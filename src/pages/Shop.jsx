@@ -82,20 +82,6 @@ const Shop = () => {
             <FadeInSection>
               <div className="shop-header">
                 <h1>{t('shop.title')}</h1>
-                <div className="shop-tabs">
-                  <button
-                    onClick={() => handleTabChange('omblus')}
-                    className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
-                  >
-                    {t('shop.tabs.omblus')}
-                  </button>
-                  <button
-                    onClick={() => handleTabChange('keraamika')}
-                    className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
-                  >
-                    {t('shop.tabs.keraamika')}
-                  </button>
-                </div>
               </div>
             </FadeInSection>
 
@@ -117,8 +103,24 @@ const Shop = () => {
                 onToggle={() => setFiltersOpen(!filtersOpen)}
               />
 
-              {/* Products Grid */}
+              {/* Products Section */}
               <div className="products-section">
+                {/* Category Tabs - aligned with products */}
+                <div className="shop-tabs">
+                  <button
+                    onClick={() => handleTabChange('omblus')}
+                    className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
+                  >
+                    {t('shop.tabs.omblus')}
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('keraamika')}
+                    className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
+                  >
+                    {t('shop.tabs.keraamika')}
+                  </button>
+                </div>
+
                 <div className="products-grid">
                   {filteredProducts.map((product) => (
                     <FadeInSection key={product.id}>
@@ -150,20 +152,11 @@ const Shop = () => {
 
       <style jsx>{`
         .shop-header {
-          display: flex;
-          align-items: baseline;
-          gap: 48px;
           margin-bottom: 48px;
         }
 
         .shop-header h1 {
           margin: 0;
-          flex-shrink: 0;
-        }
-
-        .shop-tabs {
-          display: flex;
-          align-items: baseline;
         }
 
         .shop-layout {
@@ -183,6 +176,12 @@ const Shop = () => {
           flex: 1;
           position: relative;
           z-index: 1;
+        }
+
+        .shop-tabs {
+          display: flex;
+          align-items: baseline;
+          margin-bottom: 48px;
         }
 
         .products-grid {
@@ -215,12 +214,6 @@ const Shop = () => {
         }
 
         @media (max-width: 768px) {
-          .shop-header {
-            flex-direction: column;
-            gap: 24px;
-            align-items: flex-start;
-          }
-
           .shop-layout {
             flex-direction: column;
             gap: 0;
@@ -228,6 +221,10 @@ const Shop = () => {
 
           .mobile-filter-toggle {
             display: block;
+          }
+
+          .shop-tabs {
+            margin-bottom: 32px;
           }
 
           .products-grid {

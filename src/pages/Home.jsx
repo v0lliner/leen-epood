@@ -59,6 +59,12 @@ const Home = () => {
                   <p>{t('values.uniqueness.text')}</p>
                 </div>
               </div>
+              
+              <div className="portfolio-cta-container">
+                <Link to="/portfoolio" className="btn btn-primary portfolio-cta">
+                  Tutvu töödega →
+                </Link>
+              </div>
             </FadeInSection>
           </div>
         </section>
@@ -84,6 +90,18 @@ const Home = () => {
           gap: 8px;
         }
 
+        .portfolio-cta-container {
+          text-align: center;
+          margin-top: 64px;
+        }
+
+        .portfolio-cta {
+          font-size: 1.125rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+
         @media (max-width: 768px) {
           .recent-products-grid {
             grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
@@ -93,6 +111,10 @@ const Home = () => {
           
           .view-all-container {
             margin-top: 32px;
+          }
+
+          .portfolio-cta-container {
+            margin-top: 48px;
           }
         }
         
