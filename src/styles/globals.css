@@ -4,7 +4,6 @@
   --color-ultramarine: #2f3e9c;
   --color-pastel-yellow: #f6e89d;
   --color-clay-rose: #e4c9c1;
-  --color-arrow-circle: #F1BF25;
   
   --font-heading: 'Roboto Mono', monospace;
   --font-body: 'Urbanist', sans-serif;
@@ -101,58 +100,6 @@ img {
 .fade-in.visible {
   opacity: 1;
   transform: translateY(0);
-}
-
-/* Arrow hover effect for links and buttons containing "→" */
-a:has-text("→"), 
-button:has-text("→"),
-a[href]:contains("→"),
-button:contains("→") {
-  position: relative;
-}
-
-/* More specific selectors for arrow links */
-a[href*="→"], 
-button[type="submit"]:contains("→"),
-.btn:contains("→"),
-.hero-cta,
-.view-all-link,
-.portfolio-cta,
-.about-cta,
-.contact-submit-btn,
-.checkout-button {
-  position: relative;
-}
-
-/* Apply to any element that contains arrow in text content */
-*:not(script):not(style) {
-  /* This will be handled by JavaScript for better browser support */
-}
-
-/* Arrow circle effect */
-.arrow-link {
-  position: relative;
-}
-
-.arrow-link::after {
-  content: '';
-  position: absolute;
-  width: 6px;
-  height: 6px;
-  background-color: var(--color-arrow-circle);
-  border-radius: 50%;
-  opacity: 0;
-  transform: translateX(-10px);
-  transition: all 200ms ease;
-  pointer-events: none;
-  top: 50%;
-  transform: translateY(-50%) translateX(-10px);
-  margin-left: 4px;
-}
-
-.arrow-link:hover::after {
-  opacity: 1;
-  transform: translateY(-50%) translateX(0);
 }
 
 /* Universal button styles - text only */
