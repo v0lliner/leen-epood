@@ -115,10 +115,10 @@ const ProductDetail = () => {
                     <p className="availability">{t('shop.product.available')}</p>
                     {product.available && (
                       <button 
-                        className="add-to-cart-btn"
+                        className="link-with-arrow add-to-cart-btn"
                         onClick={handleAddToCart}
                       >
-                        {t('shop.product.add_to_cart')}
+                        {t('shop.product.add_to_cart')} <span className="arrow-wrapper">→</span>
                       </button>
                     )}
                   </div>
@@ -252,19 +252,16 @@ const ProductDetail = () => {
           font-weight: 600;
           color: var(--color-ultramarine);
           cursor: pointer;
-          padding: 16px 32px;
-          border: 2px solid var(--color-ultramarine);
-          border-radius: 4px;
-          transition: all 0.2s ease;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
+          transition: opacity 0.2s ease;
+          padding: 0;
+          text-decoration: none;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
         }
 
         .add-to-cart-btn:hover {
-          background-color: var(--color-ultramarine);
-          color: white;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(47, 62, 156, 0.3);
+          opacity: 0.8;
         }
 
         .related-section {
@@ -314,9 +311,8 @@ const ProductDetail = () => {
 
           .add-to-cart-btn {
             font-size: 1.125rem;
-            padding: 14px 28px;
             align-self: stretch;
-            text-align: center;
+            text-align: left;
           }
 
           .related-products {
