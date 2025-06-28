@@ -257,7 +257,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "products": "Products",
-      "portfolio": "Portfolio",
+      "portfolio": "Works",
       "orders": "Orders",
       "messages": "Messages",
       "settings": "Settings"
@@ -268,14 +268,14 @@
       "quick_actions": "Quick Actions",
       "stats": {
         "products": "Products",
-        "portfolio": "Portfolio",
+        "portfolio": "Works",
         "orders": "Orders",
         "messages": "Messages"
       },
       "actions": {
         "add_product": "Add Product",
         "add_product_desc": "Add a new product to the shop",
-        "add_portfolio": "Add Portfolio Item",
+        "add_portfolio": "Add Work",
         "add_portfolio_desc": "Add a new work to the portfolio",
         "view_orders": "View Orders",
         "view_orders_desc": "Manage incoming orders"
@@ -318,6 +318,34 @@
         "update": "Update Product",
         "created_success": "Product successfully added!",
         "updated_success": "Product successfully updated!",
+        "network_error": "Network connection error"
+      }
+    },
+    "portfolio": {
+      "title": "Works",
+      "add_new": "Add New Work",
+      "no_items": "No works have been added yet",
+      "add_first": "Add First Work",
+      "delete_confirm": "Are you sure you want to delete this work?",
+      "form": {
+        "create_title": "Add New Work",
+        "edit_title": "Edit Work",
+        "title": "Work Title",
+        "title_placeholder": "E.g. Handcrafted Vase 'Memory'",
+        "title_required": "Work title is required",
+        "technique": "Technique",
+        "technique_placeholder": "E.g. Hand-formed, glazed",
+        "dimensions": "Dimensions",
+        "dimensions_placeholder": "E.g. 25cm x 15cm or Size M",
+        "year": "Year made",
+        "category": "Category",
+        "category_required": "Category is required",
+        "image": "Work Image",
+        "image_required": "Work image is required",
+        "create": "Add Work",
+        "update": "Update Work",
+        "created_success": "Work successfully added!",
+        "updated_success": "Work successfully updated!",
         "network_error": "Network connection error"
       }
     }

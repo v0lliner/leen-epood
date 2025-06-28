@@ -257,7 +257,7 @@
     "nav": {
       "dashboard": "Töölaud",
       "products": "Tooted",
-      "portfolio": "Portfoolio",
+      "portfolio": "Tehtud tööd",
       "orders": "Tellimused",
       "messages": "Sõnumid",
       "settings": "Seaded"
@@ -268,14 +268,14 @@
       "quick_actions": "Kiirtoimingud",
       "stats": {
         "products": "Tooted",
-        "portfolio": "Portfoolio",
+        "portfolio": "Tehtud tööd",
         "orders": "Tellimused",
         "messages": "Sõnumid"
       },
       "actions": {
         "add_product": "Lisa toode",
         "add_product_desc": "Lisage uus toode e-poodi",
-        "add_portfolio": "Lisa portfoolio töö",
+        "add_portfolio": "Lisa tehtud töö",
         "add_portfolio_desc": "Lisage uus töö portfooliosse",
         "view_orders": "Vaata tellimusi",
         "view_orders_desc": "Hallake sissetulevaid tellimusi"
@@ -318,6 +318,34 @@
         "update": "Uuenda toode",
         "created_success": "Toode edukalt lisatud!",
         "updated_success": "Toode edukalt uuendatud!",
+        "network_error": "Võrguühenduse viga"
+      }
+    },
+    "portfolio": {
+      "title": "Tehtud tööd",
+      "add_new": "Lisa uus töö",
+      "no_items": "Tehtud töid pole veel lisatud",
+      "add_first": "Lisa esimene töö",
+      "delete_confirm": "Kas olete kindel, et soovite selle töö kustutada?",
+      "form": {
+        "create_title": "Lisa uus tehtud töö",
+        "edit_title": "Muuda tehtud tööd",
+        "title": "Töö pealkiri",
+        "title_placeholder": "Nt. Käsitöövaas 'Mälestus'",
+        "title_required": "Töö pealkiri on kohustuslik",
+        "technique": "Tehnika",
+        "technique_placeholder": "Nt. Käsitsi vormitud, glasuuritud",
+        "dimensions": "Mõõdud",
+        "dimensions_placeholder": "Nt. 25cm x 15cm või Suurus M",
+        "year": "Valmimisaasta",
+        "category": "Kategooria",
+        "category_required": "Kategooria on kohustuslik",
+        "image": "Töö pilt",
+        "image_required": "Töö pilt on kohustuslik",
+        "create": "Lisa töö",
+        "update": "Uuenda töö",
+        "created_success": "Töö edukalt lisatud!",
+        "updated_success": "Töö edukalt uuendatud!",
         "network_error": "Võrguühenduse viga"
       }
     }

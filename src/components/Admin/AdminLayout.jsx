@@ -27,14 +27,14 @@ const AdminLayout = ({ children }) => {
       icon: '📦'
     },
     {
+      name: 'Tehtud tööd',
+      href: '/admin/tehtud-tood',
+      icon: '🎨'
+    },
+    {
       name: 'Kategooriad',
       href: '/admin/categories',
       icon: '📁'
-    },
-    {
-      name: t('admin.nav.portfolio'),
-      href: '/admin/portfolio',
-      icon: '🎨'
     },
     {
       name: t('admin.nav.orders'),

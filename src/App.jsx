@@ -18,6 +18,8 @@ import AdminLogin from './pages/Admin/Login';
 import AdminDashboard from './pages/Admin/Dashboard';
 import AdminProducts from './pages/Admin/Products';
 import AdminCategories from './pages/Admin/Categories';
+import AdminTehtudTood from './pages/Admin/TehtudTood';
+import TehtudToodForm from './pages/Admin/TehtudToodForm';
 import ProductForm from './pages/Admin/ProductForm';
 import './styles/globals.css';
 import './i18n';
@@ -109,6 +111,21 @@ function App() {
                 <Route path="/admin/categories" element={
                   <ProtectedRoute>
                     <AdminCategories />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/tehtud-tood" element={
+                  <ProtectedRoute>
+                    <AdminTehtudTood />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/tehtud-tood/new" element={
+                  <ProtectedRoute>
+                    <TehtudToodForm />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/tehtud-tood/:id/edit" element={
+                  <ProtectedRoute>
+                    <TehtudToodForm />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/products/new" element={

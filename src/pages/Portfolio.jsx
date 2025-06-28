@@ -1,14 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
+import { portfolioItemService } from '../utils/supabase/portfolioItems';
 
 const Portfolio = () => {
   const { t } = useTranslation();
   const [activeCategory, setActiveCategory] = useState('all');
+  const [portfolioItems, setPortfolioItems] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const portfolioItems = [
+  // Fallback data if database is empty
+  const fallbackItems = [
     {
       id: 1,
       category: 'ceramics',
@@ -65,6 +69,30 @@ const Portfolio = () => {
     }
   ];
 
+  useEffect(() => {
+    loadPortfolioItems();
+  }, []);
+
+  const loadPortfolioItems = async () => {
+    setLoading(true);
+    try {
+      const { data, error } = await portfolioItemService.getPortfolioItems();
+      
+      if (error) {
+        console.warn('Failed to load portfolio items from database, using fallback data:', error);
+        setPortfolioItems(fallbackItems);
+      } else {
+        // If no items in database, use fallback data
+        setPortfolioItems(data.length > 0 ? data : fallbackItems);
+      }
+    } catch (err) {
+      console.warn('Error loading portfolio items, using fallback data:', err);
+      setPortfolioItems(fallbackItems);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const categories = [
     { key: 'all', label: t('portfolio.categories.all') },
     { key: 'ceramics', label: t('portfolio.ceramics') },
@@ -75,6 +103,48 @@ const Portfolio = () => {
   const filteredItems = activeCategory === 'all' 
     ? portfolioItems 
     : portfolioItems.filter(item => item.category === activeCategory);
+
+  if (loading) {
+    return (
+      <>
+        <SEOHead page="portfolio" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Laadin...</p>
+              </div>
+            </div>
+          </section>
+        </main>
+        <style jsx>{`
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 64px;
+            gap: 16px;
+          }
+
+          .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--color-ultramarine);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </>
+    );
+  }
 
   return (
     <>
