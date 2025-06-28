@@ -247,7 +247,7 @@ const Shop = () => {
           display: none;
           width: 100%;
           margin-bottom: 32px;
-          text-align: left;
+          text-align: center;
           background: none;
           border: none;
           font-family: var(--font-body);
