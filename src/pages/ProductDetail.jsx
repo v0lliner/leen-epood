@@ -84,9 +84,9 @@ const ProductDetail = () => {
           <div className="container">
             <FadeInSection>
               <div className="breadcrumb">
-                <Link to="/epood" className="btn btn-underline">{t('shop.title')}</Link>
-                <span> / </span>
-                <span>{product.title}</span>
+                <Link to="/epood" className="breadcrumb-link">{t('shop.title')}</Link>
+                <span className="breadcrumb-separator"> / </span>
+                <span className="breadcrumb-current">{product.title}</span>
               </div>
             </FadeInSection>
 
@@ -115,7 +115,7 @@ const ProductDetail = () => {
                     <p className="availability">{t('shop.product.available')}</p>
                     {product.available && (
                       <button 
-                        className="btn btn-underline add-to-cart"
+                        className="add-to-cart-btn"
                         onClick={handleAddToCart}
                       >
                         {t('shop.product.add_to_cart')}
@@ -144,8 +144,34 @@ const ProductDetail = () => {
       <style jsx>{`
         .breadcrumb {
           margin-bottom: 48px;
-          font-size: 0.9rem;
+          font-size: 1.125rem;
+          font-family: var(--font-body);
+          font-weight: 500;
+          display: flex;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 4px;
+        }
+
+        .breadcrumb-link {
+          color: var(--color-ultramarine);
+          text-decoration: none;
+          transition: opacity 0.2s ease;
+        }
+
+        .breadcrumb-link:hover {
+          opacity: 0.7;
+          text-decoration: underline;
+        }
+
+        .breadcrumb-separator {
           color: #666;
+          margin: 0 4px;
+        }
+
+        .breadcrumb-current {
+          color: var(--color-text);
+          font-weight: 400;
         }
 
         .product-detail {
@@ -208,7 +234,7 @@ const ProductDetail = () => {
         .product-actions {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 24px;
         }
 
         .availability {
@@ -217,9 +243,28 @@ const ProductDetail = () => {
           margin: 0;
         }
 
-        .add-to-cart {
+        .add-to-cart-btn {
           align-self: flex-start;
-          font-size: 1rem;
+          background: none;
+          border: none;
+          font-family: var(--font-body);
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          cursor: pointer;
+          padding: 16px 32px;
+          border: 2px solid var(--color-ultramarine);
+          border-radius: 4px;
+          transition: all 0.2s ease;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .add-to-cart-btn:hover {
+          background-color: var(--color-ultramarine);
+          color: white;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(47, 62, 156, 0.3);
         }
 
         .related-section {
@@ -249,6 +294,11 @@ const ProductDetail = () => {
         }
 
         @media (max-width: 768px) {
+          .breadcrumb {
+            font-size: 1rem;
+            margin-bottom: 32px;
+          }
+
           .product-detail {
             grid-template-columns: 1fr;
             gap: 32px;
@@ -260,6 +310,13 @@ const ProductDetail = () => {
 
           .product-price {
             font-size: 1.25rem;
+          }
+
+          .add-to-cart-btn {
+            font-size: 1.125rem;
+            padding: 14px 28px;
+            align-self: stretch;
+            text-align: center;
           }
 
           .related-products {
