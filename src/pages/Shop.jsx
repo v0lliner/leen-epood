@@ -11,7 +11,7 @@ const Shop = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const { products, loading } = useProducts();
+  const { products, categories, loading } = useProducts();
   
   const activeTab = searchParams.get('tab') || 'keraamika';
   const sortBy = searchParams.get('sort') || 'newest';
@@ -87,6 +87,9 @@ const Shop = () => {
     const currentOption = sortOptions.find(option => option.value === sortBy);
     return currentOption ? `${currentOption.label} ↓` : `${sortOptions[0].label} ↓`;
   };
+
+  // Get available categories for tabs
+  const availableCategories = categories.filter(cat => !cat.parent_id);
 
   if (loading) {
     return (
@@ -165,18 +168,33 @@ const Shop = () => {
                 {/* Category Tabs and Sort Filter */}
                 <div className="shop-controls">
                   <div className="shop-tabs">
-                    <button
-                      onClick={() => handleTabChange('keraamika')}
-                      className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
-                    >
-                      {t('shop.tabs.keraamika')}
-                    </button>
-                    <button
-                      onClick={() => handleTabChange('omblus')}
-                      className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
-                    >
-                      {t('shop.tabs.omblus')}
-                    </button>
+                    {availableCategories.length > 0 ? (
+                      availableCategories.map(category => (
+                        <button
+                          key={category.slug}
+                          onClick={() => handleTabChange(category.slug)}
+                          className={`tab-button ${activeTab === category.slug ? 'active' : ''}`}
+                        >
+                          {category.name}
+                        </button>
+                      ))
+                    ) : (
+                      // Fallback to hardcoded categories if database is empty
+                      <>
+                        <button
+                          onClick={() => handleTabChange('keraamika')}
+                          className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
+                        >
+                          {t('shop.tabs.keraamika')}
+                        </button>
+                        <button
+                          onClick={() => handleTabChange('omblus')}
+                          className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
+                        >
+                          {t('shop.tabs.omblus')}
+                        </button>
+                      </>
+                    )}
                   </div>
 
                   <div className="sort-filter">

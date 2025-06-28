@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { categoryService } from '../../utils/supabase/categories';
 
 const ProductFilters = ({ 
   activeCategory, 
@@ -9,6 +10,31 @@ const ProductFilters = ({
   onToggle 
 }) => {
   const { t } = useTranslation();
+  const [categories, setCategories] = useState([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    setCategoriesLoading(true);
+    try {
+      const { data, error } = await categoryService.getCategories();
+      
+      if (error) {
+        console.warn('Failed to load categories:', error);
+        setCategories([]);
+      } else {
+        setCategories(data);
+      }
+    } catch (err) {
+      console.warn('Error loading categories:', err);
+      setCategories([]);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
   
   const handlePriceChange = (field, value) => {
     onFiltersChange({
@@ -38,9 +64,13 @@ const ProductFilters = ({
     });
   };
 
-  const subcategoryOptions = activeCategory === 'omblus' 
-    ? ['kimonod', 'kaunistused', 'roivad']
-    : ['kausid', 'alused', 'kujud', 'tassid', 'vaasid'];
+  // Leia aktiivsele kategooriale vastavad alamkategooriad
+  const getSubcategories = () => {
+    const parentCategory = categories.find(cat => cat.slug === activeCategory);
+    return parentCategory?.children || [];
+  };
+
+  const subcategoryOptions = getSubcategories();
 
   return (
     <>
@@ -53,22 +83,35 @@ const ProductFilters = ({
 
         <div className="filters-content">
           {/* Primary Filter: Subcategory */}
-          <div className="filter-group primary-filter">
-            <label className="filter-label">
-              {t('shop.filters.subcategory')}
-            </label>
-            <div className="subcategory-list">
-              {subcategoryOptions.map(subcategory => (
-                <button
-                  key={subcategory}
-                  onClick={() => handleSubcategoryChange(subcategory)}
-                  className={`subcategory-link ${filters.subcategories.includes(subcategory) ? 'active' : ''}`}
-                >
-                  {t(`shop.subcategories.${activeCategory}.${subcategory}`)}
-                </button>
-              ))}
+          {!categoriesLoading && subcategoryOptions.length > 0 && (
+            <div className="filter-group primary-filter">
+              <label className="filter-label">
+                {t('shop.filters.subcategory')}
+              </label>
+              <div className="subcategory-list">
+                {subcategoryOptions.map(subcategory => (
+                  <button
+                    key={subcategory.id}
+                    onClick={() => handleSubcategoryChange(subcategory.slug)}
+                    className={`subcategory-link ${filters.subcategories.includes(subcategory.slug) ? 'active' : ''}`}
+                  >
+                    {subcategory.name}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
+
+          {categoriesLoading && (
+            <div className="filter-group primary-filter">
+              <label className="filter-label">
+                {t('shop.filters.subcategory')}
+              </label>
+              <div className="loading-text">
+                {t('admin.loading')}...
+              </div>
+            </div>
+          )}
 
           {/* Secondary Filters */}
           <div className="secondary-filters">
@@ -208,6 +251,13 @@ const ProductFilters = ({
 
           .subcategory-link.active {
             font-weight: 500;
+          }
+
+          .loading-text {
+            padding: 12px 0;
+            color: #666;
+            font-style: italic;
+            font-size: 0.9rem;
           }
 
           .secondary-filters {
