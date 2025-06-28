@@ -32,6 +32,11 @@ const AdminLayout = ({ children }) => {
       icon: '🎨'
     },
     {
+      name: 'Minust leht',
+      href: '/admin/about',
+      icon: '👤'
+    },
+    {
       name: 'Kategooriad',
       href: '/admin/categories',
       icon: '📁'

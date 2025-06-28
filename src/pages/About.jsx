@@ -2,9 +2,66 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
+import { useAboutPage } from '../hooks/useAboutPage';
 
 const About = () => {
   const { t } = useTranslation();
+  const { content, loading, getSection } = useAboutPage();
+
+  if (loading) {
+    return (
+      <>
+        <SEOHead page="about" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Laadin...</p>
+              </div>
+            </div>
+          </section>
+        </main>
+        <style jsx>{`
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 64px;
+            gap: 16px;
+          }
+
+          .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--color-ultramarine);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </>
+    );
+  }
+
+  const introSection = getSection('intro');
+  const storySection = getSection('story');
+  const educationSection = getSection('education');
+  const experienceSection = getSection('experience');
+  const inspirationSection = getSection('inspiration');
+  const ctaSection = getSection('cta');
+
+  // Helper function to format list content
+  const formatListContent = (content) => {
+    if (!content) return [];
+    return content.split('\n').filter(line => line.trim()).map(line => line.replace(/^•\s*/, ''));
+  };
 
   return (
     <>
@@ -13,13 +70,13 @@ const About = () => {
         <section className="section-large">
           <div className="container">
             <FadeInSection>
-              <h1 className="text-center">{t('about.title')}</h1>
+              <h1 className="text-center">{introSection.title || t('about.title')}</h1>
             </FadeInSection>
             
             <FadeInSection>
               <div className="about-intro">
                 <div className="about-text">
-                  {t('about.intro').split('\n\n').map((paragraph, index) => (
+                  {(introSection.content || t('about.intro')).split('\n\n').map((paragraph, index) => (
                     <p key={index}>{paragraph}</p>
                   ))}
                 </div>
@@ -30,13 +87,13 @@ const About = () => {
               <div className="about-profile">
                 <div className="profile-image">
                   <img 
-                    src="https://images.pexels.com/photos/6185765/pexels-photo-6185765.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
+                    src={introSection.image_url || "https://images.pexels.com/photos/6185765/pexels-photo-6185765.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"} 
                     alt={t('about.profile_image_alt')}
                   />
                 </div>
                 <div className="profile-content">
                   <div className="profile-text">
-                    {t('about.story').split('\n\n').map((paragraph, index) => (
+                    {(storySection.content || t('about.story')).split('\n\n').map((paragraph, index) => (
                       <p key={index}>{paragraph}</p>
                     ))}
                   </div>
@@ -47,28 +104,28 @@ const About = () => {
             <FadeInSection>
               <div className="about-sections">
                 <div className="about-section">
-                  <h3>{t('about.education.title')}</h3>
+                  <h3>{educationSection.title || t('about.education.title')}</h3>
                   <ul className="section-list">
-                    {t('about.education.items').split('\n').map((item, index) => (
-                      <li key={index}>{item.replace('• ', '')}</li>
+                    {formatListContent(educationSection.content || t('about.education.items')).map((item, index) => (
+                      <li key={index}>{item}</li>
                     ))}
                   </ul>
                 </div>
                 
                 <div className="about-section">
-                  <h3>{t('about.experience.title')}</h3>
+                  <h3>{experienceSection.title || t('about.experience.title')}</h3>
                   <ul className="section-list">
-                    {t('about.experience.items').split('\n').map((item, index) => (
-                      <li key={index}>{item.replace('• ', '')}</li>
+                    {formatListContent(experienceSection.content || t('about.experience.items')).map((item, index) => (
+                      <li key={index}>{item}</li>
                     ))}
                   </ul>
                 </div>
                 
                 <div className="about-section">
-                  <h3>{t('about.inspiration.title')}</h3>
+                  <h3>{inspirationSection.title || t('about.inspiration.title')}</h3>
                   <ul className="section-list">
-                    {t('about.inspiration.items').split('\n').map((item, index) => (
-                      <li key={index}>{item.replace('• ', '')}</li>
+                    {formatListContent(inspirationSection.content || t('about.inspiration.items')).map((item, index) => (
+                      <li key={index}>{item}</li>
                     ))}
                   </ul>
                 </div>
@@ -78,7 +135,7 @@ const About = () => {
             {/* Shop CTA */}
             <FadeInSection className="about-cta-section">
               <div className="about-cta-content">
-                <p>{t('about.cta_text')}</p>
+                <p>{ctaSection.content || t('about.cta_text')}</p>
                 <Link to="/epood" className="link-with-arrow about-cta">
                   {t('about.cta_button')} <span className="arrow-wrapper">→</span>
                 </Link>
