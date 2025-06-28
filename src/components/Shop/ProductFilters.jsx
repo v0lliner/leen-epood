@@ -264,15 +264,14 @@ const ProductFilters = ({
             border-bottom: 1px solid transparent;
           }
 
-          .subcategory-link:hover {
+          .subcategory-link:hover,
+          .subcategory-link.active {
             color: var(--color-ultramarine);
-            text-decoration: underline;
+            border-bottom-color: var(--color-ultramarine);
           }
 
           .subcategory-link.active {
-            color: var(--color-ultramarine);
             font-weight: 500;
-            border-bottom-color: var(--color-ultramarine);
           }
 
           .secondary-filters {
