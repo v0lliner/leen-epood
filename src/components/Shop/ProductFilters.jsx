@@ -73,86 +73,89 @@ const ProductFilters = ({
         </div>
 
         <div className="filters-content">
-          {/* Price Filter */}
-          <div className="filter-group">
-            <label className="filter-label">{t('shop.filters.price')}</label>
-            <div className="price-inputs">
-              <input
-                type="number"
-                placeholder="Min €"
-                value={filters.price.min}
-                onChange={(e) => handlePriceChange('min', e.target.value)}
-                className="filter-input"
-              />
-              <span>-</span>
-              <input
-                type="number"
-                placeholder="Max €"
-                value={filters.price.max}
-                onChange={(e) => handlePriceChange('max', e.target.value)}
-                className="filter-input"
-              />
-            </div>
-          </div>
-
-          {/* Dimensions Filter */}
-          <div className="filter-group">
-            <label className="filter-label">{t('shop.filters.dimensions')}</label>
-            <div className="dimension-inputs">
-              <input
-                type="number"
-                placeholder={t('shop.filters.height')}
-                value={filters.dimensions.height}
-                onChange={(e) => handleDimensionChange('height', e.target.value)}
-                className="filter-input"
-              />
-              <input
-                type="number"
-                placeholder={t('shop.filters.width')}
-                value={filters.dimensions.width}
-                onChange={(e) => handleDimensionChange('width', e.target.value)}
-                className="filter-input"
-              />
-              <input
-                type="number"
-                placeholder={t('shop.filters.depth')}
-                value={filters.dimensions.depth}
-                onChange={(e) => handleDimensionChange('depth', e.target.value)}
-                className="filter-input"
-              />
-            </div>
-          </div>
-
-          {/* Year Filter */}
-          <div className="filter-group">
-            <label className="filter-label">{t('shop.filters.year')}</label>
-            <select
-              value={filters.year}
-              onChange={(e) => handleYearChange(e.target.value)}
-              className="filter-select"
-            >
-              <option value="">{t('shop.filters.year')}</option>
-              {years.map(year => (
-                <option key={year} value={year}>{year}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Subcategory Filter */}
-          <div className="filter-group">
-            <label className="filter-label">{t('shop.filters.subcategory')}</label>
-            <div className="subcategory-options">
+          {/* Primary Filter: Subcategory */}
+          <div className="filter-group primary-filter">
+            <label className="filter-label primary-label">
+              {t('shop.filters.subcategory')}
+            </label>
+            <div className="subcategory-grid">
               {subcategoryOptions.map(subcategory => (
-                <label key={subcategory} className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={filters.subcategories.includes(subcategory)}
-                    onChange={() => handleSubcategoryChange(subcategory)}
-                    className="filter-checkbox"
-                  />
+                <button
+                  key={subcategory}
+                  onClick={() => handleSubcategoryChange(subcategory)}
+                  className={`subcategory-button ${filters.subcategories.includes(subcategory) ? 'active' : ''}`}
+                >
                   {t(`shop.subcategories.${activeCategory}.${subcategory}`)}
-                </label>
+                </button>
               ))}
+            </div>
+          </div>
+
+          {/* Secondary Filters */}
+          <div className="secondary-filters">
+            {/* Price Filter */}
+            <div className="filter-group">
+              <label className="filter-label">{t('shop.filters.price')}</label>
+              <div className="price-inputs">
+                <input
+                  type="number"
+                  placeholder="Min €"
+                  value={filters.price.min}
+                  onChange={(e) => handlePriceChange('min', e.target.value)}
+                  className="filter-input"
+                />
+                <span className="price-separator">-</span>
+                <input
+                  type="number"
+                  placeholder="Max €"
+                  value={filters.price.max}
+                  onChange={(e) => handlePriceChange('max', e.target.value)}
+                  className="filter-input"
+                />
+              </div>
+            </div>
+
+            {/* Year Filter */}
+            <div className="filter-group">
+              <label className="filter-label">{t('shop.filters.year')}</label>
+              <select
+                value={filters.year}
+                onChange={(e) => handleYearChange(e.target.value)}
+                className="filter-select"
+              >
+                <option value="">{t('shop.filters.year')}</option>
+                {years.map(year => (
+                  <option key={year} value={year}>{year}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Dimensions Filter */}
+            <div className="filter-group">
+              <label className="filter-label">{t('shop.filters.dimensions')}</label>
+              <div className="dimension-inputs">
+                <input
+                  type="number"
+                  placeholder={t('shop.filters.height')}
+                  value={filters.dimensions.height}
+                  onChange={(e) => handleDimensionChange('height', e.target.value)}
+                  className="filter-input"
+                />
+                <input
+                  type="number"
+                  placeholder={t('shop.filters.width')}
+                  value={filters.dimensions.width}
+                  onChange={(e) => handleDimensionChange('width', e.target.value)}
+                  className="filter-input"
+                />
+                <input
+                  type="number"
+                  placeholder={t('shop.filters.depth')}
+                  value={filters.dimensions.depth}
+                  onChange={(e) => handleDimensionChange('depth', e.target.value)}
+                  className="filter-input"
+                />
+              </div>
             </div>
           </div>
 
@@ -224,23 +227,82 @@ const ProductFilters = ({
             margin-bottom: 32px;
           }
 
+          .primary-filter {
+            margin-bottom: 48px;
+            padding-bottom: 32px;
+            border-bottom: 2px solid #f0f0f0;
+          }
+
           .filter-label {
             display: block;
             font-family: var(--font-heading);
             font-weight: 500;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
             color: var(--color-text);
+            font-size: 1rem;
+          }
+
+          .primary-label {
+            font-size: 1.125rem;
+            color: var(--color-ultramarine);
+            margin-bottom: 20px;
+          }
+
+          .subcategory-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+          }
+
+          .subcategory-button {
+            padding: 16px 20px;
+            border: 2px solid #f0f0f0;
+            background-color: var(--color-background);
+            color: var(--color-text);
+            border-radius: 8px;
+            font-family: var(--font-body);
+            font-weight: 500;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            position: relative;
+          }
+
+          .subcategory-button:hover {
+            border-color: var(--color-ultramarine);
+            color: var(--color-ultramarine);
+          }
+
+          .subcategory-button.active {
+            border-color: var(--color-ultramarine);
+            background-color: var(--color-ultramarine);
+            color: white;
+          }
+
+          .subcategory-button.active:after {
+            content: '✓';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+          }
+
+          .secondary-filters {
+            opacity: 0.8;
           }
 
           .filter-input,
           .filter-select {
             width: 100%;
-            padding: 8px 12px;
+            padding: 10px 12px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-family: var(--font-body);
             font-size: 0.9rem;
             margin-bottom: 8px;
+            transition: border-color 0.2s ease;
           }
 
           .filter-input:focus,
@@ -255,8 +317,9 @@ const ProductFilters = ({
             gap: 8px;
           }
 
-          .price-inputs span {
+          .price-separator {
             color: var(--color-text);
+            font-weight: 500;
           }
 
           .dimension-inputs {
@@ -265,28 +328,13 @@ const ProductFilters = ({
             gap: 8px;
           }
 
-          .subcategory-options {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-          }
-
-          .checkbox-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9rem;
-            cursor: pointer;
-          }
-
-          .filter-checkbox {
-            margin: 0;
-          }
-
           .clear-filters {
             width: 100%;
             text-align: center;
             padding: 12px 0;
+            margin-top: 24px;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 24px;
           }
 
           @media (min-width: 769px) {
@@ -314,6 +362,16 @@ const ProductFilters = ({
 
             .filters-content {
               padding: 24px 0;
+            }
+
+            .subcategory-grid {
+              grid-template-columns: 1fr;
+              gap: 10px;
+            }
+
+            .subcategory-button {
+              padding: 14px 18px;
+              font-size: 0.9rem;
             }
           }
         `}</style>

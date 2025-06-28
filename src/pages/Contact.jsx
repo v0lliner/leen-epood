@@ -37,12 +37,6 @@ const Contact = () => {
               <h1 className="text-center">{t('contact.title')}</h1>
             </FadeInSection>
 
-            <FadeInSection>
-              <div className="contact-intro">
-                <p>Võtke julgesti ühendust, kui soovite tellida käsitöötoodet, küsida hinnapakkumist või lihtsalt vestelda loomingust.</p>
-              </div>
-            </FadeInSection>
-
             <div className="contact-layout">
               <FadeInSection className="contact-form-section">
                 <div className="contact-form-container">
@@ -146,19 +140,12 @@ const Contact = () => {
       </main>
 
       <style jsx>{`
-        .contact-intro {
-          max-width: 600px;
-          margin: 64px auto;
-          text-align: center;
-          font-size: 1.125rem;
-          color: #666;
-        }
-
         .contact-layout {
           display: grid;
           grid-template-columns: 1fr 1fr;
           gap: 96px;
           align-items: start;
+          margin-top: 64px;
         }
 
         .contact-form-container h3 {
@@ -262,14 +249,10 @@ const Contact = () => {
         }
 
         @media (max-width: 768px) {
-          .contact-intro {
-            margin: 48px auto;
-            font-size: 1rem;
-          }
-
           .contact-layout {
             grid-template-columns: 1fr;
             gap: 64px;
+            margin-top: 48px;
           }
 
           .contact-form {
