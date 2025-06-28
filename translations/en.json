@@ -36,11 +36,19 @@
   "about": {
     "title": "About",
     "description": "Meet Leen Väränen - ceramicist and clothing designer",
-    "text": "I am Leen Väränen, a ceramicist and clothing designer whose work comes from the heart. In my works, tradition and modernity, form and function meet. I studied at Tallinn Industrial Education Centre and Vana-Vigala Technical and Service School, was a teacher for a long time and now focus entirely on creation.\n\nMy inspiration comes from forms, colors and lived memories. Every object I create has its own story - it can be a childhood memory, nature or simple beauty that I have noticed somewhere.",
-    "highlights": {
-      "education": "Studied at Tallinn Industrial Education Centre and Vana-Vigala Technical and Service School",
-      "experience": "Long-time teacher, tailor, ceramicist",
-      "inspiration": "Inspired by forms, colors and lived memories"
+    "intro": "I am Leen Väränen – a ceramicist and clothing designer whose work is born from the heart and memories. My journey to ceramics began in my childhood home, where clay objects were always held in high regard. I inherited my love for ceramics from my mother – it grew with me and eventually became the core of my work.\n\nI draw, cut, fire and sew – every object I create carries something personal within it. I find inspiration in nature, simple forms and life's fleeting moments. What matters to me are calm lines, clean design and plant motifs that add life and rhythm to objects.",
+    "story": "My work combines the heritage of the past with contemporary aesthetics. The result is unique handcrafted products that suit both everyday life and special moments. Whether it's a cup that carries childhood shadows or a kimono that tells a story – there's something touching in every piece.",
+    "education": {
+      "title": "Education",
+      "items": "Tallinn Industrial Education Centre\nVana-Vigala Technical and Service School\nAdditional art courses at children's art school and applied arts"
+    },
+    "experience": {
+      "title": "Experience",
+      "items": "Long-time teacher\nTailor and clothing design practitioner\nActively working ceramicist"
+    },
+    "inspiration": {
+      "title": "Inspiration",
+      "items": "Plant motifs, shadows and patterns\nForms, colors and lived memories\nEveryday beauty and sensitivity of natural materials"
     }
   },
   "portfolio": {

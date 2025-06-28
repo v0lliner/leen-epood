@@ -36,11 +36,19 @@
   "about": {
     "title": "Minust",
     "description": "Tutvuge Leen Väränenga - keraamiku ja rõivadisaineriga",
-    "text": "Olen Leen Väränen, keraamik ja rõivadisainer, kelle looming sünnib südamest. Minu töödes kohtuvad traditsioon ja kaasaeg, vorm ja funktsioon. Olen õppinud Tallinna Tööstushariduskeskuses ja Vana-Vigala Tehnika- ja Teeninduskoolis, olnud pikka aega õpetaja ja nüüd keskendun täielikult loomingule.\n\nMinu inspiratsioon tuleb vormidest, värvidest ja elatud mälestustest. Iga ese, mille loon, on oma lugu - see võib olla lapsepõlvemälestus, loodus või lihtne ilu, mida olen kuskil märganud.",
-    "highlights": {
-      "education": "Õppinud Tallinna Tööstushariduskeskuses ja Vana-Vigala Tehnika- ja Teeninduskoolis",
-      "experience": "Pikaaegne õpetaja, rätsep, keraamik",
-      "inspiration": "Inspireeritud vormidest, värvidest ja elatud mälestustest"
+    "intro": "Olen Leen Väränen – keraamik ja rõivadisainer, kelle looming sünnib südamest ja mälestustest. Minu tee keraamikani sai alguse juba lapsepõlvekodus, kus saviesemed olid alati au sees. Armastuse keraamika vastu pärisin oma emalt – see kasvas minuga koos ja jõudis lõpuks minu tööde tuumani.\n\nJoonistan, lõikan, põletan ja õmblen – iga ese, mille loon, kannab endas midagi isiklikku. Inspiratsiooni leian loodusest, lihtsatest vormidest ja elu vahehetkedest. Mulle on olulised rahulikud jooned, puhas disain ning taimemotiivid, mis lisavad esemetele elu ja rütmi.",
+    "story": "Minu looming ühendab mineviku pärandi ja kaasaegse esteetika. Tulemuseks on ainulaadsed käsitöötooted, mis sobivad nii argipäeva kui ka erilisteks hetkedeks. Olgu selleks tass, millel on lapsepõlve varju, või kimono, mis jutustab loo – igas töös on midagi, mis puudutab.",
+    "education": {
+      "title": "Haridus",
+      "items": "Tallinna Tööstushariduskeskus\nVana-Vigala Tehnika- ja Teeninduskool\nTäiendavad kunstikursused lastekunstikoolis ja tarbekunsti suunal"
+    },
+    "experience": {
+      "title": "Kogemus",
+      "items": "Pikaaegne õpetaja\nRätsep ja rõivadisaini praktiseerija\nAktiivselt tegutsev keraamik"
+    },
+    "inspiration": {
+      "title": "Inspiratsioon",
+      "items": "Taimede motiivid, varjud ja mustrid\nVormid, värvid ja elatud mälestused\nIgapäeva ilu ja looduslike materjalide tundlikkus"
     }
   },
   "portfolio": {

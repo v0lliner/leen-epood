@@ -16,17 +16,26 @@ const About = () => {
             </FadeInSection>
             
             <FadeInSection>
-              <div className="grid-50-50 about-profile">
-                <div>
+              <div className="about-intro">
+                <div className="about-text">
+                  {t('about.intro').split('\n\n').map((paragraph, index) => (
+                    <p key={index}>{paragraph}</p>
+                  ))}
+                </div>
+              </div>
+            </FadeInSection>
+
+            <FadeInSection>
+              <div className="about-profile">
+                <div className="profile-image">
                   <img 
                     src="https://images.pexels.com/photos/6185765/pexels-photo-6185765.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
                     alt="Leen Väränen portree"
-                    className="about-image"
                   />
                 </div>
-                <div className="about-content">
-                  <div className="about-text">
-                    {t('about.text').split('\n\n').map((paragraph, index) => (
+                <div className="profile-content">
+                  <div className="profile-text">
+                    {t('about.story').split('\n\n').map((paragraph, index) => (
                       <p key={index}>{paragraph}</p>
                     ))}
                   </div>
@@ -35,18 +44,32 @@ const About = () => {
             </FadeInSection>
 
             <FadeInSection>
-              <div className="highlights">
-                <div className="highlight-item">
-                  <h3>Haridus</h3>
-                  <p>{t('about.highlights.education')}</p>
+              <div className="about-sections">
+                <div className="about-section">
+                  <h3>{t('about.education.title')}</h3>
+                  <ul className="section-list">
+                    {t('about.education.items').split('\n').map((item, index) => (
+                      <li key={index}>{item.replace('• ', '')}</li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="highlight-item">
-                  <h3>Kogemus</h3>
-                  <p>{t('about.highlights.experience')}</p>
+                
+                <div className="about-section">
+                  <h3>{t('about.experience.title')}</h3>
+                  <ul className="section-list">
+                    {t('about.experience.items').split('\n').map((item, index) => (
+                      <li key={index}>{item.replace('• ', '')}</li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="highlight-item">
-                  <h3>Inspiratsioon</h3>
-                  <p>{t('about.highlights.inspiration')}</p>
+                
+                <div className="about-section">
+                  <h3>{t('about.inspiration.title')}</h3>
+                  <ul className="section-list">
+                    {t('about.inspiration.items').split('\n').map((item, index) => (
+                      <li key={index}>{item.replace('• ', '')}</li>
+                    ))}
+                  </ul>
                 </div>
               </div>
             </FadeInSection>
@@ -55,52 +78,123 @@ const About = () => {
       </main>
 
       <style jsx>{`
-        .about-profile {
-          margin-top: 64px;
+        .about-intro {
+          max-width: 800px;
+          margin: 64px auto 96px;
+          text-align: center;
         }
 
-        .about-image {
+        .about-intro .about-text {
+          font-size: 1.25rem;
+          line-height: 1.6;
+        }
+
+        .about-intro p {
+          margin-bottom: 24px;
+        }
+
+        .about-intro p:last-child {
+          margin-bottom: 0;
+        }
+
+        .about-profile {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 64px;
+          align-items: center;
+          margin-bottom: 96px;
+        }
+
+        .profile-image img {
           width: 100%;
           aspect-ratio: 4/5;
           object-fit: cover;
           border-radius: 4px;
         }
 
-        .about-content {
+        .profile-content {
           display: flex;
           align-items: center;
         }
 
-        .about-text p {
+        .profile-text p {
           margin-bottom: 24px;
+          line-height: 1.6;
         }
 
-        .about-text p:last-child {
+        .profile-text p:last-child {
           margin-bottom: 0;
         }
 
-        .highlights {
+        .about-sections {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 48px;
-          margin-top: 96px;
+          gap: 64px;
           padding-top: 64px;
           border-top: 1px solid #f0f0f0;
         }
 
-        .highlight-item h3 {
+        .about-section h3 {
           color: var(--color-ultramarine);
+          margin-bottom: 24px;
+          font-family: var(--font-heading);
+          font-weight: 500;
+          font-size: 1.5rem;
+        }
+
+        .section-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .section-list li {
           margin-bottom: 16px;
-          font-family: var(--font-body);
-          font-weight: 600;
-          font-size: 1.25rem;
+          padding-left: 20px;
+          position: relative;
+          line-height: 1.6;
+        }
+
+        .section-list li:before {
+          content: '•';
+          color: var(--color-ultramarine);
+          font-weight: bold;
+          position: absolute;
+          left: 0;
+        }
+
+        .section-list li:last-child {
+          margin-bottom: 0;
         }
 
         @media (max-width: 768px) {
-          .highlights {
+          .about-intro {
+            margin: 48px auto 64px;
+          }
+
+          .about-intro .about-text {
+            font-size: 1.125rem;
+          }
+
+          .about-profile {
             grid-template-columns: 1fr;
             gap: 32px;
-            margin-top: 64px;
+            margin-bottom: 64px;
+          }
+
+          .about-sections {
+            grid-template-columns: 1fr;
+            gap: 48px;
+            padding-top: 48px;
+          }
+
+          .about-section h3 {
+            font-size: 1.25rem;
+            margin-bottom: 20px;
+          }
+
+          .section-list li {
+            margin-bottom: 12px;
           }
         }
       `}</style>
