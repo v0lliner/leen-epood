@@ -95,7 +95,7 @@ const ProductFilters = ({
             </div>
           </div>
 
-          <button onClick={clearFilters} className="btn btn-underline clear-filters">
+          <button onClick={clearFilters} className="clear-filters-btn">
             {t('shop.filters.clear')}
           </button>
         </div>
@@ -242,13 +242,28 @@ const ProductFilters = ({
             font-weight: 500;
           }
 
-          .clear-filters {
+          .clear-filters-btn {
             width: 100%;
             text-align: center;
-            padding: 12px 0;
+            padding: 16px 24px;
             margin-top: 24px;
             border-top: 1px solid #f0f0f0;
-            padding-top: 24px;
+            padding-top: 32px;
+            background: none;
+            border: none;
+            font-family: var(--font-body);
+            font-weight: 500;
+            font-size: 1rem;
+            color: var(--color-ultramarine);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: underline;
+            text-decoration-color: transparent;
+          }
+
+          .clear-filters-btn:hover {
+            text-decoration-color: currentColor;
+            opacity: 0.8;
           }
 
           @media (min-width: 769px) {

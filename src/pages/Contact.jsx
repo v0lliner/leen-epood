@@ -81,7 +81,7 @@ const Contact = () => {
                       ></textarea>
                     </div>
                     
-                    <button type="submit" className="btn btn-primary contact-submit">
+                    <button type="submit" className="contact-submit-btn">
                       {t('contact.form.send')}
                     </button>
                   </form>
@@ -194,12 +194,27 @@ const Contact = () => {
           min-height: 120px;
         }
 
-        .contact-submit {
+        .contact-submit-btn {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          font-size: 1rem;
+          font-size: 1.125rem;
           margin-top: 8px;
+          background: none;
+          border: none;
+          font-family: var(--font-body);
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          text-decoration: underline;
+          text-decoration-color: transparent;
+          padding: 12px 0;
+        }
+
+        .contact-submit-btn:hover {
+          text-decoration-color: currentColor;
+          opacity: 0.8;
         }
 
         .contact-info h3 {

@@ -108,7 +108,7 @@ const Shop = () => {
             <div className="shop-layout">
               {/* Mobile Filter Toggle */}
               <button 
-                className="mobile-filter-toggle btn btn-underline"
+                className="mobile-filter-toggle"
                 onClick={() => setFiltersOpen(true)}
               >
                 {t('shop.filters.title')}
@@ -190,6 +190,24 @@ const Shop = () => {
           width: 100%;
           margin-bottom: 32px;
           text-align: left;
+          background: none;
+          border: none;
+          font-family: var(--font-body);
+          font-weight: 500;
+          font-size: 1.125rem;
+          color: var(--color-ultramarine);
+          cursor: pointer;
+          padding: 16px 24px;
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          transition: all 0.2s ease;
+          text-decoration: underline;
+          text-decoration-color: transparent;
+        }
+
+        .mobile-filter-toggle:hover {
+          text-decoration-color: currentColor;
+          background-color: rgba(47, 62, 156, 0.05);
         }
 
         .products-section {
