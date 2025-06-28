@@ -14,6 +14,7 @@ const Shop = () => {
   const { products, loading } = useProducts();
   
   const activeTab = searchParams.get('tab') || 'keraamika';
+  const sortBy = searchParams.get('sort') || 'newest';
   
   const [filters, setFilters] = useState({
     price: { min: '', max: '' },
@@ -21,14 +22,22 @@ const Shop = () => {
   });
 
   const handleTabChange = (tab) => {
-    setSearchParams({ tab });
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('tab', tab);
+    setSearchParams(newParams);
     setFilters({
       price: { min: '', max: '' },
       subcategories: []
     });
   };
 
-  const filteredProducts = useMemo(() => {
+  const handleSortChange = (sort) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('sort', sort);
+    setSearchParams(newParams);
+  };
+
+  const sortedAndFilteredProducts = useMemo(() => {
     let filtered = products.filter(product => product.category === activeTab);
 
     // Price filter
@@ -48,8 +57,37 @@ const Shop = () => {
       );
     }
 
-    return filtered;
-  }, [products, activeTab, filters]);
+    // Sort products
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'newest':
+          return b.id - a.id; // Assuming higher ID means newer
+        case 'oldest':
+          return a.id - b.id;
+        case 'price-low':
+          return parseFloat(a.price.replace('€', '')) - parseFloat(b.price.replace('€', ''));
+        case 'price-high':
+          return parseFloat(b.price.replace('€', '')) - parseFloat(a.price.replace('€', ''));
+        case 'name-az':
+          return a.title.localeCompare(b.title, 'et');
+        case 'name-za':
+          return b.title.localeCompare(a.title, 'et');
+        default:
+          return 0;
+      }
+    });
+
+    return sorted;
+  }, [products, activeTab, filters, sortBy]);
+
+  const sortOptions = [
+    { value: 'newest', label: t('shop.sort.newest') },
+    { value: 'oldest', label: t('shop.sort.oldest') },
+    { value: 'price-low', label: t('shop.sort.price_low') },
+    { value: 'price-high', label: t('shop.sort.price_high') },
+    { value: 'name-az', label: t('shop.sort.name_az') },
+    { value: 'name-za', label: t('shop.sort.name_za') }
+  ];
 
   if (loading) {
     return (
@@ -125,31 +163,51 @@ const Shop = () => {
 
               {/* Products Section */}
               <div className="products-section">
-                {/* Category Tabs - aligned with products */}
-                <div className="shop-tabs">
-                  <button
-                    onClick={() => handleTabChange('keraamika')}
-                    className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
-                  >
-                    {t('shop.tabs.keraamika')}
-                  </button>
-                  <button
-                    onClick={() => handleTabChange('omblus')}
-                    className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
-                  >
-                    {t('shop.tabs.omblus')}
-                  </button>
+                {/* Category Tabs and Sort Filter */}
+                <div className="shop-controls">
+                  <div className="shop-tabs">
+                    <button
+                      onClick={() => handleTabChange('keraamika')}
+                      className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
+                    >
+                      {t('shop.tabs.keraamika')}
+                    </button>
+                    <button
+                      onClick={() => handleTabChange('omblus')}
+                      className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
+                    >
+                      {t('shop.tabs.omblus')}
+                    </button>
+                  </div>
+
+                  <div className="sort-filter">
+                    <label htmlFor="sort-select" className="sort-label">
+                      {t('shop.sort.label')}:
+                    </label>
+                    <select
+                      id="sort-select"
+                      value={sortBy}
+                      onChange={(e) => handleSortChange(e.target.value)}
+                      className="sort-select"
+                    >
+                      {sortOptions.map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
 
                 <div className="products-grid">
-                  {filteredProducts.map((product) => (
+                  {sortedAndFilteredProducts.map((product) => (
                     <FadeInSection key={product.id}>
                       <ProductCard product={product} />
                     </FadeInSection>
                   ))}
                 </div>
 
-                {filteredProducts.length === 0 && (
+                {sortedAndFilteredProducts.length === 0 && (
                   <FadeInSection>
                     <div className="no-products">
                       <p>{t('shop.no_products')}</p>
@@ -216,10 +274,54 @@ const Shop = () => {
           z-index: 1;
         }
 
+        .shop-controls {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 48px;
+          gap: 24px;
+        }
+
         .shop-tabs {
           display: flex;
           align-items: baseline;
-          margin-bottom: 48px;
+        }
+
+        .sort-filter {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-shrink: 0;
+        }
+
+        .sort-label {
+          font-family: var(--font-body);
+          font-weight: 500;
+          color: var(--color-text);
+          font-size: 1rem;
+          white-space: nowrap;
+        }
+
+        .sort-select {
+          padding: 8px 12px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-family: var(--font-body);
+          font-size: 0.9rem;
+          color: var(--color-text);
+          background-color: var(--color-background);
+          cursor: pointer;
+          transition: border-color 0.2s ease;
+          min-width: 160px;
+        }
+
+        .sort-select:focus {
+          outline: none;
+          border-color: var(--color-ultramarine);
+        }
+
+        .sort-select:hover {
+          border-color: #bbb;
         }
 
         .products-grid {
@@ -261,8 +363,26 @@ const Shop = () => {
             display: block;
           }
 
-          .shop-tabs {
+          .shop-controls {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
             margin-bottom: 32px;
+          }
+
+          .shop-tabs {
+            justify-content: center;
+            margin-bottom: 0;
+          }
+
+          .sort-filter {
+            justify-content: space-between;
+            padding: 16px 0;
+            border-top: 1px solid #f0f0f0;
+          }
+
+          .sort-select {
+            min-width: 140px;
           }
 
           .products-grid {
@@ -279,6 +399,16 @@ const Shop = () => {
           .products-grid {
             grid-template-columns: 1fr;
             gap: 24px;
+          }
+
+          .sort-filter {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 8px;
+          }
+
+          .sort-select {
+            min-width: auto;
           }
         }
       `}</style>

@@ -120,6 +120,15 @@
       "omblus": "Clothing",
       "keraamika": "Ceramics"
     },
+    "sort": {
+      "label": "Sort by",
+      "newest": "Newest first",
+      "oldest": "Oldest first",
+      "price_low": "Price: Low to High",
+      "price_high": "Price: High to Low",
+      "name_az": "Name: A-Z",
+      "name_za": "Name: Z-A"
+    },
     "filters": {
       "title": "Filters",
       "price": "Price",
