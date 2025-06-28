@@ -90,16 +90,17 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           onKeyDown={handleKeyDown}
           tabIndex={0}
         >
-          <button className="modal-close" onClick={closeModal}>
-            ×
-          </button>
-          
           <div className="modal-image-container">
             <img 
               src={sortedImages[selectedIndex].image_url} 
               alt={`${productTitle} pilt ${selectedIndex + 1}`}
               onClick={handleImageClick}
             />
+            
+            {/* Close button positioned at top-right of image */}
+            <button className="modal-close" onClick={closeModal}>
+              ×
+            </button>
           </div>
 
           {sortedImages.length > 1 && (
@@ -197,33 +198,8 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           cursor: pointer;
         }
 
-        .modal-close {
-          position: absolute;
-          top: 20px;
-          right: 20px;
-          background: rgba(255, 255, 255, 0.9);
-          border: none;
-          color: #333;
-          font-size: 2rem;
-          cursor: pointer;
-          z-index: 10001;
-          padding: 8px 12px;
-          line-height: 1;
-          transition: all 0.2s ease;
-          border-radius: 50%;
-          width: 48px;
-          height: 48px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        .modal-close:hover {
-          background: rgba(255, 255, 255, 1);
-          transform: scale(1.1);
-        }
-
         .modal-image-container {
+          position: relative;
           max-width: 90vw;
           max-height: 90vh;
           display: flex;
@@ -238,6 +214,34 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           object-fit: contain;
           border-radius: 4px;
           cursor: default;
+        }
+
+        .modal-close {
+          position: absolute;
+          top: -20px;
+          right: -20px;
+          background: rgba(255, 255, 255, 0.95);
+          border: none;
+          color: #333;
+          font-size: 3rem;
+          cursor: pointer;
+          z-index: 10001;
+          padding: 12px 16px;
+          line-height: 1;
+          transition: all 0.2s ease;
+          border-radius: 50%;
+          width: 72px;
+          height: 72px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .modal-close:hover {
+          background: rgba(255, 255, 255, 1);
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
         }
 
         .modal-nav {
@@ -310,11 +314,11 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           }
 
           .modal-close {
-            top: 10px;
-            right: 10px;
-            font-size: 1.5rem;
-            width: 40px;
-            height: 40px;
+            top: -15px;
+            right: -15px;
+            font-size: 2.5rem;
+            width: 60px;
+            height: 60px;
           }
 
           .modal-nav {
