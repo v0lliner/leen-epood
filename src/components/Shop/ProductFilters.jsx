@@ -75,7 +75,7 @@ const ProductFilters = ({
         <div className="filters-content">
           {/* Primary Filter: Subcategory */}
           <div className="filter-group primary-filter">
-            <label className="filter-label primary-label">
+            <label className="filter-label">
               {t('shop.filters.subcategory')}
             </label>
             <div className="subcategory-list">
@@ -242,12 +242,6 @@ const ProductFilters = ({
             font-size: 1rem;
           }
 
-          .primary-label {
-            font-size: 1.125rem;
-            color: var(--color-ultramarine);
-            margin-bottom: 20px;
-          }
-
           .subcategory-list {
             display: flex;
             flex-direction: column;
@@ -279,16 +273,6 @@ const ProductFilters = ({
             color: var(--color-ultramarine);
             font-weight: 600;
             border-bottom-color: var(--color-ultramarine);
-          }
-
-          .subcategory-link.active:after {
-            content: '✓';
-            position: absolute;
-            right: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            font-weight: bold;
-            color: var(--color-ultramarine);
           }
 
           .secondary-filters {
