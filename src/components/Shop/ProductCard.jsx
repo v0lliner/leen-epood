@@ -93,15 +93,13 @@ const ProductCard = ({ product }) => {
           cursor: pointer;
           font-family: var(--font-body);
           font-size: 1rem;
-          transition: all 0.2s ease;
+          transition: background-color 0.2s ease;
           z-index: 10;
         }
 
         .add-to-cart-overlay:hover {
           background-color: #1e2a7a;
           color: white !important;
-          transform: translateY(-2px);
-          box-shadow: 0 4px 12px rgba(47, 62, 156, 0.3);
         }
 
         .product-info {
