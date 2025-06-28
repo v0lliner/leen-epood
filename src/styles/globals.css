@@ -4,7 +4,6 @@
   --color-ultramarine: #2f3e9c;
   --color-pastel-yellow: #f6e89d;
   --color-clay-rose: #e4c9c1;
-  --color-arrow-hover: #F1BF25;
   
   --font-heading: 'Roboto Mono', monospace;
   --font-body: 'Urbanist', sans-serif;
@@ -138,61 +137,6 @@ img {
 
 .btn-underline:hover {
   text-decoration-color: currentColor;
-}
-
-/* Arrow hover effect for links ending with → */
-a:has-text("→"), 
-.btn:has-text("→"),
-a[href]:not([class*="nav"]):not([class*="breadcrumb"]):not([class*="back"]):not([class*="close"]):not([class*="toggle"]) {
-  position: relative;
-}
-
-/* Target links that contain → symbol */
-a:has-text("→")::after,
-.btn:has-text("→")::after,
-a[href*="→"]::after,
-a[href]:not([class*="nav"]):not([class*="breadcrumb"]):not([class*="back"]):not([class*="close"]):not([class*="toggle"])::after {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background-color: var(--color-arrow-hover);
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 200ms ease;
-  z-index: -1;
-  pointer-events: none;
-}
-
-/* More specific targeting for arrow links */
-.hero-cta::after,
-.view-all-link::after,
-.portfolio-cta::after,
-.about-cta::after,
-.contact-submit-btn::after,
-.checkout-button::after {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 8px;
-  background-color: var(--color-arrow-hover);
-  border-radius: 50%;
-  opacity: 0;
-  transition: opacity 200ms ease;
-  z-index: -1;
-  pointer-events: none;
-  top: 50%;
-  right: 2px;
-  transform: translateY(-50%);
-}
-
-.hero-cta:hover::after,
-.view-all-link:hover::after,
-.portfolio-cta:hover::after,
-.about-cta:hover::after,
-.contact-submit-btn:hover::after,
-.checkout-button:hover::after {
-  opacity: 1;
 }
 
 /* Tab styles */
