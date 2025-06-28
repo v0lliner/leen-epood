@@ -78,12 +78,12 @@ const ProductFilters = ({
             <label className="filter-label primary-label">
               {t('shop.filters.subcategory')}
             </label>
-            <div className="subcategory-grid">
+            <div className="subcategory-list">
               {subcategoryOptions.map(subcategory => (
                 <button
                   key={subcategory}
                   onClick={() => handleSubcategoryChange(subcategory)}
-                  className={`subcategory-button ${filters.subcategories.includes(subcategory) ? 'active' : ''}`}
+                  className={`subcategory-link ${filters.subcategories.includes(subcategory) ? 'active' : ''}`}
                 >
                   {t(`shop.subcategories.${activeCategory}.${subcategory}`)}
                 </button>
@@ -230,7 +230,7 @@ const ProductFilters = ({
           .primary-filter {
             margin-bottom: 48px;
             padding-bottom: 32px;
-            border-bottom: 2px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
           }
 
           .filter-label {
@@ -248,49 +248,51 @@ const ProductFilters = ({
             margin-bottom: 20px;
           }
 
-          .subcategory-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
+          .subcategory-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
           }
 
-          .subcategory-button {
-            padding: 16px 20px;
-            border: 2px solid #f0f0f0;
-            background-color: var(--color-background);
-            color: var(--color-text);
-            border-radius: 8px;
+          .subcategory-link {
+            background: none;
+            border: none;
+            padding: 12px 0;
             font-family: var(--font-body);
             font-weight: 500;
-            font-size: 0.95rem;
+            font-size: 1rem;
+            color: var(--color-text);
             cursor: pointer;
-            transition: all 0.2s ease;
             text-align: left;
+            transition: all 0.2s ease;
             position: relative;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
           }
 
-          .subcategory-button:hover {
-            border-color: var(--color-ultramarine);
+          .subcategory-link:hover {
             color: var(--color-ultramarine);
+            text-decoration: underline;
           }
 
-          .subcategory-button.active {
-            border-color: var(--color-ultramarine);
-            background-color: var(--color-ultramarine);
-            color: white;
+          .subcategory-link.active {
+            color: var(--color-ultramarine);
+            font-weight: 600;
+            border-bottom-color: var(--color-ultramarine);
           }
 
-          .subcategory-button.active:after {
+          .subcategory-link.active:after {
             content: '✓';
             position: absolute;
-            right: 16px;
+            right: 0;
             top: 50%;
             transform: translateY(-50%);
             font-weight: bold;
+            color: var(--color-ultramarine);
           }
 
           .secondary-filters {
-            opacity: 0.8;
+            opacity: 0.85;
           }
 
           .filter-input,
@@ -303,6 +305,7 @@ const ProductFilters = ({
             font-size: 0.9rem;
             margin-bottom: 8px;
             transition: border-color 0.2s ease;
+            background-color: var(--color-background);
           }
 
           .filter-input:focus,
@@ -362,16 +365,6 @@ const ProductFilters = ({
 
             .filters-content {
               padding: 24px 0;
-            }
-
-            .subcategory-grid {
-              grid-template-columns: 1fr;
-              gap: 10px;
-            }
-
-            .subcategory-button {
-              padding: 14px 18px;
-              font-size: 0.9rem;
             }
           }
         `}</style>
