@@ -253,7 +253,7 @@ const ProductFilters = ({
             border: none;
             padding: 12px 0;
             font-family: var(--font-body);
-            font-weight: 500;
+            font-weight: 400;
             font-size: 1rem;
             color: var(--color-text);
             cursor: pointer;
@@ -271,7 +271,7 @@ const ProductFilters = ({
 
           .subcategory-link.active {
             color: var(--color-ultramarine);
-            font-weight: 600;
+            font-weight: 500;
             border-bottom-color: var(--color-ultramarine);
           }
 
