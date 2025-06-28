@@ -153,19 +153,19 @@ const ProductForm = () => {
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      setError('Toote pealkiri on kohustuslik')
+      setError(t('admin.products.form.title_required'))
       return false
     }
     if (!formData.price.trim()) {
-      setError('Hind on kohustuslik')
+      setError(t('admin.products.form.price_required'))
       return false
     }
     if (!formData.image.trim()) {
-      setError('Toote pilt on kohustuslik')
+      setError(t('admin.products.form.image_required'))
       return false
     }
     if (!formData.category) {
-      setError('Kategooria on kohustuslik')
+      setError(t('admin.products.form.category_required'))
       return false
     }
     return true
@@ -201,13 +201,13 @@ const ProductForm = () => {
       if (error) {
         setError(error.message)
       } else {
-        setSuccess(isEdit ? 'Toode edukalt uuendatud!' : 'Toode edukalt lisatud!')
+        setSuccess(isEdit ? t('admin.products.form.updated_success') : t('admin.products.form.created_success'))
         setTimeout(() => {
           navigate('/admin/products')
         }, 1500)
       }
     } catch (err) {
-      setError('Võrguühenduse viga')
+      setError(t('admin.products.form.network_error'))
     } finally {
       setLoading(false)
     }
@@ -228,12 +228,12 @@ const ProductForm = () => {
     <AdminLayout>
       <div className="product-form-container">
         <div className="form-header">
-          <h1>{isEdit ? 'Muuda toodet' : 'Lisa uus toode'}</h1>
+          <h1>{isEdit ? t('admin.products.form.edit_title') : t('admin.products.form.create_title')}</h1>
           <button 
             onClick={() => navigate('/admin/products')}
             className="btn btn-secondary"
           >
-            Tagasi
+            {t('admin.back')}
           </button>
         </div>
 
@@ -254,7 +254,7 @@ const ProductForm = () => {
             {/* Left Column */}
             <div className="form-column">
               <div className="form-group">
-                <label htmlFor="title">Toote pealkiri *</label>
+                <label htmlFor="title">{t('admin.products.form.title')} *</label>
                 <input
                   type="text"
                   id="title"
@@ -263,12 +263,12 @@ const ProductForm = () => {
                   onChange={handleInputChange}
                   required
                   className="form-input"
-                  placeholder="Nt. Käsitöövaas 'Mälestus'"
+                  placeholder={t('admin.products.form.title_placeholder')}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="slug">URL slug</label>
+                <label htmlFor="slug">{t('admin.products.form.slug')}</label>
                 <input
                   type="text"
                   id="slug"
@@ -276,13 +276,13 @@ const ProductForm = () => {
                   value={formData.slug}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="kasitoo-vaas-malestus"
+                  placeholder={t('admin.products.form.slug_placeholder')}
                 />
-                <small>Genereeritakse automaatselt pealkirjast</small>
+                <small>{t('admin.products.form.slug_help')}</small>
               </div>
 
               <div className="form-group">
-                <label htmlFor="description">Kirjeldus</label>
+                <label htmlFor="description">{t('admin.products.form.description')}</label>
                 <textarea
                   id="description"
                   name="description"
@@ -290,12 +290,12 @@ const ProductForm = () => {
                   onChange={handleInputChange}
                   rows="4"
                   className="form-input"
-                  placeholder="Toote detailne kirjeldus..."
+                  placeholder={t('admin.products.form.description_placeholder')}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="price">Hind *</label>
+                <label htmlFor="price">{t('admin.products.form.price')} *</label>
                 <input
                   type="text"
                   id="price"
@@ -304,13 +304,13 @@ const ProductForm = () => {
                   onChange={handleInputChange}
                   required
                   className="form-input"
-                  placeholder="85€"
+                  placeholder={t('admin.products.form.price_placeholder')}
                 />
               </div>
 
               {/* Image Upload */}
               <div className="form-group">
-                <label>Toote pilt *</label>
+                <label>{t('admin.products.form.image')} *</label>
                 <ImageUpload
                   currentImage={formData.image}
                   onImageChange={handleImageChange}
@@ -322,9 +322,9 @@ const ProductForm = () => {
             {/* Right Column */}
             <div className="form-column">
               <div className="form-group">
-                <label htmlFor="category">Kategooria *</label>
+                <label htmlFor="category">{t('admin.products.form.category')} *</label>
                 {categoriesLoading ? (
-                  <div className="loading-text">Kategooriate laadimine...</div>
+                  <div className="loading-text">{t('admin.products.form.loading_categories')}</div>
                 ) : (
                   <select
                     id="category"
@@ -334,7 +334,7 @@ const ProductForm = () => {
                     required
                     className="form-input"
                   >
-                    <option value="">Vali kategooria</option>
+                    <option value="">{t('admin.products.form.select_category')}</option>
                     {categories.map(category => (
                       <option key={category.id} value={category.slug}>
                         {category.name}
@@ -345,7 +345,7 @@ const ProductForm = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="subcategory">Alamkategooria</label>
+                <label htmlFor="subcategory">{t('admin.products.form.subcategory')}</label>
                 <select
                   id="subcategory"
                   name="subcategory"
@@ -354,7 +354,7 @@ const ProductForm = () => {
                   className="form-input"
                   disabled={!formData.category}
                 >
-                  <option value="">Vali alamkategooria</option>
+                  <option value="">{t('admin.products.form.select_subcategory')}</option>
                   {getSubcategories().map(sub => (
                     <option key={sub.id} value={sub.slug}>
                       {sub.name}
@@ -364,14 +364,14 @@ const ProductForm = () => {
               </div>
 
               <div className="form-group">
-                <label>Mõõdud (cm)</label>
+                <label>{t('admin.products.form.dimensions')}</label>
                 <div className="dimensions-grid">
                   <input
                     type="number"
                     name="dimensions.height"
                     value={formData.dimensions.height}
                     onChange={handleInputChange}
-                    placeholder="Kõrgus"
+                    placeholder={t('admin.products.form.height')}
                     className="form-input"
                   />
                   <input
@@ -379,7 +379,7 @@ const ProductForm = () => {
                     name="dimensions.width"
                     value={formData.dimensions.width}
                     onChange={handleInputChange}
-                    placeholder="Laius"
+                    placeholder={t('admin.products.form.width')}
                     className="form-input"
                   />
                   <input
@@ -387,7 +387,7 @@ const ProductForm = () => {
                     name="dimensions.depth"
                     value={formData.dimensions.depth}
                     onChange={handleInputChange}
-                    placeholder="Sügavus"
+                    placeholder={t('admin.products.form.depth')}
                     className="form-input"
                   />
                 </div>
@@ -402,7 +402,7 @@ const ProductForm = () => {
                     onChange={handleInputChange}
                     className="form-checkbox"
                   />
-                  <span>Toode on saadaval</span>
+                  <span>{t('admin.products.form.available')}</span>
                 </label>
               </div>
             </div>
@@ -414,14 +414,14 @@ const ProductForm = () => {
               onClick={() => navigate('/admin/products')}
               className="btn btn-secondary"
             >
-              Tühista
+              {t('admin.cancel')}
             </button>
             <button 
               type="submit"
               disabled={loading}
               className="btn btn-primary"
             >
-              {loading ? 'Salvestamine...' : (isEdit ? 'Uuenda toode' : 'Lisa toode')}
+              {loading ? t('admin.saving') : (isEdit ? t('admin.products.form.update') : t('admin.products.form.create'))}
             </button>
           </div>
         </form>

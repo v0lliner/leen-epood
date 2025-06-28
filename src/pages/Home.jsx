@@ -42,7 +42,7 @@ const Home = () => {
                   </div>
                   <div className="view-all-container">
                     <Link to="/epood" className="link-with-arrow view-all-link">
-                      Vaata kõiki tooteid <span className="arrow-wrapper">→</span>
+                      {t('home.view_all')} <span className="arrow-wrapper">→</span>
                     </Link>
                   </div>
                 </>
@@ -72,7 +72,7 @@ const Home = () => {
               
               <div className="portfolio-cta-container">
                 <Link to="/portfoolio" className="link-with-arrow portfolio-cta">
-                  Tutvu töödega <span className="arrow-wrapper">→</span>
+                  {t('home.portfolio_cta')} <span className="arrow-wrapper">→</span>
                 </Link>
               </div>
             </FadeInSection>

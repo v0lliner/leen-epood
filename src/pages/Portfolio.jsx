@@ -128,7 +128,7 @@ const Portfolio = () => {
               <div className="portfolio-cta-content">
                 <p>{t('portfolio.cta_text')}</p>
                 <Link to="/epood" className="link-with-arrow portfolio-cta">
-                  Külasta e-poodi <span className="arrow-wrapper">→</span>
+                  {t('portfolio.cta_button')} <span className="arrow-wrapper">→</span>
                 </Link>
               </div>
             </FadeInSection>

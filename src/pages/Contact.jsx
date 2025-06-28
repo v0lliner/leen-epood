@@ -82,7 +82,7 @@ const Contact = () => {
                     </div>
                     
                     <button type="submit" className="link-with-arrow contact-submit-btn">
-                      Saada <span className="arrow-wrapper">→</span>
+                      {t('contact.form.send')} <span className="arrow-wrapper">→</span>
                     </button>
                   </form>
                 </div>
