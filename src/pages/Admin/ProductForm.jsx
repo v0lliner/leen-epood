@@ -179,8 +179,21 @@ const ProductForm = () => {
     setError('')
 
     try {
+      // Generate unique slug before saving
+      const { data: uniqueSlug, error: slugError } = await productService.generateUniqueSlug(
+        formData.slug || generateSlug(formData.title),
+        isEdit ? id : null
+      )
+
+      if (slugError) {
+        setError(slugError.message)
+        setLoading(false)
+        return
+      }
+
       const productData = {
         ...formData,
+        slug: uniqueSlug, // Use the guaranteed unique slug
         price: formData.price.includes('€') ? formData.price : `${formData.price}€`,
         dimensions: {
           height: parseInt(formData.dimensions.height) || 0,

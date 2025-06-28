@@ -41,6 +41,57 @@ export const productService = {
   },
 
   /**
+   * Generate a unique slug for a product
+   * @param {string} baseSlug - Base slug to make unique
+   * @param {string} excludeId - Product ID to exclude from uniqueness check (for updates)
+   * @returns {Promise<{data: string|null, error: object|null}>}
+   */
+  async generateUniqueSlug(baseSlug, excludeId = null) {
+    try {
+      let uniqueSlug = baseSlug
+      let counter = 1
+      
+      while (true) {
+        // Check if slug exists
+        let query = supabase
+          .from('products')
+          .select('id')
+          .eq('slug', uniqueSlug)
+        
+        // Exclude current product if updating
+        if (excludeId) {
+          query = query.neq('id', excludeId)
+        }
+        
+        const { data, error } = await query
+        
+        if (error) {
+          return { data: null, error }
+        }
+        
+        // If no products found with this slug, it's unique
+        if (!data || data.length === 0) {
+          return { data: uniqueSlug, error: null }
+        }
+        
+        // Generate next variation
+        uniqueSlug = `${baseSlug}-${counter}`
+        counter++
+        
+        // Prevent infinite loop
+        if (counter > 100) {
+          return { 
+            data: null, 
+            error: { message: 'Unable to generate unique slug after 100 attempts' } 
+          }
+        }
+      }
+    } catch (error) {
+      return { data: null, error: { message: 'Network error occurred' } }
+    }
+  },
+
+  /**
    * Create or update product
    * @param {object} product - Product data
    * @returns {Promise<{data: object|null, error: object|null}>}
