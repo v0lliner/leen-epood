@@ -128,7 +128,6 @@ const ProductDetail = () => {
                         {validDimensions.map((dimension, index) => (
                           <div key={index} className="dimension-item">
                             <span className="dimension-label">{dimension.label}</span>
-                            <span className="dimension-separator"> - </span>
                             <span className="dimension-value">{dimension.value}</span>
                           </div>
                         ))}
@@ -254,6 +253,7 @@ const ProductDetail = () => {
           align-items: center;
           font-size: 1rem;
           line-height: 1.5;
+          gap: 12px;
         }
 
         .dimension-label {
@@ -261,11 +261,6 @@ const ProductDetail = () => {
           font-weight: 400;
           color: var(--color-text);
           min-width: 60px;
-        }
-
-        .dimension-separator {
-          color: #666;
-          margin: 0 4px;
         }
 
         .dimension-value {
