@@ -13,10 +13,9 @@ const Navigation = () => {
   const { getTotalItems } = useCart();
 
   const navigation = [
-    { name: t('nav.home'), href: '/' },
-    { name: t('nav.about'), href: '/minust' },
-    { name: t('nav.portfolio'), href: '/portfoolio' },
     { name: t('nav.shop'), href: '/epood' },
+    { name: t('nav.portfolio'), href: '/portfoolio' },
+    { name: t('nav.about'), href: '/minust' },
     { name: t('nav.contact'), href: '/kontakt' }
   ];
 
@@ -146,6 +145,8 @@ const Navigation = () => {
             list-style: none;
             margin: 0;
             padding: 0;
+            justify-content: center;
+            flex: 1;
           }
 
           .nav-link {
