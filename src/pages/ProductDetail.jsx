@@ -76,6 +76,27 @@ const ProductDetail = () => {
     addItem(product);
   };
 
+  // Helper function to format dimensions
+  const formatDimensions = (dimensions) => {
+    if (!dimensions) return null;
+    
+    const validDimensions = [];
+    
+    if (dimensions.height && dimensions.height > 0) {
+      validDimensions.push(`${dimensions.height}cm`);
+    }
+    if (dimensions.width && dimensions.width > 0) {
+      validDimensions.push(`${dimensions.width}cm`);
+    }
+    if (dimensions.depth && dimensions.depth > 0) {
+      validDimensions.push(`${dimensions.depth}cm`);
+    }
+    
+    return validDimensions.length > 0 ? validDimensions.join(' × ') : null;
+  };
+
+  const dimensionsText = formatDimensions(product.dimensions);
+
   return (
     <>
       <SEOHead page="shop" />
@@ -100,14 +121,12 @@ const ProductDetail = () => {
                   <h1 className="product-title">{product.title}</h1>
                   <p className="product-price">{product.price}</p>
                   
-                  <div className="product-meta">
-                    <div className="meta-item">
+                  {dimensionsText && (
+                    <div className="product-dimensions">
                       <strong>{t('shop.product.dimensions_label')}:</strong>
-                      <span>
-                        {product.dimensions.height}cm × {product.dimensions.width}cm × {product.dimensions.depth}cm
-                      </span>
+                      <span>{dimensionsText}</span>
                     </div>
-                  </div>
+                  )}
                   
                   <p className="product-description">{product.description}</p>
                   
@@ -201,27 +220,24 @@ const ProductDetail = () => {
           font-size: 1.5rem;
           font-weight: 500;
           color: var(--color-ultramarine);
-          margin-bottom: 32px;
+          margin-bottom: 24px;
         }
 
-        .product-meta {
-          margin-bottom: 32px;
-        }
-
-        .meta-item {
+        .product-dimensions {
           display: flex;
           gap: 8px;
-          margin-bottom: 8px;
-          font-size: 0.9rem;
+          margin-bottom: 24px;
+          font-size: 1rem;
+          line-height: 1.5;
         }
 
-        .meta-item strong {
+        .product-dimensions strong {
           font-family: var(--font-heading);
           font-weight: 500;
           color: var(--color-text);
         }
 
-        .meta-item span {
+        .product-dimensions span {
           color: #666;
         }
 
@@ -307,6 +323,11 @@ const ProductDetail = () => {
 
           .product-price {
             font-size: 1.25rem;
+          }
+
+          .product-dimensions {
+            flex-direction: column;
+            gap: 4px;
           }
 
           .add-to-cart-btn {
