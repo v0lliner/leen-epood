@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import AdminLayout from '../../components/Admin/AdminLayout'
+import ImageUpload from '../../components/Admin/ImageUpload'
 import { productService } from '../../utils/supabase/products'
+import { categoryService } from '../../utils/supabase/categories'
+import { storageService } from '../../utils/supabase/storage'
 
 const ProductForm = () => {
   const { t } = useTranslation()
@@ -11,8 +14,10 @@ const ProductForm = () => {
   const isEdit = Boolean(id)
 
   const [loading, setLoading] = useState(false)
+  const [categoriesLoading, setCategoriesLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [categories, setCategories] = useState([])
   
   const [formData, setFormData] = useState({
     title: '',
@@ -20,7 +25,8 @@ const ProductForm = () => {
     description: '',
     price: '',
     image: '',
-    category: 'keraamika',
+    image_path: '',
+    category: '',
     subcategory: '',
     dimensions: {
       height: '',
@@ -31,16 +37,26 @@ const ProductForm = () => {
     available: true
   })
 
-  const categories = {
-    keraamika: ['kausid', 'alused', 'kujud', 'tassid', 'vaasid'],
-    omblus: ['kimonod', 'kaunistused', 'roivad']
-  }
-
   useEffect(() => {
+    loadCategories()
     if (isEdit && id) {
       loadProduct()
     }
   }, [id, isEdit])
+
+  const loadCategories = async () => {
+    setCategoriesLoading(true)
+    const { data, error } = await categoryService.getCategories()
+    
+    if (error) {
+      console.warn('Failed to load categories:', error)
+      setCategories([])
+    } else {
+      setCategories(data)
+    }
+    
+    setCategoriesLoading(false)
+  }
 
   const loadProduct = async () => {
     setLoading(true)
@@ -110,6 +126,32 @@ const ProductForm = () => {
     }))
   }
 
+  const handleImageChange = (imageUrl, imagePath) => {
+    setFormData(prev => ({
+      ...prev,
+      image: imageUrl,
+      image_path: imagePath
+    }))
+  }
+
+  const handleImageRemove = async () => {
+    // Delete old image from storage if it exists
+    if (formData.image_path) {
+      await storageService.deleteImage(formData.image_path)
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      image: '',
+      image_path: ''
+    }))
+  }
+
+  const getSubcategories = () => {
+    const parentCategory = categories.find(cat => cat.slug === formData.category)
+    return parentCategory?.children || []
+  }
+
   const validateForm = () => {
     if (!formData.title.trim()) {
       setError('Toote pealkiri on kohustuslik')
@@ -120,7 +162,7 @@ const ProductForm = () => {
       return false
     }
     if (!formData.image.trim()) {
-      setError('Pildi URL on kohustuslik')
+      setError('Toote pilt on kohustuslik')
       return false
     }
     if (!formData.category) {
@@ -267,17 +309,13 @@ const ProductForm = () => {
                 />
               </div>
 
+              {/* Image Upload */}
               <div className="form-group">
-                <label htmlFor="image">Pildi URL *</label>
-                <input
-                  type="url"
-                  id="image"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleInputChange}
-                  required
-                  className="form-input"
-                  placeholder="https://images.pexels.com/..."
+                <label>Toote pilt *</label>
+                <ImageUpload
+                  currentImage={formData.image}
+                  onImageChange={handleImageChange}
+                  onImageRemove={handleImageRemove}
                 />
               </div>
             </div>
@@ -286,17 +324,25 @@ const ProductForm = () => {
             <div className="form-column">
               <div className="form-group">
                 <label htmlFor="category">Kategooria *</label>
-                <select
-                  id="category"
-                  name="category"
-                  value={formData.category}
-                  onChange={handleCategoryChange}
-                  required
-                  className="form-input"
-                >
-                  <option value="keraamika">Keraamika</option>
-                  <option value="omblus">Õmblustööd</option>
-                </select>
+                {categoriesLoading ? (
+                  <div className="loading-text">Kategooriate laadimine...</div>
+                ) : (
+                  <select
+                    id="category"
+                    name="category"
+                    value={formData.category}
+                    onChange={handleCategoryChange}
+                    required
+                    className="form-input"
+                  >
+                    <option value="">Vali kategooria</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.slug}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className="form-group">
@@ -307,11 +353,12 @@ const ProductForm = () => {
                   value={formData.subcategory}
                   onChange={handleInputChange}
                   className="form-input"
+                  disabled={!formData.category}
                 >
                   <option value="">Vali alamkategooria</option>
-                  {categories[formData.category]?.map(sub => (
-                    <option key={sub} value={sub}>
-                      {t(`shop.subcategories.${formData.category}.${sub}`)}
+                  {getSubcategories().map(sub => (
+                    <option key={sub.id} value={sub.slug}>
+                      {sub.name}
                     </option>
                   ))}
                 </select>
@@ -376,14 +423,6 @@ const ProductForm = () => {
             </div>
           </div>
 
-          {/* Image Preview */}
-          {formData.image && (
-            <div className="image-preview">
-              <h3>Pildi eelvaade</h3>
-              <img src={formData.image} alt="Toote eelvaade" />
-            </div>
-          )}
-
           <div className="form-actions">
             <button 
               type="button"
@@ -444,6 +483,12 @@ const ProductForm = () => {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+          padding: 12px 16px;
+          color: #666;
+          font-style: italic;
         }
 
         .error-message {
@@ -512,6 +557,11 @@ const ProductForm = () => {
           box-shadow: 0 0 0 3px rgba(47, 62, 156, 0.1);
         }
 
+        .form-input:disabled {
+          background-color: #f5f5f5;
+          cursor: not-allowed;
+        }
+
         .form-input::placeholder {
           color: #999;
         }
@@ -541,29 +591,6 @@ const ProductForm = () => {
           width: 18px;
           height: 18px;
           accent-color: var(--color-ultramarine);
-        }
-
-        .image-preview {
-          margin-bottom: 32px;
-          padding: 24px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          background: #f9f9f9;
-        }
-
-        .image-preview h3 {
-          font-family: var(--font-heading);
-          color: var(--color-text);
-          margin-bottom: 16px;
-          font-size: 1.125rem;
-        }
-
-        .image-preview img {
-          max-width: 300px;
-          max-height: 200px;
-          object-fit: cover;
-          border-radius: 4px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
 
         .form-actions {

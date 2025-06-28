@@ -27,6 +27,11 @@ const AdminLayout = ({ children }) => {
       icon: '📦'
     },
     {
+      name: 'Kategooriad',
+      href: '/admin/categories',
+      icon: '📁'
+    },
+    {
       name: t('admin.nav.portfolio'),
       href: '/admin/portfolio',
       icon: '🎨'

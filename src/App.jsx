@@ -17,6 +17,7 @@ import NotFound from './pages/NotFound';
 import AdminLogin from './pages/Admin/Login';
 import AdminDashboard from './pages/Admin/Dashboard';
 import AdminProducts from './pages/Admin/Products';
+import AdminCategories from './pages/Admin/Categories';
 import ProductForm from './pages/Admin/ProductForm';
 import './styles/globals.css';
 import './i18n';
@@ -95,6 +96,11 @@ function App() {
                 <Route path="/admin/products" element={
                   <ProtectedRoute>
                     <AdminProducts />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/categories" element={
+                  <ProtectedRoute>
+                    <AdminCategories />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/products/new" element={

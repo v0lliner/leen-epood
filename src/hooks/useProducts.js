@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { productService } from '../utils/supabase/products'
+import { categoryService } from '../utils/supabase/categories'
 import { products as fallbackProducts } from '../data/products'
 
 /**
@@ -8,30 +9,43 @@ import { products as fallbackProducts } from '../data/products'
  */
 export const useProducts = () => {
   const [products, setProducts] = useState([])
+  const [categories, setCategories] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    loadProducts()
+    loadData()
   }, [])
 
-  const loadProducts = async () => {
+  const loadData = async () => {
     setLoading(true)
     setError(null)
 
     try {
-      const { data, error } = await productService.getProducts()
+      // Load products and categories in parallel
+      const [productsResult, categoriesResult] = await Promise.all([
+        productService.getProducts(),
+        categoryService.getCategories()
+      ])
       
-      if (error) {
-        console.warn('Failed to load products from Supabase, using fallback data:', error)
+      if (productsResult.error) {
+        console.warn('Failed to load products from Supabase, using fallback data:', productsResult.error)
         setProducts(fallbackProducts)
       } else {
         // If no products in database, use fallback data
-        setProducts(data.length > 0 ? data : fallbackProducts)
+        setProducts(productsResult.data.length > 0 ? productsResult.data : fallbackProducts)
+      }
+
+      if (categoriesResult.error) {
+        console.warn('Failed to load categories from Supabase:', categoriesResult.error)
+        setCategories([])
+      } else {
+        setCategories(categoriesResult.data)
       }
     } catch (err) {
-      console.warn('Error loading products, using fallback data:', err)
+      console.warn('Error loading data, using fallback:', err)
       setProducts(fallbackProducts)
+      setCategories([])
     } finally {
       setLoading(false)
     }
@@ -51,13 +65,27 @@ export const useProducts = () => {
       .slice(0, limit)
   }
 
+  const getCategoryBySlug = (slug) => {
+    // Search in both parent and child categories
+    for (const category of categories) {
+      if (category.slug === slug) return category
+      if (category.children) {
+        const child = category.children.find(child => child.slug === slug)
+        if (child) return child
+      }
+    }
+    return null
+  }
+
   return {
     products,
+    categories,
     loading,
     error,
     getProductBySlug,
     getProductsByCategory,
     getRelatedProducts,
-    refetch: loadProducts
+    getCategoryBySlug,
+    refetch: loadData
   }
 }
