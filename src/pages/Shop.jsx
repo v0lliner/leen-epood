@@ -17,8 +17,6 @@ const Shop = () => {
   
   const [filters, setFilters] = useState({
     price: { min: '', max: '' },
-    dimensions: { height: '', width: '', depth: '' },
-    year: '',
     subcategories: []
   });
 
@@ -26,8 +24,6 @@ const Shop = () => {
     setSearchParams({ tab });
     setFilters({
       price: { min: '', max: '' },
-      dimensions: { height: '', width: '', depth: '' },
-      year: '',
       subcategories: []
     });
   };
@@ -43,25 +39,6 @@ const Shop = () => {
         const max = filters.price.max ? parseFloat(filters.price.max) : Infinity;
         return price >= min && price <= max;
       });
-    }
-
-    // Dimensions filter
-    if (filters.dimensions.height || filters.dimensions.width || filters.dimensions.depth) {
-      filtered = filtered.filter(product => {
-        const { height, width, depth } = product.dimensions;
-        const filterHeight = filters.dimensions.height ? parseFloat(filters.dimensions.height) : null;
-        const filterWidth = filters.dimensions.width ? parseFloat(filters.dimensions.width) : null;
-        const filterDepth = filters.dimensions.depth ? parseFloat(filters.dimensions.depth) : null;
-        
-        return (!filterHeight || height >= filterHeight) &&
-               (!filterWidth || width >= filterWidth) &&
-               (!filterDepth || depth >= filterDepth);
-      });
-    }
-
-    // Year filter
-    if (filters.year) {
-      filtered = filtered.filter(product => product.year === parseInt(filters.year));
     }
 
     // Subcategory filter

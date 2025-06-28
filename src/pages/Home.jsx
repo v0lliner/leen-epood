@@ -10,9 +10,9 @@ const Home = () => {
   const { t } = useTranslation();
   const { products, loading } = useProducts();
   
-  // Get the 4 most recent products (using the 'year' field as a proxy for recency)
+  // Get the 4 most recent products (using the 'id' field as a proxy for recency)
   const recentProducts = [...products]
-    .sort((a, b) => b.year - a.year)
+    .sort((a, b) => b.id - a.id)
     .slice(0, 4);
 
   return (

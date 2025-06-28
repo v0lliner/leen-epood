@@ -125,12 +125,6 @@
       "price": "Hind",
       "price_min": "Min €",
       "price_max": "Max €",
-      "dimensions": "Mõõdud",
-      "height": "Kõrgus",
-      "width": "Laius",
-      "depth": "Sügavus",
-      "year": "Valmimisaasta",
-      "year_placeholder": "Valmimisaasta",
       "subcategory": "Alamkategooria",
       "clear": "Tühjenda filtrid"
     },
@@ -152,7 +146,6 @@
       "available": "Saadaval",
       "add_to_cart": "Lisa ostukorvi",
       "dimensions_label": "Mõõdud",
-      "year_label": "Valmimisaasta",
       "related": "Vaata ka"
     },
     "philosophy": {

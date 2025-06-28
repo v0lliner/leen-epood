@@ -107,10 +107,6 @@ const ProductDetail = () => {
                         {product.dimensions.height}cm × {product.dimensions.width}cm × {product.dimensions.depth}cm
                       </span>
                     </div>
-                    <div className="meta-item">
-                      <strong>{t('shop.product.year_label')}:</strong>
-                      <span>{product.year}</span>
-                    </div>
                   </div>
                   
                   <p className="product-description">{product.description}</p>

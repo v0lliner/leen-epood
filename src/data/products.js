@@ -16,7 +16,6 @@ export const products = [
       width: 15,
       depth: 15
     },
-    year: 2023,
     available: true
   },
   {
@@ -33,7 +32,6 @@ export const products = [
       width: 50,
       depth: 2
     },
-    year: 2023,
     available: true
   },
   {
@@ -50,7 +48,6 @@ export const products = [
       width: 8,
       depth: 8
     },
-    year: 2022,
     available: false
   },
   {
@@ -67,7 +64,6 @@ export const products = [
       width: 2,
       depth: 1
     },
-    year: 2023,
     available: true
   },
   {
@@ -84,7 +80,6 @@ export const products = [
       width: 60,
       depth: 3
     },
-    year: 2023,
     available: true
   },
   {
@@ -101,7 +96,6 @@ export const products = [
       width: 20,
       depth: 20
     },
-    year: 2022,
     available: true
   },
   {
@@ -118,7 +112,6 @@ export const products = [
       width: 15,
       depth: 15
     },
-    year: 2023,
     available: true
   },
   {
@@ -135,7 +128,6 @@ export const products = [
       width: 45,
       depth: 2
     },
-    year: 2023,
     available: true
   }
 ];

@@ -125,12 +125,6 @@
       "price": "Price",
       "price_min": "Min €",
       "price_max": "Max €",
-      "dimensions": "Dimensions",
-      "height": "Height",
-      "width": "Width",
-      "depth": "Depth",
-      "year": "Year made",
-      "year_placeholder": "Year made",
       "subcategory": "Subcategory",
       "clear": "Clear filters"
     },
@@ -152,7 +146,6 @@
       "available": "Available",
       "add_to_cart": "Add to cart",
       "dimensions_label": "Dimensions",
-      "year_label": "Year made",
       "related": "Related products"
     },
     "philosophy": {

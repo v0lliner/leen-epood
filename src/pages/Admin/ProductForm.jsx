@@ -33,7 +33,6 @@ const ProductForm = () => {
       width: '',
       depth: ''
     },
-    year: new Date().getFullYear(),
     available: true
   })
 
@@ -392,20 +391,6 @@ const ProductForm = () => {
                     className="form-input"
                   />
                 </div>
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="year">Valmimisaasta</label>
-                <input
-                  type="number"
-                  id="year"
-                  name="year"
-                  value={formData.year}
-                  onChange={handleInputChange}
-                  min="2020"
-                  max={new Date().getFullYear() + 1}
-                  className="form-input"
-                />
               </div>
 
               <div className="form-group">

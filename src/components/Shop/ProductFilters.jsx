@@ -20,23 +20,6 @@ const ProductFilters = ({
     });
   };
 
-  const handleDimensionChange = (field, value) => {
-    onFiltersChange({
-      ...filters,
-      dimensions: {
-        ...filters.dimensions,
-        [field]: value
-      }
-    });
-  };
-
-  const handleYearChange = (value) => {
-    onFiltersChange({
-      ...filters,
-      year: value
-    });
-  };
-
   const handleSubcategoryChange = (subcategory) => {
     const newSubcategories = filters.subcategories.includes(subcategory)
       ? filters.subcategories.filter(s => s !== subcategory)
@@ -51,8 +34,6 @@ const ProductFilters = ({
   const clearFilters = () => {
     onFiltersChange({
       price: { min: '', max: '' },
-      dimensions: { height: '', width: '', depth: '' },
-      year: '',
       subcategories: []
     });
   };
@@ -60,8 +41,6 @@ const ProductFilters = ({
   const subcategoryOptions = activeCategory === 'omblus' 
     ? ['kimonod', 'kaunistused', 'roivad']
     : ['kausid', 'alused', 'kujud', 'tassid', 'vaasid'];
-
-  const years = [2020, 2021, 2022, 2023, 2024];
 
   return (
     <>
@@ -110,49 +89,6 @@ const ProductFilters = ({
                   placeholder={t('shop.filters.price_max')}
                   value={filters.price.max}
                   onChange={(e) => handlePriceChange('max', e.target.value)}
-                  className="filter-input"
-                />
-              </div>
-            </div>
-
-            {/* Year Filter */}
-            <div className="filter-group">
-              <label className="filter-label">{t('shop.filters.year')}</label>
-              <select
-                value={filters.year}
-                onChange={(e) => handleYearChange(e.target.value)}
-                className="filter-select"
-              >
-                <option value="">{t('shop.filters.year_placeholder')}</option>
-                {years.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Dimensions Filter */}
-            <div className="filter-group">
-              <label className="filter-label">{t('shop.filters.dimensions')}</label>
-              <div className="dimension-inputs">
-                <input
-                  type="number"
-                  placeholder={t('shop.filters.height')}
-                  value={filters.dimensions.height}
-                  onChange={(e) => handleDimensionChange('height', e.target.value)}
-                  className="filter-input"
-                />
-                <input
-                  type="number"
-                  placeholder={t('shop.filters.width')}
-                  value={filters.dimensions.width}
-                  onChange={(e) => handleDimensionChange('width', e.target.value)}
-                  className="filter-input"
-                />
-                <input
-                  type="number"
-                  placeholder={t('shop.filters.depth')}
-                  value={filters.dimensions.depth}
-                  onChange={(e) => handleDimensionChange('depth', e.target.value)}
                   className="filter-input"
                 />
               </div>
@@ -278,8 +214,7 @@ const ProductFilters = ({
             opacity: 0.85;
           }
 
-          .filter-input,
-          .filter-select {
+          .filter-input {
             width: 100%;
             padding: 10px 12px;
             border: 1px solid #ddd;
@@ -291,8 +226,7 @@ const ProductFilters = ({
             background-color: var(--color-background);
           }
 
-          .filter-input:focus,
-          .filter-select:focus {
+          .filter-input:focus {
             outline: none;
             border-color: var(--color-ultramarine);
           }
@@ -306,12 +240,6 @@ const ProductFilters = ({
           .price-separator {
             color: var(--color-text);
             font-weight: 500;
-          }
-
-          .dimension-inputs {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
           }
 
           .clear-filters {
