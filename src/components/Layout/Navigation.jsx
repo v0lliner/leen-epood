@@ -33,7 +33,7 @@ const Navigation = () => {
               <h3>Leen.ee</h3>
             </Link>
             
-            <div className="nav-desktop">
+            <div className="nav-center">
               <ul className="nav-links">
                 {navigation.map((item) => (
                   <li key={item.href}>
@@ -132,7 +132,7 @@ const Navigation = () => {
             margin: 0 auto;
             padding: 24px var(--padding-inline);
             display: grid;
-            grid-template-columns: auto 1fr auto;
+            grid-template-columns: 1fr auto 1fr;
             align-items: center;
             gap: 48px;
           }
@@ -144,7 +144,7 @@ const Navigation = () => {
             margin: 0;
           }
 
-          .nav-desktop {
+          .nav-center {
             display: flex;
             justify-content: center;
             width: 100%;
@@ -301,7 +301,7 @@ const Navigation = () => {
               gap: 24px;
             }
 
-            .nav-desktop {
+            .nav-center {
               display: none;
             }
 
