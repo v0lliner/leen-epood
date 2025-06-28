@@ -136,7 +136,9 @@ const Navigation = () => {
           .nav-desktop {
             display: flex;
             align-items: center;
-            gap: 48px;
+            justify-content: center;
+            flex: 1;
+            position: relative;
           }
 
           .nav-links {
@@ -145,8 +147,9 @@ const Navigation = () => {
             list-style: none;
             margin: 0;
             padding: 0;
-            justify-content: center;
-            flex: 1;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
           }
 
           .nav-link {
@@ -178,6 +181,7 @@ const Navigation = () => {
             display: flex;
             align-items: center;
             gap: 24px;
+            margin-left: auto;
           }
 
           .cart-button {
