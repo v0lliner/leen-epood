@@ -108,16 +108,16 @@ const Shop = () => {
                 {/* Category Tabs - aligned with products */}
                 <div className="shop-tabs">
                   <button
-                    onClick={() => handleTabChange('omblus')}
-                    className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
-                  >
-                    {t('shop.tabs.omblus')}
-                  </button>
-                  <button
                     onClick={() => handleTabChange('keraamika')}
                     className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
                   >
                     {t('shop.tabs.keraamika')}
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('omblus')}
+                    className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
+                  >
+                    {t('shop.tabs.omblus')}
                   </button>
                 </div>
 
