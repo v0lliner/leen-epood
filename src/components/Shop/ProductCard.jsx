@@ -28,7 +28,7 @@ const ProductCard = ({ product }) => {
         )}
         {isHovered && product.available && (
           <button 
-            className="add-to-cart-overlay btn btn-primary"
+            className="add-to-cart-overlay"
             onClick={handleAddToCart}
           >
             {t('shop.product.add_to_cart')}
@@ -91,14 +91,17 @@ const ProductCard = ({ product }) => {
           font-weight: 500;
           border: none;
           cursor: pointer;
-          transition: opacity 0.2s ease;
-          opacity: 0.9;
-          transform: translateY(0);
           font-family: var(--font-body);
+          font-size: 1rem;
+          transition: all 0.2s ease;
+          z-index: 10;
         }
 
         .add-to-cart-overlay:hover {
-          opacity: 1;
+          background-color: #1e2a7a;
+          color: white !important;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(47, 62, 156, 0.3);
         }
 
         .product-info {
