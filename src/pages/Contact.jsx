@@ -76,7 +76,7 @@ const Contact = () => {
                     ></textarea>
                   </div>
                   
-                  <button type="submit" className="cta-button">
+                  <button type="submit" className="btn btn-primary contact-submit">
                     {t('contact.form.send')} →
                   </button>
                 </form>
@@ -92,10 +92,10 @@ const Contact = () => {
                     {t('contact.info.address')}
                   </div>
                   <div className="info-item">
-                    <a href="mailto:leen@leen.ee">{t('contact.info.email')}</a>
+                    <a href="mailto:leen@leen.ee" className="btn btn-underline">{t('contact.info.email')}</a>
                   </div>
                   <div className="info-item">
-                    <a href="tel:+372xxxxxxx">{t('contact.info.phone')}</a>
+                    <a href="tel:+372xxxxxxx" className="btn btn-underline">{t('contact.info.phone')}</a>
                   </div>
                 </div>
               </FadeInSection>
@@ -164,6 +164,13 @@ const Contact = () => {
           min-height: 120px;
         }
 
+        .contact-submit {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 1rem;
+        }
+
         .contact-info h3 {
           font-family: var(--font-body);
           font-weight: 600;
@@ -174,15 +181,6 @@ const Contact = () => {
         .info-item {
           margin-bottom: 16px;
           line-height: 1.6;
-        }
-
-        .info-item a {
-          color: var(--color-ultramarine);
-          text-decoration: none;
-        }
-
-        .info-item a:hover {
-          text-decoration: underline;
         }
 
         .map-section {

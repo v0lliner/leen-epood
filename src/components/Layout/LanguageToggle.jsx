@@ -9,24 +9,8 @@ const LanguageToggle = () => {
   };
 
   return (
-    <button onClick={toggleLanguage} className="language-toggle">
+    <button onClick={toggleLanguage} className="btn btn-underline">
       {i18n.language === 'et' ? 'EN' : 'ET'}
-      
-      <style jsx>{`
-        .language-toggle {
-          padding: 8px 16px;
-          border: 1px solid var(--color-ultramarine);
-          color: var(--color-ultramarine);
-          border-radius: 4px;
-          font-weight: 500;
-          transition: all 0.2s ease;
-        }
-
-        .language-toggle:hover {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-      `}</style>
     </button>
   );
 };

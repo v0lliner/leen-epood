@@ -85,7 +85,7 @@ const Portfolio = () => {
                   <button
                     key={category.key}
                     onClick={() => setActiveCategory(category.key)}
-                    className={`filter-button ${activeCategory === category.key ? 'active' : ''}`}
+                    className={`tab-button ${activeCategory === category.key ? 'active' : ''}`}
                   >
                     {category.label}
                   </button>
@@ -117,25 +117,8 @@ const Portfolio = () => {
         .portfolio-filters {
           display: flex;
           justify-content: center;
-          gap: 24px;
           margin: 64px 0 48px;
           flex-wrap: wrap;
-        }
-
-        .filter-button {
-          padding: 12px 24px;
-          border: 1px solid var(--color-text);
-          color: var(--color-text);
-          border-radius: 4px;
-          font-weight: 500;
-          transition: all 0.2s ease;
-        }
-
-        .filter-button:hover,
-        .filter-button.active {
-          background-color: var(--color-ultramarine);
-          color: white;
-          border-color: var(--color-ultramarine);
         }
 
         .portfolio-grid {
@@ -189,13 +172,7 @@ const Portfolio = () => {
 
         @media (max-width: 768px) {
           .portfolio-filters {
-            gap: 16px;
             margin: 48px 0 32px;
-          }
-
-          .filter-button {
-            padding: 10px 20px;
-            font-size: 0.9rem;
           }
 
           .portfolio-grid {

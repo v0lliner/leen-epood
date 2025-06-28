@@ -69,7 +69,7 @@ const ProductFilters = ({
       <div className={`filters-container ${isOpen ? 'open' : ''}`}>
         <div className="filters-header">
           <h3>{t('shop.filters.title')}</h3>
-          <button className="filters-close" onClick={onToggle}>×</button>
+          <button className="filters-close btn" onClick={onToggle}>×</button>
         </div>
 
         <div className="filters-content">
@@ -156,7 +156,7 @@ const ProductFilters = ({
             </div>
           </div>
 
-          <button onClick={clearFilters} className="clear-filters">
+          <button onClick={clearFilters} className="btn btn-underline clear-filters">
             {t('shop.filters.clear')}
           </button>
         </div>
@@ -214,9 +214,6 @@ const ProductFilters = ({
           .filters-close {
             font-size: 1.5rem;
             color: var(--color-text);
-            background: none;
-            border: none;
-            cursor: pointer;
           }
 
           .filters-content {
@@ -288,20 +285,8 @@ const ProductFilters = ({
 
           .clear-filters {
             width: 100%;
-            padding: 12px;
-            background: none;
-            border: 1px solid var(--color-ultramarine);
-            color: var(--color-ultramarine);
-            border-radius: 4px;
-            font-family: var(--font-body);
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-          }
-
-          .clear-filters:hover {
-            background-color: var(--color-ultramarine);
-            color: white;
+            text-align: center;
+            padding: 12px 0;
           }
 
           @media (min-width: 769px) {

@@ -16,7 +16,7 @@ const NotFound = () => {
               <div className="error-content">
                 <h1>404</h1>
                 <p>{t('errors.404.message')}</p>
-                <Link to="/" className="cta-button">
+                <Link to="/" className="btn btn-primary">
                   {t('errors.404.back')} →
                 </Link>
               </div>

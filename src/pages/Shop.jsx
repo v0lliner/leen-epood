@@ -80,31 +80,29 @@ const Shop = () => {
         <section className="section-large">
           <div className="container">
             <FadeInSection>
-              <h1 className="text-center">{t('shop.title')}</h1>
-            </FadeInSection>
-
-            {/* Category Tabs */}
-            <FadeInSection>
-              <div className="shop-tabs">
-                <button
-                  onClick={() => handleTabChange('omblus')}
-                  className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
-                >
-                  {t('shop.tabs.omblus')}
-                </button>
-                <button
-                  onClick={() => handleTabChange('keraamika')}
-                  className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
-                >
-                  {t('shop.tabs.keraamika')}
-                </button>
+              <div className="shop-header">
+                <h1>{t('shop.title')}</h1>
+                <div className="shop-tabs">
+                  <button
+                    onClick={() => handleTabChange('omblus')}
+                    className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
+                  >
+                    {t('shop.tabs.omblus')}
+                  </button>
+                  <button
+                    onClick={() => handleTabChange('keraamika')}
+                    className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
+                  >
+                    {t('shop.tabs.keraamika')}
+                  </button>
+                </div>
               </div>
             </FadeInSection>
 
             <div className="shop-layout">
               {/* Mobile Filter Toggle */}
               <button 
-                className="mobile-filter-toggle"
+                className="mobile-filter-toggle btn btn-underline"
                 onClick={() => setFiltersOpen(true)}
               >
                 {t('shop.filters.title')}
@@ -151,52 +149,34 @@ const Shop = () => {
       </main>
 
       <style jsx>{`
+        .shop-header {
+          display: flex;
+          align-items: baseline;
+          gap: 48px;
+          margin-bottom: 48px;
+        }
+
+        .shop-header h1 {
+          margin: 0;
+          flex-shrink: 0;
+        }
+
         .shop-tabs {
           display: flex;
-          justify-content: center;
-          gap: 32px;
-          margin: 64px 0 48px;
-        }
-
-        .tab-button {
-          padding: 16px 32px;
-          border: 1px solid var(--color-text);
-          color: var(--color-text);
-          border-radius: 4px;
-          font-family: var(--font-heading);
-          font-weight: 500;
-          font-size: 1rem;
-          transition: all 0.2s ease;
-          background: none;
-          cursor: pointer;
-        }
-
-        .tab-button:hover,
-        .tab-button.active {
-          background-color: var(--color-ultramarine);
-          color: white;
-          border-color: var(--color-ultramarine);
+          align-items: baseline;
         }
 
         .shop-layout {
           display: flex;
           gap: 48px;
-          margin-top: 48px;
           position: relative;
         }
 
         .mobile-filter-toggle {
           display: none;
           width: 100%;
-          padding: 16px;
           margin-bottom: 32px;
-          border: 1px solid var(--color-ultramarine);
-          color: var(--color-ultramarine);
-          background: none;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-weight: 500;
-          cursor: pointer;
+          text-align: left;
         }
 
         .products-section {
@@ -235,14 +215,10 @@ const Shop = () => {
         }
 
         @media (max-width: 768px) {
-          .shop-tabs {
-            gap: 16px;
-            margin: 48px 0 32px;
-          }
-
-          .tab-button {
-            padding: 12px 24px;
-            font-size: 0.9rem;
+          .shop-header {
+            flex-direction: column;
+            gap: 24px;
+            align-items: flex-start;
           }
 
           .shop-layout {

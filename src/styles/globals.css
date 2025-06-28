@@ -102,20 +102,71 @@ img {
   transform: translateY(0);
 }
 
-.cta-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 32px;
-  background-color: var(--color-ultramarine);
-  color: white;
+/* Universal button styles - text only */
+.btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-body);
   font-weight: 500;
-  border-radius: 4px;
-  transition: opacity 0.2s ease;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  text-decoration: none;
+  display: inline-block;
 }
 
-.cta-button:hover {
-  opacity: 0.9;
+.btn:hover {
+  color: var(--color-ultramarine);
+}
+
+.btn-primary {
+  color: var(--color-ultramarine);
+  font-weight: 600;
+}
+
+.btn-primary:hover {
+  opacity: 0.7;
+}
+
+.btn-underline {
+  text-decoration: underline;
+  text-decoration-color: transparent;
+  transition: text-decoration-color 0.2s ease, color 0.2s ease;
+}
+
+.btn-underline:hover {
+  text-decoration-color: currentColor;
+}
+
+/* Tab styles */
+.tab-button {
+  background: none;
+  border: none;
+  padding: 8px 0;
+  font-family: var(--font-heading);
+  font-weight: 500;
+  font-size: 1rem;
+  color: var(--color-text);
+  cursor: pointer;
+  transition: color 0.2s ease;
+  position: relative;
+  margin-right: 32px;
+}
+
+.tab-button:hover,
+.tab-button.active {
+  color: var(--color-ultramarine);
+}
+
+.tab-button.active:after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: var(--color-ultramarine);
 }
 
 .text-center {
@@ -162,10 +213,18 @@ img {
   p {
     font-size: 1rem;
   }
+
+  .tab-button {
+    margin-right: 24px;
+  }
 }
 
 @media (max-width: 480px) {
   :root {
     --padding-inline: 16px;
+  }
+
+  .tab-button {
+    margin-right: 16px;
   }
 }

@@ -48,7 +48,7 @@ const Checkout = () => {
               <FadeInSection>
                 <div className="empty-cart">
                   <h1>{t('cart.empty')}</h1>
-                  <Link to="/epood" className="back-to-shop">
+                  <Link to="/epood" className="btn btn-primary">
                     {t('cart.back_to_shop')}
                   </Link>
                 </div>
@@ -71,7 +71,7 @@ const Checkout = () => {
                 <div className="thank-you">
                   <h1>{t('checkout.thank_you.title')}</h1>
                   <p>{t('checkout.thank_you.message')}</p>
-                  <Link to="/epood" className="back-to-shop">
+                  <Link to="/epood" className="btn btn-primary">
                     {t('checkout.thank_you.back_to_shop')}
                   </Link>
                 </div>
@@ -95,21 +95,6 @@ const Checkout = () => {
           .thank-you p {
             margin-bottom: 32px;
             color: #666;
-          }
-
-          .back-to-shop {
-            display: inline-block;
-            padding: 16px 32px;
-            background-color: var(--color-ultramarine);
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-weight: 500;
-            transition: opacity 0.2s ease;
-          }
-
-          .back-to-shop:hover {
-            opacity: 0.9;
           }
         `}</style>
       </>
@@ -168,7 +153,7 @@ const Checkout = () => {
                     ></textarea>
                   </div>
                   
-                  <button type="submit" className="pay-button">
+                  <button type="submit" className="btn btn-primary pay-button">
                     {t('checkout.form.pay')}
                   </button>
                 </form>
@@ -248,19 +233,9 @@ const Checkout = () => {
         .pay-button {
           width: 100%;
           padding: 16px;
-          background-color: var(--color-ultramarine);
-          color: white;
-          border: none;
-          border-radius: 4px;
-          font-family: var(--font-body);
           font-size: 1rem;
           font-weight: 500;
-          cursor: pointer;
-          transition: opacity 0.2s ease;
-        }
-
-        .pay-button:hover {
-          opacity: 0.9;
+          text-align: center;
         }
 
         .order-summary {
@@ -333,16 +308,6 @@ const Checkout = () => {
         .empty-cart h1 {
           margin-bottom: 32px;
           color: var(--color-text);
-        }
-
-        .back-to-shop {
-          color: var(--color-ultramarine);
-          text-decoration: none;
-          font-weight: 500;
-        }
-
-        .back-to-shop:hover {
-          text-decoration: underline;
         }
 
         @media (max-width: 768px) {

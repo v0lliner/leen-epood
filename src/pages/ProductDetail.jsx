@@ -20,7 +20,7 @@ const ProductDetail = () => {
           <div className="container">
             <div className="error-content">
               <h1>Toodet ei leitud</h1>
-              <Link to="/epood" className="back-link">
+              <Link to="/epood" className="btn btn-primary">
                 Tagasi poodi
               </Link>
             </div>
@@ -44,7 +44,7 @@ const ProductDetail = () => {
           <div className="container">
             <FadeInSection>
               <div className="breadcrumb">
-                <Link to="/epood">{t('shop.title')}</Link>
+                <Link to="/epood" className="btn btn-underline">{t('shop.title')}</Link>
                 <span> / </span>
                 <span>{product.title}</span>
               </div>
@@ -79,7 +79,7 @@ const ProductDetail = () => {
                     <p className="availability">{t('shop.product.available')}</p>
                     {product.available && (
                       <button 
-                        className="add-to-cart"
+                        className="btn btn-underline add-to-cart"
                         onClick={handleAddToCart}
                       >
                         {t('shop.product.add_to_cart')}
@@ -110,15 +110,6 @@ const ProductDetail = () => {
           margin-bottom: 48px;
           font-size: 0.9rem;
           color: #666;
-        }
-
-        .breadcrumb a {
-          color: var(--color-ultramarine);
-          text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-          text-decoration: underline;
         }
 
         .product-detail {
@@ -192,19 +183,7 @@ const ProductDetail = () => {
 
         .add-to-cart {
           align-self: flex-start;
-          padding: 0;
-          background: none;
-          border: none;
-          color: var(--color-ultramarine);
-          font-family: var(--font-body);
           font-size: 1rem;
-          font-weight: 500;
-          text-decoration: underline;
-          cursor: pointer;
-        }
-
-        .add-to-cart:hover {
-          opacity: 0.7;
         }
 
         .related-section {
@@ -231,16 +210,6 @@ const ProductDetail = () => {
         .error-content {
           text-align: center;
           padding: 64px 0;
-        }
-
-        .back-link {
-          color: var(--color-ultramarine);
-          text-decoration: none;
-          font-weight: 500;
-        }
-
-        .back-link:hover {
-          text-decoration: underline;
         }
 
         @media (max-width: 768px) {

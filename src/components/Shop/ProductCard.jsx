@@ -28,7 +28,7 @@ const ProductCard = ({ product }) => {
         )}
         {isHovered && product.available && (
           <button 
-            className="add-to-cart-overlay"
+            className="add-to-cart-overlay btn btn-primary"
             onClick={handleAddToCart}
           >
             {t('shop.product.add_to_cart')}

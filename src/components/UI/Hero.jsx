@@ -20,7 +20,7 @@ const Hero = () => {
         <FadeInSection className="hero-content">
           <h1>{t('hero.heading')}</h1>
           <p className="hero-subtext">{t('hero.subtext')}</p>
-          <Link to="/epood" className="cta-button">
+          <Link to="/epood" className="btn btn-primary hero-cta">
             Mine poodi →
           </Link>
         </FadeInSection>
@@ -54,6 +54,13 @@ const Hero = () => {
           font-size: 1.25rem;
           margin: 24px 0 32px;
           color: #666;
+        }
+
+        .hero-cta {
+          font-size: 1.125rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
         }
 
         @media (max-width: 768px) {

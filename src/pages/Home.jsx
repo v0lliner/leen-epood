@@ -33,7 +33,7 @@ const Home = () => {
                 ))}
               </div>
               <div className="view-all-container">
-                <Link to="/epood" className="view-all-link">
+                <Link to="/epood" className="btn btn-primary view-all-link">
                   {t('home.view_all')} →
                 </Link>
               </div>
@@ -78,19 +78,10 @@ const Home = () => {
         }
         
         .view-all-link {
+          font-size: 1.125rem;
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          padding: 16px 32px;
-          background-color: var(--color-ultramarine);
-          color: white;
-          font-weight: 500;
-          border-radius: 4px;
-          transition: opacity 0.2s ease;
-        }
-        
-        .view-all-link:hover {
-          opacity: 0.9;
         }
 
         @media (max-width: 768px) {
