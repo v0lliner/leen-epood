@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 
@@ -71,6 +72,18 @@ const About = () => {
                     ))}
                   </ul>
                 </div>
+              </div>
+            </FadeInSection>
+
+            {/* Subtle CTA to shop */}
+            <FadeInSection>
+              <div className="about-cta">
+                <p className="cta-text">
+                  Iga ese, mille loon, on ainulaadne ja kannab endas lugu.
+                </p>
+                <Link to="/epood" className="btn btn-underline cta-link">
+                  Tutvu minu töödega →
+                </Link>
               </div>
             </FadeInSection>
           </div>
@@ -167,6 +180,32 @@ const About = () => {
           margin-bottom: 0;
         }
 
+        .about-cta {
+          text-align: center;
+          margin-top: 96px;
+          padding-top: 48px;
+          border-top: 1px solid #f0f0f0;
+          max-width: 600px;
+          margin-left: auto;
+          margin-right: auto;
+        }
+
+        .cta-text {
+          font-size: 1.125rem;
+          color: #666;
+          margin-bottom: 24px;
+          font-style: italic;
+          line-height: 1.5;
+        }
+
+        .cta-link {
+          font-size: 1rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          color: var(--color-ultramarine);
+        }
+
         @media (max-width: 768px) {
           .about-intro {
             margin: 48px auto 64px;
@@ -195,6 +234,16 @@ const About = () => {
 
           .section-list li {
             margin-bottom: 12px;
+          }
+
+          .about-cta {
+            margin-top: 64px;
+            padding-top: 32px;
+          }
+
+          .cta-text {
+            font-size: 1rem;
+            margin-bottom: 20px;
           }
         }
       `}</style>
