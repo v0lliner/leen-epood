@@ -99,7 +99,7 @@ const ProductFilters = ({
               <div className="price-inputs">
                 <input
                   type="number"
-                  placeholder="Min €"
+                  placeholder={t('shop.filters.price_min')}
                   value={filters.price.min}
                   onChange={(e) => handlePriceChange('min', e.target.value)}
                   className="filter-input"
@@ -107,7 +107,7 @@ const ProductFilters = ({
                 <span className="price-separator">-</span>
                 <input
                   type="number"
-                  placeholder="Max €"
+                  placeholder={t('shop.filters.price_max')}
                   value={filters.price.max}
                   onChange={(e) => handlePriceChange('max', e.target.value)}
                   className="filter-input"
@@ -123,7 +123,7 @@ const ProductFilters = ({
                 onChange={(e) => handleYearChange(e.target.value)}
                 className="filter-select"
               >
-                <option value="">{t('shop.filters.year')}</option>
+                <option value="">{t('shop.filters.year_placeholder')}</option>
                 {years.map(year => (
                   <option key={year} value={year}>{year}</option>
                 ))}

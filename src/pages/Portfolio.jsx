@@ -12,8 +12,8 @@ const Portfolio = () => {
     {
       id: 1,
       category: 'ceramics',
-      title: 'Savi vaas',
-      technique: 'Käsitsi vormitud, glasuuritud',
+      title: t('portfolio.items.ceramic_vase.title'),
+      technique: t('portfolio.items.ceramic_vase.technique'),
       dimensions: '25cm x 15cm',
       year: 2023,
       image: 'https://images.pexels.com/photos/4207892/pexels-photo-4207892.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2'
@@ -21,52 +21,52 @@ const Portfolio = () => {
     {
       id: 2,
       category: 'clothing',
-      title: 'Linane kleit',
-      technique: 'Käsitsi õmmeldud, looduslik materjal',
-      dimensions: 'Suurus M',
+      title: t('portfolio.items.linen_dress.title'),
+      technique: t('portfolio.items.linen_dress.technique'),
+      dimensions: t('portfolio.items.linen_dress.size'),
       year: 2023,
       image: 'https://images.pexels.com/photos/7148430/pexels-photo-7148430.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2'
     },
     {
       id: 3,
       category: 'ceramics',
-      title: 'Kohvitassid',
-      technique: 'Dreitud, mattkasiin',
-      dimensions: '8cm x 8cm, komplekt 4tk',
+      title: t('portfolio.items.coffee_cups.title'),
+      technique: t('portfolio.items.coffee_cups.technique'),
+      dimensions: t('portfolio.items.coffee_cups.dimensions'),
       year: 2022,
       image: 'https://images.pexels.com/photos/4226894/pexels-photo-4226894.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2'
     },
     {
       id: 4,
       category: 'clothing',
-      title: 'Villane vest',
-      technique: 'Käsitööna kootud, loodusvärvid',
-      dimensions: 'Suurus S-M',
+      title: t('portfolio.items.wool_vest.title'),
+      technique: t('portfolio.items.wool_vest.technique'),
+      dimensions: t('portfolio.items.wool_vest.size'),
       year: 2023,
       image: 'https://images.pexels.com/photos/6069101/pexels-photo-6069101.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2'
     },
     {
       id: 5,
       category: 'experiments',
-      title: 'Segatehnika taldrik',
-      technique: 'Keraamika ja tekstiil',
-      dimensions: '20cm diameter',
+      title: t('portfolio.items.mixed_plate.title'),
+      technique: t('portfolio.items.mixed_plate.technique'),
+      dimensions: t('portfolio.items.mixed_plate.dimensions'),
       year: 2024,
       image: 'https://images.pexels.com/photos/4391470/pexels-photo-4391470.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2'
     },
     {
       id: 6,
       category: 'experiments',
-      title: 'Tekstuurne sein',
-      technique: 'Mitmematerjali installatsioon',
-      dimensions: '100cm x 150cm',
+      title: t('portfolio.items.texture_wall.title'),
+      technique: t('portfolio.items.texture_wall.technique'),
+      dimensions: t('portfolio.items.texture_wall.dimensions'),
       year: 2024,
       image: 'https://images.pexels.com/photos/6479546/pexels-photo-6479546.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2'
     }
   ];
 
   const categories = [
-    { key: 'all', label: 'Kõik' },
+    { key: 'all', label: t('portfolio.categories.all') },
     { key: 'ceramics', label: t('portfolio.ceramics') },
     { key: 'clothing', label: t('portfolio.clothing') },
     { key: 'experiments', label: t('portfolio.experiments') }
@@ -111,8 +111,7 @@ const Portfolio = () => {
                       <div className="portfolio-meta">
                         <span className="portfolio-year">{item.year}</span>
                         <span className="portfolio-category">
-                          {item.category === 'ceramics' ? 'Keraamika' : 
-                           item.category === 'clothing' ? 'Rõivadisain' : 'Eksperiment'}
+                          {t(`portfolio.category_labels.${item.category}`)}
                         </span>
                       </div>
                       <h3>{item.title}</h3>
@@ -127,9 +126,9 @@ const Portfolio = () => {
             {/* Shop CTA */}
             <FadeInSection className="portfolio-cta-section">
               <div className="portfolio-cta-content">
-                <p>Meeldivad tööd? Vaata, mis on müügis saadaval.</p>
+                <p>{t('portfolio.cta_text')}</p>
                 <Link to="/epood" className="btn btn-primary portfolio-cta">
-                  Külasta e-poodi →
+                  {t('portfolio.cta_button')}
                 </Link>
               </div>
             </FadeInSection>

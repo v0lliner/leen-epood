@@ -7,14 +7,25 @@
     "contact": "Contact",
     "cart": "Cart"
   },
+  "footer": {
+    "faq": "FAQ",
+    "products": "PRODUCTS",
+    "portfolio": "PORTFOLIO",
+    "about": "ABOUT",
+    "contact": "CONTACT",
+    "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
+    "facebook": "Facebook"
+  },
   "hero": {
     "heading": "Leen Väränen",
     "subtext": "Ceramics and clothing design that carries a personal message",
-    "cta": "Go to shop"
+    "cta": "Go to shop →",
+    "image_alt": "Leen Väränen working with ceramics"
   },
   "home": {
     "recent_products": "Recently Added Products",
-    "view_all": "View all products"
+    "view_all": "View all products →",
+    "portfolio_cta": "Explore works →"
   },
   "intro": {
     "text": "Leen is a creator whose work carries a personal message. In her works, form, function and memory meet."
@@ -49,14 +60,58 @@
     "inspiration": {
       "title": "Inspiration",
       "items": "Plant motifs, shadows and patterns\nForms, colors and lived memories\nEveryday beauty and sensitivity of natural materials"
-    }
+    },
+    "profile_image_alt": "Leen Väränen portrait",
+    "cta_text": "Interested in my work? See what pieces are currently available.",
+    "cta_button": "View products →"
   },
   "portfolio": {
     "title": "Portfolio",
     "description": "View Leen Väränen's ceramics and clothing design works",
     "ceramics": "Ceramics",
     "clothing": "Clothing Design",
-    "experiments": "Experiments"
+    "experiments": "Experiments",
+    "categories": {
+      "all": "All"
+    },
+    "category_labels": {
+      "ceramics": "Ceramics",
+      "clothing": "Clothing Design",
+      "experiments": "Experiment"
+    },
+    "items": {
+      "ceramic_vase": {
+        "title": "Clay vase",
+        "technique": "Hand-formed, glazed"
+      },
+      "linen_dress": {
+        "title": "Linen dress",
+        "technique": "Hand-sewn, natural material",
+        "size": "Size M"
+      },
+      "coffee_cups": {
+        "title": "Coffee cups",
+        "technique": "Thrown, matte glaze",
+        "dimensions": "8cm x 8cm, set of 4"
+      },
+      "wool_vest": {
+        "title": "Wool vest",
+        "technique": "Hand-knitted, natural dyes",
+        "size": "Size S-M"
+      },
+      "mixed_plate": {
+        "title": "Mixed technique plate",
+        "technique": "Ceramics and textile",
+        "dimensions": "20cm diameter"
+      },
+      "texture_wall": {
+        "title": "Textured wall",
+        "technique": "Multi-material installation",
+        "dimensions": "100cm x 150cm"
+      }
+    },
+    "cta_text": "Like the works? See what's available for sale.",
+    "cta_button": "Visit e-shop →"
   },
   "shop": {
     "title": "Shop",
@@ -68,11 +123,14 @@
     "filters": {
       "title": "Filters",
       "price": "Price",
+      "price_min": "Min €",
+      "price_max": "Max €",
       "dimensions": "Dimensions",
       "height": "Height",
       "width": "Width",
       "depth": "Depth",
       "year": "Year made",
+      "year_placeholder": "Year made",
       "subcategory": "Subcategory",
       "clear": "Clear filters"
     },
@@ -101,6 +159,7 @@
       "heading": "Less, but more meaningful",
       "text": "In my shop you will find unique handcrafted products created on the principle of sustainability. Each object is carefully made and carries a story."
     },
+    "no_products": "No products found matching the selected filters.",
     "buy": "Buy",
     "read_more": "Read more",
     "categories": {
@@ -109,6 +168,10 @@
       "accessories": "Accessories"
     }
   },
+  "product": {
+    "not_found": "Product not found",
+    "back_to_shop": "Back to shop"
+  },
   "cart": {
     "title": "Shopping Cart",
     "empty": "Cart is empty",
@@ -116,7 +179,8 @@
     "remove": "Remove",
     "total": "Total",
     "continue": "Continue to checkout",
-    "back_to_shop": "Back to shop"
+    "back_to_shop": "Back to shop",
+    "quantity": "Quantity"
   },
   "checkout": {
     "title": "Checkout",
@@ -138,16 +202,26 @@
     "title": "Contact",
     "description": "Get in touch with Leen Väränen",
     "form": {
+      "title": "Send a message",
       "name": "Name",
       "email": "Email",
       "message": "Message",
-      "send": "Send"
+      "send": "Send →",
+      "success_message": "Message sent! Leen will respond to you as soon as possible."
     },
     "info": {
+      "title": "Contact information",
+      "name_label": "Name",
       "name": "Leen Väränen",
+      "location_label": "Location",
       "address": "Keldrimäe farm, Kuku village, Rapla county",
+      "email_label": "Email",
       "email": "leen@leen.ee",
+      "phone_label": "Phone",
       "phone": "+372 xxx xxxx"
+    },
+    "map": {
+      "title": "Keldrimäe farm location"
     }
   },
   "errors": {

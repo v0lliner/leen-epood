@@ -34,7 +34,7 @@ const Home = () => {
               </div>
               <div className="view-all-container">
                 <Link to="/epood" className="btn btn-primary view-all-link">
-                  {t('home.view_all')} →
+                  {t('home.view_all')}
                 </Link>
               </div>
             </FadeInSection>
@@ -62,7 +62,7 @@ const Home = () => {
               
               <div className="portfolio-cta-container">
                 <Link to="/portfoolio" className="btn btn-primary portfolio-cta">
-                  Tutvu töödega →
+                  {t('home.portfolio_cta')}
                 </Link>
               </div>
             </FadeInSection>

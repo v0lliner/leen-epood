@@ -31,7 +31,7 @@ const About = () => {
                 <div className="profile-image">
                   <img 
                     src="https://images.pexels.com/photos/6185765/pexels-photo-6185765.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
-                    alt="Leen Väränen portree"
+                    alt={t('about.profile_image_alt')}
                   />
                 </div>
                 <div className="profile-content">
@@ -78,9 +78,9 @@ const About = () => {
             {/* Shop CTA */}
             <FadeInSection className="about-cta-section">
               <div className="about-cta-content">
-                <p>Huvitatud minu loomingust? Vaata, millised tööd on praegu saadaval.</p>
+                <p>{t('about.cta_text')}</p>
                 <Link to="/epood" className="btn btn-primary about-cta">
-                  Vaata tooteid →
+                  {t('about.cta_button')}
                 </Link>
               </div>
             </FadeInSection>

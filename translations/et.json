@@ -7,14 +7,25 @@
     "contact": "Kontakt",
     "cart": "Ostukorv"
   },
+  "footer": {
+    "faq": "KKK",
+    "products": "TOOTED",
+    "portfolio": "PORTFOOLIO",
+    "about": "MINUST",
+    "contact": "KONTAKT",
+    "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
+    "facebook": "Facebook"
+  },
   "hero": {
     "heading": "Leen Väränen",
     "subtext": "Keraamika ja rõivadisain, mis kannab isiklikku sõnumit",
-    "cta": "Mine poodi"
+    "cta": "Mine poodi →",
+    "image_alt": "Leen Väränen töötamas keraamikaga"
   },
   "home": {
     "recent_products": "Hiljuti lisatud tooted",
-    "view_all": "Vaata kõiki tooteid"
+    "view_all": "Vaata kõiki tooteid →",
+    "portfolio_cta": "Tutvu töödega →"
   },
   "intro": {
     "text": "Leen on looja, kelle looming kannab isiklikku sõnumit. Tema töödes kohtuvad vorm, funktsioon ja mälestus."
@@ -49,14 +60,58 @@
     "inspiration": {
       "title": "Inspiratsioon",
       "items": "Taimede motiivid, varjud ja mustrid\nVormid, värvid ja elatud mälestused\nIgapäeva ilu ja looduslike materjalide tundlikkus"
-    }
+    },
+    "profile_image_alt": "Leen Väränen portree",
+    "cta_text": "Huvitatud minu loomingust? Vaata, millised tööd on praegu saadaval.",
+    "cta_button": "Vaata tooteid →"
   },
   "portfolio": {
     "title": "Portfoolio",
     "description": "Vaadake Leen Väräneni keraamika ja rõivadisaini töid",
     "ceramics": "Keraamika",
     "clothing": "Rõivadisain",
-    "experiments": "Eksperimendid"
+    "experiments": "Eksperimendid",
+    "categories": {
+      "all": "Kõik"
+    },
+    "category_labels": {
+      "ceramics": "Keraamika",
+      "clothing": "Rõivadisain",
+      "experiments": "Eksperiment"
+    },
+    "items": {
+      "ceramic_vase": {
+        "title": "Savi vaas",
+        "technique": "Käsitsi vormitud, glasuuritud"
+      },
+      "linen_dress": {
+        "title": "Linane kleit",
+        "technique": "Käsitsi õmmeldud, looduslik materjal",
+        "size": "Suurus M"
+      },
+      "coffee_cups": {
+        "title": "Kohvitassid",
+        "technique": "Dreitud, mattkasiin",
+        "dimensions": "8cm x 8cm, komplekt 4tk"
+      },
+      "wool_vest": {
+        "title": "Villane vest",
+        "technique": "Käsitööna kootud, loodusvärvid",
+        "size": "Suurus S-M"
+      },
+      "mixed_plate": {
+        "title": "Segatehnika taldrik",
+        "technique": "Keraamika ja tekstiil",
+        "dimensions": "20cm diameter"
+      },
+      "texture_wall": {
+        "title": "Tekstuurne sein",
+        "technique": "Mitmematerjali installatsioon",
+        "dimensions": "100cm x 150cm"
+      }
+    },
+    "cta_text": "Meeldivad tööd? Vaata, mis on müügis saadaval.",
+    "cta_button": "Külasta e-poodi →"
   },
   "shop": {
     "title": "E-pood",
@@ -68,11 +123,14 @@
     "filters": {
       "title": "Filtrid",
       "price": "Hind",
+      "price_min": "Min €",
+      "price_max": "Max €",
       "dimensions": "Mõõdud",
       "height": "Kõrgus",
       "width": "Laius",
       "depth": "Sügavus",
       "year": "Valmimisaasta",
+      "year_placeholder": "Valmimisaasta",
       "subcategory": "Alamkategooria",
       "clear": "Tühjenda filtrid"
     },
@@ -101,6 +159,7 @@
       "heading": "Vähem, aga tähendusrikkamalt",
       "text": "Minu e-poes leiate ainulaadseid käsitöötooteid, mis on loodud jätkusuutlikkuse põhimõttel. Iga ese on hoolikalt valmistatud ja kannab endas lugu."
     },
+    "no_products": "Valitud filtritele vastavaid tooteid ei leitud.",
     "buy": "Osta",
     "read_more": "Loe lisa",
     "categories": {
@@ -109,6 +168,10 @@
       "accessories": "Aksessuaarid"
     }
   },
+  "product": {
+    "not_found": "Toodet ei leitud",
+    "back_to_shop": "Tagasi poodi"
+  },
   "cart": {
     "title": "Ostukorv",
     "empty": "Ostukorv on tühi",
@@ -116,7 +179,8 @@
     "remove": "Eemalda",
     "total": "Kokku",
     "continue": "Jätka ostuks",
-    "back_to_shop": "Tagasi poodi"
+    "back_to_shop": "Tagasi poodi",
+    "quantity": "Kogus"
   },
   "checkout": {
     "title": "Tellimuse vormistamine",
@@ -138,16 +202,26 @@
     "title": "Kontakt",
     "description": "Võtke Leen Väränenga ühendust",
     "form": {
+      "title": "Saatke sõnum",
       "name": "Nimi",
       "email": "E-mail",
       "message": "Sõnum",
-      "send": "Saada"
+      "send": "Saada →",
+      "success_message": "Sõnum saadetud! Leen vastab teile esimesel võimalusel."
     },
     "info": {
+      "title": "Kontaktandmed",
+      "name_label": "Nimi",
       "name": "Leen Väränen",
+      "location_label": "Asukoht",
       "address": "Keldrimäe talu, Kuku küla, Rapla vald",
+      "email_label": "E-post",
       "email": "leen@leen.ee",
+      "phone_label": "Telefon",
       "phone": "+372 xxx xxxx"
+    },
+    "map": {
+      "title": "Keldrimäe talu asukoht"
     }
   },
   "errors": {

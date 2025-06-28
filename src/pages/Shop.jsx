@@ -132,7 +132,7 @@ const Shop = () => {
                 {filteredProducts.length === 0 && (
                   <FadeInSection>
                     <div className="no-products">
-                      <p>Valitud filtritele vastavaid tooteid ei leitud.</p>
+                      <p>{t('shop.no_products')}</p>
                     </div>
                   </FadeInSection>
                 )}

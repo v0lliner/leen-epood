@@ -19,9 +19,9 @@ const ProductDetail = () => {
         <section className="section-large">
           <div className="container">
             <div className="error-content">
-              <h1>Toodet ei leitud</h1>
+              <h1>{t('product.not_found')}</h1>
               <Link to="/epood" className="btn btn-primary">
-                Tagasi poodi
+                {t('product.back_to_shop')}
               </Link>
             </div>
           </div>

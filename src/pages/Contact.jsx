@@ -23,7 +23,7 @@ const Contact = () => {
     e.preventDefault();
     console.log('Vormi saatmine:', formData);
     // Here would be form submission logic
-    alert('Sõnum saadetud! Leen vastab teile esimesel võimalusel.');
+    alert(t('contact.form.success_message'));
     setFormData({ name: '', email: '', message: '' });
   };
 
@@ -40,7 +40,7 @@ const Contact = () => {
             <div className="contact-layout">
               <FadeInSection className="contact-form-section">
                 <div className="contact-form-container">
-                  <h3>Saatke sõnum</h3>
+                  <h3>{t('contact.form.title')}</h3>
                   <form onSubmit={handleSubmit} className="contact-form">
                     <div className="form-group">
                       <label htmlFor="name">{t('contact.form.name')}</label>
@@ -82,7 +82,7 @@ const Contact = () => {
                     </div>
                     
                     <button type="submit" className="btn btn-primary contact-submit">
-                      {t('contact.form.send')} →
+                      {t('contact.form.send')}
                     </button>
                   </form>
                 </div>
@@ -90,28 +90,28 @@ const Contact = () => {
 
               <FadeInSection className="contact-info-section">
                 <div className="contact-info">
-                  <h3>Kontaktandmed</h3>
+                  <h3>{t('contact.info.title')}</h3>
                   
                   <div className="contact-details">
                     <div className="contact-item">
-                      <span className="contact-label">Nimi</span>
+                      <span className="contact-label">{t('contact.info.name_label')}</span>
                       <span className="contact-value">{t('contact.info.name')}</span>
                     </div>
                     
                     <div className="contact-item">
-                      <span className="contact-label">Asukoht</span>
+                      <span className="contact-label">{t('contact.info.location_label')}</span>
                       <span className="contact-value">{t('contact.info.address')}</span>
                     </div>
                     
                     <div className="contact-item">
-                      <span className="contact-label">E-post</span>
+                      <span className="contact-label">{t('contact.info.email_label')}</span>
                       <a href="mailto:leen@leen.ee" className="btn btn-underline contact-value">
                         {t('contact.info.email')}
                       </a>
                     </div>
                     
                     <div className="contact-item">
-                      <span className="contact-label">Telefon</span>
+                      <span className="contact-label">{t('contact.info.phone_label')}</span>
                       <a href="tel:+372xxxxxxx" className="btn btn-underline contact-value">
                         {t('contact.info.phone')}
                       </a>
@@ -131,7 +131,7 @@ const Contact = () => {
                   allowFullScreen=""
                   loading="lazy"
                   referrerPolicy="no-referrer-when-downgrade"
-                  title="Keldrimäe talu asukoht"
+                  title={t('contact.map.title')}
                 ></iframe>
               </div>
             </FadeInSection>

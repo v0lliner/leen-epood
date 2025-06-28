@@ -12,7 +12,7 @@ const Hero = () => {
           <div className="hero-image">
             <img 
               src="/leen-premium-epood.svg" 
-              alt="Leen Väränen töötamas keraamikaga"
+              alt={t('hero.image_alt')}
             />
           </div>
         </FadeInSection>
@@ -21,7 +21,7 @@ const Hero = () => {
           <h1>{t('hero.heading')}</h1>
           <p className="hero-subtext">{t('hero.subtext')}</p>
           <Link to="/epood" className="btn btn-primary hero-cta">
-            Mine poodi →
+            {t('hero.cta')}
           </Link>
         </FadeInSection>
       </div>

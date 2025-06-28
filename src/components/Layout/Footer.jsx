@@ -8,19 +8,19 @@ const Footer = () => {
     <footer className="footer">
       <div className="container">
         <div className="nav">
-          <Link to="/kkk">KKK</Link>
-          <Link to="/e-pood">TOOTED</Link>
-          <Link to="/portfoolio">PORTFOOLIO</Link>
-          <Link to="/minust">MINUST</Link>
-          <Link to="/kontakt">KONTAKT</Link>
+          <Link to="/kkk">{t('footer.faq')}</Link>
+          <Link to="/e-pood">{t('footer.products')}</Link>
+          <Link to="/portfoolio">{t('footer.portfolio')}</Link>
+          <Link to="/minust">{t('footer.about')}</Link>
+          <Link to="/kontakt">{t('footer.contact')}</Link>
         </div>
         
         <div className="info">
-          <span className="brand">Leen.</span> PopLeen OÜ · +372 5380 1413 · leen@leen.ee
+          <span className="brand">Leen.</span> {t('footer.company_info')}
         </div>
 
         <div className="social">
-          <a href="#" target="_blank" rel="noopener noreferrer">Facebook</a>
+          <a href="#" target="_blank" rel="noopener noreferrer">{t('footer.facebook')}</a>
         </div>
       </div>
 
