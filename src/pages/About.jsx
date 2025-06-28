@@ -6,7 +6,7 @@ import { useAboutPage } from '../hooks/useAboutPage';
 
 const About = () => {
   const { t } = useTranslation();
-  const { content, loading, getSection } = useAboutPage();
+  const { loading, getSection } = useAboutPage();
 
   if (loading) {
     return (

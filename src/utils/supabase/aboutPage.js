@@ -5,15 +5,17 @@ import { supabase } from './client'
  */
 export const aboutPageService = {
   /**
-   * Get all about page content sections
+   * Get all about page content sections for a specific language
+   * @param {string} language - Language code (et, en)
    * @returns {Promise<{data: Array, error: object|null}>}
    */
-  async getAboutContent() {
+  async getAboutContent(language = 'et') {
     try {
       const { data, error } = await supabase
         .from('about_page_content')
         .select('*')
         .eq('is_active', true)
+        .eq('language', language)
         .order('display_order', { ascending: true })
       
       return { data: data || [], error }
@@ -23,16 +25,18 @@ export const aboutPageService = {
   },
 
   /**
-   * Get about content section by section identifier
+   * Get about content section by section identifier and language
    * @param {string} section - Section identifier
+   * @param {string} language - Language code (et, en)
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async getAboutSection(section) {
+  async getAboutSection(section, language = 'et') {
     try {
       const { data, error } = await supabase
         .from('about_page_content')
         .select('*')
         .eq('section', section)
+        .eq('language', language)
         .single()
       
       return { data, error }
@@ -42,17 +46,19 @@ export const aboutPageService = {
   },
 
   /**
-   * Update about content section
+   * Update about content section for specific language
    * @param {string} section - Section identifier
+   * @param {string} language - Language code
    * @param {object} updates - Updates to apply
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async updateAboutSection(section, updates) {
+  async updateAboutSection(section, language, updates) {
     try {
       const { data, error } = await supabase
         .from('about_page_content')
         .update(updates)
         .eq('section', section)
+        .eq('language', language)
         .select()
         .single()
       
@@ -63,8 +69,8 @@ export const aboutPageService = {
   },
 
   /**
-   * Create or update about content section
-   * @param {object} sectionData - Section data
+   * Create or update about content section for specific language
+   * @param {object} sectionData - Section data including language
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
   async upsertAboutSection(sectionData) {
@@ -72,7 +78,7 @@ export const aboutPageService = {
       const { data, error } = await supabase
         .from('about_page_content')
         .upsert(sectionData, { 
-          onConflict: 'section',
+          onConflict: 'section,language',
           ignoreDuplicates: false 
         })
         .select()
@@ -86,11 +92,12 @@ export const aboutPageService = {
 
   /**
    * Get content organized by sections for easy use
+   * @param {string} language - Language code (et, en)
    * @returns {Promise<{data: object, error: object|null}>}
    */
-  async getOrganizedContent() {
+  async getOrganizedContent(language = 'et') {
     try {
-      const { data, error } = await this.getAboutContent()
+      const { data, error } = await this.getAboutContent(language)
       
       if (error) return { data: {}, error }
       
@@ -100,6 +107,33 @@ export const aboutPageService = {
       })
       
       return { data: organized, error: null }
+    } catch (error) {
+      return { data: {}, error: { message: 'Network error occurred' } }
+    }
+  },
+
+  /**
+   * Get content for both languages organized by sections
+   * @returns {Promise<{data: object, error: object|null}>}
+   */
+  async getBilingualContent() {
+    try {
+      const [etResult, enResult] = await Promise.all([
+        this.getOrganizedContent('et'),
+        this.getOrganizedContent('en')
+      ])
+      
+      if (etResult.error && enResult.error) {
+        return { data: {}, error: etResult.error }
+      }
+      
+      return { 
+        data: {
+          et: etResult.data || {},
+          en: enResult.data || {}
+        }, 
+        error: null 
+      }
     } catch (error) {
       return { data: {}, error: { message: 'Network error occurred' } }
     }
