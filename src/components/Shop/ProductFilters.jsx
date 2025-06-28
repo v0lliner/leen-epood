@@ -108,7 +108,7 @@ const ProductFilters = ({
             right: 0;
             bottom: 0;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 997;
+            z-index: 98;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
@@ -126,7 +126,7 @@ const ProductFilters = ({
             width: 320px;
             height: 100vh;
             background-color: var(--color-background);
-            z-index: 997;
+            z-index: 99;
             transition: left 0.3s ease;
             overflow-y: auto;
           }
@@ -278,6 +278,7 @@ const ProductFilters = ({
               left: 0;
               background: none;
               overflow-y: visible;
+              z-index: auto;
             }
 
             .filters-header {
