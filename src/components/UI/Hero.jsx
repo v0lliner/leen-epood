@@ -11,7 +11,7 @@ const Hero = () => {
         <FadeInSection>
           <div className="hero-image">
             <img 
-              src="/result.svg" 
+              src="/leen-premium-epood.svg" 
               alt="Leen Väränen töötamas keraamikaga"
             />
           </div>
