@@ -121,13 +121,10 @@
       "keraamika": "Keraamika"
     },
     "sort": {
-      "label": "Järjesta",
       "newest": "Uusimad enne",
       "oldest": "Vanemad enne",
-      "price_low": "Hind: madalam enne",
-      "price_high": "Hind: kõrgem enne",
-      "name_az": "Nimi: A-Z",
-      "name_za": "Nimi: Z-A"
+      "price_low": "Soodsamad enne",
+      "price_high": "Kallimad enne"
     },
     "filters": {
       "title": "Filtrid",

@@ -68,10 +68,6 @@ const Shop = () => {
           return parseFloat(a.price.replace('€', '')) - parseFloat(b.price.replace('€', ''));
         case 'price-high':
           return parseFloat(b.price.replace('€', '')) - parseFloat(a.price.replace('€', ''));
-        case 'name-az':
-          return a.title.localeCompare(b.title, 'et');
-        case 'name-za':
-          return b.title.localeCompare(a.title, 'et');
         default:
           return 0;
       }
@@ -84,9 +80,7 @@ const Shop = () => {
     { value: 'newest', label: t('shop.sort.newest') },
     { value: 'oldest', label: t('shop.sort.oldest') },
     { value: 'price-low', label: t('shop.sort.price_low') },
-    { value: 'price-high', label: t('shop.sort.price_high') },
-    { value: 'name-az', label: t('shop.sort.name_az') },
-    { value: 'name-za', label: t('shop.sort.name_za') }
+    { value: 'price-high', label: t('shop.sort.price_high') }
   ];
 
   if (loading) {
@@ -181,11 +175,7 @@ const Shop = () => {
                   </div>
 
                   <div className="sort-filter">
-                    <label htmlFor="sort-select" className="sort-label">
-                      {t('shop.sort.label')}:
-                    </label>
                     <select
-                      id="sort-select"
                       value={sortBy}
                       onChange={(e) => handleSortChange(e.target.value)}
                       className="sort-select"
@@ -290,38 +280,37 @@ const Shop = () => {
         .sort-filter {
           display: flex;
           align-items: center;
-          gap: 12px;
           flex-shrink: 0;
         }
 
-        .sort-label {
+        .sort-select {
+          background: none;
+          border: none;
           font-family: var(--font-body);
+          font-size: 1rem;
           font-weight: 500;
           color: var(--color-text);
-          font-size: 1rem;
-          white-space: nowrap;
-        }
-
-        .sort-select {
-          padding: 8px 12px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-size: 0.9rem;
-          color: var(--color-text);
-          background-color: var(--color-background);
           cursor: pointer;
-          transition: border-color 0.2s ease;
-          min-width: 160px;
-        }
-
-        .sort-select:focus {
+          padding: 8px 0;
+          text-decoration: underline;
+          text-decoration-color: transparent;
+          transition: all 0.2s ease;
+          appearance: none;
+          -webkit-appearance: none;
+          -moz-appearance: none;
           outline: none;
-          border-color: var(--color-ultramarine);
         }
 
-        .sort-select:hover {
-          border-color: #bbb;
+        .sort-select:hover,
+        .sort-select:focus {
+          color: var(--color-ultramarine);
+          text-decoration-color: currentColor;
+        }
+
+        .sort-select option {
+          background: var(--color-background);
+          color: var(--color-text);
+          padding: 8px 12px;
         }
 
         .products-grid {
@@ -376,13 +365,9 @@ const Shop = () => {
           }
 
           .sort-filter {
-            justify-content: space-between;
+            justify-content: center;
             padding: 16px 0;
             border-top: 1px solid #f0f0f0;
-          }
-
-          .sort-select {
-            min-width: 140px;
           }
 
           .products-grid {
@@ -399,16 +384,6 @@ const Shop = () => {
           .products-grid {
             grid-template-columns: 1fr;
             gap: 24px;
-          }
-
-          .sort-filter {
-            flex-direction: column;
-            align-items: stretch;
-            gap: 8px;
-          }
-
-          .sort-select {
-            min-width: auto;
           }
         }
       `}</style>
