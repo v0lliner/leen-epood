@@ -6,7 +6,6 @@ import { ThemeProvider } from './context/ThemeContext';
 import Navigation from './components/Layout/Navigation';
 import Footer from './components/Layout/Footer';
 import ProtectedRoute from './components/Admin/ProtectedRoute';
-import ArrowLinkEffect from './components/UI/ArrowLinkEffect';
 import Home from './pages/Home';
 import About from './pages/About';
 import Portfolio from './pages/Portfolio';
@@ -21,7 +20,6 @@ import AdminProducts from './pages/Admin/Products';
 import AdminCategories from './pages/Admin/Categories';
 import ProductForm from './pages/Admin/ProductForm';
 import './styles/globals.css';
-import './styles/arrow-effects.css';
 import './i18n';
 
 function App() {
@@ -31,7 +29,6 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <Router>
-              <ArrowLinkEffect />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={

@@ -139,49 +139,6 @@ img {
   text-decoration-color: currentColor;
 }
 
-/* Arrow link hover effect */
-a[href]:not(.no-arrow-effect),
-button:not(.no-arrow-effect) {
-  position: relative;
-}
-
-a[href]:not(.no-arrow-effect)::after,
-button:not(.no-arrow-effect)::after {
-  content: '';
-  position: absolute;
-  width: 1.5em;
-  height: 1.5em;
-  background-color: #F1BF25;
-  border-radius: 50%;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 200ms ease, transform 200ms ease;
-  pointer-events: none;
-  z-index: -1;
-}
-
-/* Only show effect for links/buttons that contain arrow → */
-a[href]:hover::after,
-button:hover::after {
-  opacity: 0;
-  transform: scale(0.8);
-}
-
-/* Show effect only when text contains → */
-a[href*="→"]:hover::after,
-button[class*="→"]:hover::after,
-a[href]:hover::after,
-button:hover::after {
-  opacity: 0;
-  transform: scale(0.8);
-}
-
-/* Specific targeting for arrow-containing elements */
-a[href]:hover::after,
-button:hover::after {
-  /* Check if element contains arrow via JavaScript will be handled by specific classes */
-}
-
 /* Tab styles */
 .tab-button {
   background: none;
