@@ -1,20 +1,78 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
+import ImageGallery from '../components/UI/ImageGallery';
 import ProductCard from '../components/Shop/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../hooks/useProducts';
+import { productImageService } from '../utils/supabase/productImages';
 
 const ProductDetail = () => {
   const { slug } = useParams();
   const { t } = useTranslation();
   const { addItem } = useCart();
   const { products, getProductBySlug, getRelatedProducts, loading } = useProducts();
+  const [productImages, setProductImages] = useState([]);
+  const [imagesLoading, setImagesLoading] = useState(true);
   
   const product = getProductBySlug(slug);
   
-  if (loading) {
+  useEffect(() => {
+    if (product?.id) {
+      loadProductImages();
+    }
+  }, [product?.id]);
+
+  const loadProductImages = async () => {
+    if (!product?.id) return;
+    
+    setImagesLoading(true);
+    try {
+      const { data, error } = await productImageService.getProductImages(product.id);
+      
+      if (error) {
+        console.warn('Failed to load product images:', error);
+        // Fallback to main product image
+        if (product.image) {
+          setProductImages([{
+            id: 'fallback',
+            image_url: product.image,
+            is_primary: true,
+            display_order: 0
+          }]);
+        }
+      } else {
+        // If no images in database, use fallback
+        if (data.length === 0 && product.image) {
+          setProductImages([{
+            id: 'fallback',
+            image_url: product.image,
+            is_primary: true,
+            display_order: 0
+          }]);
+        } else {
+          setProductImages(data);
+        }
+      }
+    } catch (err) {
+      console.warn('Error loading product images:', err);
+      // Fallback to main product image
+      if (product.image) {
+        setProductImages([{
+          id: 'fallback',
+          image_url: product.image,
+          is_primary: true,
+          display_order: 0
+        }]);
+      }
+    } finally {
+      setImagesLoading(false);
+    }
+  };
+  
+  if (loading || imagesLoading) {
     return (
       <main>
         <section className="section-large">
@@ -113,8 +171,11 @@ const ProductDetail = () => {
 
             <FadeInSection>
               <div className="product-detail">
-                <div className="product-image">
-                  <img src={product.image} alt={product.title} />
+                <div className="product-images">
+                  <ImageGallery 
+                    images={productImages} 
+                    productTitle={product.title}
+                  />
                 </div>
                 
                 <div className="product-info">
@@ -207,11 +268,8 @@ const ProductDetail = () => {
           align-items: start;
         }
 
-        .product-image img {
+        .product-images {
           width: 100%;
-          aspect-ratio: 4/3;
-          object-fit: cover;
-          border-radius: 4px;
         }
 
         .product-title {

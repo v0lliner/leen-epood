@@ -2,10 +2,10 @@ import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import AdminLayout from '../../components/Admin/AdminLayout'
-import ImageUpload from '../../components/Admin/ImageUpload'
+import MultiImageUpload from '../../components/Admin/MultiImageUpload'
 import { productService } from '../../utils/supabase/products'
 import { categoryService } from '../../utils/supabase/categories'
-import { storageService } from '../../utils/supabase/storage'
+import { productImageService } from '../../utils/supabase/productImages'
 
 const ProductForm = () => {
   const { t } = useTranslation()
@@ -18,14 +18,13 @@ const ProductForm = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [categories, setCategories] = useState([])
+  const [images, setImages] = useState([])
   
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
     description: '',
     price: '',
-    image: '',
-    image_path: '',
     category: '',
     subcategory: '',
     dimensions: {
@@ -59,18 +58,37 @@ const ProductForm = () => {
 
   const loadProduct = async () => {
     setLoading(true)
-    const { data, error } = await productService.getProduct(id)
     
-    if (error) {
-      setError(error.message)
-    } else if (data) {
-      setFormData({
-        ...data,
-        dimensions: data.dimensions || { height: '', width: '', depth: '' }
-      })
+    try {
+      // Load product data
+      const { data: productData, error: productError } = await productService.getProduct(id)
+      
+      if (productError) {
+        setError(productError.message)
+        setLoading(false)
+        return
+      }
+
+      if (productData) {
+        setFormData({
+          ...productData,
+          dimensions: productData.dimensions || { height: '', width: '', depth: '' }
+        })
+
+        // Load product images
+        const { data: imagesData, error: imagesError } = await productImageService.getProductImages(id)
+        
+        if (imagesError) {
+          console.warn('Failed to load product images:', imagesError)
+        } else {
+          setImages(imagesData || [])
+        }
+      }
+    } catch (err) {
+      setError('Andmete laadimine ebaõnnestus')
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }
 
   const generateSlug = (title) => {
@@ -125,27 +143,6 @@ const ProductForm = () => {
     }))
   }
 
-  const handleImageChange = (imageUrl, imagePath) => {
-    setFormData(prev => ({
-      ...prev,
-      image: imageUrl,
-      image_path: imagePath
-    }))
-  }
-
-  const handleImageRemove = async () => {
-    // Delete old image from storage if it exists
-    if (formData.image_path) {
-      await storageService.deleteImage(formData.image_path)
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      image: '',
-      image_path: ''
-    }))
-  }
-
   const getSubcategories = () => {
     const parentCategory = categories.find(cat => cat.slug === formData.category)
     return parentCategory?.children || []
@@ -160,8 +157,8 @@ const ProductForm = () => {
       setError(t('admin.products.form.price_required'))
       return false
     }
-    if (!formData.image.trim()) {
-      setError(t('admin.products.form.image_required'))
+    if (images.length === 0) {
+      setError('Vähemalt üks pilt on kohustuslik')
       return false
     }
     if (!formData.category) {
@@ -189,7 +186,10 @@ const ProductForm = () => {
           height: parseInt(formData.dimensions.height) || 0,
           width: parseInt(formData.dimensions.width) || 0,
           depth: parseInt(formData.dimensions.depth) || 0
-        }
+        },
+        // Set primary image for backward compatibility
+        image: images.find(img => img.is_primary)?.image_url || images[0]?.image_url || '',
+        image_path: images.find(img => img.is_primary)?.image_path || images[0]?.image_path || ''
       }
 
       if (isEdit) {
@@ -307,16 +307,6 @@ const ProductForm = () => {
                   placeholder={t('admin.products.form.price_placeholder')}
                 />
               </div>
-
-              {/* Image Upload */}
-              <div className="form-group">
-                <label>{t('admin.products.form.image')} *</label>
-                <ImageUpload
-                  currentImage={formData.image}
-                  onImageChange={handleImageChange}
-                  onImageRemove={handleImageRemove}
-                />
-              </div>
             </div>
 
             {/* Right Column */}
@@ -406,6 +396,17 @@ const ProductForm = () => {
                 </label>
               </div>
             </div>
+          </div>
+
+          {/* Images Section */}
+          <div className="images-section">
+            <h3>Toote pildid *</h3>
+            <MultiImageUpload
+              productId={isEdit ? id : null}
+              images={images}
+              onImagesChange={setImages}
+              maxImages={3}
+            />
           </div>
 
           <div className="form-actions">
@@ -576,6 +577,21 @@ const ProductForm = () => {
           width: 18px;
           height: 18px;
           accent-color: var(--color-ultramarine);
+        }
+
+        .images-section {
+          margin-bottom: 32px;
+          padding: 24px;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          background: #f8f9fa;
+        }
+
+        .images-section h3 {
+          font-family: var(--font-heading);
+          color: var(--color-ultramarine);
+          margin-bottom: 16px;
+          font-size: 1.125rem;
         }
 
         .form-actions {
