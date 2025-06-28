@@ -1,10 +1,18 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import Hero from '../components/UI/Hero';
 import FadeInSection from '../components/UI/FadeInSection';
+import ProductCard from '../components/Shop/ProductCard';
+import { products } from '../data/products';
 
 const Home = () => {
   const { t } = useTranslation();
+  
+  // Get the 4 most recent products (using the 'year' field as a proxy for recency)
+  const recentProducts = [...products]
+    .sort((a, b) => b.year - a.year)
+    .slice(0, 4);
 
   return (
     <>
@@ -12,20 +20,22 @@ const Home = () => {
       <main>
         <Hero />
         
-        {/* Intro Section */}
+        {/* Recently Added Products Section */}
         <section className="section">
           <div className="container">
             <FadeInSection>
-              <div className="grid-50-50">
-                <div>
-                  <img 
-                    src="https://images.pexels.com/photos/7261706/pexels-photo-7261706.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2" 
-                    alt="Leen Väränen portree"
-                  />
-                </div>
-                <div>
-                  <p className="intro-text">{t('intro.text')}</p>
-                </div>
+              <h2 className="text-center">{t('home.recent_products')}</h2>
+              <div className="recent-products-grid">
+                {recentProducts.map(product => (
+                  <FadeInSection key={product.id}>
+                    <ProductCard product={product} />
+                  </FadeInSection>
+                ))}
+              </div>
+              <div className="view-all-container">
+                <Link to="/epood" className="view-all-link">
+                  {t('home.view_all')} →
+                </Link>
               </div>
             </FadeInSection>
           </div>
@@ -55,15 +65,50 @@ const Home = () => {
       </main>
 
       <style jsx>{`
-        .intro-text {
-          font-size: 1.5rem;
-          line-height: 1.4;
-          color: var(--color-text);
+        .recent-products-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 48px;
+          margin-top: 48px;
+        }
+        
+        .view-all-container {
+          text-align: center;
+          margin-top: 48px;
+        }
+        
+        .view-all-link {
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+          padding: 16px 32px;
+          background-color: var(--color-ultramarine);
+          color: white;
+          font-weight: 500;
+          border-radius: 4px;
+          transition: opacity 0.2s ease;
+        }
+        
+        .view-all-link:hover {
+          opacity: 0.9;
         }
 
         @media (max-width: 768px) {
-          .intro-text {
-            font-size: 1.25rem;
+          .recent-products-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 32px;
+            margin-top: 32px;
+          }
+          
+          .view-all-container {
+            margin-top: 32px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .recent-products-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
           }
         }
       `}</style>

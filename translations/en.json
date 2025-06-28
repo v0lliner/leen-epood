@@ -12,6 +12,10 @@
     "subtext": "Ceramics and clothing design that carries a personal message",
     "cta": "Go to shop"
   },
+  "home": {
+    "recent_products": "Recently Added Products",
+    "view_all": "View all products"
+  },
   "intro": {
     "text": "Leen is a creator whose work carries a personal message. In her works, form, function and memory meet."
   },

@@ -12,6 +12,10 @@
     "subtext": "Keraamika ja rõivadisain, mis kannab isiklikku sõnumit",
     "cta": "Mine poodi"
   },
+  "home": {
+    "recent_products": "Hiljuti lisatud tooted",
+    "view_all": "Vaata kõiki tooteid"
+  },
   "intro": {
     "text": "Leen on looja, kelle looming kannab isiklikku sõnumit. Tema töödes kohtuvad vorm, funktsioon ja mälestus."
   },
