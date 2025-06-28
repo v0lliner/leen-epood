@@ -18,10 +18,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   const openModal = (index) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden'
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
+    // Restore body scroll
+    document.body.style.overflow = 'unset'
   }
 
   const nextImage = () => {
@@ -38,6 +42,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     if (e.key === 'ArrowLeft') prevImage()
   }
 
+  const handleOverlayClick = (e) => {
+    // Close modal when clicking on overlay (not on image)
+    if (e.target === e.currentTarget) {
+      closeModal()
+    }
+  }
+
   return (
     <>
       <div className="image-gallery">
@@ -47,9 +58,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             src={primaryImage.image_url} 
             alt={productTitle}
           />
-          <div className="zoom-indicator">
-            🔍 Klõpsake suurendamiseks
-          </div>
         </div>
 
         {/* Thumbnail Grid */}
@@ -75,11 +83,11 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
       {isModalOpen && (
         <div 
           className="modal-overlay" 
-          onClick={closeModal}
+          onClick={handleOverlayClick}
           onKeyDown={handleKeyDown}
           tabIndex={0}
         >
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-content">
             <button className="modal-close" onClick={closeModal}>
               ×
             </button>
@@ -88,6 +96,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
               <img 
                 src={sortedImages[selectedIndex].image_url} 
                 alt={`${productTitle} pilt ${selectedIndex + 1}`}
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
 
@@ -146,23 +155,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           transform: scale(1.05);
         }
 
-        .zoom-indicator {
-          position: absolute;
-          bottom: 12px;
-          right: 12px;
-          background: rgba(0, 0, 0, 0.7);
-          color: white;
-          padding: 6px 12px;
-          border-radius: 4px;
-          font-size: 0.8rem;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-
-        .main-image:hover .zoom-indicator {
-          opacity: 1;
-        }
-
         .thumbnails {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
@@ -196,12 +188,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.9);
-          z-index: 1000;
+          background: rgba(0, 0, 0, 0.95);
+          z-index: 9999;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 20px;
+          cursor: pointer;
         }
 
         .modal-content {
@@ -211,6 +204,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           display: flex;
           flex-direction: column;
           align-items: center;
+          cursor: default;
         }
 
         .modal-close {
@@ -222,9 +216,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           color: white;
           font-size: 2rem;
           cursor: pointer;
-          z-index: 1001;
+          z-index: 10001;
           padding: 8px;
           line-height: 1;
+          transition: opacity 0.2s ease;
+        }
+
+        .modal-close:hover {
+          opacity: 0.7;
         }
 
         .modal-image-container {
@@ -240,6 +239,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           max-height: 100%;
           object-fit: contain;
           border-radius: 4px;
+          cursor: default;
         }
 
         .modal-nav {
@@ -254,6 +254,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           cursor: pointer;
           border-radius: 4px;
           transition: background-color 0.2s ease;
+          z-index: 10000;
         }
 
         .modal-nav:hover {
@@ -330,6 +331,10 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .modal-close {
             top: -40px;
             font-size: 1.5rem;
+          }
+
+          .modal-overlay {
+            padding: 10px;
           }
         }
       `}</style>
