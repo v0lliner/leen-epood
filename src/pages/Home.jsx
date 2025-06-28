@@ -4,10 +4,11 @@ import SEOHead from '../components/Layout/SEOHead';
 import Hero from '../components/UI/Hero';
 import FadeInSection from '../components/UI/FadeInSection';
 import ProductCard from '../components/Shop/ProductCard';
-import { products } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 
 const Home = () => {
   const { t } = useTranslation();
+  const { products, loading } = useProducts();
   
   // Get the 4 most recent products (using the 'year' field as a proxy for recency)
   const recentProducts = [...products]
@@ -25,18 +26,27 @@ const Home = () => {
           <div className="container">
             <FadeInSection>
               <h2 className="text-center">{t('home.recent_products')}</h2>
-              <div className="recent-products-grid">
-                {recentProducts.map(product => (
-                  <FadeInSection key={product.id}>
-                    <ProductCard product={product} />
-                  </FadeInSection>
-                ))}
-              </div>
-              <div className="view-all-container">
-                <Link to="/epood" className="btn btn-primary view-all-link">
-                  {t('home.view_all')}
-                </Link>
-              </div>
+              {loading ? (
+                <div className="loading-container">
+                  <div className="loading-spinner"></div>
+                  <p>{t('admin.loading')}</p>
+                </div>
+              ) : (
+                <>
+                  <div className="recent-products-grid">
+                    {recentProducts.map(product => (
+                      <FadeInSection key={product.id}>
+                        <ProductCard product={product} />
+                      </FadeInSection>
+                    ))}
+                  </div>
+                  <div className="view-all-container">
+                    <Link to="/epood" className="btn btn-primary view-all-link">
+                      {t('home.view_all')}
+                    </Link>
+                  </div>
+                </>
+              )}
             </FadeInSection>
           </div>
         </section>
@@ -71,6 +81,29 @@ const Home = () => {
       </main>
 
       <style jsx>{`
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 64px;
+          gap: 16px;
+        }
+
+        .loading-spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid #f3f3f3;
+          border-top: 3px solid var(--color-ultramarine);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
         .recent-products-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

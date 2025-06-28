@@ -4,14 +4,54 @@ import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import ProductCard from '../components/Shop/ProductCard';
 import { useCart } from '../context/CartContext';
-import { getProductBySlug, getRelatedProducts } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 
 const ProductDetail = () => {
   const { slug } = useParams();
   const { t } = useTranslation();
   const { addItem } = useCart();
+  const { products, getProductBySlug, getRelatedProducts, loading } = useProducts();
   
   const product = getProductBySlug(slug);
+  
+  if (loading) {
+    return (
+      <main>
+        <section className="section-large">
+          <div className="container">
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>{t('admin.loading')}</p>
+            </div>
+          </div>
+        </section>
+        <style jsx>{`
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 64px;
+            gap: 16px;
+          }
+
+          .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--color-ultramarine);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </main>
+    );
+  }
   
   if (!product) {
     return (

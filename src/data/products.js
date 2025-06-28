@@ -1,3 +1,6 @@
+// This file now serves as a fallback for static data
+// In production, products will be loaded from Supabase database
+
 export const products = [
   {
     id: 1,

@@ -5,12 +5,13 @@ import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import ProductFilters from '../components/Shop/ProductFilters';
 import ProductCard from '../components/Shop/ProductCard';
-import { products } from '../data/products';
+import { useProducts } from '../hooks/useProducts';
 
 const Shop = () => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const { products, loading } = useProducts();
   
   const activeTab = searchParams.get('tab') || 'keraamika';
   
@@ -71,7 +72,49 @@ const Shop = () => {
     }
 
     return filtered;
-  }, [activeTab, filters]);
+  }, [products, activeTab, filters]);
+
+  if (loading) {
+    return (
+      <>
+        <SEOHead page="shop" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>{t('admin.loading')}</p>
+              </div>
+            </div>
+          </section>
+        </main>
+        <style jsx>{`
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 64px;
+            gap: 16px;
+          }
+
+          .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--color-ultramarine);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </>
+    );
+  }
 
   return (
     <>
