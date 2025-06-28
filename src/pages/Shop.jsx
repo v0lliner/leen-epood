@@ -83,6 +83,11 @@ const Shop = () => {
     { value: 'price-high', label: t('shop.sort.price_high') }
   ];
 
+  const getCurrentSortLabel = () => {
+    const currentOption = sortOptions.find(option => option.value === sortBy);
+    return currentOption ? `${currentOption.label} ↓` : `${sortOptions[0].label} ↓`;
+  };
+
   if (loading) {
     return (
       <>
@@ -175,17 +180,22 @@ const Shop = () => {
                   </div>
 
                   <div className="sort-filter">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => handleSortChange(e.target.value)}
-                      className="sort-select"
-                    >
-                      {sortOptions.map(option => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="sort-dropdown">
+                      <button className="sort-button">
+                        {getCurrentSortLabel()}
+                      </button>
+                      <div className="sort-options">
+                        {sortOptions.map(option => (
+                          <button
+                            key={option.value}
+                            onClick={() => handleSortChange(option.value)}
+                            className={`sort-option ${sortBy === option.value ? 'active' : ''}`}
+                          >
+                            {option.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -283,34 +293,84 @@ const Shop = () => {
           flex-shrink: 0;
         }
 
-        .sort-select {
+        .sort-dropdown {
+          position: relative;
+        }
+
+        .sort-button {
           background: none;
           border: none;
-          font-family: var(--font-body);
-          font-size: 1rem;
+          padding: 8px 0;
+          font-family: var(--font-heading);
           font-weight: 500;
+          font-size: 1rem;
           color: var(--color-text);
           cursor: pointer;
-          padding: 8px 0;
-          text-decoration: underline;
-          text-decoration-color: transparent;
-          transition: all 0.2s ease;
-          appearance: none;
-          -webkit-appearance: none;
-          -moz-appearance: none;
-          outline: none;
+          transition: color 0.2s ease;
+          position: relative;
+          margin-right: 32px;
         }
 
-        .sort-select:hover,
-        .sort-select:focus {
+        .sort-button:hover,
+        .sort-dropdown:hover .sort-button {
           color: var(--color-ultramarine);
-          text-decoration-color: currentColor;
         }
 
-        .sort-select option {
-          background: var(--color-background);
+        .sort-button:hover:after,
+        .sort-dropdown:hover .sort-button:after {
+          content: '';
+          position: absolute;
+          bottom: -4px;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background-color: var(--color-ultramarine);
+        }
+
+        .sort-options {
+          position: absolute;
+          top: 100%;
+          right: 0;
+          background: white;
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+          opacity: 0;
+          visibility: hidden;
+          transform: translateY(-8px);
+          transition: all 0.2s ease;
+          z-index: 10;
+          min-width: 180px;
+        }
+
+        .sort-dropdown:hover .sort-options {
+          opacity: 1;
+          visibility: visible;
+          transform: translateY(0);
+        }
+
+        .sort-option {
+          display: block;
+          width: 100%;
+          padding: 12px 16px;
+          background: none;
+          border: none;
+          text-align: left;
+          font-family: var(--font-body);
+          font-size: 0.9rem;
           color: var(--color-text);
-          padding: 8px 12px;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        .sort-option:hover {
+          background-color: #f5f5f5;
+        }
+
+        .sort-option.active {
+          background-color: rgba(47, 62, 156, 0.1);
+          color: var(--color-ultramarine);
+          font-weight: 500;
         }
 
         .products-grid {
@@ -368,6 +428,25 @@ const Shop = () => {
             justify-content: center;
             padding: 16px 0;
             border-top: 1px solid #f0f0f0;
+          }
+
+          .sort-dropdown {
+            width: 100%;
+            text-align: center;
+          }
+
+          .sort-button {
+            margin-right: 0;
+          }
+
+          .sort-options {
+            left: 50%;
+            transform: translateX(-50%) translateY(-8px);
+            right: auto;
+          }
+
+          .sort-dropdown:hover .sort-options {
+            transform: translateX(-50%) translateY(0);
           }
 
           .products-grid {
