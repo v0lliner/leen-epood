@@ -236,6 +236,57 @@
       "back": "Tagasi avalehele"
     }
   },
+  "admin": {
+    "back_to_homepage": "Tagasi kodulehele",
+    "cms_title": "Sisuhaldussüsteem",
+    "sign_out": "Logi välja",
+    "loading": "Laadin...",
+    "edit": "Muuda",
+    "delete": "Kustuta",
+    "login": {
+      "subtitle": "Sisuhaldussüsteem",
+      "email": "E-mail",
+      "password": "Parool",
+      "sign_in": "Logi sisse",
+      "signing_in": "Sisselogimine...",
+      "error_generic": "Sisselogimine ebaõnnestus",
+      "error_network": "Võrguühenduse viga"
+    },
+    "nav": {
+      "dashboard": "Töölaud",
+      "products": "Tooted",
+      "portfolio": "Portfoolio",
+      "orders": "Tellimused",
+      "messages": "Sõnumid",
+      "settings": "Seaded"
+    },
+    "dashboard": {
+      "welcome": "Tere tulemast",
+      "subtitle": "Siin saate hallata oma veebilehe sisu",
+      "quick_actions": "Kiirtoimingud",
+      "stats": {
+        "products": "Tooted",
+        "portfolio": "Portfoolio",
+        "orders": "Tellimused",
+        "messages": "Sõnumid"
+      },
+      "actions": {
+        "add_product": "Lisa toode",
+        "add_product_desc": "Lisage uus toode e-poodi",
+        "add_portfolio": "Lisa portfoolio töö",
+        "add_portfolio_desc": "Lisage uus töö portfooliosse",
+        "view_orders": "Vaata tellimusi",
+        "view_orders_desc": "Hallake sissetulevaid tellimusi"
+      }
+    },
+    "products": {
+      "title": "Tooted",
+      "add_new": "Lisa uus toode",
+      "no_products": "Tooteid pole veel lisatud",
+      "add_first": "Lisa esimene toode",
+      "delete_confirm": "Kas olete kindel, et soovite selle toote kustutada?"
+    }
+  },
   "meta": {
     "home": {
       "title": "Leen Väränen - Keraamika ja Rõivadisain",

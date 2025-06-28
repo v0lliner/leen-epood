@@ -1,8 +1,11 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { CartProvider } from './context/CartContext';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import Navigation from './components/Layout/Navigation';
 import Footer from './components/Layout/Footer';
+import ProtectedRoute from './components/Admin/ProtectedRoute';
 import Home from './pages/Home';
 import About from './pages/About';
 import Portfolio from './pages/Portfolio';
@@ -11,30 +14,102 @@ import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
 import NotFound from './pages/NotFound';
+import AdminLogin from './pages/Admin/Login';
+import AdminDashboard from './pages/Admin/Dashboard';
+import AdminProducts from './pages/Admin/Products';
 import './styles/globals.css';
 import './i18n';
 
 function App() {
   return (
     <HelmetProvider>
-      <CartProvider>
-        <Router>
-          <div className="app">
-            <Navigation />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/minust" element={<About />} />
-              <Route path="/portfoolio" element={<Portfolio />} />
-              <Route path="/epood" element={<Shop />} />
-              <Route path="/epood/toode/:slug" element={<ProductDetail />} />
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/kontakt" element={<Contact />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-            <Footer />
-          </div>
-        </Router>
-      </CartProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <CartProvider>
+            <Router>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/" element={
+                  <div className="app">
+                    <Navigation />
+                    <Home />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/minust" element={
+                  <div className="app">
+                    <Navigation />
+                    <About />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/portfoolio" element={
+                  <div className="app">
+                    <Navigation />
+                    <Portfolio />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/epood" element={
+                  <div className="app">
+                    <Navigation />
+                    <Shop />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/epood/toode/:slug" element={
+                  <div className="app">
+                    <Navigation />
+                    <ProductDetail />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/checkout" element={
+                  <div className="app">
+                    <Navigation />
+                    <Checkout />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/kontakt" element={
+                  <div className="app">
+                    <Navigation />
+                    <Contact />
+                    <Footer />
+                  </div>
+                } />
+
+                {/* Admin routes */}
+                <Route path="/admin/login" element={<AdminLogin />} />
+                <Route path="/admin" element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/dashboard" element={
+                  <ProtectedRoute>
+                    <AdminDashboard />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/products" element={
+                  <ProtectedRoute>
+                    <AdminProducts />
+                  </ProtectedRoute>
+                } />
+
+                {/* 404 route */}
+                <Route path="*" element={
+                  <div className="app">
+                    <Navigation />
+                    <NotFound />
+                    <Footer />
+                  </div>
+                } />
+              </Routes>
+            </Router>
+          </CartProvider>
+        </AuthProvider>
+      </ThemeProvider>
     </HelmetProvider>
   );
 }

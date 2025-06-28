@@ -236,6 +236,57 @@
       "back": "Back to home"
     }
   },
+  "admin": {
+    "back_to_homepage": "Back to Homepage",
+    "cms_title": "Content Management System",
+    "sign_out": "Sign Out",
+    "loading": "Loading...",
+    "edit": "Edit",
+    "delete": "Delete",
+    "login": {
+      "subtitle": "Content Management System",
+      "email": "Email",
+      "password": "Password",
+      "sign_in": "Sign In",
+      "signing_in": "Signing in...",
+      "error_generic": "Sign in failed",
+      "error_network": "Network error occurred"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "portfolio": "Portfolio",
+      "orders": "Orders",
+      "messages": "Messages",
+      "settings": "Settings"
+    },
+    "dashboard": {
+      "welcome": "Welcome",
+      "subtitle": "Here you can manage your website content",
+      "quick_actions": "Quick Actions",
+      "stats": {
+        "products": "Products",
+        "portfolio": "Portfolio",
+        "orders": "Orders",
+        "messages": "Messages"
+      },
+      "actions": {
+        "add_product": "Add Product",
+        "add_product_desc": "Add a new product to the shop",
+        "add_portfolio": "Add Portfolio Item",
+        "add_portfolio_desc": "Add a new work to the portfolio",
+        "view_orders": "View Orders",
+        "view_orders_desc": "Manage incoming orders"
+      }
+    },
+    "products": {
+      "title": "Products",
+      "add_new": "Add New Product",
+      "no_products": "No products have been added yet",
+      "add_first": "Add First Product",
+      "delete_confirm": "Are you sure you want to delete this product?"
+    }
+  },
   "meta": {
     "home": {
       "title": "Leen Väränen - Ceramics and Clothing Design",
