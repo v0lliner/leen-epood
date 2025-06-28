@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const ImageGallery = ({ images = [], productTitle = '' }) => {
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -18,10 +18,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   const openModal = (index) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden'
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
+    // Restore body scroll
+    document.body.style.overflow = 'unset'
   }
 
   const nextImage = () => {
@@ -37,6 +41,23 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     if (e.key === 'ArrowRight') nextImage()
     if (e.key === 'ArrowLeft') prevImage()
   }
+
+  // Add keyboard event listener when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown)
+      }
+    }
+  }, [isModalOpen, selectedIndex])
+
+  // Clean up on unmount
+  useEffect(() => {
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [])
 
   return (
     <>
@@ -76,8 +97,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         <div 
           className="modal-overlay" 
           onClick={closeModal}
-          onKeyDown={handleKeyDown}
-          tabIndex={0}
         >
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <button className="modal-close" onClick={closeModal}>
@@ -150,11 +169,12 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           position: absolute;
           bottom: 12px;
           right: 12px;
-          background: rgba(0, 0, 0, 0.7);
+          background: var(--color-ultramarine);
           color: white;
-          padding: 6px 12px;
+          padding: 8px 12px;
           border-radius: 4px;
           font-size: 0.8rem;
+          font-weight: 500;
           opacity: 0;
           transition: opacity 0.2s ease;
         }
@@ -196,12 +216,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.9);
-          z-index: 1000;
+          background: var(--color-ultramarine);
+          z-index: 9999;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 20px;
+          cursor: pointer;
         }
 
         .modal-content {
@@ -211,20 +232,33 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           display: flex;
           flex-direction: column;
           align-items: center;
+          cursor: default;
         }
 
         .modal-close {
           position: absolute;
-          top: -50px;
-          right: 0;
-          background: none;
-          border: none;
+          top: -60px;
+          right: -10px;
+          background: rgba(255, 255, 255, 0.2);
+          border: 2px solid white;
           color: white;
           font-size: 2rem;
           cursor: pointer;
-          z-index: 1001;
-          padding: 8px;
+          z-index: 10001;
+          padding: 8px 12px;
           line-height: 1;
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+          background: rgba(255, 255, 255, 0.3);
+          transform: scale(1.1);
         }
 
         .modal-image-container {
@@ -247,17 +281,19 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           top: 50%;
           transform: translateY(-50%);
           background: rgba(255, 255, 255, 0.2);
-          border: none;
+          border: 2px solid white;
           color: white;
           font-size: 2rem;
           padding: 12px 16px;
           cursor: pointer;
           border-radius: 4px;
-          transition: background-color 0.2s ease;
+          transition: all 0.2s ease;
+          z-index: 10000;
         }
 
         .modal-nav:hover {
           background: rgba(255, 255, 255, 0.3);
+          transform: translateY(-50%) scale(1.1);
         }
 
         .modal-prev {
@@ -305,6 +341,19 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             gap: 6px;
           }
 
+          .modal-overlay {
+            padding: 10px;
+          }
+
+          .modal-close {
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            padding: 6px;
+          }
+
           .modal-nav {
             font-size: 1.5rem;
             padding: 8px 12px;
@@ -327,9 +376,25 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             height: 50px;
           }
 
+          .modal-image-container {
+            max-width: 95vw;
+            max-height: 80vh;
+          }
+        }
+
+        @media (hover: hover) {
+          .modal-overlay {
+            cursor: pointer;
+          }
+        }
+
+        @media (hover: none) {
           .modal-close {
-            top: -40px;
-            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.3);
+          }
+          
+          .modal-nav {
+            background: rgba(255, 255, 255, 0.3);
           }
         }
       `}</style>
