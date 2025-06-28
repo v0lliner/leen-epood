@@ -121,15 +121,16 @@ export const categoryService = {
         .from('categories')
         .select('id')
         .eq('slug', slug)
+        .limit(1)
 
       // Only add the neq filter if excludeId is provided and not null/undefined
       if (excludeId) {
         query = query.neq('id', excludeId)
       }
 
-      const { data } = await query.single()
+      const { data } = await query
 
-      if (!data) break
+      if (!data || data.length === 0) break
       
       slug = `${baseSlug}-${counter}`
       counter++
