@@ -1,0 +1,175 @@
+{
+  "nav": {
+    "home": "Avaleht",
+    "about": "Minust",
+    "portfolio": "Portfoolio",
+    "shop": "E-pood",
+    "contact": "Kontakt",
+    "cart": "Ostukorv"
+  },
+  "hero": {
+    "heading": "Leen Väränen",
+    "subtext": "Keraamika ja rõivadisain, mis kannab isiklikku sõnumit",
+    "cta": "Mine poodi"
+  },
+  "intro": {
+    "text": "Leen on looja, kelle looming kannab isiklikku sõnumit. Tema töödes kohtuvad vorm, funktsioon ja mälestus."
+  },
+  "values": {
+    "slow_fashion": {
+      "heading": "Aeglane mood",
+      "text": "Käsitsi loodud esemed, mis kestavad ja räägivad lugu."
+    },
+    "sustainability": {
+      "heading": "Taaskasutus ja teadlik valik",
+      "text": "Väärtus ei peitu mitte trendis, vaid selles, mida üks ese suudab tähendada."
+    },
+    "uniqueness": {
+      "heading": "Iga ese on oma nägu",
+      "text": "Leeni looming sünnib dialoogis vormi, inimese ja loodusega."
+    }
+  },
+  "about": {
+    "title": "Minust",
+    "description": "Tutvuge Leen Väränenga - keraamiku ja rõivadisaineriga",
+    "text": "Olen Leen Väränen, keraamik ja rõivadisainer, kelle looming sünnib südamest. Minu töödes kohtuvad traditsioon ja kaasaeg, vorm ja funktsioon. Olen õppinud Tallinna Tööstushariduskeskuses ja Vana-Vigala Tehnika- ja Teeninduskoolis, olnud pikka aega õpetaja ja nüüd keskendun täielikult loomingule.\n\nMinu inspiratsioon tuleb vormidest, värvidest ja elatud mälestustest. Iga ese, mille loon, on oma lugu - see võib olla lapsepõlvemälestus, loodus või lihtne ilu, mida olen kuskil märganud.",
+    "highlights": {
+      "education": "Õppinud Tallinna Tööstushariduskeskuses ja Vana-Vigala Tehnika- ja Teeninduskoolis",
+      "experience": "Pikaaegne õpetaja, rätsep, keraamik",
+      "inspiration": "Inspireeritud vormidest, värvidest ja elatud mälestustest"
+    }
+  },
+  "portfolio": {
+    "title": "Portfoolio",
+    "description": "Vaadake Leen Väräneni keraamika ja rõivadisaini töid",
+    "ceramics": "Keraamika",
+    "clothing": "Rõivadisain",
+    "experiments": "Eksperimendid"
+  },
+  "shop": {
+    "title": "E-pood",
+    "description": "Ostke Leen Väräneni käsitöötooteid",
+    "tabs": {
+      "omblus": "Õmblustööd",
+      "keraamika": "Keraamika"
+    },
+    "filters": {
+      "title": "Filtrid",
+      "price": "Hind",
+      "dimensions": "Mõõdud",
+      "height": "Kõrgus",
+      "width": "Laius",
+      "depth": "Sügavus",
+      "year": "Valmimisaasta",
+      "subcategory": "Alamkategooria",
+      "clear": "Tühjenda filtrid"
+    },
+    "subcategories": {
+      "omblus": {
+        "kimonod": "Kimonod",
+        "kaunistused": "Kaunistused",
+        "roivad": "Rõivad"
+      },
+      "keraamika": {
+        "kausid": "Kausid",
+        "alused": "Alused",
+        "kujud": "Kujud",
+        "tassid": "Tassid",
+        "vaasid": "Vaasid"
+      }
+    },
+    "product": {
+      "available": "Saadaval",
+      "add_to_cart": "Lisa ostukorvi",
+      "dimensions_label": "Mõõdud",
+      "year_label": "Valmimisaasta",
+      "related": "Vaata ka"
+    },
+    "philosophy": {
+      "heading": "Vähem, aga tähendusrikkamalt",
+      "text": "Minu e-poes leiate ainulaadseid käsitöötooteid, mis on loodud jätkusuutlikkuse põhimõttel. Iga ese on hoolikalt valmistatud ja kannab endas lugu."
+    },
+    "buy": "Osta",
+    "read_more": "Loe lisa",
+    "categories": {
+      "ceramics": "Keraamika",
+      "clothing": "Rõivad",
+      "accessories": "Aksessuaarid"
+    }
+  },
+  "cart": {
+    "title": "Ostukorv",
+    "empty": "Ostukorv on tühi",
+    "item_count": "{{count}} toodet",
+    "remove": "Eemalda",
+    "total": "Kokku",
+    "continue": "Jätka ostuks",
+    "back_to_shop": "Tagasi poodi"
+  },
+  "checkout": {
+    "title": "Tellimuse vormistamine",
+    "form": {
+      "name": "Nimi",
+      "email": "E-mail",
+      "address": "Tarneaadress",
+      "pay": "Maksa"
+    },
+    "summary": "Tellimuse kokkuvõte",
+    "total": "Kokku",
+    "thank_you": {
+      "title": "Aitäh!",
+      "message": "Teie tellimus on edukalt vormistatud. Saadame peagi tellimuse kinnituse e-kirja.",
+      "back_to_shop": "Tagasi poodi"
+    }
+  },
+  "contact": {
+    "title": "Kontakt",
+    "description": "Võtke Leen Väränenga ühendust",
+    "form": {
+      "name": "Nimi",
+      "email": "E-mail",
+      "message": "Sõnum",
+      "send": "Saada"
+    },
+    "info": {
+      "name": "Leen Väränen",
+      "address": "Keldrimäe talu, Kuku küla, Rapla vald",
+      "email": "leen@leen.ee",
+      "phone": "+372 xxx xxxx"
+    }
+  },
+  "errors": {
+    "404": {
+      "title": "Lehekülge ei leitud",
+      "message": "Otsitud lehekülge ei leitud.",
+      "back": "Tagasi avalehele"
+    },
+    "500": {
+      "title": "Viga",
+      "message": "Midagi läks valesti.",
+      "back": "Tagasi avalehele"
+    }
+  },
+  "meta": {
+    "home": {
+      "title": "Leen Väränen - Keraamika ja Rõivadisain",
+      "description": "Leen Väränen on keraamik ja rõivadisainer, kelle käsitööloomingus kohtuvad vorm, funktsioon ja mälestus. Vaadake portfooliot ja ostke ainulaadseid tooteid."
+    },
+    "about": {
+      "title": "Minust - Leen Väränen",
+      "description": "Tutvuge keraamiku ja rõivadisainer Leen Väränenga. Pikaaegne õpetaja ja looja, kes leiab inspiratsiooni vormidest, värvidest ja mälestustest."
+    },
+    "portfolio": {
+      "title": "Portfoolio - Leen Väränen",
+      "description": "Vaadake Leen Väräneni keraamika ja rõivadisaini töid. Iga ese on loodud hoolikalt ja kannab endas isiklikku sõnumit."
+    },
+    "shop": {
+      "title": "E-pood - Leen Väränen",
+      "description": "Ostke Leen Väräneni ainulaadseid käsitöötooteid. Keraamika, rõivad ja aksessuaarid, mis on loodud jätkusuutlikkuse põhimõttel."
+    },
+    "contact": {
+      "title": "Kontakt - Leen Väränen",
+      "description": "Võtke keraamiku ja rõivadisainer Leen Väränenga ühendust. Keldrimäe talu, Kuku küla, Rapla vald."
+    }
+  }
+}

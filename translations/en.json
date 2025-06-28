@@ -1,0 +1,175 @@
+{
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "portfolio": "Portfolio",
+    "shop": "Shop",
+    "contact": "Contact",
+    "cart": "Cart"
+  },
+  "hero": {
+    "heading": "Leen Väränen",
+    "subtext": "Ceramics and clothing design that carries a personal message",
+    "cta": "Go to shop"
+  },
+  "intro": {
+    "text": "Leen is a creator whose work carries a personal message. In her works, form, function and memory meet."
+  },
+  "values": {
+    "slow_fashion": {
+      "heading": "Slow fashion",
+      "text": "Handcrafted objects that last and tell a story."
+    },
+    "sustainability": {
+      "heading": "Reuse and conscious choice",
+      "text": "Value lies not in trend, but in what one object can mean."
+    },
+    "uniqueness": {
+      "heading": "Every object has its own face",
+      "text": "Leen's creation is born in dialogue with form, human and nature."
+    }
+  },
+  "about": {
+    "title": "About",
+    "description": "Meet Leen Väränen - ceramicist and clothing designer",
+    "text": "I am Leen Väränen, a ceramicist and clothing designer whose work comes from the heart. In my works, tradition and modernity, form and function meet. I studied at Tallinn Industrial Education Centre and Vana-Vigala Technical and Service School, was a teacher for a long time and now focus entirely on creation.\n\nMy inspiration comes from forms, colors and lived memories. Every object I create has its own story - it can be a childhood memory, nature or simple beauty that I have noticed somewhere.",
+    "highlights": {
+      "education": "Studied at Tallinn Industrial Education Centre and Vana-Vigala Technical and Service School",
+      "experience": "Long-time teacher, tailor, ceramicist",
+      "inspiration": "Inspired by forms, colors and lived memories"
+    }
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "description": "View Leen Väränen's ceramics and clothing design works",
+    "ceramics": "Ceramics",
+    "clothing": "Clothing Design",
+    "experiments": "Experiments"
+  },
+  "shop": {
+    "title": "Shop",
+    "description": "Buy Leen Väränen's handcrafted products",
+    "tabs": {
+      "omblus": "Clothing",
+      "keraamika": "Ceramics"
+    },
+    "filters": {
+      "title": "Filters",
+      "price": "Price",
+      "dimensions": "Dimensions",
+      "height": "Height",
+      "width": "Width",
+      "depth": "Depth",
+      "year": "Year made",
+      "subcategory": "Subcategory",
+      "clear": "Clear filters"
+    },
+    "subcategories": {
+      "omblus": {
+        "kimonod": "Kimonos",
+        "kaunistused": "Decorations",
+        "roivad": "Clothing"
+      },
+      "keraamika": {
+        "kausid": "Bowls",
+        "alused": "Plates",
+        "kujud": "Figures",
+        "tassid": "Cups",
+        "vaasid": "Vases"
+      }
+    },
+    "product": {
+      "available": "Available",
+      "add_to_cart": "Add to cart",
+      "dimensions_label": "Dimensions",
+      "year_label": "Year made",
+      "related": "Related products"
+    },
+    "philosophy": {
+      "heading": "Less, but more meaningful",
+      "text": "In my shop you will find unique handcrafted products created on the principle of sustainability. Each object is carefully made and carries a story."
+    },
+    "buy": "Buy",
+    "read_more": "Read more",
+    "categories": {
+      "ceramics": "Ceramics",
+      "clothing": "Clothing",
+      "accessories": "Accessories"
+    }
+  },
+  "cart": {
+    "title": "Shopping Cart",
+    "empty": "Cart is empty",
+    "item_count": "{{count}} items",
+    "remove": "Remove",
+    "total": "Total",
+    "continue": "Continue to checkout",
+    "back_to_shop": "Back to shop"
+  },
+  "checkout": {
+    "title": "Checkout",
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "address": "Delivery address",
+      "pay": "Pay"
+    },
+    "summary": "Order summary",
+    "total": "Total",
+    "thank_you": {
+      "title": "Thank you!",
+      "message": "Your order has been successfully placed. We will send you an order confirmation email shortly.",
+      "back_to_shop": "Back to shop"
+    }
+  },
+  "contact": {
+    "title": "Contact",
+    "description": "Get in touch with Leen Väränen",
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "message": "Message",
+      "send": "Send"
+    },
+    "info": {
+      "name": "Leen Väränen",
+      "address": "Keldrimäe farm, Kuku village, Rapla county",
+      "email": "leen@leen.ee",
+      "phone": "+372 xxx xxxx"
+    }
+  },
+  "errors": {
+    "404": {
+      "title": "Page not found",
+      "message": "The requested page was not found.",
+      "back": "Back to home"
+    },
+    "500": {
+      "title": "Error",
+      "message": "Something went wrong.",
+      "back": "Back to home"
+    }
+  },
+  "meta": {
+    "home": {
+      "title": "Leen Väränen - Ceramics and Clothing Design",
+      "description": "Leen Väränen is a ceramicist and clothing designer whose handcraft combines form, function and memory. View portfolio and buy unique products."
+    },
+    "about": {
+      "title": "About - Leen Väränen",
+      "description": "Meet ceramicist and clothing designer Leen Väränen. Long-time teacher and creator who finds inspiration in forms, colors and memories."
+    },
+    "portfolio": {
+      "title": "Portfolio - Leen Väränen",
+      "description": "View Leen Väränen's ceramics and clothing design works. Each object is carefully created and carries a personal message."
+    },
+    "shop": {
+      "title": "Shop - Leen Väränen",
+      "description": "Buy Leen Väränen's unique handcrafted products. Ceramics, clothing and accessories created on sustainability principles."
+    },
+    "contact": {
+      "title": "Contact - Leen Väränen",
+      "description": "Contact ceramicist and clothing designer Leen Väränen. Keldrimäe farm, Kuku village, Rapla county."
+    }
+  }
+}
