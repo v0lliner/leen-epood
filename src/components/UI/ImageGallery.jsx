@@ -18,10 +18,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   const openModal = (index) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
+    // Prevent body scroll when modal is open
+    document.body.style.overflow = 'hidden'
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
+    // Restore body scroll
+    document.body.style.overflow = 'unset'
   }
 
   const nextImage = () => {
@@ -38,6 +42,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     if (e.key === 'ArrowLeft') prevImage()
   }
 
+  const handleOverlayClick = (e) => {
+    // Close modal only if clicking on the overlay itself, not the content
+    if (e.target === e.currentTarget) {
+      closeModal()
+    }
+  }
+
   return (
     <>
       <div className="image-gallery">
@@ -47,9 +58,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             src={primaryImage.image_url} 
             alt={productTitle}
           />
-          <div className="zoom-indicator">
-            🔍 Klõpsake suurendamiseks
-          </div>
         </div>
 
         {/* Thumbnail Grid */}
@@ -75,7 +83,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
       {isModalOpen && (
         <div 
           className="modal-overlay" 
-          onClick={closeModal}
+          onClick={handleOverlayClick}
           onKeyDown={handleKeyDown}
           tabIndex={0}
         >
@@ -146,23 +154,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           transform: scale(1.05);
         }
 
-        .zoom-indicator {
-          position: absolute;
-          bottom: 12px;
-          right: 12px;
-          background: rgba(0, 0, 0, 0.7);
-          color: white;
-          padding: 6px 12px;
-          border-radius: 4px;
-          font-size: 0.8rem;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-
-        .main-image:hover .zoom-indicator {
-          opacity: 1;
-        }
-
         .thumbnails {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
@@ -197,38 +188,46 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           right: 0;
           bottom: 0;
           background: rgba(0, 0, 0, 0.9);
-          z-index: 1000;
+          z-index: 9999;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 20px;
+          cursor: pointer;
         }
 
         .modal-content {
           position: relative;
-          max-width: 90vw;
-          max-height: 90vh;
+          max-width: 80vw;
+          max-height: 80vh;
           display: flex;
           flex-direction: column;
           align-items: center;
+          cursor: default;
         }
 
         .modal-close {
           position: absolute;
           top: -50px;
           right: 0;
-          background: none;
+          background: rgba(255, 255, 255, 0.2);
           border: none;
           color: white;
           font-size: 2rem;
           cursor: pointer;
-          z-index: 1001;
-          padding: 8px;
+          z-index: 10001;
+          padding: 8px 12px;
           line-height: 1;
+          border-radius: 4px;
+          transition: background-color 0.2s ease;
+        }
+
+        .modal-close:hover {
+          background: rgba(255, 255, 255, 0.3);
         }
 
         .modal-image-container {
-          max-width: 80vw;
+          max-width: 100%;
           max-height: 70vh;
           display: flex;
           align-items: center;
@@ -254,6 +253,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           cursor: pointer;
           border-radius: 4px;
           transition: background-color 0.2s ease;
+          z-index: 10000;
         }
 
         .modal-nav:hover {
@@ -305,6 +305,15 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             gap: 6px;
           }
 
+          .modal-content {
+            max-width: 95vw;
+            max-height: 90vh;
+          }
+
+          .modal-image-container {
+            max-height: 75vh;
+          }
+
           .modal-nav {
             font-size: 1.5rem;
             padding: 8px 12px;
@@ -330,6 +339,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .modal-close {
             top: -40px;
             font-size: 1.5rem;
+            padding: 6px 10px;
           }
         }
       `}</style>
