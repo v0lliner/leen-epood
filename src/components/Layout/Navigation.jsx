@@ -12,6 +12,15 @@ const Navigation = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { getTotalItems } = useCart();
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLinkClick = () => {
+    setIsMenuOpen(false);
+    scrollToTop();
+  };
+
   const navigation = [
     { name: t('nav.shop'), href: '/epood' },
     { name: t('nav.portfolio'), href: '/tehtud-tood' },
@@ -32,7 +41,7 @@ const Navigation = () => {
       <nav className="nav-container">
         <div className="nav-wrapper">
           <div className="nav-inner">
-            <Link to="/" className="nav-logo">
+            <Link to="/" className="nav-logo" onClick={scrollToTop}>
               <h3>Leen.ee</h3>
             </Link>
             
@@ -43,6 +52,7 @@ const Navigation = () => {
                     <Link 
                       to={item.href}
                       className={`nav-link ${isActive(item.href) ? 'active' : ''}`}
+                      onClick={scrollToTop}
                     >
                       {item.name}
                     </Link>
@@ -86,7 +96,7 @@ const Navigation = () => {
                     <Link 
                       to={item.href}
                       className={`nav-mobile-link ${isActive(item.href) ? 'active' : ''}`}
-                      onClick={() => setIsMenuOpen(false)}
+                      onClick={handleLinkClick}
                     >
                       {item.name}
                     </Link>

@@ -4,15 +4,19 @@ import { useTranslation } from 'react-i18next';
 const Footer = () => {
   const { t } = useTranslation();
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <footer className="footer">
       <div className="container">
         <div className="nav">
-          <Link to="/kkk">{t('footer.faq')}</Link>
-          <Link to="/e-pood">{t('footer.products')}</Link>
-          <Link to="/tehtud-tood">{t('footer.portfolio')}</Link>
-          <Link to="/minust">{t('footer.about')}</Link>
-          <Link to="/kontakt">{t('footer.contact')}</Link>
+          <Link to="/kkk" onClick={scrollToTop}>{t('footer.faq')}</Link>
+          <Link to="/epood" onClick={scrollToTop}>{t('footer.shop')}</Link>
+          <Link to="/tehtud-tood" onClick={scrollToTop}>{t('footer.portfolio')}</Link>
+          <Link to="/minust" onClick={scrollToTop}>{t('footer.about')}</Link>
+          <Link to="/kontakt" onClick={scrollToTop}>{t('footer.contact')}</Link>
         </div>
         
         <div className="info">

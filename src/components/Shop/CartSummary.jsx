@@ -6,6 +6,15 @@ const CartSummary = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const { items, removeItem, getTotalPrice, getTotalItems } = useCart();
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleLinkClick = () => {
+    onClose();
+    scrollToTop();
+  };
+
   if (getTotalItems() === 0) {
     return (
       <>
@@ -17,7 +26,7 @@ const CartSummary = ({ isOpen, onClose }) => {
           </div>
           <div className="cart-content">
             <p className="cart-empty">{t('cart.empty')}</p>
-            <Link to="/epood" className="back-to-shop" onClick={onClose}>
+            <Link to="/epood" className="back-to-shop" onClick={handleLinkClick}>
               {t('cart.back_to_shop')}
             </Link>
           </div>
@@ -149,7 +158,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             <Link 
               to="/checkout" 
               className="checkout-button"
-              onClick={onClose}
+              onClick={handleLinkClick}
             >
               {t('cart.continue')}
             </Link>

@@ -5,6 +5,10 @@ import FadeInSection from './FadeInSection';
 const Hero = () => {
   const { t } = useTranslation();
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <section className="hero">
       <div className="container">
@@ -20,7 +24,7 @@ const Hero = () => {
         <FadeInSection className="hero-content">
           <h1>{t('hero.heading')}</h1>
           <p className="hero-subtext">{t('hero.subtext')}</p>
-          <Link to="/epood" className="link-with-arrow hero-cta">
+          <Link to="/epood" className="link-with-arrow hero-cta" onClick={scrollToTop}>
             {t('hero.cta')} <span className="arrow-wrapper">→</span>
           </Link>
         </FadeInSection>
