@@ -14,13 +14,16 @@ const Navigation = () => {
 
   const navigation = [
     { name: t('nav.shop'), href: '/epood' },
-    { name: t('nav.portfolio'), href: '/portfoolio' },
+    { name: t('nav.portfolio'), href: '/tehtud-tood' },
     { name: t('nav.about'), href: '/minust' },
     { name: t('nav.contact'), href: '/kontakt' }
   ];
 
   const isActive = (href) => {
     if (href === '/') return location.pathname === '/';
+    if (href === '/tehtud-tood') {
+      return location.pathname === '/tehtud-tood' || location.pathname === '/portfoolio';
+    }
     return location.pathname.startsWith(href);
   };
 

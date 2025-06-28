@@ -45,6 +45,14 @@ function App() {
                     <Footer />
                   </div>
                 } />
+                <Route path="/tehtud-tood" element={
+                  <div className="app">
+                    <Navigation />
+                    <Portfolio />
+                    <Footer />
+                  </div>
+                } />
+                {/* Keep old route for backward compatibility */}
                 <Route path="/portfoolio" element={
                   <div className="app">
                     <Navigation />

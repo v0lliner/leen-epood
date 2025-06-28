@@ -2,7 +2,7 @@
   "nav": {
     "home": "Home",
     "about": "About",
-    "portfolio": "Portfolio",
+    "portfolio": "Works",
     "shop": "Shop",
     "contact": "Contact",
     "cart": "Cart"
@@ -10,7 +10,7 @@
   "footer": {
     "faq": "FAQ",
     "products": "PRODUCTS",
-    "portfolio": "PORTFOLIO",
+    "portfolio": "WORKS",
     "about": "ABOUT",
     "contact": "CONTACT",
     "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
@@ -66,18 +66,18 @@
     "cta_button": "View products"
   },
   "portfolio": {
-    "title": "Portfolio",
+    "title": "Works",
     "description": "View Leen Väränen's ceramics and clothing design works",
     "ceramics": "Ceramics",
-    "clothing": "Clothing Design",
-    "experiments": "Experiments",
+    "clothing": "Clothing",
+    "other": "Other Products",
     "categories": {
       "all": "All"
     },
     "category_labels": {
       "ceramics": "Ceramics",
-      "clothing": "Clothing Design",
-      "experiments": "Experiment"
+      "clothing": "Clothing",
+      "other": "Other Products"
     },
     "items": {
       "ceramic_vase": {
@@ -332,7 +332,7 @@
       "description": "Meet ceramicist and clothing designer Leen Väränen. Long-time teacher and creator who finds inspiration in forms, colors and memories."
     },
     "portfolio": {
-      "title": "Portfolio - Leen Väränen",
+      "title": "Works - Leen Väränen",
       "description": "View Leen Väränen's ceramics and clothing design works. Each object is carefully created and carries a personal message."
     },
     "shop": {

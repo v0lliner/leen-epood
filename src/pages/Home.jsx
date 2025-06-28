@@ -71,7 +71,7 @@ const Home = () => {
               </div>
               
               <div className="portfolio-cta-container">
-                <Link to="/portfoolio" className="link-with-arrow portfolio-cta">
+                <Link to="/tehtud-tood" className="link-with-arrow portfolio-cta">
                   {t('home.portfolio_cta')} <span className="arrow-wrapper">→</span>
                 </Link>
               </div>

@@ -47,7 +47,7 @@ const Portfolio = () => {
     },
     {
       id: 5,
-      category: 'experiments',
+      category: 'other',
       title: t('portfolio.items.mixed_plate.title'),
       technique: t('portfolio.items.mixed_plate.technique'),
       dimensions: t('portfolio.items.mixed_plate.dimensions'),
@@ -56,7 +56,7 @@ const Portfolio = () => {
     },
     {
       id: 6,
-      category: 'experiments',
+      category: 'other',
       title: t('portfolio.items.texture_wall.title'),
       technique: t('portfolio.items.texture_wall.technique'),
       dimensions: t('portfolio.items.texture_wall.dimensions'),
@@ -69,7 +69,7 @@ const Portfolio = () => {
     { key: 'all', label: t('portfolio.categories.all') },
     { key: 'ceramics', label: t('portfolio.ceramics') },
     { key: 'clothing', label: t('portfolio.clothing') },
-    { key: 'experiments', label: t('portfolio.experiments') }
+    { key: 'other', label: t('portfolio.other') }
   ];
 
   const filteredItems = activeCategory === 'all' 

@@ -10,7 +10,7 @@ const Footer = () => {
         <div className="nav">
           <Link to="/kkk">{t('footer.faq')}</Link>
           <Link to="/e-pood">{t('footer.products')}</Link>
-          <Link to="/portfoolio">{t('footer.portfolio')}</Link>
+          <Link to="/tehtud-tood">{t('footer.portfolio')}</Link>
           <Link to="/minust">{t('footer.about')}</Link>
           <Link to="/kontakt">{t('footer.contact')}</Link>
         </div>

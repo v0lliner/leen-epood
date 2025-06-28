@@ -2,7 +2,7 @@
   "nav": {
     "home": "Avaleht",
     "about": "Minust",
-    "portfolio": "Portfoolio",
+    "portfolio": "Tehtud tööd",
     "shop": "E-pood",
     "contact": "Kontakt",
     "cart": "Ostukorv"
@@ -10,7 +10,7 @@
   "footer": {
     "faq": "KKK",
     "products": "TOOTED",
-    "portfolio": "PORTFOOLIO",
+    "portfolio": "TEHTUD TÖÖD",
     "about": "MINUST",
     "contact": "KONTAKT",
     "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
@@ -66,18 +66,18 @@
     "cta_button": "Vaata tooteid"
   },
   "portfolio": {
-    "title": "Portfoolio",
+    "title": "Tehtud tööd",
     "description": "Vaadake Leen Väräneni keraamika ja rõivadisaini töid",
     "ceramics": "Keraamika",
-    "clothing": "Rõivadisain",
-    "experiments": "Eksperimendid",
+    "clothing": "Rõivad",
+    "other": "Muud tooted",
     "categories": {
       "all": "Kõik"
     },
     "category_labels": {
       "ceramics": "Keraamika",
-      "clothing": "Rõivadisain",
-      "experiments": "Eksperiment"
+      "clothing": "Rõivad",
+      "other": "Muud tooted"
     },
     "items": {
       "ceramic_vase": {
@@ -332,7 +332,7 @@
       "description": "Tutvuge keraamiku ja rõivadisainer Leen Väränenga. Pikaaegne õpetaja ja looja, kes leiab inspiratsiooni vormidest, värvidest ja mälestustest."
     },
     "portfolio": {
-      "title": "Portfoolio - Leen Väränen",
+      "title": "Tehtud tööd - Leen Väränen",
       "description": "Vaadake Leen Väräneni keraamika ja rõivadisaini töid. Iga ese on loodud hoolikalt ja kannab endas isiklikku sõnumit."
     },
     "shop": {
