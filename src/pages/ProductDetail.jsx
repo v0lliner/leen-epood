@@ -76,26 +76,26 @@ const ProductDetail = () => {
     addItem(product);
   };
 
-  // Helper function to format dimensions
-  const formatDimensions = (dimensions) => {
-    if (!dimensions) return null;
+  // Helper function to get valid dimensions
+  const getValidDimensions = (dimensions) => {
+    if (!dimensions) return [];
     
     const validDimensions = [];
     
     if (dimensions.height && dimensions.height > 0) {
-      validDimensions.push(`${dimensions.height}cm`);
+      validDimensions.push({ label: 'Kõrgus', value: `${dimensions.height}cm` });
     }
     if (dimensions.width && dimensions.width > 0) {
-      validDimensions.push(`${dimensions.width}cm`);
+      validDimensions.push({ label: 'Laius', value: `${dimensions.width}cm` });
     }
     if (dimensions.depth && dimensions.depth > 0) {
-      validDimensions.push(`${dimensions.depth}cm`);
+      validDimensions.push({ label: 'Sügavus', value: `${dimensions.depth}cm` });
     }
     
-    return validDimensions.length > 0 ? validDimensions.join(' × ') : null;
+    return validDimensions;
   };
 
-  const dimensionsText = formatDimensions(product.dimensions);
+  const validDimensions = getValidDimensions(product.dimensions);
 
   return (
     <>
@@ -121,10 +121,18 @@ const ProductDetail = () => {
                   <h1 className="product-title">{product.title}</h1>
                   <p className="product-price">{product.price}</p>
                   
-                  {dimensionsText && (
+                  {validDimensions.length > 0 && (
                     <div className="product-dimensions">
-                      <strong>{t('shop.product.dimensions_label')}:</strong>
-                      <span>{dimensionsText}</span>
+                      <h3 className="dimensions-title">{t('shop.product.dimensions_label')}:</h3>
+                      <div className="dimensions-list">
+                        {validDimensions.map((dimension, index) => (
+                          <div key={index} className="dimension-item">
+                            <span className="dimension-label">{dimension.label}</span>
+                            <span className="dimension-separator"> - </span>
+                            <span className="dimension-value">{dimension.value}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                   
@@ -224,20 +232,45 @@ const ProductDetail = () => {
         }
 
         .product-dimensions {
-          display: flex;
-          gap: 8px;
           margin-bottom: 24px;
+        }
+
+        .dimensions-title {
+          font-family: var(--font-heading);
+          font-weight: 500;
+          color: var(--color-text);
+          font-size: 1rem;
+          margin-bottom: 12px;
+        }
+
+        .dimensions-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .dimension-item {
+          display: flex;
+          align-items: center;
           font-size: 1rem;
           line-height: 1.5;
         }
 
-        .product-dimensions strong {
-          font-family: var(--font-heading);
-          font-weight: 500;
+        .dimension-label {
+          font-family: var(--font-body);
+          font-weight: 400;
           color: var(--color-text);
+          min-width: 60px;
         }
 
-        .product-dimensions span {
+        .dimension-separator {
+          color: #666;
+          margin: 0 4px;
+        }
+
+        .dimension-value {
+          font-family: var(--font-body);
+          font-weight: 500;
           color: #666;
         }
 
@@ -323,11 +356,6 @@ const ProductDetail = () => {
 
           .product-price {
             font-size: 1.25rem;
-          }
-
-          .product-dimensions {
-            flex-direction: column;
-            gap: 4px;
           }
 
           .add-to-cart-btn {
