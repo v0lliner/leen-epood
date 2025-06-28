@@ -117,12 +117,17 @@ export const categoryService = {
     let counter = 1
 
     while (true) {
-      const { data } = await supabase
+      let query = supabase
         .from('categories')
         .select('id')
         .eq('slug', slug)
-        .neq('id', excludeId || '')
-        .single()
+
+      // Only add the neq filter if excludeId is provided and not null/undefined
+      if (excludeId) {
+        query = query.neq('id', excludeId)
+      }
+
+      const { data } = await query.single()
 
       if (!data) break
       
