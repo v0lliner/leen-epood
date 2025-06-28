@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 
@@ -122,6 +123,16 @@ const Portfolio = () => {
                 </FadeInSection>
               ))}
             </div>
+
+            {/* Shop CTA */}
+            <FadeInSection className="portfolio-cta-section">
+              <div className="portfolio-cta-content">
+                <p>Meeldivad tööd? Vaata, mis on müügis saadaval.</p>
+                <Link to="/epood" className="btn btn-primary portfolio-cta">
+                  Külasta e-poodi →
+                </Link>
+              </div>
+            </FadeInSection>
           </div>
         </section>
       </main>
@@ -205,6 +216,31 @@ const Portfolio = () => {
           margin: 0;
         }
 
+        .portfolio-cta-section {
+          margin-top: 128px;
+          padding-top: 64px;
+          border-top: 1px solid #f0f0f0;
+        }
+
+        .portfolio-cta-content {
+          text-align: center;
+          max-width: 500px;
+          margin: 0 auto;
+        }
+
+        .portfolio-cta-content p {
+          margin-bottom: 24px;
+          color: #666;
+          font-size: 1rem;
+        }
+
+        .portfolio-cta {
+          font-size: 1.125rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+
         @media (max-width: 768px) {
           .portfolio-filters {
             margin: 48px 0 32px;
@@ -226,6 +262,11 @@ const Portfolio = () => {
           .portfolio-meta {
             justify-content: center;
             margin-bottom: 12px;
+          }
+
+          .portfolio-cta-section {
+            margin-top: 96px;
+            padding-top: 48px;
           }
         }
       `}</style>

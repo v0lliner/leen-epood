@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 
@@ -71,6 +72,16 @@ const About = () => {
                     ))}
                   </ul>
                 </div>
+              </div>
+            </FadeInSection>
+
+            {/* Shop CTA */}
+            <FadeInSection className="about-cta-section">
+              <div className="about-cta-content">
+                <p>Huvitatud minu loomingust? Vaata, millised tööd on praegu saadaval.</p>
+                <Link to="/epood" className="btn btn-primary about-cta">
+                  Vaata tooteid →
+                </Link>
               </div>
             </FadeInSection>
           </div>
@@ -167,6 +178,31 @@ const About = () => {
           margin-bottom: 0;
         }
 
+        .about-cta-section {
+          margin-top: 128px;
+          padding-top: 64px;
+          border-top: 1px solid #f0f0f0;
+        }
+
+        .about-cta-content {
+          text-align: center;
+          max-width: 500px;
+          margin: 0 auto;
+        }
+
+        .about-cta-content p {
+          margin-bottom: 24px;
+          color: #666;
+          font-size: 1rem;
+        }
+
+        .about-cta {
+          font-size: 1.125rem;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
+        }
+
         @media (max-width: 768px) {
           .about-intro {
             margin: 48px auto 64px;
@@ -195,6 +231,11 @@ const About = () => {
 
           .section-list li {
             margin-bottom: 12px;
+          }
+
+          .about-cta-section {
+            margin-top: 96px;
+            padding-top: 48px;
           }
         }
       `}</style>
