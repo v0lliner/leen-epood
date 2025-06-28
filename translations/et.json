@@ -19,13 +19,13 @@
   "hero": {
     "heading": "Leen Väränen",
     "subtext": "Keraamika ja rõivadisain, mis kannab isiklikku sõnumit",
-    "cta": "Mine poodi →",
+    "cta": "Mine poodi",
     "image_alt": "Leen Väränen töötamas keraamikaga"
   },
   "home": {
     "recent_products": "Hiljuti lisatud tooted",
-    "view_all": "Vaata kõiki tooteid →",
-    "portfolio_cta": "Tutvu töödega →"
+    "view_all": "Vaata kõiki tooteid",
+    "portfolio_cta": "Tutvu töödega"
   },
   "intro": {
     "text": "Leen on looja, kelle looming kannab isiklikku sõnumit. Tema töödes kohtuvad vorm, funktsioon ja mälestus."
@@ -63,7 +63,7 @@
     },
     "profile_image_alt": "Leen Väränen portree",
     "cta_text": "Huvitatud minu loomingust? Vaata, millised tööd on praegu saadaval.",
-    "cta_button": "Vaata tooteid →"
+    "cta_button": "Vaata tooteid"
   },
   "portfolio": {
     "title": "Portfoolio",
@@ -111,7 +111,7 @@
       }
     },
     "cta_text": "Meeldivad tööd? Vaata, mis on müügis saadaval.",
-    "cta_button": "Külasta e-poodi →"
+    "cta_button": "Külasta e-poodi"
   },
   "shop": {
     "title": "E-pood",
@@ -199,7 +199,7 @@
       "name": "Nimi",
       "email": "E-mail",
       "message": "Sõnum",
-      "send": "Saada →",
+      "send": "Saada",
       "success_message": "Sõnum saadetud! Leen vastab teile esimesel võimalusel."
     },
     "info": {

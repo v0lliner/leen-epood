@@ -21,7 +21,7 @@ const Hero = () => {
           <h1>{t('hero.heading')}</h1>
           <p className="hero-subtext">{t('hero.subtext')}</p>
           <Link to="/epood" className="link-with-arrow hero-cta">
-            {t('hero.cta')} <span className="arrow-wrapper">→</span>
+            Mine poodi <span className="arrow-wrapper">→</span>
           </Link>
         </FadeInSection>
       </div>

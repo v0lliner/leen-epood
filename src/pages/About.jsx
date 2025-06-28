@@ -80,7 +80,7 @@ const About = () => {
               <div className="about-cta-content">
                 <p>{t('about.cta_text')}</p>
                 <Link to="/epood" className="link-with-arrow about-cta">
-                  {t('about.cta_button')} <span className="arrow-wrapper">→</span>
+                  Vaata tooteid <span className="arrow-wrapper">→</span>
                 </Link>
               </div>
             </FadeInSection>

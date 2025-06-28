@@ -19,13 +19,13 @@
   "hero": {
     "heading": "Leen Väränen",
     "subtext": "Ceramics and clothing design that carries a personal message",
-    "cta": "Go to shop →",
+    "cta": "Go to shop",
     "image_alt": "Leen Väränen working with ceramics"
   },
   "home": {
     "recent_products": "Recently Added Products",
-    "view_all": "View all products →",
-    "portfolio_cta": "Explore works →"
+    "view_all": "View all products",
+    "portfolio_cta": "Explore works"
   },
   "intro": {
     "text": "Leen is a creator whose work carries a personal message. In her works, form, function and memory meet."
@@ -63,7 +63,7 @@
     },
     "profile_image_alt": "Leen Väränen portrait",
     "cta_text": "Interested in my work? See what pieces are currently available.",
-    "cta_button": "View products →"
+    "cta_button": "View products"
   },
   "portfolio": {
     "title": "Portfolio",
@@ -111,7 +111,7 @@
       }
     },
     "cta_text": "Like the works? See what's available for sale.",
-    "cta_button": "Visit e-shop →"
+    "cta_button": "Visit e-shop"
   },
   "shop": {
     "title": "Shop",
@@ -199,7 +199,7 @@
       "name": "Name",
       "email": "Email",
       "message": "Message",
-      "send": "Send →",
+      "send": "Send",
       "success_message": "Message sent! Leen will respond to you as soon as possible."
     },
     "info": {
