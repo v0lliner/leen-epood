@@ -3,6 +3,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import ArrowLinkEffect from './components/UI/ArrowLinkEffect';
 import Navigation from './components/Layout/Navigation';
 import Footer from './components/Layout/Footer';
 import ProtectedRoute from './components/Admin/ProtectedRoute';
@@ -29,6 +30,7 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <Router>
+              <ArrowLinkEffect />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={
