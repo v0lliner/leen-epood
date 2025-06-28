@@ -148,7 +148,7 @@ const Shop = () => {
                 className="mobile-filter-toggle"
                 onClick={() => setFiltersOpen(true)}
               >
-                {t('shop.filters.title')} ↓
+                {t('shop.filters.title')}
               </button>
 
               {/* Filters Sidebar */}
@@ -250,28 +250,22 @@ const Shop = () => {
           text-align: left;
           background: none;
           border: none;
-          font-family: var(--font-heading);
+          font-family: var(--font-body);
           font-weight: 500;
-          font-size: 1rem;
-          color: var(--color-text);
+          font-size: 1.125rem;
+          color: var(--color-ultramarine);
           cursor: pointer;
-          padding: 8px 0;
-          transition: color 0.2s ease;
-          position: relative;
+          padding: 16px 24px;
+          border: 1px solid #e0e0e0;
+          border-radius: 4px;
+          transition: all 0.2s ease;
+          text-decoration: underline;
+          text-decoration-color: transparent;
         }
 
         .mobile-filter-toggle:hover {
-          color: var(--color-ultramarine);
-        }
-
-        .mobile-filter-toggle:hover:after {
-          content: '';
-          position: absolute;
-          bottom: -4px;
-          left: 0;
-          width: 100%;
-          height: 2px;
-          background-color: var(--color-ultramarine);
+          text-decoration-color: currentColor;
+          background-color: rgba(47, 62, 156, 0.05);
         }
 
         .products-section {
