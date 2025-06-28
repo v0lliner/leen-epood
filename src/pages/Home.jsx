@@ -41,8 +41,8 @@ const Home = () => {
                     ))}
                   </div>
                   <div className="view-all-container">
-                    <Link to="/epood" className="btn btn-primary view-all-link">
-                      {t('home.view_all')}
+                    <Link to="/epood" className="link-with-arrow view-all-link">
+                      {t('home.view_all')} <span className="arrow-wrapper">→</span>
                     </Link>
                   </div>
                 </>
@@ -71,8 +71,8 @@ const Home = () => {
               </div>
               
               <div className="portfolio-cta-container">
-                <Link to="/portfoolio" className="btn btn-primary portfolio-cta">
-                  {t('home.portfolio_cta')}
+                <Link to="/portfoolio" className="link-with-arrow portfolio-cta">
+                  {t('home.portfolio_cta')} <span className="arrow-wrapper">→</span>
                 </Link>
               </div>
             </FadeInSection>
@@ -118,9 +118,14 @@ const Home = () => {
         
         .view-all-link {
           font-size: 1.125rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
+          font-family: var(--font-body);
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          transition: opacity 0.2s ease;
+        }
+
+        .view-all-link:hover {
+          opacity: 0.8;
         }
 
         .portfolio-cta-container {
@@ -130,9 +135,14 @@ const Home = () => {
 
         .portfolio-cta {
           font-size: 1.125rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
+          font-family: var(--font-body);
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          transition: opacity 0.2s ease;
+        }
+
+        .portfolio-cta:hover {
+          opacity: 0.8;
         }
 
         @media (max-width: 768px) {

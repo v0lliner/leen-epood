@@ -139,6 +139,45 @@ img {
   text-decoration-color: currentColor;
 }
 
+/* Arrow link styles */
+.link-with-arrow {
+  position: relative;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.arrow-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.arrow-wrapper::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 1.5em;
+  height: 1.5em;
+  background-color: #F1BF25;
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  z-index: -1;
+}
+
+.link-with-arrow:hover .arrow-wrapper::before {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .arrow-wrapper::before {
+    display: none;
+  }
+}
+
 /* Tab styles */
 .tab-button {
   background: none;

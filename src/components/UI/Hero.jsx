@@ -20,8 +20,8 @@ const Hero = () => {
         <FadeInSection className="hero-content">
           <h1>{t('hero.heading')}</h1>
           <p className="hero-subtext">{t('hero.subtext')}</p>
-          <Link to="/epood" className="btn btn-primary hero-cta">
-            {t('hero.cta')}
+          <Link to="/epood" className="link-with-arrow hero-cta">
+            {t('hero.cta')} <span className="arrow-wrapper">→</span>
           </Link>
         </FadeInSection>
       </div>
@@ -58,9 +58,14 @@ const Hero = () => {
 
         .hero-cta {
           font-size: 1.125rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
+          font-family: var(--font-body);
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          transition: opacity 0.2s ease;
+        }
+
+        .hero-cta:hover {
+          opacity: 0.8;
         }
 
         @media (max-width: 768px) {

@@ -79,8 +79,8 @@ const About = () => {
             <FadeInSection className="about-cta-section">
               <div className="about-cta-content">
                 <p>{t('about.cta_text')}</p>
-                <Link to="/epood" className="btn btn-primary about-cta">
-                  {t('about.cta_button')}
+                <Link to="/epood" className="link-with-arrow about-cta">
+                  {t('about.cta_button')} <span className="arrow-wrapper">→</span>
                 </Link>
               </div>
             </FadeInSection>
@@ -198,9 +198,14 @@ const About = () => {
 
         .about-cta {
           font-size: 1.125rem;
-          display: inline-flex;
-          align-items: center;
-          gap: 8px;
+          font-family: var(--font-body);
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          transition: opacity 0.2s ease;
+        }
+
+        .about-cta:hover {
+          opacity: 0.8;
         }
 
         @media (max-width: 768px) {
