@@ -30,7 +30,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             right: 0;
             bottom: 0;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 998;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
@@ -48,7 +48,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             width: 400px;
             height: 100vh;
             background-color: var(--color-background);
-            z-index: 1001;
+            z-index: 999;
             transition: right 0.3s ease;
             overflow-y: auto;
           }
@@ -69,6 +69,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             font-family: var(--font-heading);
             font-size: 1.25rem;
             color: var(--color-ultramarine);
+            margin: 0;
           }
 
           .cart-close {
@@ -163,7 +164,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             right: 0;
             bottom: 0;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
+            z-index: 998;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
@@ -181,7 +182,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             width: 400px;
             height: 100vh;
             background-color: var(--color-background);
-            z-index: 1001;
+            z-index: 999;
             transition: right 0.3s ease;
             overflow-y: auto;
             display: flex;
@@ -204,6 +205,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             font-family: var(--font-heading);
             font-size: 1.25rem;
             color: var(--color-ultramarine);
+            margin: 0;
           }
 
           .cart-close {
@@ -260,6 +262,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             font-weight: 400;
             margin-bottom: 4px;
             color: var(--color-text);
+            margin-top: 0;
           }
 
           .item-price {
@@ -267,6 +270,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             font-weight: 500;
             color: var(--color-ultramarine);
             margin-bottom: 4px;
+            margin-top: 0;
           }
 
           .item-quantity {

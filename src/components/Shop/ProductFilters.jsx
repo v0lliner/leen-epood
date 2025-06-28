@@ -169,7 +169,7 @@ const ProductFilters = ({
             right: 0;
             bottom: 0;
             background-color: rgba(0, 0, 0, 0.5);
-            z-index: 998;
+            z-index: 997;
             opacity: 0;
             visibility: hidden;
             transition: all 0.3s ease;
@@ -187,7 +187,7 @@ const ProductFilters = ({
             width: 320px;
             height: 100vh;
             background-color: var(--color-background);
-            z-index: 999;
+            z-index: 997;
             transition: left 0.3s ease;
             overflow-y: auto;
           }
@@ -208,6 +208,7 @@ const ProductFilters = ({
             font-family: var(--font-heading);
             font-size: 1.25rem;
             color: var(--color-ultramarine);
+            margin: 0;
           }
 
           .filters-close {
@@ -224,7 +225,6 @@ const ProductFilters = ({
 
           .filter-group {
             margin-bottom: 32px;
-            position: relative;
           }
 
           .filter-label {
@@ -233,8 +233,6 @@ const ProductFilters = ({
             font-weight: 500;
             margin-bottom: 12px;
             color: var(--color-text);
-            position: relative;
-            z-index: 1;
           }
 
           .filter-input,
@@ -246,15 +244,12 @@ const ProductFilters = ({
             font-family: var(--font-body);
             font-size: 0.9rem;
             margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
           }
 
           .filter-input:focus,
           .filter-select:focus {
             outline: none;
             border-color: var(--color-ultramarine);
-            z-index: 2;
           }
 
           .price-inputs {

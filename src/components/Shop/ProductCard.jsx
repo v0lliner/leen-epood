@@ -1,19 +1,39 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useCart } from '../../context/CartContext';
 import { useTranslation } from 'react-i18next';
 
 const ProductCard = ({ product }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const { addItem } = useCart();
   const { t } = useTranslation();
-  
+
+  const handleAddToCart = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    addItem(product);
+  };
+
   return (
-    <Link to={`/epood/toode/${product.slug}`} className="product-card">
+    <Link 
+      to={`/epood/toode/${product.slug}`} 
+      className="product-card"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <div className="product-image">
         <img src={product.image} alt={product.title} />
         {!product.available && (
           <div className="sold-overlay">Müüdud</div>
         )}
-        <div className="add-to-cart-overlay">
-          <span>{t('shop.product.add_to_cart')}</span>
-        </div>
+        {isHovered && product.available && (
+          <button 
+            className="add-to-cart-overlay"
+            onClick={handleAddToCart}
+          >
+            {t('shop.product.add_to_cart')}
+          </button>
+        )}
       </div>
       <div className="product-info">
         <h3 className="product-title">{product.title}</h3>
@@ -43,7 +63,7 @@ const ProductCard = ({ product }) => {
         }
 
         .product-card:hover .product-image img {
-          transform: scale(1.03);
+          transform: scale(1.05);
         }
 
         .sold-overlay {
@@ -64,18 +84,21 @@ const ProductCard = ({ product }) => {
           bottom: 0;
           left: 0;
           right: 0;
-          background-color: rgba(255, 255, 255, 0.9);
-          color: var(--color-ultramarine);
+          background-color: var(--color-ultramarine);
+          color: white;
           padding: 12px;
           text-align: center;
-          transform: translateY(100%);
-          transition: transform 0.3s ease;
-          font-family: var(--font-heading);
-          font-weight: 400;
+          font-weight: 500;
+          border: none;
+          cursor: pointer;
+          transition: opacity 0.2s ease;
+          opacity: 0.9;
+          transform: translateY(0);
+          font-family: var(--font-body);
         }
 
-        .product-card:hover .add-to-cart-overlay {
-          transform: translateY(0);
+        .add-to-cart-overlay:hover {
+          opacity: 1;
         }
 
         .product-info {
@@ -88,6 +111,7 @@ const ProductCard = ({ product }) => {
           font-weight: 400;
           margin-bottom: 8px;
           color: var(--color-text);
+          margin-top: 0;
         }
 
         .product-price {

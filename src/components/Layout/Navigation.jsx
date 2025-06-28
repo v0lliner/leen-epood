@@ -98,7 +98,7 @@ const Navigation = () => {
                     setIsMenuOpen(false);
                   }}
                 >
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="cart-icon">
                     <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -130,23 +130,32 @@ const Navigation = () => {
           .nav-logo h3 {
             font-family: var(--font-heading);
             color: var(--color-ultramarine);
+            font-weight: 600;
+            margin: 0;
           }
 
           .nav-desktop {
             display: flex;
             align-items: center;
-            gap: 32px;
+            gap: 48px;
           }
 
           .nav-links {
             display: flex;
-            gap: 32px;
+            gap: 40px;
             list-style: none;
+            margin: 0;
+            padding: 0;
           }
 
           .nav-link {
             font-weight: 500;
             transition: color 0.2s ease;
+            text-decoration: none;
+            color: var(--color-text);
+            font-size: 1rem;
+            padding: 4px 0;
+            position: relative;
           }
 
           .nav-link:hover,
@@ -154,10 +163,20 @@ const Navigation = () => {
             color: var(--color-ultramarine);
           }
 
+          .nav-link.active:after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--color-ultramarine);
+          }
+
           .nav-actions {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 24px;
           }
 
           .cart-button {
@@ -168,22 +187,23 @@ const Navigation = () => {
             font-weight: 500;
             cursor: pointer;
             transition: color 0.2s ease;
-            position: relative;
             display: flex;
             align-items: center;
+            position: relative;
+            padding: 0;
           }
 
           .cart-button:hover {
             color: var(--color-ultramarine);
           }
-          
+
           .cart-count {
             position: absolute;
             top: -8px;
             right: -8px;
             background-color: var(--color-ultramarine);
             color: white;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             width: 18px;
             height: 18px;
             border-radius: 50%;
@@ -197,6 +217,9 @@ const Navigation = () => {
             flex-direction: column;
             gap: 4px;
             padding: 8px;
+            background: none;
+            border: none;
+            cursor: pointer;
           }
 
           .nav-mobile-toggle span {
@@ -217,12 +240,17 @@ const Navigation = () => {
             flex-direction: column;
             gap: 16px;
             margin-bottom: 24px;
+            padding: 0;
           }
 
           .nav-mobile-link {
             font-weight: 500;
             padding: 8px 0;
             border-bottom: 1px solid transparent;
+            text-decoration: none;
+            color: var(--color-text);
+            display: block;
+            font-family: var(--font-body);
           }
 
           .nav-mobile-link:hover,
@@ -235,6 +263,17 @@ const Navigation = () => {
             display: flex;
             flex-direction: column;
             gap: 16px;
+          }
+
+          .nav-mobile-actions .cart-button {
+            font-family: var(--font-body);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+
+          .cart-icon {
+            margin-right: 4px;
           }
 
           @media (max-width: 768px) {
