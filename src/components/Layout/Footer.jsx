@@ -14,7 +14,7 @@ const Footer = () => {
         <div className="nav">
           <Link to="/kkk" onClick={scrollToTop}>{t('footer.faq')}</Link>
           <Link to="/epood" onClick={scrollToTop}>{t('footer.shop')}</Link>
-          <Link to="/tehtud-tood" onClick={scrollToTop}>{t('footer.portfolio')}</Link>
+          <Link to="/parimad-palad" onClick={scrollToTop}>{t('footer.portfolio')}</Link>
           <Link to="/minust" onClick={scrollToTop}>{t('footer.about')}</Link>
           <Link to="/kontakt" onClick={scrollToTop}>{t('footer.contact')}</Link>
         </div>

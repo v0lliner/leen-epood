@@ -48,6 +48,14 @@ function App() {
                     <Footer />
                   </div>
                 } />
+                <Route path="/parimad-palad" element={
+                  <div className="app">
+                    <Navigation />
+                    <Portfolio />
+                    <Footer />
+                  </div>
+                } />
+                {/* Keep old routes for backward compatibility */}
                 <Route path="/tehtud-tood" element={
                   <div className="app">
                     <Navigation />
@@ -55,7 +63,6 @@ function App() {
                     <Footer />
                   </div>
                 } />
-                {/* Keep old route for backward compatibility */}
                 <Route path="/portfoolio" element={
                   <div className="app">
                     <Navigation />
@@ -114,16 +121,33 @@ function App() {
                     <AdminCategories />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/tehtud-tood" element={
-                  <ProtectedRoute>
-                    <AdminTehtudTood />
-                  </ProtectedRoute>
-                } />
                 <Route path="/admin/about" element={
                   <ProtectedRoute>
                     <AdminAboutPage />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/parimad-palad" element={
+                  <ProtectedRoute>
+                    <AdminTehtudTood />
+                  </ProtectedRoute>
+                } />
+                {/* Keep old admin route for backward compatibility */}
+                <Route path="/admin/tehtud-tood" element={
+                  <ProtectedRoute>
+                    <AdminTehtudTood />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/parimad-palad/new" element={
+                  <ProtectedRoute>
+                    <TehtudToodForm />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/parimad-palad/:id/edit" element={
+                  <ProtectedRoute>
+                    <TehtudToodForm />
+                  </ProtectedRoute>
+                } />
+                {/* Keep old admin routes for backward compatibility */}
                 <Route path="/admin/tehtud-tood/new" element={
                   <ProtectedRoute>
                     <TehtudToodForm />

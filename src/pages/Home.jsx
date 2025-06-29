@@ -75,7 +75,7 @@ const Home = () => {
               </div>
               
               <div className="portfolio-cta-container">
-                <Link to="/tehtud-tood" className="link-with-arrow portfolio-cta" onClick={scrollToTop}>
+                <Link to="/parimad-palad" className="link-with-arrow portfolio-cta" onClick={scrollToTop}>
                   {t('home.portfolio_cta')} <span className="arrow-wrapper">→</span>
                 </Link>
               </div>

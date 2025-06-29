@@ -27,8 +27,8 @@ const AdminLayout = ({ children }) => {
       icon: '📦'
     },
     {
-      name: 'Tehtud tööd',
-      href: '/admin/tehtud-tood',
+      name: t('admin.nav.portfolio'),
+      href: '/admin/parimad-palad',
       icon: '🎨'
     },
     {
@@ -61,6 +61,10 @@ const AdminLayout = ({ children }) => {
   const isActive = (href) => {
     if (href === '/admin/dashboard') {
       return location.pathname === '/admin/dashboard' || location.pathname === '/admin'
+    }
+    if (href === '/admin/parimad-palad') {
+      return location.pathname.startsWith('/admin/parimad-palad') || 
+             location.pathname.startsWith('/admin/tehtud-tood')
     }
     return location.pathname.startsWith(href)
   }

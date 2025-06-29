@@ -30,7 +30,7 @@ const AdminTehtudTood = () => {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Kas olete kindel, et soovite selle töö kustutada?')) {
+    if (!confirm('Kas olete kindel, et soovite selle pala kustutada?')) {
       return
     }
 
@@ -75,9 +75,9 @@ const AdminTehtudTood = () => {
     <AdminLayout>
       <div className="portfolio-container">
         <div className="portfolio-header">
-          <h1>Tehtud tööd ({portfolioItems.length})</h1>
-          <Link to="/admin/tehtud-tood/new" className="btn btn-primary">
-            ➕ Lisa uus töö
+          <h1>{t('admin.portfolio.title')} ({portfolioItems.length})</h1>
+          <Link to="/admin/parimad-palad/new" className="btn btn-primary">
+            ➕ {t('admin.portfolio.add_new')}
           </Link>
         </div>
 
@@ -91,7 +91,7 @@ const AdminTehtudTood = () => {
         <div className="filters-section">
           <div className="filters-grid">
             <div className="filter-group">
-              <label>Otsi töid</label>
+              <label>Otsi palasid</label>
               <input
                 type="text"
                 placeholder="Otsi pealkirja või tehnika järgi..."
@@ -123,16 +123,16 @@ const AdminTehtudTood = () => {
               {portfolioItems.length === 0 ? (
                 <>
                   <div className="empty-icon">🎨</div>
-                  <h3>Tehtud töid pole veel lisatud</h3>
-                  <p>Alustage oma portfoolio loomist esimese töö lisamisega</p>
-                  <Link to="/admin/tehtud-tood/new" className="btn btn-primary">
-                    Lisa esimene töö
+                  <h3>{t('admin.portfolio.no_items')}</h3>
+                  <p>Alustage oma portfoolio loomist esimese palaga</p>
+                  <Link to="/admin/parimad-palad/new" className="btn btn-primary">
+                    {t('admin.portfolio.add_first')}
                   </Link>
                 </>
               ) : (
                 <>
                   <div className="empty-icon">🔍</div>
-                  <h3>Otsingule vastavaid töid ei leitud</h3>
+                  <h3>Otsingule vastavaid palasid ei leitud</h3>
                   <p>Proovige muuta otsingukriteeriumeid</p>
                 </>
               )}
@@ -157,7 +157,7 @@ const AdminTehtudTood = () => {
                   )}
                   <div className="portfolio-actions">
                     <Link 
-                      to={`/admin/tehtud-tood/${item.id}/edit`}
+                      to={`/admin/parimad-palad/${item.id}/edit`}
                       className="btn btn-secondary"
                     >
                       ✏️ Muuda

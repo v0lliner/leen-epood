@@ -2,7 +2,7 @@
   "nav": {
     "home": "Home",
     "about": "About",
-    "portfolio": "Works",
+    "portfolio": "Best Pieces",
     "shop": "Shop",
     "contact": "Contact",
     "cart": "Cart"
@@ -10,7 +10,7 @@
   "footer": {
     "faq": "FAQ",
     "shop": "SHOP",
-    "portfolio": "WORKS",
+    "portfolio": "BEST PIECES",
     "about": "ABOUT",
     "contact": "CONTACT",
     "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
@@ -25,7 +25,7 @@
   "home": {
     "recent_products": "Recently Added Products",
     "view_all": "View all products",
-    "portfolio_cta": "Explore works"
+    "portfolio_cta": "Explore best pieces"
   },
   "intro": {
     "text": "Leen is a creator whose work carries a personal message. In her works, form, function and memory meet."
@@ -66,7 +66,7 @@
     "cta_button": "View products"
   },
   "portfolio": {
-    "title": "Works",
+    "title": "Best Pieces",
     "description": "View Leen Väränen's ceramics and clothing design works",
     "ceramics": "Ceramics",
     "clothing": "Clothing",
@@ -257,7 +257,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "products": "Products",
-      "portfolio": "Works",
+      "portfolio": "Best Pieces",
       "orders": "Orders",
       "messages": "Messages",
       "settings": "Settings"
@@ -268,14 +268,14 @@
       "quick_actions": "Quick Actions",
       "stats": {
         "products": "Products",
-        "portfolio": "Works",
+        "portfolio": "Best Pieces",
         "orders": "Orders",
         "messages": "Messages"
       },
       "actions": {
         "add_product": "Add Product",
         "add_product_desc": "Add a new product to the shop",
-        "add_portfolio": "Add Work",
+        "add_portfolio": "Add Best Piece",
         "add_portfolio_desc": "Add a new work to the portfolio",
         "view_orders": "View Orders",
         "view_orders_desc": "Manage incoming orders"
@@ -322,17 +322,17 @@
       }
     },
     "portfolio": {
-      "title": "Works",
-      "add_new": "Add New Work",
-      "no_items": "No works have been added yet",
-      "add_first": "Add First Work",
-      "delete_confirm": "Are you sure you want to delete this work?",
+      "title": "Best Pieces",
+      "add_new": "Add New Piece",
+      "no_items": "No best pieces have been added yet",
+      "add_first": "Add First Piece",
+      "delete_confirm": "Are you sure you want to delete this piece?",
       "form": {
-        "create_title": "Add New Work",
-        "edit_title": "Edit Work",
-        "title": "Work Title",
+        "create_title": "Add New Best Piece",
+        "edit_title": "Edit Best Piece",
+        "title": "Piece Title",
         "title_placeholder": "E.g. Handcrafted Vase 'Memory'",
-        "title_required": "Work title is required",
+        "title_required": "Piece title is required",
         "technique": "Technique",
         "technique_placeholder": "E.g. Hand-formed, glazed",
         "dimensions": "Dimensions",
@@ -340,12 +340,12 @@
         "year": "Year made",
         "category": "Category",
         "category_required": "Category is required",
-        "image": "Work Image",
-        "image_required": "Work image is required",
-        "create": "Add Work",
-        "update": "Update Work",
-        "created_success": "Work successfully added!",
-        "updated_success": "Work successfully updated!",
+        "image": "Piece Image",
+        "image_required": "Piece image is required",
+        "create": "Add Piece",
+        "update": "Update Piece",
+        "created_success": "Piece successfully added!",
+        "updated_success": "Piece successfully updated!",
         "network_error": "Network connection error"
       }
     }
@@ -360,7 +360,7 @@
       "description": "Meet ceramicist and clothing designer Leen Väränen. Long-time teacher and creator who finds inspiration in forms, colors and memories."
     },
     "portfolio": {
-      "title": "Works - Leen Väränen",
+      "title": "Best Pieces - Leen Väränen",
       "description": "View Leen Väränen's ceramics and clothing design works. Each object is carefully created and carries a personal message."
     },
     "shop": {

@@ -23,15 +23,17 @@ const Navigation = () => {
 
   const navigation = [
     { name: t('nav.shop'), href: '/epood' },
-    { name: t('nav.portfolio'), href: '/tehtud-tood' },
+    { name: t('nav.portfolio'), href: '/parimad-palad' },
     { name: t('nav.about'), href: '/minust' },
     { name: t('nav.contact'), href: '/kontakt' }
   ];
 
   const isActive = (href) => {
     if (href === '/') return location.pathname === '/';
-    if (href === '/tehtud-tood') {
-      return location.pathname === '/tehtud-tood' || location.pathname === '/portfoolio';
+    if (href === '/parimad-palad') {
+      return location.pathname === '/parimad-palad' || 
+             location.pathname === '/tehtud-tood' || 
+             location.pathname === '/portfoolio';
     }
     return location.pathname.startsWith(href);
   };

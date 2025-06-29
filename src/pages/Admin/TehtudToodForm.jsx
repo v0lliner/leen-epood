@@ -82,7 +82,7 @@ const TehtudToodForm = () => {
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      setError('Töö pealkiri on kohustuslik')
+      setError('Pala pealkiri on kohustuslik')
       return false
     }
     if (!formData.category) {
@@ -117,9 +117,9 @@ const TehtudToodForm = () => {
       if (error) {
         setError(error.message)
       } else {
-        setSuccess(isEdit ? 'Töö edukalt uuendatud!' : 'Töö edukalt lisatud!')
+        setSuccess(isEdit ? 'Pala edukalt uuendatud!' : 'Pala edukalt lisatud!')
         setTimeout(() => {
-          navigate('/admin/tehtud-tood')
+          navigate('/admin/parimad-palad')
         }, 1500)
       }
     } catch (err) {
@@ -144,9 +144,9 @@ const TehtudToodForm = () => {
     <AdminLayout>
       <div className="form-container">
         <div className="form-header">
-          <h1>{isEdit ? 'Muuda tehtud tööd' : 'Lisa uus tehtud töö'}</h1>
+          <h1>{isEdit ? t('admin.portfolio.form.edit_title') : t('admin.portfolio.form.create_title')}</h1>
           <button 
-            onClick={() => navigate('/admin/tehtud-tood')}
+            onClick={() => navigate('/admin/parimad-palad')}
             className="btn btn-secondary"
           >
             Tagasi
@@ -170,7 +170,7 @@ const TehtudToodForm = () => {
             {/* Left Column */}
             <div className="form-column">
               <div className="form-group">
-                <label htmlFor="title">Töö pealkiri *</label>
+                <label htmlFor="title">{t('admin.portfolio.form.title')} *</label>
                 <input
                   type="text"
                   id="title"
@@ -179,12 +179,12 @@ const TehtudToodForm = () => {
                   onChange={handleInputChange}
                   required
                   className="form-input"
-                  placeholder="Nt. Käsitöövaas 'Mälestus'"
+                  placeholder={t('admin.portfolio.form.title_placeholder')}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="technique">Tehnika</label>
+                <label htmlFor="technique">{t('admin.portfolio.form.technique')}</label>
                 <input
                   type="text"
                   id="technique"
@@ -192,12 +192,12 @@ const TehtudToodForm = () => {
                   value={formData.technique}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Nt. Käsitsi vormitud, glasuuritud"
+                  placeholder={t('admin.portfolio.form.technique_placeholder')}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="dimensions">Mõõdud</label>
+                <label htmlFor="dimensions">{t('admin.portfolio.form.dimensions')}</label>
                 <input
                   type="text"
                   id="dimensions"
@@ -205,12 +205,12 @@ const TehtudToodForm = () => {
                   value={formData.dimensions}
                   onChange={handleInputChange}
                   className="form-input"
-                  placeholder="Nt. 25cm x 15cm või Suurus M"
+                  placeholder={t('admin.portfolio.form.dimensions_placeholder')}
                 />
               </div>
 
               <div className="form-group">
-                <label htmlFor="year">Valmimisaasta</label>
+                <label htmlFor="year">{t('admin.portfolio.form.year')}</label>
                 <input
                   type="number"
                   id="year"
@@ -224,7 +224,7 @@ const TehtudToodForm = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="category">Kategooria *</label>
+                <label htmlFor="category">{t('admin.portfolio.form.category')} *</label>
                 <select
                   id="category"
                   name="category"
@@ -245,12 +245,12 @@ const TehtudToodForm = () => {
             {/* Right Column */}
             <div className="form-column">
               <div className="form-group">
-                <label>Töö pilt</label>
+                <label>{t('admin.portfolio.form.image')}</label>
                 <ImageUpload
                   currentImage={formData.image}
                   onImageChange={handleImageChange}
                   onImageRemove={handleImageRemove}
-                  placeholder="Lohistage töö pilt siia või klõpsake valimiseks"
+                  placeholder="Lohistage pala pilt siia või klõpsake valimiseks"
                 />
               </div>
             </div>
@@ -259,7 +259,7 @@ const TehtudToodForm = () => {
           <div className="form-actions">
             <button 
               type="button"
-              onClick={() => navigate('/admin/tehtud-tood')}
+              onClick={() => navigate('/admin/parimad-palad')}
               className="btn btn-secondary"
             >
               Tühista
@@ -269,7 +269,7 @@ const TehtudToodForm = () => {
               disabled={loading}
               className="btn btn-primary"
             >
-              {loading ? 'Salvestamine...' : (isEdit ? 'Uuenda töö' : 'Lisa töö')}
+              {loading ? 'Salvestamine...' : (isEdit ? t('admin.portfolio.form.update') : t('admin.portfolio.form.create'))}
             </button>
           </div>
         </form>
