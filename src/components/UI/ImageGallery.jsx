@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 
 const ImageGallery = ({ images = [], productTitle = '' }) => {
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -28,60 +29,15 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
     
-    // CRITICAL: Complete body scroll lock
-    const scrollY = window.scrollY
-    const body = document.body
-    const html = document.documentElement
-    
-    // Store current scroll position
-    body.dataset.scrollY = scrollY.toString()
-    
-    // Lock body completely
-    body.style.position = 'fixed'
-    body.style.top = `-${scrollY}px`
-    body.style.left = '0'
-    body.style.right = '0'
-    body.style.width = '100%'
-    body.style.height = '100%'
-    body.style.overflow = 'hidden'
-    
-    // Also lock html element
-    html.style.overflow = 'hidden'
-    html.style.height = '100%'
-    
-    // Prevent any scrolling on the page
-    body.style.touchAction = 'none'
-    body.style.userSelect = 'none'
+    // Lock body scroll
+    document.body.style.overflow = 'hidden'
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
     
-    // CRITICAL: Complete body scroll restore
-    const body = document.body
-    const html = document.documentElement
-    const scrollY = parseInt(body.dataset.scrollY || '0')
-    
-    // Restore body styles
-    body.style.position = ''
-    body.style.top = ''
-    body.style.left = ''
-    body.style.right = ''
-    body.style.width = ''
-    body.style.height = ''
-    body.style.overflow = ''
-    body.style.touchAction = ''
-    body.style.userSelect = ''
-    
-    // Restore html styles
-    html.style.overflow = ''
-    html.style.height = ''
-    
-    // Clean up data attribute
-    delete body.dataset.scrollY
-    
-    // Restore scroll position
-    window.scrollTo(0, scrollY)
+    // Restore body scroll
+    document.body.style.overflow = 'unset'
   }
 
   const nextImage = () => {
@@ -97,17 +53,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     const handleKeyDown = (e) => {
       if (!isModalOpen) return
       
-      e.preventDefault()
-      e.stopPropagation()
-      
       if (e.key === 'Escape') closeModal()
       if (e.key === 'ArrowRight') nextImage()
       if (e.key === 'ArrowLeft') prevImage()
     }
 
     if (isModalOpen) {
-      document.addEventListener('keydown', handleKeyDown, true)
-      return () => document.removeEventListener('keydown', handleKeyDown, true)
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isModalOpen])
 
@@ -127,23 +80,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   useEffect(() => {
     return () => {
       if (isModalOpen) {
-        const body = document.body
-        const html = document.documentElement
-        
-        body.style.position = ''
-        body.style.top = ''
-        body.style.left = ''
-        body.style.right = ''
-        body.style.width = ''
-        body.style.height = ''
-        body.style.overflow = ''
-        body.style.touchAction = ''
-        body.style.userSelect = ''
-        
-        html.style.overflow = ''
-        html.style.height = ''
-        
-        delete body.dataset.scrollY
+        document.body.style.overflow = 'unset'
       }
     }
   }, [])
@@ -168,10 +105,217 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex(index)
   }
 
+  // **MODAL COMPONENT - ERALDI KOMPONENT PORTALI JAOKS**
+  const Modal = () => (
+    <div className="modal-portal">
+      <div className="modal-overlay" onClick={handleModalBackdropClick}>
+        <div className="modal-container">
+          {/* Close button */}
+          <button 
+            className="modal-close" 
+            onClick={closeModal} 
+            aria-label="Sulge"
+          >
+            ×
+          </button>
+
+          {/* Image */}
+          <div className="modal-image-wrapper">
+            <img 
+              src={sortedImages[selectedIndex].image_url} 
+              alt={`${productTitle} pilt ${selectedIndex + 1}`}
+            />
+          </div>
+
+          {/* Navigation arrows - only show if more than 1 image */}
+          {sortedImages.length > 1 && (
+            <>
+              <button 
+                className="modal-nav modal-prev" 
+                onClick={prevImage}
+                aria-label="Eelmine pilt"
+              >
+                ‹
+              </button>
+              <button 
+                className="modal-nav modal-next" 
+                onClick={nextImage}
+                aria-label="Järgmine pilt"
+              >
+                ›
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <style jsx>{`
+        .modal-portal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          z-index: 9999;
+        }
+
+        .modal-overlay {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(0, 0, 0, 0.95);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+        }
+
+        .modal-container {
+          position: relative;
+          width: 90vw;
+          height: 90vh;
+          max-width: 1200px;
+          max-height: 800px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: default;
+        }
+
+        .modal-image-wrapper {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
+        .modal-image-wrapper img {
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
+          object-fit: contain;
+          border-radius: 8px;
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8);
+        }
+
+        .modal-close {
+          position: absolute;
+          top: -60px;
+          right: -60px;
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(255, 255, 255, 0.95);
+          color: #333;
+          font-size: 2rem;
+          font-weight: 300;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          z-index: 10001;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-close:hover {
+          background: rgba(255, 255, 255, 1);
+          transform: scale(1.1);
+        }
+
+        .modal-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          width: 50px;
+          height: 50px;
+          border-radius: 50%;
+          border: none;
+          background: rgba(255, 255, 255, 0.9);
+          color: #333;
+          font-size: 1.5rem;
+          font-weight: 300;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          z-index: 10001;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-nav:hover {
+          background: rgba(255, 255, 255, 1);
+          transform: translateY(-50%) scale(1.1);
+        }
+
+        .modal-prev {
+          left: -80px;
+        }
+
+        .modal-next {
+          right: -80px;
+        }
+
+        @media (max-width: 1200px) {
+          .modal-container {
+            width: 95vw;
+            height: 95vh;
+          }
+          
+          .modal-close {
+            top: -50px;
+            right: -50px;
+            width: 50px;
+            height: 50px;
+            font-size: 1.8rem;
+          }
+          
+          .modal-prev {
+            left: -60px;
+          }
+
+          .modal-next {
+            right: -60px;
+          }
+        }
+
+        @media (max-width: 1000px) {
+          .modal-container {
+            width: 98vw;
+            height: 98vh;
+          }
+          
+          .modal-close {
+            top: -40px;
+            right: -40px;
+            width: 45px;
+            height: 45px;
+            font-size: 1.6rem;
+          }
+          
+          .modal-prev {
+            left: -50px;
+          }
+
+          .modal-next {
+            right: -50px;
+          }
+        }
+      `}</style>
+    </div>
+  )
+
   return (
     <>
       <div className="image-gallery">
-        {/* Desktop Layout */}
+        {/* Desktop Gallery - Default */}
         <div className="desktop-gallery">
           {/* Main Image */}
           <div 
@@ -184,14 +328,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             />
           </div>
 
-          {/* Additional Images - Below main image, same width */}
+          {/* Additional Images */}
           {additionalImages.length > 0 && (
             <div className="additional-images">
               {additionalImages.map((image, index) => (
                 <div 
                   key={image.id}
                   className="additional-image clickable"
-                  onClick={() => openModal(index + 1)} // +1 because primary is at index 0
+                  onClick={() => openModal(index + 1)}
                 >
                   <img 
                     src={image.image_url} 
@@ -220,7 +364,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
               ))}
             </div>
 
-            {/* Navigation arrows - only show if more than 1 image */}
+            {/* Navigation arrows */}
             {sortedImages.length > 1 && (
               <>
                 <button 
@@ -241,7 +385,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             )}
           </div>
 
-          {/* Dots indicator - only show if more than 1 image */}
+          {/* Dots indicator */}
           {sortedImages.length > 1 && (
             <div className="carousel-dots">
               {sortedImages.map((_, index) => (
@@ -257,50 +401,10 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         </div>
       </div>
 
-      {/* MODAL - TÄIUSLIK IMPLEMENTATSIOON */}
-      {isModalOpen && !isMobile() && (
-        <div className="modal-portal">
-          <div className="modal-overlay" onClick={handleModalBackdropClick}>
-            <div className="modal-container">
-              {/* Close button - positioned absolutely relative to viewport */}
-              <button 
-                className="modal-close" 
-                onClick={closeModal} 
-                aria-label="Sulge"
-              >
-                ×
-              </button>
-
-              {/* Image container - perfectly centered */}
-              <div className="modal-image-wrapper">
-                <img 
-                  src={sortedImages[selectedIndex].image_url} 
-                  alt={`${productTitle} pilt ${selectedIndex + 1}`}
-                />
-              </div>
-
-              {/* Navigation arrows - only show if more than 1 image */}
-              {sortedImages.length > 1 && (
-                <>
-                  <button 
-                    className="modal-nav modal-prev" 
-                    onClick={prevImage}
-                    aria-label="Eelmine pilt"
-                  >
-                    ‹
-                  </button>
-                  <button 
-                    className="modal-nav modal-next" 
-                    onClick={nextImage}
-                    aria-label="Järgmine pilt"
-                  >
-                    ›
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* **PORTAL MODAL - AVANEB VÄLJASPOOL E-POOD KOMPONENTI** */}
+      {isModalOpen && !isMobile() && createPortal(
+        <Modal />,
+        document.body
       )}
 
       <style jsx>{`
@@ -448,255 +552,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           opacity: 0.7;
         }
 
-        /* ===== MODAL STYLES - TÄIUSLIK LAHENDUS ===== */
-        
-        .modal-portal {
-          /* Create a new stacking context at the highest level */
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          z-index: 2147483647; /* Maximum possible z-index */
-          pointer-events: none; /* Allow clicks to pass through portal */
-        }
-
-        .modal-overlay {
-          /* Full screen overlay */
-          position: absolute;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          
-          /* Dark backdrop */
-          background-color: rgba(0, 0, 0, 0.95);
-          
-          /* Enable interactions */
-          pointer-events: all;
-          
-          /* Center content */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          
-          /* Prevent scrolling */
-          overflow: hidden;
-          
-          /* Cursor indicates clickable backdrop */
-          cursor: pointer;
-          
-          /* Smooth appearance */
-          animation: modalFadeIn 0.3s ease-out;
-        }
-
-        @keyframes modalFadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        .modal-container {
-          /* Container for modal content */
-          position: relative;
-          
-          /* Size constraints - always fits in viewport */
-          width: 90vw;
-          height: 90vh;
-          max-width: 1200px;
-          max-height: 800px;
-          
-          /* Center the container */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          
-          /* Remove cursor pointer from container */
-          cursor: default;
-          
-          /* Ensure proper box-sizing */
-          box-sizing: border-box;
-          
-          /* Smooth scaling animation */
-          animation: modalScaleIn 0.3s ease-out;
-        }
-
-        @keyframes modalScaleIn {
-          from {
-            transform: scale(0.9);
-            opacity: 0;
-          }
-          to {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-
-        .modal-image-wrapper {
-          /* Image wrapper */
-          position: relative;
-          width: 100%;
-          height: 100%;
-          
-          /* Center image within wrapper */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          
-          /* Ensure proper box-sizing */
-          box-sizing: border-box;
-        }
-
-        .modal-image-wrapper img {
-          /* Image sizing - maintain aspect ratio, no cropping */
-          max-width: 100%;
-          max-height: 100%;
-          width: auto;
-          height: auto;
-          object-fit: contain;
-          
-          /* Visual enhancements */
-          border-radius: 8px;
-          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8);
-          
-          /* Prevent image from being clickable */
-          cursor: default;
-          pointer-events: none;
-          
-          /* Smooth appearance */
-          animation: imageAppear 0.4s ease-out 0.1s both;
-        }
-
-        @keyframes imageAppear {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        /* ===== CLOSE BUTTON ===== */
-        .modal-close {
-          /* Position relative to modal container */
-          position: absolute;
-          top: -20px;
-          right: -20px;
-          
-          /* Styling */
-          width: 70px;
-          height: 70px;
-          border-radius: 50%;
-          border: none;
-          
-          /* Background with blur effect */
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(15px);
-          
-          /* Text styling */
-          color: #333;
-          font-size: 2.5rem;
-          font-weight: 300;
-          line-height: 1;
-          
-          /* Layout */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          
-          /* Interactions */
-          cursor: pointer;
-          transition: all 0.3s ease;
-          
-          /* Layering */
-          z-index: 2147483648;
-          
-          /* Shadow */
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-          
-          /* Smooth appearance */
-          animation: buttonAppear 0.4s ease-out 0.2s both;
-        }
-
-        @keyframes buttonAppear {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        .modal-close:hover {
-          background: rgba(255, 255, 255, 1);
-          transform: scale(1.1);
-          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
-        }
-
-        /* ===== NAVIGATION ARROWS ===== */
-        .modal-nav {
-          /* Position relative to modal container */
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
-          
-          /* Styling */
-          width: 60px;
-          height: 60px;
-          border-radius: 50%;
-          border: none;
-          
-          /* Background with blur effect */
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(15px);
-          
-          /* Text styling */
-          color: #333;
-          font-size: 2rem;
-          font-weight: 300;
-          line-height: 1;
-          
-          /* Layout */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          
-          /* Interactions */
-          cursor: pointer;
-          transition: all 0.3s ease;
-          
-          /* Layering */
-          z-index: 2147483648;
-          
-          /* Shadow */
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-          
-          /* Smooth appearance */
-          animation: buttonAppear 0.4s ease-out 0.3s both;
-        }
-
-        .modal-nav:hover {
-          background: rgba(255, 255, 255, 1);
-          transform: translateY(-50%) scale(1.1);
-          box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
-        }
-
-        .modal-prev {
-          left: -80px;
-        }
-
-        .modal-next {
-          right: -80px;
-        }
-
-        /* ===== RESPONSIVE ADJUSTMENTS ===== */
         @media (max-width: 768px) {
           /* Hide desktop gallery, show mobile carousel */
           .desktop-gallery {
@@ -706,78 +561,8 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .mobile-carousel {
             display: block;
           }
-
-          /* Ensure modal never appears on mobile */
-          .modal-portal {
-            display: none !important;
-          }
         }
 
-        /* Large tablet adjustments */
-        @media (max-width: 1200px) and (min-width: 769px) {
-          .modal-container {
-            width: 95vw;
-            height: 95vh;
-            max-width: 1000px;
-            max-height: 700px;
-          }
-          
-          .modal-close {
-            width: 60px;
-            height: 60px;
-            font-size: 2.2rem;
-            top: -15px;
-            right: -15px;
-          }
-          
-          .modal-nav {
-            width: 55px;
-            height: 55px;
-            font-size: 1.8rem;
-          }
-          
-          .modal-prev {
-            left: -70px;
-          }
-
-          .modal-next {
-            right: -70px;
-          }
-        }
-
-        /* Small desktop adjustments */
-        @media (max-width: 1000px) and (min-width: 769px) {
-          .modal-container {
-            width: 98vw;
-            height: 98vh;
-            max-width: 900px;
-            max-height: 600px;
-          }
-          
-          .modal-close {
-            width: 55px;
-            height: 55px;
-            font-size: 2rem;
-            top: -12px;
-            right: -12px;
-          }
-          
-          .modal-nav {
-            width: 50px;
-            height: 50px;
-            font-size: 1.6rem;
-          }
-          
-          .modal-prev {
-            left: -60px;
-          }
-
-          .modal-next {
-            right: -60px;
-          }
-        }
-
-        /* Mobile carousel responsive adjustments */
         @media (max-width: 480px) {
           .carousel-nav {
             font-size: 1.2rem;
