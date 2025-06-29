@@ -174,8 +174,10 @@ const Portfolio = () => {
               {filteredItems.map((item, index) => (
                 <FadeInSection key={item.id} className="portfolio-item">
                   <div className={`portfolio-content ${index % 2 === 1 ? 'reverse' : ''}`}>
-                    <div className="portfolio-image">
-                      <img src={item.image} alt={item.title} />
+                    <div className="portfolio-image-container">
+                      <div className="portfolio-image">
+                        <img src={item.image} alt={item.title} />
+                      </div>
                     </div>
                     <div className="portfolio-info">
                       <div className="portfolio-meta">
@@ -221,7 +223,7 @@ const Portfolio = () => {
 
         .portfolio-content {
           display: flex;
-          gap: 48px;
+          gap: 64px;
           align-items: flex-start;
         }
 
@@ -229,27 +231,44 @@ const Portfolio = () => {
           flex-direction: row-reverse;
         }
 
+        /* Fixed-width container for consistent spacing */
+        .portfolio-image-container {
+          flex: 0 0 500px;
+          width: 500px;
+          height: 500px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+
         .portfolio-image {
-          flex: 0 0 45%;
-          max-height: 500px;
+          width: 100%;
+          height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
-        .portfolio-content.reverse .portfolio-image {
-          justify-content: flex-start;
-        }
-
         .portfolio-image img {
-          width: 100%;
-          max-height: 500px;
+          max-width: 100%;
+          max-height: 100%;
+          width: auto;
+          height: auto;
           object-fit: contain;
           border-radius: 4px;
         }
 
+        /* Ensure one dimension is always 500px */
+        .portfolio-image img {
+          min-width: 100%;
+          min-height: 100%;
+          object-fit: cover;
+        }
+
         .portfolio-info {
-          flex: 1 1 55%;
+          flex: 1;
+          min-width: 0; /* Prevents flex item from overflowing */
         }
 
         .portfolio-content.reverse .portfolio-info {
@@ -344,21 +363,21 @@ const Portfolio = () => {
           .portfolio-content.reverse {
             flex-direction: column !important;
             gap: 32px;
+            align-items: center;
           }
 
-          .portfolio-image {
+          .portfolio-image-container {
             flex: none;
-            max-height: 400px;
-          }
-
-          .portfolio-image img {
-            max-height: 400px;
+            width: 100%;
+            max-width: 400px;
+            height: 400px;
           }
 
           .portfolio-info,
           .portfolio-content.reverse .portfolio-info {
             flex: none;
-            text-align: left;
+            text-align: center;
+            width: 100%;
           }
 
           .portfolio-meta,
