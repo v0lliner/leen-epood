@@ -173,7 +173,7 @@ const Portfolio = () => {
             <div className="portfolio-grid">
               {filteredItems.map((item, index) => (
                 <FadeInSection key={item.id} className="portfolio-item">
-                  <div className="portfolio-content">
+                  <div className={`portfolio-content ${index % 2 === 1 ? 'reverse' : ''}`}>
                     <div className="portfolio-image">
                       <img src={item.image} alt={item.title} />
                     </div>
@@ -219,14 +219,14 @@ const Portfolio = () => {
           gap: 96px;
         }
 
-        .portfolio-item:nth-child(even) .portfolio-content {
-          flex-direction: row-reverse;
-        }
-
         .portfolio-content {
           display: flex;
           gap: 48px;
           align-items: flex-start;
+        }
+
+        .portfolio-content.reverse {
+          flex-direction: row-reverse;
         }
 
         .portfolio-image {
@@ -235,6 +235,10 @@ const Portfolio = () => {
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .portfolio-content.reverse .portfolio-image {
+          justify-content: flex-start;
         }
 
         .portfolio-image img {
@@ -248,12 +252,20 @@ const Portfolio = () => {
           flex: 1 1 55%;
         }
 
+        .portfolio-content.reverse .portfolio-info {
+          text-align: right;
+        }
+
         .portfolio-meta {
           display: flex;
           gap: 16px;
           margin-bottom: 16px;
           font-size: 0.9rem;
           color: #666;
+        }
+
+        .portfolio-content.reverse .portfolio-meta {
+          justify-content: flex-end;
         }
 
         .portfolio-year {
@@ -328,7 +340,8 @@ const Portfolio = () => {
             gap: 64px;
           }
 
-          .portfolio-content {
+          .portfolio-content,
+          .portfolio-content.reverse {
             flex-direction: column !important;
             gap: 32px;
           }
@@ -342,17 +355,20 @@ const Portfolio = () => {
             max-height: 400px;
           }
 
-          .portfolio-info {
+          .portfolio-info,
+          .portfolio-content.reverse .portfolio-info {
             flex: none;
+            text-align: left;
+          }
+
+          .portfolio-meta,
+          .portfolio-content.reverse .portfolio-meta {
+            justify-content: center;
+            margin-bottom: 12px;
           }
 
           .portfolio-info h3 {
             font-size: 1.5rem;
-          }
-
-          .portfolio-meta {
-            justify-content: center;
-            margin-bottom: 12px;
           }
 
           .portfolio-cta-section {
