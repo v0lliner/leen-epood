@@ -231,7 +231,7 @@ const FAQ = () => {
           margin-top: 128px;
           padding: 64px 48px;
           border-radius: 8px;
-          border-left: 4px solid var(--color-ultramarine);
+          background: #f8f9fa;
         }
 
         .faq-contact-content {
