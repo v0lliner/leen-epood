@@ -225,12 +225,12 @@ const Portfolio = () => {
 
         .portfolio-content {
           display: flex;
-          gap: 64px;
+          gap: 48px;
           align-items: flex-start;
         }
 
         .portfolio-image {
-          flex: 1;
+          flex: 0 0 45%;
           max-height: 500px;
           display: flex;
           align-items: center;
@@ -245,7 +245,7 @@ const Portfolio = () => {
         }
 
         .portfolio-info {
-          flex: 1;
+          flex: 1 1 55%;
         }
 
         .portfolio-meta {
@@ -334,11 +334,16 @@ const Portfolio = () => {
           }
 
           .portfolio-image {
+            flex: none;
             max-height: 400px;
           }
 
           .portfolio-image img {
             max-height: 400px;
+          }
+
+          .portfolio-info {
+            flex: none;
           }
 
           .portfolio-info h3 {
