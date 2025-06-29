@@ -131,21 +131,24 @@ const ProductCard = ({ product }) => {
           text-align: left;
         }
 
-        .product-title {
+        /* Increased specificity to override global styles */
+        .product-info .product-title {
           font-family: var(--font-heading);
-          font-size: 1.125rem;
+          font-size: 1.125rem !important;
           font-weight: 400;
           margin-bottom: 8px;
           color: var(--color-text);
           margin-top: 0;
+          line-height: 1.3;
         }
 
-        .product-price {
+        .product-info .product-price {
           font-family: var(--font-heading);
-          font-size: 1rem;
+          font-size: 1rem !important;
           font-weight: 500;
           color: var(--color-ultramarine);
           margin: 0;
+          line-height: 1.2;
         }
       `}</style>
     </Link>
