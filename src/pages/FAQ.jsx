@@ -312,7 +312,7 @@ const FAQ = () => {
           }
         }
       `}</style>
-    </>
+    </FadeInSection>
   );
 };
 
