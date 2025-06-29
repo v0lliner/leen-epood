@@ -61,37 +61,106 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     e.stopPropagation()
   }
 
+  // Mobile carousel navigation
+  const nextCarouselImage = () => {
+    setSelectedIndex((prev) => (prev + 1) % sortedImages.length)
+  }
+
+  const prevCarouselImage = () => {
+    setSelectedIndex((prev) => (prev - 1 + sortedImages.length) % sortedImages.length)
+  }
+
+  const goToSlide = (index) => {
+    setSelectedIndex(index)
+  }
+
   return (
     <>
       <div className="image-gallery">
-        {/* Main Image */}
-        <div 
-          className={`main-image ${!isMobile() ? 'clickable' : ''}`}
-          onClick={() => openModal(0)}
-        >
-          <img 
-            src={primaryImage.image_url} 
-            alt={productTitle}
-          />
+        {/* Desktop Layout */}
+        <div className="desktop-gallery">
+          {/* Main Image */}
+          <div 
+            className="main-image clickable"
+            onClick={() => openModal(0)}
+          >
+            <img 
+              src={primaryImage.image_url} 
+              alt={productTitle}
+            />
+          </div>
+
+          {/* Additional Images - Below main image, same width */}
+          {additionalImages.length > 0 && (
+            <div className="additional-images">
+              {additionalImages.map((image, index) => (
+                <div 
+                  key={image.id}
+                  className="additional-image clickable"
+                  onClick={() => openModal(index + 1)} // +1 because primary is at index 0
+                >
+                  <img 
+                    src={image.image_url} 
+                    alt={`${productTitle} pilt ${index + 2}`}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Additional Images - Below main image, same width */}
-        {additionalImages.length > 0 && (
-          <div className="additional-images">
-            {additionalImages.map((image, index) => (
-              <div 
-                key={image.id}
-                className={`additional-image ${!isMobile() ? 'clickable' : ''}`}
-                onClick={() => openModal(index + 1)} // +1 because primary is at index 0
-              >
-                <img 
-                  src={image.image_url} 
-                  alt={`${productTitle} pilt ${index + 2}`}
-                />
-              </div>
-            ))}
+        {/* Mobile Carousel */}
+        <div className="mobile-carousel">
+          <div className="carousel-container">
+            <div 
+              className="carousel-track"
+              style={{ transform: `translateX(-${selectedIndex * 100}%)` }}
+            >
+              {sortedImages.map((image, index) => (
+                <div key={image.id} className="carousel-slide">
+                  <img 
+                    src={image.image_url} 
+                    alt={`${productTitle} pilt ${index + 1}`}
+                  />
+                </div>
+              ))}
+            </div>
+
+            {/* Navigation arrows - only show if more than 1 image */}
+            {sortedImages.length > 1 && (
+              <>
+                <button 
+                  className="carousel-nav carousel-prev"
+                  onClick={prevCarouselImage}
+                  aria-label="Eelmine pilt"
+                >
+                  ‹
+                </button>
+                <button 
+                  className="carousel-nav carousel-next"
+                  onClick={nextCarouselImage}
+                  aria-label="Järgmine pilt"
+                >
+                  ›
+                </button>
+              </>
+            )}
           </div>
-        )}
+
+          {/* Dots indicator - only show if more than 1 image */}
+          {sortedImages.length > 1 && (
+            <div className="carousel-dots">
+              {sortedImages.map((_, index) => (
+                <button
+                  key={index}
+                  className={`carousel-dot ${index === selectedIndex ? 'active' : ''}`}
+                  onClick={() => goToSlide(index)}
+                  aria-label={`Mine pildile ${index + 1}`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Modal - Only on desktop */}
@@ -133,6 +202,15 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           width: 100%;
         }
 
+        /* Desktop Gallery - Default */
+        .desktop-gallery {
+          display: block;
+        }
+
+        .mobile-carousel {
+          display: none;
+        }
+
         .main-image {
           position: relative;
           width: 100%;
@@ -140,9 +218,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           border-radius: 4px;
           overflow: hidden;
           margin-bottom: 16px;
-        }
-
-        .main-image.clickable {
           cursor: pointer;
         }
 
@@ -153,7 +228,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           transition: transform 0.3s ease;
         }
 
-        .main-image.clickable:hover img {
+        .main-image:hover img {
           transform: scale(1.05);
         }
 
@@ -169,13 +244,10 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           border-radius: 4px;
           overflow: hidden;
           transition: transform 0.2s ease;
-        }
-
-        .additional-image.clickable {
           cursor: pointer;
         }
 
-        .additional-image.clickable:hover {
+        .additional-image:hover {
           transform: scale(1.02);
         }
 
@@ -185,19 +257,105 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           object-fit: cover;
         }
 
+        /* Mobile Carousel Styles */
+        .carousel-container {
+          position: relative;
+          width: 100%;
+          aspect-ratio: 4/3;
+          overflow: hidden;
+          border-radius: 4px;
+          background: #f5f5f5;
+        }
+
+        .carousel-track {
+          display: flex;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.3s ease;
+        }
+
+        .carousel-slide {
+          flex: 0 0 100%;
+          width: 100%;
+          height: 100%;
+        }
+
+        .carousel-slide img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+
+        .carousel-nav {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255, 255, 255, 0.9);
+          border: none;
+          color: #333;
+          font-size: 1.5rem;
+          padding: 8px 12px;
+          cursor: pointer;
+          border-radius: 4px;
+          transition: all 0.2s ease;
+          z-index: 10;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .carousel-nav:hover {
+          background: rgba(255, 255, 255, 1);
+          transform: translateY(-50%) scale(1.1);
+        }
+
+        .carousel-prev {
+          left: 12px;
+        }
+
+        .carousel-next {
+          right: 12px;
+        }
+
+        .carousel-dots {
+          display: flex;
+          justify-content: center;
+          gap: 8px;
+          margin-top: 16px;
+        }
+
+        .carousel-dot {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          border: none;
+          background: #ddd;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .carousel-dot.active {
+          background: var(--color-ultramarine);
+          transform: scale(1.2);
+        }
+
+        .carousel-dot:hover {
+          background: var(--color-ultramarine);
+          opacity: 0.7;
+        }
+
+        /* Modal Styles */
         .modal-overlay {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           bottom: 0;
-          z-index: 99999; /* Very high z-index to ensure it's on top */
+          z-index: 99999;
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 20px;
           cursor: pointer;
-          background-color: rgba(0, 0, 0, 0.95); /* Darker background */
+          background-color: rgba(0, 0, 0, 0.95);
         }
 
         .modal-image-container {
@@ -208,7 +366,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           align-items: center;
           justify-content: center;
           cursor: default;
-          z-index: 100000; /* Even higher for the image container */
+          z-index: 100000;
         }
 
         .modal-image-container img {
@@ -228,7 +386,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           color: #333;
           font-size: 3rem;
           cursor: pointer;
-          z-index: 100001; /* Highest z-index for close button */
+          z-index: 100001;
           padding: 12px 16px;
           line-height: 1;
           transition: all 0.2s ease;
@@ -275,28 +433,46 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           right: 20px;
         }
 
+        /* Mobile Responsive */
         @media (max-width: 768px) {
+          /* Hide desktop gallery, show mobile carousel */
+          .desktop-gallery {
+            display: none;
+          }
+
+          .mobile-carousel {
+            display: block;
+          }
+
+          /* Adjust additional images grid for smaller screens when desktop is shown */
           .additional-images {
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
           }
-
-          /* Remove hover effects on mobile */
-          .main-image img,
-          .additional-image {
-            transition: none;
-          }
-
-          .main-image:hover img,
-          .additional-image:hover {
-            transform: none;
-          }
         }
 
         @media (max-width: 480px) {
-          .additional-images {
-            grid-template-columns: 1fr;
-            gap: 8px;
+          .carousel-nav {
+            font-size: 1.2rem;
+            padding: 6px 10px;
+          }
+
+          .carousel-prev {
+            left: 8px;
+          }
+
+          .carousel-next {
+            right: 8px;
+          }
+
+          .carousel-dots {
+            gap: 6px;
+            margin-top: 12px;
+          }
+
+          .carousel-dot {
+            width: 10px;
+            height: 10px;
           }
         }
       `}</style>
