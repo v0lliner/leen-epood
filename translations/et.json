@@ -261,9 +261,7 @@
       "title": "Ei leidnud vastust oma küsimusele?",
       "text": "Võtke julgelt ühendust! Vastangi alati isiklikult ja võimalikult kiiresti.",
       "button": "Võta ühendust"
-    },
-    "cta_text": "Valmis avastama ainulaadseid käsitöötooteid?",
-    "cta_button": "Külasta e-poodi"
+    }
   },
   "errors": {
     "404": {

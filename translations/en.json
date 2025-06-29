@@ -261,9 +261,7 @@
       "title": "Didn't find an answer to your question?",
       "text": "Feel free to get in touch! I always respond personally and as quickly as possible.",
       "button": "Get in touch"
-    },
-    "cta_text": "Ready to discover unique handcrafted products?",
-    "cta_button": "Visit e-shop"
+    }
   },
   "errors": {
     "404": {
