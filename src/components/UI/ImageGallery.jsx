@@ -28,29 +28,57 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
     
-    // Lock body scroll and position
+    // CRITICAL: Complete body scroll lock
     const scrollY = window.scrollY
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${scrollY}px`
-    document.body.style.left = '0'
-    document.body.style.right = '0'
-    document.body.style.overflow = 'hidden'
-    document.body.style.width = '100%'
-    document.body.dataset.scrollY = scrollY.toString()
+    const body = document.body
+    const html = document.documentElement
+    
+    // Store current scroll position
+    body.dataset.scrollY = scrollY.toString()
+    
+    // Lock body completely
+    body.style.position = 'fixed'
+    body.style.top = `-${scrollY}px`
+    body.style.left = '0'
+    body.style.right = '0'
+    body.style.width = '100%'
+    body.style.height = '100%'
+    body.style.overflow = 'hidden'
+    
+    // Also lock html element
+    html.style.overflow = 'hidden'
+    html.style.height = '100%'
+    
+    // Prevent any scrolling on the page
+    body.style.touchAction = 'none'
+    body.style.userSelect = 'none'
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
     
-    // Restore body scroll and position
-    const scrollY = parseInt(document.body.dataset.scrollY || '0')
-    document.body.style.position = ''
-    document.body.style.top = ''
-    document.body.style.left = ''
-    document.body.style.right = ''
-    document.body.style.overflow = ''
-    document.body.style.width = ''
-    delete document.body.dataset.scrollY
+    // CRITICAL: Complete body scroll restore
+    const body = document.body
+    const html = document.documentElement
+    const scrollY = parseInt(body.dataset.scrollY || '0')
+    
+    // Restore body styles
+    body.style.position = ''
+    body.style.top = ''
+    body.style.left = ''
+    body.style.right = ''
+    body.style.width = ''
+    body.style.height = ''
+    body.style.overflow = ''
+    body.style.touchAction = ''
+    body.style.userSelect = ''
+    
+    // Restore html styles
+    html.style.overflow = ''
+    html.style.height = ''
+    
+    // Clean up data attribute
+    delete body.dataset.scrollY
     
     // Restore scroll position
     window.scrollTo(0, scrollY)
@@ -69,14 +97,17 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     const handleKeyDown = (e) => {
       if (!isModalOpen) return
       
+      e.preventDefault()
+      e.stopPropagation()
+      
       if (e.key === 'Escape') closeModal()
       if (e.key === 'ArrowRight') nextImage()
       if (e.key === 'ArrowLeft') prevImage()
     }
 
     if (isModalOpen) {
-      document.addEventListener('keydown', handleKeyDown)
-      return () => document.removeEventListener('keydown', handleKeyDown)
+      document.addEventListener('keydown', handleKeyDown, true)
+      return () => document.removeEventListener('keydown', handleKeyDown, true)
     }
   }, [isModalOpen])
 
@@ -96,13 +127,23 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   useEffect(() => {
     return () => {
       if (isModalOpen) {
-        document.body.style.position = ''
-        document.body.style.top = ''
-        document.body.style.left = ''
-        document.body.style.right = ''
-        document.body.style.overflow = ''
-        document.body.style.width = ''
-        delete document.body.dataset.scrollY
+        const body = document.body
+        const html = document.documentElement
+        
+        body.style.position = ''
+        body.style.top = ''
+        body.style.left = ''
+        body.style.right = ''
+        body.style.width = ''
+        body.style.height = ''
+        body.style.overflow = ''
+        body.style.touchAction = ''
+        body.style.userSelect = ''
+        
+        html.style.overflow = ''
+        html.style.height = ''
+        
+        delete body.dataset.scrollY
       }
     }
   }, [])
@@ -216,46 +257,48 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         </div>
       </div>
 
-      {/* Modal - Only on desktop */}
+      {/* MODAL - TÄIUSLIK IMPLEMENTATSIOON */}
       {isModalOpen && !isMobile() && (
-        <div className="modal-overlay" onClick={handleModalBackdropClick}>
-          <div className="modal-container">
-            {/* Close button */}
-            <button 
-              className="modal-close" 
-              onClick={closeModal} 
-              aria-label="Sulge"
-            >
-              ×
-            </button>
+        <div className="modal-portal">
+          <div className="modal-overlay" onClick={handleModalBackdropClick}>
+            <div className="modal-container">
+              {/* Close button - positioned absolutely relative to viewport */}
+              <button 
+                className="modal-close" 
+                onClick={closeModal} 
+                aria-label="Sulge"
+              >
+                ×
+              </button>
 
-            {/* Image container */}
-            <div className="modal-image-container">
-              <img 
-                src={sortedImages[selectedIndex].image_url} 
-                alt={`${productTitle} pilt ${selectedIndex + 1}`}
-              />
+              {/* Image container - perfectly centered */}
+              <div className="modal-image-wrapper">
+                <img 
+                  src={sortedImages[selectedIndex].image_url} 
+                  alt={`${productTitle} pilt ${selectedIndex + 1}`}
+                />
+              </div>
+
+              {/* Navigation arrows - only show if more than 1 image */}
+              {sortedImages.length > 1 && (
+                <>
+                  <button 
+                    className="modal-nav modal-prev" 
+                    onClick={prevImage}
+                    aria-label="Eelmine pilt"
+                  >
+                    ‹
+                  </button>
+                  <button 
+                    className="modal-nav modal-next" 
+                    onClick={nextImage}
+                    aria-label="Järgmine pilt"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
             </div>
-
-            {/* Navigation arrows - only show if more than 1 image */}
-            {sortedImages.length > 1 && (
-              <>
-                <button 
-                  className="modal-nav modal-prev" 
-                  onClick={prevImage}
-                  aria-label="Eelmine pilt"
-                >
-                  ‹
-                </button>
-                <button 
-                  className="modal-nav modal-next" 
-                  onClick={nextImage}
-                  aria-label="Järgmine pilt"
-                >
-                  ›
-                </button>
-              </>
-            )}
           </div>
         </div>
       )}
@@ -405,46 +448,66 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           opacity: 0.7;
         }
 
-        /* MODAL STYLES - CORRECTED RESPONSIVE IMPLEMENTATION */
-        .modal-overlay {
-          /* Fixed positioning - always centered on screen */
+        /* ===== MODAL STYLES - TÄIUSLIK LAHENDUS ===== */
+        
+        .modal-portal {
+          /* Create a new stacking context at the highest level */
           position: fixed;
           top: 0;
           left: 0;
           width: 100vw;
           height: 100vh;
-          
-          /* Maximum z-index to ensure nothing appears above */
-          z-index: 2147483647;
+          z-index: 2147483647; /* Maximum possible z-index */
+          pointer-events: none; /* Allow clicks to pass through portal */
+        }
+
+        .modal-overlay {
+          /* Full screen overlay */
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
           
           /* Dark backdrop */
           background-color: rgba(0, 0, 0, 0.95);
+          
+          /* Enable interactions */
+          pointer-events: all;
           
           /* Center content */
           display: flex;
           align-items: center;
           justify-content: center;
           
-          /* Prevent any scrolling or movement */
+          /* Prevent scrolling */
           overflow: hidden;
           
           /* Cursor indicates clickable backdrop */
           cursor: pointer;
           
-          /* Ensure proper box-sizing */
-          box-sizing: border-box;
-          padding: 20px;
+          /* Smooth appearance */
+          animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
 
         .modal-container {
           /* Container for modal content */
           position: relative;
           
-          /* Size constraints - responsive and contained */
-          width: 100%;
-          height: 100%;
-          max-width: min(90vw, 1000px);
-          max-height: min(90vh, 700px);
+          /* Size constraints - always fits in viewport */
+          width: 90vw;
+          height: 90vh;
+          max-width: 1200px;
+          max-height: 800px;
           
           /* Center the container */
           display: flex;
@@ -456,15 +519,29 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           
           /* Ensure proper box-sizing */
           box-sizing: border-box;
+          
+          /* Smooth scaling animation */
+          animation: modalScaleIn 0.3s ease-out;
         }
 
-        .modal-image-container {
-          /* Image container */
+        @keyframes modalScaleIn {
+          from {
+            transform: scale(0.9);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+
+        .modal-image-wrapper {
+          /* Image wrapper */
           position: relative;
           width: 100%;
           height: 100%;
           
-          /* Center image within container */
+          /* Center image within wrapper */
           display: flex;
           align-items: center;
           justify-content: center;
@@ -473,7 +550,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           box-sizing: border-box;
         }
 
-        .modal-image-container img {
+        .modal-image-wrapper img {
           /* Image sizing - maintain aspect ratio, no cropping */
           max-width: 100%;
           max-height: 100%;
@@ -483,18 +560,92 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           
           /* Visual enhancements */
           border-radius: 8px;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+          box-shadow: 0 25px 80px rgba(0, 0, 0, 0.8);
           
           /* Prevent image from being clickable */
           cursor: default;
           pointer-events: none;
+          
+          /* Smooth appearance */
+          animation: imageAppear 0.4s ease-out 0.1s both;
         }
 
-        /* CLOSE BUTTON - Top right of modal container */
+        @keyframes imageAppear {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        /* ===== CLOSE BUTTON ===== */
         .modal-close {
+          /* Position relative to modal container */
           position: absolute;
-          top: -15px;
-          right: -15px;
+          top: -20px;
+          right: -20px;
+          
+          /* Styling */
+          width: 70px;
+          height: 70px;
+          border-radius: 50%;
+          border: none;
+          
+          /* Background with blur effect */
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(15px);
+          
+          /* Text styling */
+          color: #333;
+          font-size: 2.5rem;
+          font-weight: 300;
+          line-height: 1;
+          
+          /* Layout */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          /* Interactions */
+          cursor: pointer;
+          transition: all 0.3s ease;
+          
+          /* Layering */
+          z-index: 2147483648;
+          
+          /* Shadow */
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+          
+          /* Smooth appearance */
+          animation: buttonAppear 0.4s ease-out 0.2s both;
+        }
+
+        @keyframes buttonAppear {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        .modal-close:hover {
+          background: rgba(255, 255, 255, 1);
+          transform: scale(1.1);
+          box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        /* ===== NAVIGATION ARROWS ===== */
+        .modal-nav {
+          /* Position relative to modal container */
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
           
           /* Styling */
           width: 60px;
@@ -503,8 +654,8 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           border: none;
           
           /* Background with blur effect */
-          background: rgba(255, 255, 255, 0.95);
-          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.9);
+          backdrop-filter: blur(15px);
           
           /* Text styling */
           color: #333;
@@ -526,67 +677,26 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           
           /* Shadow */
           box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-close:hover {
-          background: rgba(255, 255, 255, 1);
-          transform: scale(1.1);
-          box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
-        }
-
-        /* NAVIGATION ARROWS */
-        .modal-nav {
-          position: absolute;
-          top: 50%;
-          transform: translateY(-50%);
           
-          /* Styling */
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          border: none;
-          
-          /* Background with blur effect */
-          background: rgba(255, 255, 255, 0.9);
-          backdrop-filter: blur(10px);
-          
-          /* Text styling */
-          color: #333;
-          font-size: 1.8rem;
-          font-weight: 300;
-          line-height: 1;
-          
-          /* Layout */
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          
-          /* Interactions */
-          cursor: pointer;
-          transition: all 0.3s ease;
-          
-          /* Layering */
-          z-index: 2147483648;
-          
-          /* Shadow */
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+          /* Smooth appearance */
+          animation: buttonAppear 0.4s ease-out 0.3s both;
         }
 
         .modal-nav:hover {
           background: rgba(255, 255, 255, 1);
           transform: translateY(-50%) scale(1.1);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
         }
 
         .modal-prev {
-          left: -70px;
+          left: -80px;
         }
 
         .modal-next {
-          right: -70px;
+          right: -80px;
         }
 
-        /* RESPONSIVE ADJUSTMENTS */
+        /* ===== RESPONSIVE ADJUSTMENTS ===== */
         @media (max-width: 768px) {
           /* Hide desktop gallery, show mobile carousel */
           .desktop-gallery {
@@ -596,30 +706,65 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .mobile-carousel {
             display: block;
           }
+
+          /* Ensure modal never appears on mobile */
+          .modal-portal {
+            display: none !important;
+          }
         }
 
-        /* Tablet and smaller desktop adjustments */
-        @media (max-width: 1200px) {
-          .modal-overlay {
-            padding: 15px;
-          }
-          
+        /* Large tablet adjustments */
+        @media (max-width: 1200px) and (min-width: 769px) {
           .modal-container {
-            max-width: min(95vw, 900px);
-            max-height: min(95vh, 600px);
+            width: 95vw;
+            height: 95vh;
+            max-width: 1000px;
+            max-height: 700px;
           }
           
           .modal-close {
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
+            font-size: 2.2rem;
+            top: -15px;
+            right: -15px;
+          }
+          
+          .modal-nav {
+            width: 55px;
+            height: 55px;
             font-size: 1.8rem;
+          }
+          
+          .modal-prev {
+            left: -70px;
+          }
+
+          .modal-next {
+            right: -70px;
+          }
+        }
+
+        /* Small desktop adjustments */
+        @media (max-width: 1000px) and (min-width: 769px) {
+          .modal-container {
+            width: 98vw;
+            height: 98vh;
+            max-width: 900px;
+            max-height: 600px;
+          }
+          
+          .modal-close {
+            width: 55px;
+            height: 55px;
+            font-size: 2rem;
             top: -12px;
             right: -12px;
           }
           
           .modal-nav {
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             font-size: 1.6rem;
           }
           
@@ -629,47 +774,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
 
           .modal-next {
             right: -60px;
-          }
-        }
-
-        /* Small desktop and large tablet */
-        @media (max-width: 1000px) {
-          .modal-overlay {
-            padding: 10px;
-          }
-          
-          .modal-container {
-            max-width: min(98vw, 800px);
-            max-height: min(98vh, 500px);
-          }
-          
-          .modal-close {
-            width: 45px;
-            height: 45px;
-            font-size: 1.6rem;
-            top: -10px;
-            right: -10px;
-          }
-          
-          .modal-nav {
-            width: 40px;
-            height: 40px;
-            font-size: 1.4rem;
-          }
-          
-          .modal-prev {
-            left: -50px;
-          }
-
-          .modal-next {
-            right: -50px;
-          }
-        }
-
-        /* Ensure modal never appears on mobile/tablet */
-        @media (max-width: 768px) {
-          .modal-overlay {
-            display: none !important;
           }
         }
 
