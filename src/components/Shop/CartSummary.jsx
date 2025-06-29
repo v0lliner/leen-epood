@@ -212,7 +212,7 @@ const CartSummary = ({ isOpen, onClose }) => {
               <h4>Küsimusi tellimise kohta?</h4>
               <p>Leiate vastused saatmise, maksmise ja hoolduse kohta meie KKK lehelt.</p>
               <Link to="/kkk" className="link-with-arrow cart-faq-link" onClick={handleLinkClick}>
-                Vaata KKK <span className="arrow-wrapper">→</span>
+                Korduma Kippuvad Küsimused <span className="arrow-wrapper">→</span>
               </Link>
             </div>
           </div>
