@@ -295,9 +295,7 @@ const ProductDetail = () => {
                 <h2 className="related-title">{t('shop.product.related')}</h2>
                 <div className="related-products">
                   {relatedProducts.map((relatedProduct) => (
-                    <div key={relatedProduct.id} className="related-product-card">
-                      <ProductCard product={relatedProduct} />
-                    </div>
+                    <ProductCard key={relatedProduct.id} product={relatedProduct} />
                   ))}
                 </div>
               </FadeInSection>
@@ -510,24 +508,6 @@ const ProductDetail = () => {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 48px;
-        }
-
-        /* Specific styling for related product cards to match home page exactly */
-        .related-product-card :global(.product-title) {
-          font-family: var(--font-heading);
-          font-size: 1.125rem !important;
-          font-weight: 400 !important;
-          margin-bottom: 8px !important;
-          color: var(--color-text) !important;
-          margin-top: 0 !important;
-        }
-
-        .related-product-card :global(.product-price) {
-          font-family: var(--font-heading);
-          font-size: 1rem !important;
-          font-weight: 500 !important;
-          color: var(--color-ultramarine) !important;
-          margin: 0 !important;
         }
 
         .product-faq-section {
