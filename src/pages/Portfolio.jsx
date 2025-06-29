@@ -110,6 +110,40 @@ const Portfolio = () => {
     ? portfolioItems 
     : portfolioItems.filter(item => item.category === activeCategory);
 
+  // Helper function to determine if we're on mobile
+  const isMobile = () => window.innerWidth <= 768;
+
+  // Smart image sizing function
+  const handleImageLoad = (e) => {
+    const img = e.target;
+    const isLandscape = img.naturalWidth > img.naturalHeight;
+    const mobile = isMobile();
+    
+    if (mobile) {
+      // Mobile: Always constrain to screen width with max height
+      img.style.width = '100%';
+      img.style.height = 'auto';
+      img.style.maxWidth = '100%';
+      img.style.maxHeight = '300px';
+      img.style.objectFit = 'cover';
+    } else {
+      // Desktop: Pikim külg alati 500px
+      if (isLandscape) {
+        img.style.width = '500px';
+        img.style.height = 'auto';
+        img.style.maxWidth = '500px';
+        img.style.maxHeight = 'none';
+        img.style.objectFit = 'cover';
+      } else {
+        img.style.height = '500px';
+        img.style.width = 'auto';
+        img.style.maxHeight = '500px';
+        img.style.maxWidth = 'none';
+        img.style.objectFit = 'cover';
+      }
+    }
+  };
+
   if (loading) {
     return (
       <>
@@ -185,24 +219,7 @@ const Portfolio = () => {
                         <img 
                           src={item.image} 
                           alt={item.title}
-                          onLoad={(e) => {
-                            const img = e.target;
-                            const isLandscape = img.naturalWidth > img.naturalHeight;
-                            
-                            if (isLandscape) {
-                              // Landscape: width is the longest side, set to 500px
-                              img.style.width = '500px';
-                              img.style.height = 'auto';
-                              img.style.maxWidth = '500px';
-                              img.style.maxHeight = 'none';
-                            } else {
-                              // Portrait: height is the longest side, set to 500px
-                              img.style.height = '500px';
-                              img.style.width = 'auto';
-                              img.style.maxHeight = '500px';
-                              img.style.maxWidth = 'none';
-                            }
-                          }}
+                          onLoad={handleImageLoad}
                         />
                       </div>
                     </div>
@@ -383,29 +400,43 @@ const Portfolio = () => {
             gap: 64px;
           }
 
+          /* Mobile: Force column layout and center everything */
           .portfolio-content,
           .portfolio-content.reverse {
             flex-direction: column !important;
-            gap: 32px;
+            gap: 24px;
             align-items: center;
           }
 
+          /* Mobile: Center image container */
           .portfolio-image-container {
             justify-content: center !important;
+            width: 100%;
+          }
+
+          /* Mobile: Ensure image fits screen */
+          .portfolio-image {
+            width: 100%;
+            max-width: 100%;
           }
 
           .portfolio-image img {
-            /* Mobile: scale down if needed */
-            max-width: 100%;
-            max-height: 400px;
+            /* Mobile constraints - will be overridden by onLoad */
+            max-width: 100% !important;
+            max-height: 300px !important;
+            width: 100% !important;
+            height: auto !important;
+            object-fit: cover !important;
           }
 
+          /* Mobile: Center all text */
           .portfolio-info,
           .portfolio-content.reverse .portfolio-info {
             text-align: center;
             width: 100%;
           }
 
+          /* Mobile: Center meta information */
           .portfolio-meta,
           .portfolio-content.reverse .portfolio-meta {
             justify-content: center;
@@ -419,6 +450,20 @@ const Portfolio = () => {
           .portfolio-cta-section {
             margin-top: 96px;
             padding-top: 48px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .portfolio-content {
+            gap: 20px;
+          }
+
+          .portfolio-image img {
+            max-height: 250px !important;
+          }
+
+          .portfolio-info h3 {
+            font-size: 1.25rem;
           }
         }
       `}</style>
