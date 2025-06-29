@@ -32,16 +32,16 @@
   },
   "values": {
     "slow_fashion": {
-      "heading": "Aeglane mood",
-      "text": "Käsitsi loodud esemed, mis kestavad ja räägivad lugu."
+      "heading": "Praktiline ilu",
+      "text": "Iga ese on loodud kasutamiseks – ilu tuleb lihtsusest, materjalist ja läbimõeldud vormist."
     },
     "sustainability": {
-      "heading": "Taaskasutus ja teadlik valik",
-      "text": "Väärtus ei peitu mitte trendis, vaid selles, mida üks ese suudab tähendada."
+      "heading": "Isikupärane käekiri",
+      "text": "Looming on äratuntav detailide, materjalitunde ja tasakaaluka vormikeele kaudu."
     },
     "uniqueness": {
-      "heading": "Iga ese on oma nägu",
-      "text": "Leeni looming sünnib dialoogis vormi, inimese ja loodusega."
+      "heading": "Visuaalne proportsioon",
+      "text": "Tervik tekib siis, kui vormi osad toetavad üksteist – tasakaal on vaadeldav ja tajutav."
     }
   },
   "about": {
