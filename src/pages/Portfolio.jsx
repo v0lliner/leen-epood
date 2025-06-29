@@ -173,7 +173,7 @@ const Portfolio = () => {
             <div className="portfolio-grid">
               {filteredItems.map((item, index) => (
                 <FadeInSection key={item.id} className="portfolio-item">
-                  <div className="portfolio-content">
+                  <div className="portfolio-card">
                     <div className="portfolio-image">
                       <img src={item.image} alt={item.title} />
                     </div>
@@ -216,32 +216,45 @@ const Portfolio = () => {
 
         .portfolio-grid {
           display: grid;
-          gap: 96px;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          gap: 32px;
         }
 
-        .portfolio-item:nth-child(even) .portfolio-content {
-          flex-direction: row-reverse;
+        .portfolio-item {
+          width: 100%;
         }
 
-        .portfolio-content {
-          display: flex;
-          gap: 64px;
-          align-items: center;
+        .portfolio-card {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+          transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .portfolio-card:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
 
         .portfolio-image {
-          flex: 1;
+          width: 100%;
+          height: 250px;
+          overflow: hidden;
+          background-color: #f8f8f8;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .portfolio-image img {
           width: 100%;
-          aspect-ratio: 4/3;
-          object-fit: cover;
-          border-radius: 4px;
+          height: 100%;
+          object-fit: contain;
         }
 
         .portfolio-info {
-          flex: 1;
+          padding: 20px;
         }
 
         .portfolio-meta {
@@ -266,8 +279,8 @@ const Portfolio = () => {
         .portfolio-info h3 {
           font-family: var(--font-heading);
           font-weight: 500;
-          font-size: 1.75rem;
-          margin-bottom: 16px;
+          font-size: 1.25rem;
+          margin-bottom: 12px;
           color: var(--color-ultramarine);
         }
 
@@ -321,16 +334,20 @@ const Portfolio = () => {
           }
 
           .portfolio-grid {
-            gap: 64px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
           }
 
-          .portfolio-content {
-            flex-direction: column !important;
-            gap: 32px;
+          .portfolio-image {
+            height: 200px;
+          }
+
+          .portfolio-info {
+            padding: 16px;
           }
 
           .portfolio-info h3 {
-            font-size: 1.5rem;
+            font-size: 1.125rem;
           }
 
           .portfolio-meta {
@@ -341,6 +358,12 @@ const Portfolio = () => {
           .portfolio-cta-section {
             margin-top: 96px;
             padding-top: 48px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .portfolio-grid {
+            grid-template-columns: 1fr;
           }
         }
       `}</style>
