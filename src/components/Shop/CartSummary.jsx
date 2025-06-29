@@ -29,6 +29,15 @@ const CartSummary = ({ isOpen, onClose }) => {
             <Link to="/epood" className="back-to-shop" onClick={handleLinkClick}>
               {t('cart.back_to_shop')}
             </Link>
+            
+            {/* FAQ Reference for empty cart */}
+            <div className="cart-faq-section">
+              <h4>Küsimusi ostlemise kohta?</h4>
+              <p>Vaadake meie KKK lehelt vastuseid kõige sagedamini küsitavatele küsimustele.</p>
+              <Link to="/kkk" className="cart-faq-link" onClick={handleLinkClick}>
+                Vaata KKK →
+              </Link>
+            </div>
           </div>
         </div>
         <style jsx>{`
@@ -103,9 +112,45 @@ const CartSummary = ({ isOpen, onClose }) => {
             color: var(--color-ultramarine);
             text-decoration: none;
             font-weight: 500;
+            display: block;
+            margin-bottom: 32px;
           }
 
           .back-to-shop:hover {
+            text-decoration: underline;
+          }
+
+          .cart-faq-section {
+            padding: 24px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 24px;
+          }
+
+          .cart-faq-section h4 {
+            font-family: var(--font-heading);
+            color: var(--color-ultramarine);
+            margin-bottom: 12px;
+            font-size: 1rem;
+          }
+
+          .cart-faq-section p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 16px;
+          }
+
+          .cart-faq-link {
+            color: var(--color-ultramarine);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: opacity 0.2s ease;
+          }
+
+          .cart-faq-link:hover {
+            opacity: 0.8;
             text-decoration: underline;
           }
 
@@ -162,6 +207,15 @@ const CartSummary = ({ isOpen, onClose }) => {
             >
               {t('cart.continue')}
             </Link>
+
+            {/* FAQ Reference for filled cart */}
+            <div className="cart-faq-section">
+              <h4>Küsimusi tellimise kohta?</h4>
+              <p>Leiate vastused saatmise, maksmise ja hoolduse kohta meie KKK lehelt.</p>
+              <Link to="/kkk" className="cart-faq-link" onClick={handleLinkClick}>
+                Vaata KKK →
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -327,10 +381,45 @@ const CartSummary = ({ isOpen, onClose }) => {
             font-family: var(--font-body);
             font-weight: 500;
             transition: opacity 0.2s ease;
+            margin-bottom: 24px;
           }
 
           .checkout-button:hover {
             opacity: 0.9;
+          }
+
+          .cart-faq-section {
+            padding: 20px 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+          }
+
+          .cart-faq-section h4 {
+            font-family: var(--font-heading);
+            color: var(--color-ultramarine);
+            margin-bottom: 12px;
+            font-size: 1rem;
+          }
+
+          .cart-faq-section p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 16px;
+          }
+
+          .cart-faq-link {
+            color: var(--color-ultramarine);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: opacity 0.2s ease;
+          }
+
+          .cart-faq-link:hover {
+            opacity: 0.8;
+            text-decoration: underline;
           }
 
           @media (max-width: 480px) {

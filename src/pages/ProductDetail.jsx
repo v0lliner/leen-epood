@@ -299,6 +299,17 @@ const ProductDetail = () => {
                 </div>
               </FadeInSection>
             )}
+
+            {/* FAQ Reference */}
+            <FadeInSection className="product-faq-section">
+              <div className="product-faq-content">
+                <h3>Küsimusi toote kohta?</h3>
+                <p>Leiate vastused kõige sagedamini küsitavatele küsimustele meie KKK lehelt.</p>
+                <Link to="/kkk" className="link-with-arrow product-faq-link" onClick={scrollToTop}>
+                  Vaata KKK <span className="arrow-wrapper">→</span>
+                </Link>
+              </div>
+            </FadeInSection>
           </div>
         </section>
       </main>
@@ -498,6 +509,45 @@ const ProductDetail = () => {
           gap: 48px;
         }
 
+        .product-faq-section {
+          margin-top: 96px;
+          padding: 48px 32px;
+          border-radius: 8px;
+          background: #f8f9fa;
+          text-align: center;
+        }
+
+        .product-faq-content {
+          max-width: 500px;
+          margin: 0 auto;
+        }
+
+        .product-faq-content h3 {
+          font-family: var(--font-heading);
+          color: var(--color-ultramarine);
+          margin-bottom: 16px;
+          font-size: 1.25rem;
+        }
+
+        .product-faq-content p {
+          margin-bottom: 24px;
+          color: #666;
+          font-size: 1rem;
+          line-height: 1.6;
+        }
+
+        .product-faq-link {
+          font-size: 1.125rem;
+          font-family: var(--font-body);
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          transition: opacity 0.2s ease;
+        }
+
+        .product-faq-link:hover {
+          opacity: 0.8;
+        }
+
         .error-content {
           text-align: center;
           padding: 64px 0;
@@ -536,6 +586,15 @@ const ProductDetail = () => {
 
           .related-section {
             margin-top: 96px;
+          }
+
+          .product-faq-section {
+            margin-top: 64px;
+            padding: 32px 24px;
+          }
+
+          .product-faq-content h3 {
+            font-size: 1.125rem;
           }
         }
       `}</style>
