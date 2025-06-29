@@ -15,6 +15,9 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     return a.display_order - b.display_order
   })
 
+  // Get additional images (excluding primary)
+  const additionalImages = sortedImages.filter(img => !img.is_primary)
+
   const openModal = (index) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
@@ -63,18 +66,18 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           />
         </div>
 
-        {/* Thumbnail Grid - Optimized for up to 4 images */}
-        {sortedImages.length > 1 && (
-          <div className="thumbnails">
-            {sortedImages.map((image, index) => (
+        {/* Additional Images - Below main image, same width */}
+        {additionalImages.length > 0 && (
+          <div className="additional-images">
+            {additionalImages.map((image, index) => (
               <div 
                 key={image.id}
-                className={`thumbnail ${index === 0 ? 'active' : ''}`}
-                onClick={() => openModal(index)}
+                className="additional-image"
+                onClick={() => openModal(index + 1)} // +1 because primary is at index 0
               >
                 <img 
                   src={image.image_url} 
-                  alt={`${productTitle} pilt ${index + 1}`}
+                  alt={`${productTitle} pilt ${index + 2}`}
                 />
               </div>
             ))}
@@ -157,28 +160,26 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           transform: scale(1.05);
         }
 
-        .thumbnails {
+        .additional-images {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+          grid-template-columns: repeat(3, 1fr);
           gap: 8px;
-          max-width: 320px;
+          width: 100%;
         }
 
-        .thumbnail {
-          aspect-ratio: 1;
+        .additional-image {
+          aspect-ratio: 4/3;
           border-radius: 4px;
           overflow: hidden;
           cursor: pointer;
-          border: 2px solid transparent;
-          transition: border-color 0.2s ease;
+          transition: transform 0.2s ease;
         }
 
-        .thumbnail:hover,
-        .thumbnail.active {
-          border-color: var(--color-ultramarine);
+        .additional-image:hover {
+          transform: scale(1.02);
         }
 
-        .thumbnail img {
+        .additional-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
@@ -190,12 +191,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           left: 0;
           right: 0;
           bottom: 0;
-          z-index: 9999;
+          z-index: 99999; /* Very high z-index to ensure it's on top */
           display: flex;
           align-items: center;
           justify-content: center;
           padding: 20px;
           cursor: pointer;
+          background-color: rgba(0, 0, 0, 0.95); /* Darker background */
         }
 
         .modal-image-container {
@@ -206,6 +208,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           align-items: center;
           justify-content: center;
           cursor: default;
+          z-index: 100000; /* Even higher for the image container */
         }
 
         .modal-image-container img {
@@ -225,7 +228,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           color: #333;
           font-size: 3rem;
           cursor: pointer;
-          z-index: 10001;
+          z-index: 100001; /* Highest z-index for close button */
           padding: 12px 16px;
           line-height: 1;
           transition: all 0.2s ease;
@@ -256,7 +259,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           cursor: pointer;
           border-radius: 4px;
           transition: all 0.2s ease;
-          z-index: 10000;
+          z-index: 100000;
         }
 
         .modal-nav:hover {
@@ -283,6 +286,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           overflow-x: auto;
           padding: 8px;
           cursor: default;
+          z-index: 100000;
         }
 
         .modal-thumbnail {
@@ -308,10 +312,9 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         }
 
         @media (max-width: 768px) {
-          .thumbnails {
-            grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+          .additional-images {
+            grid-template-columns: repeat(2, 1fr);
             gap: 6px;
-            max-width: 280px;
           }
 
           .modal-close {
@@ -342,6 +345,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .modal-thumbnail {
             width: 50px;
             height: 50px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .additional-images {
+            grid-template-columns: 1fr;
+            gap: 8px;
           }
         }
       `}</style>
