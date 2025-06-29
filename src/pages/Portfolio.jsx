@@ -148,6 +148,18 @@ const Portfolio = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Helper function to format technique text with line breaks
+  const formatTechniqueText = (technique) => {
+    if (!technique) return '';
+    
+    return technique.split('\n').map((line, index) => (
+      <span key={index}>
+        {line}
+        {index < technique.split('\n').length - 1 && <br />}
+      </span>
+    ));
+  };
+
   if (loading) {
     return (
       <>
@@ -235,7 +247,7 @@ const Portfolio = () => {
                         </span>
                       </div>
                       <h3>{item.title}</h3>
-                      <p className="technique">{item.technique}</p>
+                      <p className="technique">{formatTechniqueText(item.technique)}</p>
                       <p className="dimensions">{item.dimensions}</p>
                     </div>
                   </div>

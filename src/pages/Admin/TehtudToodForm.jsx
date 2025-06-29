@@ -82,7 +82,7 @@ const TehtudToodForm = () => {
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      setError('Töö pealkiri on kohustuslik')
+      setError('Pala pealkiri on kohustuslik')
       return false
     }
     if (!formData.category) {
@@ -117,9 +117,9 @@ const TehtudToodForm = () => {
       if (error) {
         setError(error.message)
       } else {
-        setSuccess(isEdit ? 'Lemmik edukalt uuendatud!' : 'Lemmik edukalt lisatud!')
+        setSuccess(isEdit ? 'Pala edukalt uuendatud!' : 'Pala edukalt lisatud!')
         setTimeout(() => {
-          navigate('/admin/minu-lemmikud')
+          navigate('/admin/parimad-palad')
         }, 1500)
       }
     } catch (err) {
@@ -146,7 +146,7 @@ const TehtudToodForm = () => {
         <div className="form-header">
           <h1>{isEdit ? t('admin.portfolio.form.edit_title') : t('admin.portfolio.form.create_title')}</h1>
           <button 
-            onClick={() => navigate('/admin/minu-lemmikud')}
+            onClick={() => navigate('/admin/parimad-palad')}
             className="btn btn-secondary"
           >
             Tagasi
@@ -185,15 +185,16 @@ const TehtudToodForm = () => {
 
               <div className="form-group">
                 <label htmlFor="technique">{t('admin.portfolio.form.technique')}</label>
-                <input
-                  type="text"
+                <textarea
                   id="technique"
                   name="technique"
                   value={formData.technique}
                   onChange={handleInputChange}
+                  rows="3"
                   className="form-input"
                   placeholder={t('admin.portfolio.form.technique_placeholder')}
                 />
+                <small className="form-hint">Kasutage Enter klahvi uue rea alustamiseks</small>
               </div>
 
               <div className="form-group">
@@ -250,7 +251,7 @@ const TehtudToodForm = () => {
                   currentImage={formData.image}
                   onImageChange={handleImageChange}
                   onImageRemove={handleImageRemove}
-                  placeholder="Lohistage töö pilt siia või klõpsake valimiseks"
+                  placeholder="Lohistage pala pilt siia või klõpsake valimiseks"
                 />
               </div>
             </div>
@@ -259,7 +260,7 @@ const TehtudToodForm = () => {
           <div className="form-actions">
             <button 
               type="button"
-              onClick={() => navigate('/admin/minu-lemmikud')}
+              onClick={() => navigate('/admin/parimad-palad')}
               className="btn btn-secondary"
             >
               Tühista
@@ -386,6 +387,12 @@ const TehtudToodForm = () => {
 
         .form-input::placeholder {
           color: #999;
+        }
+
+        textarea.form-input {
+          resize: vertical;
+          min-height: 80px;
+          line-height: 1.5;
         }
 
         .form-hint {
