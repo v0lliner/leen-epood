@@ -269,7 +269,7 @@ const AdminTehtudTood = () => {
 
         .portfolio-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
           gap: 24px;
         }
 
@@ -316,16 +316,12 @@ const AdminTehtudTood = () => {
           width: 100%;
           height: 200px;
           overflow: hidden;
-          background-color: #f8f8f8;
-          display: flex;
-          align-items: center;
-          justify-content: center;
         }
 
         .portfolio-image img {
           width: 100%;
           height: 100%;
-          object-fit: contain;
+          object-fit: cover;
         }
 
         .portfolio-info {
@@ -434,25 +430,11 @@ const AdminTehtudTood = () => {
           }
 
           .portfolio-grid {
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-          }
-
-          .portfolio-image {
-            height: 180px;
-          }
-
-          .portfolio-info {
-            padding: 16px;
+            grid-template-columns: 1fr;
           }
 
           .portfolio-actions {
             justify-content: space-between;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .portfolio-grid {
-            grid-template-columns: 1fr;
           }
         }
       `}</style>
