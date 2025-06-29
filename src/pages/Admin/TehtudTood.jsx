@@ -11,6 +11,7 @@ const AdminTehtudTood = () => {
   const [error, setError] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [filterCategory, setFilterCategory] = useState('')
+  const [reordering, setReordering] = useState(false)
 
   useEffect(() => {
     loadPortfolioItems()
@@ -41,6 +42,32 @@ const AdminTehtudTood = () => {
     } else {
       setPortfolioItems(portfolioItems.filter(item => item.id !== id))
     }
+  }
+
+  const handleMoveUp = async (id) => {
+    setReordering(true)
+    const { error } = await portfolioItemService.moveItemUp(id)
+    
+    if (error) {
+      setError(error.message)
+    } else {
+      await loadPortfolioItems() // Reload to get updated order
+    }
+    
+    setReordering(false)
+  }
+
+  const handleMoveDown = async (id) => {
+    setReordering(true)
+    const { error } = await portfolioItemService.moveItemDown(id)
+    
+    if (error) {
+      setError(error.message)
+    } else {
+      await loadPortfolioItems() // Reload to get updated order
+    }
+    
+    setReordering(false)
   }
 
   const filteredItems = portfolioItems.filter(item => {
@@ -117,7 +144,15 @@ const AdminTehtudTood = () => {
           </div>
         </div>
 
-        <div className="portfolio-grid">
+        {/* Ordering Info */}
+        <div className="ordering-info">
+          <div className="info-card">
+            <h3>📋 Järjestuse muutmine</h3>
+            <p>Kasutage ↑ ja ↓ nuppe, et muuta palaside järjekorda kodulehel. Ülemine pala kuvatakse esimesena.</p>
+          </div>
+        </div>
+
+        <div className="portfolio-list">
           {filteredItems.length === 0 ? (
             <div className="empty-state">
               {portfolioItems.length === 0 ? (
@@ -138,37 +173,61 @@ const AdminTehtudTood = () => {
               )}
             </div>
           ) : (
-            filteredItems.map((item) => (
-              <div key={item.id} className="portfolio-card">
-                <div className="portfolio-image">
+            filteredItems.map((item, index) => (
+              <div key={item.id} className="portfolio-item">
+                <div className="item-order">
+                  <span className="order-number">#{item.display_order || index + 1}</span>
+                  <div className="order-controls">
+                    <button 
+                      onClick={() => handleMoveUp(item.id)}
+                      disabled={reordering || index === 0}
+                      className="btn btn-small btn-order"
+                      title="Liiguta üles"
+                    >
+                      ↑
+                    </button>
+                    <button 
+                      onClick={() => handleMoveDown(item.id)}
+                      disabled={reordering || index === filteredItems.length - 1}
+                      className="btn btn-small btn-order"
+                      title="Liiguta alla"
+                    >
+                      ↓
+                    </button>
+                  </div>
+                </div>
+
+                <div className="item-image">
                   <img src={item.image} alt={item.title} />
                 </div>
-                <div className="portfolio-info">
-                  <div className="portfolio-meta">
-                    <span className="portfolio-category">{getCategoryLabel(item.category)}</span>
-                    {item.year && <span className="portfolio-year">📅 {item.year}</span>}
+
+                <div className="item-info">
+                  <div className="item-meta">
+                    <span className="item-category">{getCategoryLabel(item.category)}</span>
+                    {item.year && <span className="item-year">📅 {item.year}</span>}
                   </div>
                   <h3>{item.title}</h3>
                   {item.technique && (
-                    <p className="portfolio-technique">{item.technique}</p>
+                    <p className="item-technique">{item.technique}</p>
                   )}
                   {item.dimensions && (
-                    <p className="portfolio-dimensions">📏 {item.dimensions}</p>
+                    <p className="item-dimensions">📏 {item.dimensions}</p>
                   )}
-                  <div className="portfolio-actions">
-                    <Link 
-                      to={`/admin/parimad-palad/${item.id}/edit`}
-                      className="btn btn-secondary"
-                    >
-                      ✏️ Muuda
-                    </Link>
-                    <button 
-                      onClick={() => handleDelete(item.id)}
-                      className="btn btn-danger"
-                    >
-                      🗑️ Kustuta
-                    </button>
-                  </div>
+                </div>
+
+                <div className="item-actions">
+                  <Link 
+                    to={`/admin/parimad-palad/${item.id}/edit`}
+                    className="btn btn-secondary"
+                  >
+                    ✏️ Muuda
+                  </Link>
+                  <button 
+                    onClick={() => handleDelete(item.id)}
+                    className="btn btn-danger"
+                  >
+                    🗑️ Kustuta
+                  </button>
                 </div>
               </div>
             ))
@@ -231,7 +290,7 @@ const AdminTehtudTood = () => {
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           padding: 24px;
-          margin-bottom: 32px;
+          margin-bottom: 24px;
         }
 
         .filters-grid {
@@ -267,14 +326,39 @@ const AdminTehtudTood = () => {
           border-color: var(--color-ultramarine);
         }
 
-        .portfolio-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-          gap: 24px;
+        .ordering-info {
+          margin-bottom: 32px;
+        }
+
+        .info-card {
+          background: #f8f9fa;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          padding: 20px;
+          border-left: 4px solid var(--color-ultramarine);
+        }
+
+        .info-card h3 {
+          font-family: var(--font-heading);
+          color: var(--color-ultramarine);
+          margin-bottom: 8px;
+          font-size: 1rem;
+        }
+
+        .info-card p {
+          color: #666;
+          font-size: 0.9rem;
+          line-height: 1.4;
+          margin: 0;
+        }
+
+        .portfolio-list {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
         }
 
         .empty-state {
-          grid-column: 1 / -1;
           text-align: center;
           padding: 64px 24px;
           background: white;
@@ -299,45 +383,95 @@ const AdminTehtudTood = () => {
           font-size: 1rem;
         }
 
-        .portfolio-card {
+        .portfolio-item {
           background: white;
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          overflow: hidden;
+          padding: 20px;
+          display: grid;
+          grid-template-columns: auto 120px 1fr auto;
+          gap: 20px;
+          align-items: center;
           transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .portfolio-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        .portfolio-item:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
-        .portfolio-image {
-          width: 100%;
-          height: 200px;
+        .item-order {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          min-width: 60px;
+        }
+
+        .order-number {
+          font-family: var(--font-heading);
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          font-size: 1.1rem;
+        }
+
+        .order-controls {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .btn-order {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f8f9fa;
+          border: 1px solid #dee2e6;
+          color: var(--color-text);
+          font-size: 1.2rem;
+          font-weight: bold;
+        }
+
+        .btn-order:hover:not(:disabled) {
+          background: var(--color-ultramarine);
+          color: white;
+          border-color: var(--color-ultramarine);
+        }
+
+        .btn-order:disabled {
+          opacity: 0.3;
+          cursor: not-allowed;
+        }
+
+        .item-image {
+          width: 120px;
+          height: 120px;
           overflow: hidden;
+          border-radius: 4px;
+          flex-shrink: 0;
         }
 
-        .portfolio-image img {
+        .item-image img {
           width: 100%;
           height: 100%;
           object-fit: cover;
         }
 
-        .portfolio-info {
-          padding: 20px;
+        .item-info {
+          min-width: 0;
         }
 
-        .portfolio-meta {
+        .item-meta {
           display: flex;
-          justify-content: space-between;
           align-items: center;
-          margin-bottom: 12px;
+          gap: 12px;
+          margin-bottom: 8px;
           flex-wrap: wrap;
-          gap: 8px;
         }
 
-        .portfolio-category {
+        .item-category {
           background: var(--color-ultramarine);
           color: white;
           padding: 4px 12px;
@@ -346,37 +480,37 @@ const AdminTehtudTood = () => {
           font-weight: 500;
         }
 
-        .portfolio-year {
+        .item-year {
           font-size: 0.8rem;
           color: #666;
         }
 
-        .portfolio-info h3 {
+        .item-info h3 {
           font-family: var(--font-heading);
           color: var(--color-text);
-          margin-bottom: 8px;
+          margin-bottom: 4px;
           font-size: 1.125rem;
           line-height: 1.3;
         }
 
-        .portfolio-technique {
+        .item-technique {
           color: #666;
           font-style: italic;
-          margin-bottom: 8px;
+          margin-bottom: 4px;
           font-size: 0.9rem;
           line-height: 1.4;
         }
 
-        .portfolio-dimensions {
+        .item-dimensions {
           color: #666;
           font-size: 0.8rem;
-          margin-bottom: 16px;
+          margin: 0;
         }
 
-        .portfolio-actions {
+        .item-actions {
           display: flex;
           gap: 8px;
-          flex-wrap: wrap;
+          flex-shrink: 0;
         }
 
         .btn {
@@ -394,7 +528,7 @@ const AdminTehtudTood = () => {
           white-space: nowrap;
         }
 
-        .btn:hover {
+        .btn:hover:not(:disabled) {
           opacity: 0.9;
         }
 
@@ -413,6 +547,11 @@ const AdminTehtudTood = () => {
           color: white;
         }
 
+        .btn-small {
+          padding: 4px 8px;
+          font-size: 0.8rem;
+        }
+
         @media (max-width: 768px) {
           .portfolio-container {
             padding: 24px 16px;
@@ -429,12 +568,33 @@ const AdminTehtudTood = () => {
             gap: 16px;
           }
 
-          .portfolio-grid {
+          .portfolio-item {
             grid-template-columns: 1fr;
+            gap: 16px;
+            text-align: center;
           }
 
-          .portfolio-actions {
-            justify-content: space-between;
+          .item-order {
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+          }
+
+          .order-controls {
+            flex-direction: row;
+            gap: 8px;
+          }
+
+          .item-image {
+            width: 100%;
+            max-width: 200px;
+            height: 200px;
+            margin: 0 auto;
+          }
+
+          .item-actions {
+            justify-content: center;
           }
         }
       `}</style>
