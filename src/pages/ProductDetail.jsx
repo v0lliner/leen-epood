@@ -447,7 +447,7 @@ const ProductDetail = () => {
           font-size: 2rem;
           font-weight: 500;
           color: var(--color-ultramarine);
-          margin-bottom: 32px;
+          margin-bottom: 48px;
         }
 
         .product-actions {
@@ -570,6 +570,7 @@ const ProductDetail = () => {
 
           .product-price {
             font-size: 1.5rem;
+            margin-bottom: 32px;
           }
 
           .add-to-cart-btn,
