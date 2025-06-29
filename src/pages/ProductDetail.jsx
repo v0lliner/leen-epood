@@ -159,17 +159,6 @@ const ProductDetail = () => {
 
   const validDimensions = getValidDimensions(product.dimensions);
 
-  // Get availability text
-  const getAvailabilityText = () => {
-    if (!product.available) {
-      return t('shop.product.sold_out');
-    }
-    if (isProductInCart) {
-      return t('shop.product.in_cart');
-    }
-    return t('shop.product.available');
-  };
-
   // Get button text
   const getButtonText = () => {
     if (!product.available) {
@@ -225,9 +214,6 @@ const ProductDetail = () => {
                   <p className="product-description">{product.description}</p>
                   
                   <div className="product-actions">
-                    <p className={`availability ${!product.available ? 'sold-out' : isProductInCart ? 'in-cart' : 'available'}`}>
-                      {getAvailabilityText()}
-                    </p>
                     {canAddToCart && (
                       <button 
                         className="link-with-arrow add-to-cart-btn"
@@ -370,24 +356,6 @@ const ProductDetail = () => {
           display: flex;
           flex-direction: column;
           gap: 24px;
-        }
-
-        .availability {
-          font-size: 0.9rem;
-          margin: 0;
-          font-weight: 500;
-        }
-
-        .availability.available {
-          color: #28a745;
-        }
-
-        .availability.sold-out {
-          color: #dc3545;
-        }
-
-        .availability.in-cart {
-          color: var(--color-ultramarine);
         }
 
         .add-to-cart-btn {

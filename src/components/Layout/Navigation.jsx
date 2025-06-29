@@ -227,8 +227,8 @@ const Navigation = () => {
             position: absolute;
             top: -8px;
             right: -8px;
-            background-color: var(--color-ultramarine);
-            color: white;
+            background-color: var(--color-pastel-yellow);
+            color: #333;
             font-size: 0.7rem;
             width: 18px;
             height: 18px;
@@ -236,6 +236,7 @@ const Navigation = () => {
             display: flex;
             align-items: center;
             justify-content: center;
+            font-weight: 600;
           }
 
           .nav-mobile-toggle {

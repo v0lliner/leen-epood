@@ -92,7 +92,7 @@ const ProductCard = ({ product }) => {
         }
 
         .sold-overlay {
-          background-color: var(--color-ultramarine);
+          background-color: rgba(0, 0, 0, 0.8);
         }
 
         .in-cart-overlay {
