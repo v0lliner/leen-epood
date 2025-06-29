@@ -33,11 +33,6 @@ body {
   font-size: 16px;
 }
 
-/* Modal open state - allows background scrolling but keeps modal fixed */
-body.modal-open {
-  /* Don't prevent scrolling, just ensure modal stays fixed */
-}
-
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 400;
@@ -105,21 +100,6 @@ img {
 .fade-in.visible {
   opacity: 1;
   transform: translateY(0);
-}
-
-/* Ensure no elements interfere with modal */
-.modal-overlay ~ * {
-  z-index: 1 !important;
-}
-
-/* Override any potential z-index conflicts */
-nav, header, footer, .navigation, .nav-container {
-  z-index: 100 !important;
-}
-
-/* Ensure modal is always highest */
-.modal-overlay {
-  z-index: 999999 !important;
 }
 
 /* Universal button styles - text only */
