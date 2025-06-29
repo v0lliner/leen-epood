@@ -11,14 +11,19 @@ export const productImageService = {
    */
   async getProductImages(productId) {
     try {
+      console.log('Getting product images for product ID:', productId)
+      
       const { data, error } = await supabase
         .from('product_images')
         .select('*')
         .eq('product_id', productId)
         .order('display_order', { ascending: true })
       
+      console.log('Product images query result:', { data, error })
+      
       return { data: data || [], error }
     } catch (error) {
+      console.error('Error in getProductImages:', error)
       return { data: [], error: { message: 'Network error occurred' } }
     }
   },
@@ -34,6 +39,22 @@ export const productImageService = {
    */
   async addProductImage(productId, imageUrl, imagePath, isPrimary = false, displayOrder = 0) {
     try {
+      console.log('Adding product image:', {
+        productId,
+        imageUrl,
+        imagePath,
+        isPrimary,
+        displayOrder
+      })
+
+      // If this is set as primary, first remove primary from all other images
+      if (isPrimary) {
+        await supabase
+          .from('product_images')
+          .update({ is_primary: false })
+          .eq('product_id', productId)
+      }
+
       const { data, error } = await supabase
         .from('product_images')
         .insert({
@@ -46,8 +67,11 @@ export const productImageService = {
         .select()
         .single()
       
+      console.log('Add product image result:', { data, error })
+      
       return { data, error }
     } catch (error) {
+      console.error('Error in addProductImage:', error)
       return { data: null, error: { message: 'Network error occurred' } }
     }
   },
@@ -80,13 +104,18 @@ export const productImageService = {
    */
   async deleteProductImage(imageId) {
     try {
+      console.log('Deleting product image:', imageId)
+      
       const { error } = await supabase
         .from('product_images')
         .delete()
         .eq('id', imageId)
       
+      console.log('Delete product image result:', { error })
+      
       return { error }
     } catch (error) {
+      console.error('Error in deleteProductImage:', error)
       return { error: { message: 'Network error occurred' } }
     }
   },
@@ -99,6 +128,8 @@ export const productImageService = {
    */
   async setPrimaryImage(productId, imageId) {
     try {
+      console.log('Setting primary image:', { productId, imageId })
+      
       // First, remove primary from all images of this product
       await supabase
         .from('product_images')
@@ -111,8 +142,11 @@ export const productImageService = {
         .update({ is_primary: true })
         .eq('id', imageId)
       
+      console.log('Set primary image result:', { error })
+      
       return { error }
     } catch (error) {
+      console.error('Error in setPrimaryImage:', error)
       return { error: { message: 'Network error occurred' } }
     }
   },
@@ -124,6 +158,8 @@ export const productImageService = {
    */
   async reorderImages(imageOrders) {
     try {
+      console.log('Reordering images:', imageOrders)
+      
       const updates = imageOrders.map(({ id, display_order }) => 
         supabase
           .from('product_images')
@@ -134,6 +170,7 @@ export const productImageService = {
       await Promise.all(updates)
       return { error: null }
     } catch (error) {
+      console.error('Error in reorderImages:', error)
       return { error: { message: 'Network error occurred' } }
     }
   }

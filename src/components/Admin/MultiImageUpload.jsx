@@ -6,7 +6,7 @@ const MultiImageUpload = ({
   productId,
   images = [],
   onImagesChange,
-  maxImages = 4, // Changed from 3 to 4
+  maxImages = 4,
   className = ''
 }) => {
   const [uploading, setUploading] = useState(false)
@@ -52,7 +52,12 @@ const MultiImageUpload = ({
             displayOrder
           )
           
-          if (dbError) throw new Error(dbError.message)
+          if (dbError) {
+            console.error('Database error when adding image:', dbError)
+            throw new Error(dbError.message)
+          }
+          
+          console.log('Successfully added image to database:', imageData)
           return imageData
         } else {
           // Return image data for form preview
@@ -67,8 +72,15 @@ const MultiImageUpload = ({
       })
 
       const newImages = await Promise.all(uploadPromises)
-      onImagesChange([...images, ...newImages])
+      console.log('All images uploaded successfully:', newImages)
+      
+      // Update the images state
+      const updatedImages = [...images, ...newImages]
+      console.log('Updated images array:', updatedImages)
+      onImagesChange(updatedImages)
+      
     } catch (err) {
+      console.error('Error uploading images:', err)
       setError(err.message)
     } finally {
       setUploading(false)
@@ -107,16 +119,22 @@ const MultiImageUpload = ({
 
   const handleRemoveImage = async (imageIndex) => {
     const image = images[imageIndex]
+    console.log('Removing image:', image)
     
     try {
       // Delete from storage
       if (image.image_path) {
+        console.log('Deleting from storage:', image.image_path)
         await storageService.deleteImage(image.image_path)
       }
       
       // Delete from database if it has a real ID
       if (productId && image.id && !image.id.startsWith('temp-')) {
-        await productImageService.deleteProductImage(image.id)
+        console.log('Deleting from database:', image.id)
+        const { error } = await productImageService.deleteProductImage(image.id)
+        if (error) {
+          console.error('Error deleting from database:', error)
+        }
       }
       
       const newImages = images.filter((_, index) => index !== imageIndex)
@@ -129,8 +147,10 @@ const MultiImageUpload = ({
         }
       }
       
+      console.log('Images after removal:', newImages)
       onImagesChange(newImages)
     } catch (err) {
+      console.error('Error removing image:', err)
       setError('Pildi eemaldamine ebaõnnestus')
     }
   }
@@ -145,6 +165,7 @@ const MultiImageUpload = ({
       try {
         await productImageService.setPrimaryImage(productId, images[imageIndex].id)
       } catch (err) {
+        console.error('Error setting primary image:', err)
         setError('Peamise pildi määramine ebaõnnestus')
         return
       }
@@ -191,6 +212,7 @@ const MultiImageUpload = ({
           await productImageService.reorderImages(imageOrders)
         }
       } catch (err) {
+        console.error('Error reordering images:', err)
         setError('Piltide järjestamine ebaõnnestus')
         return
       }
@@ -201,6 +223,8 @@ const MultiImageUpload = ({
   }
 
   const canAddMore = images.length < maxImages
+
+  console.log('MultiImageUpload render - images:', images, 'productId:', productId)
 
   return (
     <div className={`multi-image-upload ${className}`}>

@@ -29,6 +29,8 @@ const ProductDetail = () => {
     if (!product?.id) return;
     
     setImagesLoading(true);
+    console.log('Loading images for product:', product.id);
+    
     try {
       const { data, error } = await productImageService.getProductImages(product.id);
       
@@ -36,25 +38,34 @@ const ProductDetail = () => {
         console.warn('Failed to load product images:', error);
         // Fallback to main product image
         if (product.image) {
+          console.log('Using fallback image:', product.image);
           setProductImages([{
             id: 'fallback',
             image_url: product.image,
             is_primary: true,
             display_order: 0
           }]);
+        } else {
+          setProductImages([]);
         }
       } else {
+        console.log('Loaded product images from database:', data);
+        
         // If we have images from database, use them
         if (data && data.length > 0) {
           setProductImages(data);
         } else if (product.image) {
           // If no images in database but product has main image, use it as fallback
+          console.log('No images in database, using product main image as fallback');
           setProductImages([{
             id: 'fallback',
             image_url: product.image,
             is_primary: true,
             display_order: 0
           }]);
+        } else {
+          console.log('No images available for this product');
+          setProductImages([]);
         }
       }
     } catch (err) {
@@ -67,6 +78,8 @@ const ProductDetail = () => {
           is_primary: true,
           display_order: 0
         }]);
+      } else {
+        setProductImages([]);
       }
     } finally {
       setImagesLoading(false);
@@ -171,6 +184,8 @@ const ProductDetail = () => {
     return t('shop.product.add_to_cart');
   };
 
+  console.log('ProductDetail render - productImages:', productImages);
+
   return (
     <>
       <SEOHead page="shop" />
@@ -188,10 +203,19 @@ const ProductDetail = () => {
             <FadeInSection>
               <div className="product-detail">
                 <div className="product-images">
-                  <ImageGallery 
-                    images={productImages} 
-                    productTitle={product.title}
-                  />
+                  {productImages.length > 0 ? (
+                    <ImageGallery 
+                      images={productImages} 
+                      productTitle={product.title}
+                    />
+                  ) : (
+                    <div className="no-images">
+                      <div className="no-images-placeholder">
+                        <span>📷</span>
+                        <p>Pilte pole saadaval</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="product-info">
@@ -297,6 +321,28 @@ const ProductDetail = () => {
 
         .product-images {
           width: 100%;
+        }
+
+        .no-images {
+          width: 100%;
+          aspect-ratio: 4/3;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #f5f5f5;
+          border-radius: 4px;
+          border: 2px dashed #ddd;
+        }
+
+        .no-images-placeholder {
+          text-align: center;
+          color: #999;
+        }
+
+        .no-images-placeholder span {
+          font-size: 3rem;
+          display: block;
+          margin-bottom: 8px;
         }
 
         .product-title {

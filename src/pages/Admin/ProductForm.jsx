@@ -76,15 +76,19 @@ const ProductForm = () => {
         })
 
         // Load product images
+        console.log('Loading images for product:', id)
         const { data: imagesData, error: imagesError } = await productImageService.getProductImages(id)
         
         if (imagesError) {
           console.warn('Failed to load product images:', imagesError)
+          setImages([])
         } else {
+          console.log('Loaded product images:', imagesData)
           setImages(imagesData || [])
         }
       }
     } catch (err) {
+      console.error('Error loading product:', err)
       setError('Andmete laadimine ebaõnnestus')
     } finally {
       setLoading(false)
@@ -209,21 +213,32 @@ const ProductForm = () => {
         productData.id = id
       }
 
+      console.log('Saving product with data:', productData)
+      console.log('Current images:', images)
+
       const { data, error } = await productService.upsertProduct(productData)
       
       if (error) {
         setError(error.message)
       } else {
+        console.log('Product saved successfully:', data)
         setSuccess(isEdit ? t('admin.products.form.updated_success') : t('admin.products.form.created_success'))
         setTimeout(() => {
           navigate('/admin/products')
         }, 1500)
       }
     } catch (err) {
+      console.error('Error saving product:', err)
       setError(t('admin.products.form.network_error'))
     } finally {
       setLoading(false)
     }
+  }
+
+  // Handle images change with logging
+  const handleImagesChange = (newImages) => {
+    console.log('Images changed in ProductForm:', newImages)
+    setImages(newImages)
   }
 
   if (loading && isEdit) {
@@ -417,7 +432,7 @@ const ProductForm = () => {
             <MultiImageUpload
               productId={isEdit ? id : null}
               images={images}
-              onImagesChange={setImages}
+              onImagesChange={handleImagesChange}
               maxImages={4}
             />
           </div>
