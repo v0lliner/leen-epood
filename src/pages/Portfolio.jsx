@@ -216,48 +216,36 @@ const Portfolio = () => {
 
         .portfolio-grid {
           display: grid;
-          gap: 80px;
-        }
-
-        .portfolio-content {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 56px;
-          align-items: center;
-          min-height: 400px;
+          gap: 96px;
         }
 
         .portfolio-item:nth-child(even) .portfolio-content {
-          grid-template-columns: 1fr 1fr;
-          direction: rtl;
+          flex-direction: row-reverse;
         }
 
-        .portfolio-item:nth-child(even) .portfolio-info {
-          direction: ltr;
+        .portfolio-content {
+          display: flex;
+          gap: 48px;
+          align-items: flex-start;
         }
 
         .portfolio-image {
-          width: 100%;
-          height: 400px;
+          flex: 0 0 45%;
+          max-height: 500px;
           display: flex;
           align-items: center;
           justify-content: center;
-          overflow: hidden;
         }
 
         .portfolio-image img {
           width: 100%;
-          height: 100%;
+          max-height: 500px;
           object-fit: contain;
           border-radius: 4px;
         }
 
         .portfolio-info {
-          display: flex;
-          flex-direction: column;
-          justify-content: center;
-          height: 100%;
-          padding: 24px 0;
+          flex: 1 1 55%;
         }
 
         .portfolio-meta {
@@ -341,19 +329,21 @@ const Portfolio = () => {
           }
 
           .portfolio-content {
-            grid-template-columns: 1fr !important;
+            flex-direction: column !important;
             gap: 32px;
-            min-height: auto;
-            direction: ltr !important;
           }
 
           .portfolio-image {
-            height: 300px;
+            flex: none;
+            max-height: 400px;
+          }
+
+          .portfolio-image img {
+            max-height: 400px;
           }
 
           .portfolio-info {
-            padding: 0;
-            text-align: center;
+            flex: none;
           }
 
           .portfolio-info h3 {
