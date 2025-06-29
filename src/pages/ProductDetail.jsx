@@ -244,7 +244,7 @@ const ProductDetail = () => {
                 </div>
                 
                 <div className="product-info">
-                  <h1 className="product-title">{product.title}</h1>
+                  <h1 className="product-detail-title">{product.title}</h1>
                   
                   {validDimensions.length > 0 && (
                     <div className="product-dimensions">
@@ -268,7 +268,7 @@ const ProductDetail = () => {
                     </div>
                   )}
 
-                  <p className="product-price">{product.price}</p>
+                  <p className="product-detail-price">{product.price}</p>
                   
                   <div className="product-actions">
                     {canAddToCart && (
@@ -381,12 +381,15 @@ const ProductDetail = () => {
           margin-bottom: 8px;
         }
 
-        .product-title {
-          font-family: var(--font-heading);
-          font-size: 2rem;
-          font-weight: 400;
-          margin-bottom: 24px;
-          color: var(--color-text);
+        /* CRITICAL: Highly specific selectors to override global styles */
+        .product-info .product-detail-title {
+          font-family: var(--font-heading) !important;
+          font-size: 2rem !important;
+          font-weight: 400 !important;
+          margin-bottom: 24px !important;
+          color: var(--color-ultramarine) !important;
+          line-height: 1.2 !important;
+          margin-top: 0 !important;
         }
 
         .product-dimensions {
@@ -442,12 +445,15 @@ const ProductDetail = () => {
           margin-bottom: 0;
         }
 
-        .product-price {
-          font-family: var(--font-heading);
-          font-size: 2rem;
-          font-weight: 500;
-          color: var(--color-ultramarine);
-          margin-bottom: 32px;
+        /* CRITICAL: Highly specific selector for price to override global styles */
+        .product-info .product-detail-price {
+          font-family: var(--font-heading) !important;
+          font-size: 2rem !important;
+          font-weight: 500 !important;
+          color: var(--color-ultramarine) !important;
+          margin-bottom: 48px !important;
+          margin-top: 0 !important;
+          line-height: 1.2 !important;
         }
 
         .product-actions {
@@ -564,12 +570,14 @@ const ProductDetail = () => {
             gap: 32px;
           }
 
-          .product-title {
-            font-size: 1.5rem;
+          /* Mobile specific overrides */
+          .product-info .product-detail-title {
+            font-size: 1.5rem !important;
           }
 
-          .product-price {
-            font-size: 1.5rem;
+          .product-info .product-detail-price {
+            font-size: 1.5rem !important;
+            margin-bottom: 32px !important;
           }
 
           .add-to-cart-btn,
