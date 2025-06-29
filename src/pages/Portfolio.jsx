@@ -182,7 +182,19 @@ const Portfolio = () => {
                   <div className={`portfolio-content ${index % 2 === 1 ? 'reverse' : ''}`}>
                     <div className="portfolio-image-container">
                       <div className="portfolio-image">
-                        <img src={item.image} alt={item.title} />
+                        <img 
+                          src={item.image} 
+                          alt={item.title}
+                          onLoad={(e) => {
+                            const img = e.target;
+                            const isLandscape = img.naturalWidth > img.naturalHeight;
+                            if (isLandscape) {
+                              img.classList.add('landscape');
+                            } else {
+                              img.classList.add('portrait');
+                            }
+                          }}
+                        />
                       </div>
                     </div>
                     <div className="portfolio-info">
@@ -241,7 +253,6 @@ const Portfolio = () => {
         .portfolio-image-container {
           flex: 0 0 500px;
           width: 500px;
-          height: 500px;
           display: flex;
           overflow: hidden;
         }
@@ -257,7 +268,6 @@ const Portfolio = () => {
 
         .portfolio-image {
           max-width: 100%;
-          max-height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -265,11 +275,24 @@ const Portfolio = () => {
 
         .portfolio-image img {
           max-width: 100%;
-          max-height: 100%;
           width: auto;
           height: auto;
-          object-fit: contain;
           border-radius: 4px;
+          display: block;
+        }
+
+        /* Portrait images - keep original behavior */
+        .portfolio-image img.portrait {
+          max-height: 500px;
+          object-fit: contain;
+        }
+
+        /* Landscape images - eliminate empty space */
+        .portfolio-image img.landscape {
+          width: 100%;
+          height: 350px;
+          object-fit: cover;
+          object-position: center;
         }
 
         .portfolio-info {
@@ -376,8 +399,15 @@ const Portfolio = () => {
             flex: none;
             width: 100%;
             max-width: 400px;
-            height: 400px;
             justify-content: center !important;
+          }
+
+          .portfolio-image img.landscape {
+            height: 250px;
+          }
+
+          .portfolio-image img.portrait {
+            max-height: 400px;
           }
 
           .portfolio-info,
