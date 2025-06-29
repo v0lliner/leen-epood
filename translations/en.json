@@ -225,6 +225,46 @@
       "title": "Keldrimäe farm location"
     }
   },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "description": "Find answers to the most commonly asked questions",
+    "intro": "Here you'll find answers to questions I'm asked most often. If your question remains unanswered, feel free to get in touch!",
+    "shipping": {
+      "question": "How does order shipping work and how quickly will my order arrive?",
+      "answer": "I send all orders via Estonian Post within 1-3 working days after order confirmation. In Estonia, orders usually arrive within 2-4 working days. I always include a small personal note with each order – it's my way of saying thank you for choosing handcraft.\n\nLarger ceramic products are packed with extra care to ensure they arrive safely. I always use recycled packaging because sustainability is important to me."
+    },
+    "uniqueness": {
+      "question": "Is each product truly unique? Why can't I order exactly the same product again?",
+      "answer": "Yes, every piece I create is truly unique! Since I make everything by hand, it's impossible to create two exactly identical products. Clay behaves slightly differently each time, glazes give different results, and my hands never move exactly the same way.\n\nThis is the beauty of handcraft – each piece carries the moment when it was born. If you see something you like, I recommend deciding quickly, because exactly the same will never come again."
+    },
+    "materials": {
+      "question": "What materials do you use and where do they come from?",
+      "answer": "I only use quality and as natural materials as possible. For ceramics, I use local clay and natural glazes. For clothing, I prefer linen, cotton and wool – materials that breathe and only become more beautiful over time.\n\nI always try to find materials as close as possible. Estonian craft traditions are rich and I want to carry them forward. I choose each material carefully, thinking about how it ages over time and whether it fits with my values."
+    },
+    "care": {
+      "question": "How to care for ceramics and clothing so they last long?",
+      "answer": "Ceramics are quite durable – most products can be washed in the dishwasher, but hand washing is always gentler. Avoid sudden temperature changes and hitting against hard surfaces.\n\nI recommend washing clothes by hand or in gentle mode in cold water. Natural materials love air, so always dry in shade. You can iron at low temperature. With proper care, my clothes last for years and only become more beautiful over time – like good wine."
+    },
+    "custom": {
+      "question": "Do you also do custom work? Can I order something special?",
+      "answer": "Yes, I'm happy to do custom work! I especially enjoy creating something with personal meaning – like a wedding gift or memorial piece. For custom work, we'll discuss your wishes and possibilities together.\n\nCustom work usually takes 4-8 weeks, depending on complexity. Price depends on material, size and workload. Feel free to get in touch and let's talk about your ideas – sometimes the most beautiful things are born from such collaboration!"
+    },
+    "payment": {
+      "question": "What payment methods are available and is installment payment possible?",
+      "answer": "Currently I can accept bank transfers and cash (if you come in person). I'm working on making card payments directly in the e-shop possible soon.\n\nFor larger orders, we can also agree on partial payments – for example, half upfront and half upon completion. For me, it's important that beautiful handcraft is accessible even when the budget is limited. We'll always agree!"
+    },
+    "time": {
+      "question": "How long does it take to make a new product and when do new items come for sale?",
+      "answer": "Ceramics usually takes 2-3 weeks to complete – clay must dry slowly, then comes the first firing, glaze application and second firing. For clothing, it depends on complexity, but usually 1-2 weeks.\n\nI add new products to the e-shop irregularly – when inspiration comes and hands get them ready. The best way to stay updated is to follow my Facebook page or visit the e-shop from time to time. Each new item is a small event!"
+    },
+    "contact": {
+      "title": "Didn't find an answer to your question?",
+      "text": "Feel free to get in touch! I always respond personally and as quickly as possible.",
+      "button": "Get in touch"
+    },
+    "cta_text": "Ready to discover unique handcrafted products?",
+    "cta_button": "Visit e-shop"
+  },
   "errors": {
     "404": {
       "title": "Page not found",
@@ -372,6 +412,10 @@
     "contact": {
       "title": "Contact - Leen Väränen",
       "description": "Contact ceramicist and clothing designer Leen Väränen. Keldrimäe farm, Kuku village, Rapla county."
+    },
+    "faq": {
+      "title": "FAQ - Leen Väränen",
+      "description": "Answers to frequently asked questions about Leen Väränen's handcrafted products, orders and care."
     }
   }
 }

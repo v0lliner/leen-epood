@@ -13,6 +13,7 @@ import Shop from './pages/Shop';
 import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
 import Contact from './pages/Contact';
+import FAQ from './pages/FAQ';
 import NotFound from './pages/NotFound';
 import AdminLogin from './pages/Admin/Login';
 import AdminDashboard from './pages/Admin/Dashboard';
@@ -95,6 +96,13 @@ function App() {
                   <div className="app">
                     <Navigation />
                     <Contact />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/kkk" element={
+                  <div className="app">
+                    <Navigation />
+                    <FAQ />
                     <Footer />
                   </div>
                 } />

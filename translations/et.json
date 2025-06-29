@@ -225,6 +225,46 @@
       "title": "Keldrimäe talu asukoht"
     }
   },
+  "faq": {
+    "title": "Korduma kippuvad küsimused",
+    "description": "Leiate vastused kõige sagedamini küsitavatele küsimustele",
+    "intro": "Siin leiate vastused küsimustele, mida mulle kõige sagedamini esitatakse. Kui teie küsimus jääb vastuseta, võtke julgelt ühendust!",
+    "shipping": {
+      "question": "Kuidas toimub tellimuste saatmine ja kui kiiresti jõuab tellimus kohale?",
+      "answer": "Saadan kõik tellimused Eesti Posti kaudu 1-3 tööpäeva jooksul pärast tellimuse kinnitamist. Eestis jõuab tellimus tavaliselt kohale 2-4 tööpäeva jooksul. Iga tellimuse juurde panen alati väikese isikliku märkme – see on minu viis öelda aitäh, et valisite käsitöö.\n\nSuuremad keraamikatooted pakendatakse eriti hoolikalt, et need tervena kohale jõuaksid. Kasutan alati taaskasutatud pakendeid, sest jätkusuutlikkus on mulle oluline."
+    },
+    "uniqueness": {
+      "question": "Kas iga toode on tõesti ainulaadne? Miks ei saa täpselt sama toodet uuesti tellida?",
+      "answer": "Jah, iga minu loodud ese on tõepoolest ainulaadne! Kuna teen kõike käsitsi, ei ole võimalik luua kahte täpselt ühesugust toodet. Savi käitub iga kord natuke teisiti, glasuurid annavad erinevaid tulemusi ja ka minu käed ei liigu kunagi täpselt samamoodi.\n\nSee ongi käsitöö ilu – iga ese kannab endas hetke, mil see sündis. Kui näete midagi, mis teile meeldib, soovitan kohe otsustada, sest täpselt sama enam ei tule."
+    },
+    "materials": {
+      "question": "Milliseid materjale kasutate ja kust need pärinevad?",
+      "answer": "Kasutan ainult kvaliteetseid ja võimalikult looduslähedaseid materjale. Keraamika jaoks kasutan kohalikku savi ja looduslikke glasuure. Rõivaste puhul eelistangi lina, puuvilla ja villa – materjale, mis hingavad ja aja jooksul ainult ilusamaks muutuvad.\n\nPüüan alati leida materjale võimalikult lähedalt. Eesti käsitöötraditsioonid on rikkalikud ja tahan neid edasi kanda. Iga materjali valin hoolikalt, mõeldes sellele, kuidas see aja jooksul vananeb ja kas see sobib kokku minu väärtustega."
+    },
+    "care": {
+      "question": "Kuidas hooldada keraamikat ja rõivaid, et need kaua kestaksid?",
+      "answer": "Keraamika on üsna vastupidav – enamikku tooteid saab pesta nõudepesumasinas, kuid käsitsi pesemine on alati õrnem. Vältige järske temperatuurimuutusi ja löömist kõvade pindade vastu.\n\nRõivaid soovitan pesta käsitsi või õrnas režiimis külmas vees. Looduslikud materjalid armastavad õhku, seega kuivatage alati varjus. Triikida saab madalal temperatuuril. Õige hooldusega kestavad minu rõivad aastaid ja muutuvad aja jooksul ainult ilusamaks – nagu hea vein."
+    },
+    "custom": {
+      "question": "Kas teete ka tellimustöid? Saab tellida midagi spetsiaalset?",
+      "answer": "Jah, teen hea meelega tellimustöid! Eriti meeldib mulle luua midagi, millel on isiklik tähendus – näiteks pulmakingi või mälestusese. Tellimustöö puhul arutame koos läbi teie soovid ja võimalused.\n\nTellimustöö võtab tavaliselt 4-8 nädalat, sõltuvalt keerukusest. Hind sõltub materjalist, suurusest ja töömahust. Võtke julgelt ühendust ja räägime teie ideedest – vahel sünnivad kõige ilusamad asjad just sellisest koostööst!"
+    },
+    "payment": {
+      "question": "Millised makseviisid on võimalikud ja kas saab ka järelmaksu?",
+      "answer": "Praegu saan vastu võtta pangaülekandeid ja sularaha (kui tulete kohale). Töötan selle kallal, et peagi oleksid võimalikud ka kaardimaksed otse e-poes.\n\nSuurema tellimuse puhul saame kokku leppida ka osalistes maksetes – näiteks pool raha ette ja pool valmimise järel. Minu jaoks on oluline, et ilus käsitöö oleks kättesaadav ka siis, kui eelarve on piiratud. Räägime alati kokku!"
+    },
+    "time": {
+      "question": "Kui kaua võtab aega uue toote valmimise ja millal tulevad uued asjad müüki?",
+      "answer": "Keraamika valmimiseks kulub tavaliselt 2-3 nädalat – savi peab aeglaselt kuivama, siis tuleb esimene põletamine, glasuuri kandmine ja teine põletamine. Rõivaste puhul sõltub kõik keerukusest, aga tavaliselt 1-2 nädalat.\n\nUusi tooteid lisan e-poodi ebaregulaarselt – siis, kui inspiratsioon tuleb ja käed valmis saavad. Parim viis kursis olla on jälgida minu Facebooki lehte või külastada e-poodi aeg-ajalt. Iga uus asi on väike sündmus!"
+    },
+    "contact": {
+      "title": "Ei leidnud vastust oma küsimusele?",
+      "text": "Võtke julgelt ühendust! Vastangi alati isiklikult ja võimalikult kiiresti.",
+      "button": "Võta ühendust"
+    },
+    "cta_text": "Valmis avastama ainulaadseid käsitöötooteid?",
+    "cta_button": "Külasta e-poodi"
+  },
   "errors": {
     "404": {
       "title": "Lehekülge ei leitud",
@@ -372,6 +412,10 @@
     "contact": {
       "title": "Kontakt - Leen Väränen",
       "description": "Võtke keraamiku ja rõivadisainer Leen Väränenga ühendust. Keldrimäe talu, Kuku küla, Rapla vald."
+    },
+    "faq": {
+      "title": "KKK - Leen Väränen",
+      "description": "Vastused korduma kippuvatele küsimustele Leen Väräneni käsitöötoodete, tellimuste ja hoolduse kohta."
     }
   }
 }
