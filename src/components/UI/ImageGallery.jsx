@@ -391,7 +391,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          padding: 0;
+          padding: 40px;
           margin: 0;
         }
 
@@ -402,15 +402,15 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           justify-content: center;
           width: 100%;
           height: 100%;
-          max-width: 100vw;
-          max-height: 100vh;
+          max-width: 100%;
+          max-height: 100%;
           cursor: default;
         }
 
         .modal-image-container {
           position: relative;
-          max-width: 90vw;
-          max-height: 90vh;
+          max-width: calc(100vw - 120px);
+          max-height: calc(100vh - 120px);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -420,10 +420,12 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         .modal-image-container img {
           max-width: 100%;
           max-height: 100%;
+          width: auto;
+          height: auto;
           object-fit: contain;
-          border-radius: 4px;
+          border-radius: 8px;
           cursor: default;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
         }
 
         .modal-close {
@@ -433,26 +435,26 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           background: rgba(255, 255, 255, 0.95);
           border: none;
           color: #333;
-          font-size: 3rem;
+          font-size: 2.5rem;
           cursor: pointer;
           z-index: 1000001;
           padding: 8px 12px;
           line-height: 1;
           transition: all 0.2s ease;
           border-radius: 50%;
-          width: 80px;
-          height: 80px;
+          width: 70px;
+          height: 70px;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
           font-weight: 300;
         }
 
         .modal-close:hover {
           background: rgba(255, 255, 255, 1);
           transform: scale(1.1);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
         }
 
         .modal-nav {
@@ -526,6 +528,40 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .carousel-dot {
             width: 10px;
             height: 10px;
+          }
+        }
+
+        /* Smaller screens - adjust modal padding */
+        @media (max-width: 1200px) {
+          .modal-overlay {
+            padding: 30px;
+          }
+
+          .modal-image-container {
+            max-width: calc(100vw - 100px);
+            max-height: calc(100vh - 100px);
+          }
+        }
+
+        @media (max-width: 900px) {
+          .modal-overlay {
+            padding: 20px;
+          }
+
+          .modal-image-container {
+            max-width: calc(100vw - 80px);
+            max-height: calc(100vh - 80px);
+          }
+
+          .modal-close {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+          }
+
+          .modal-nav {
+            font-size: 1.5rem;
+            padding: 8px 12px;
           }
         }
 
