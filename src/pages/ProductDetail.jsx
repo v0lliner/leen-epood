@@ -29,18 +29,16 @@ const ProductDetail = () => {
     if (!product?.id) return;
     
     setImagesLoading(true);
-    console.log('Loading images for product:', product.id, product.title);
+    console.log('Loading images for product:', product.id);
     
     try {
-      // Consistent retry mechanism for all products
+      // Try multiple times to ensure we get the images
       let retryCount = 0;
-      const maxRetries = 5; // Increased retries
+      const maxRetries = 3;
       let imagesData = null;
       let lastError = null;
 
       while (retryCount < maxRetries && !imagesData) {
-        console.log(`Attempt ${retryCount + 1} to load images for product ${product.id}`);
-        
         const { data, error } = await productImageService.getProductImages(product.id);
         
         if (error) {
@@ -48,20 +46,16 @@ const ProductDetail = () => {
           lastError = error;
           retryCount++;
           if (retryCount < maxRetries) {
-            // Exponential backoff
-            const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000);
-            console.log(`Waiting ${delay}ms before retry...`);
-            await new Promise(resolve => setTimeout(resolve, delay));
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
           }
         } else {
           imagesData = data;
-          console.log(`Successfully loaded ${data?.length || 0} images for product ${product.id}`);
           break;
         }
       }
 
       if (lastError && !imagesData) {
-        console.warn('Failed to load product images after all retries, using fallback:', lastError);
+        console.warn('Failed to load product images after retries, using fallback:', lastError);
         // Fallback to main product image
         if (product.image) {
           console.log('Using fallback image:', product.image);
@@ -72,15 +66,13 @@ const ProductDetail = () => {
             display_order: 0
           }]);
         } else {
-          console.log('No fallback image available');
           setProductImages([]);
         }
       } else {
-        console.log('Final images data:', imagesData);
+        console.log('Loaded product images from database:', imagesData);
         
         // If we have images from database, use them
         if (imagesData && imagesData.length > 0) {
-          console.log(`Setting ${imagesData.length} images from database`);
           setProductImages(imagesData);
         } else if (product.image) {
           // If no images in database but product has main image, use it as fallback
@@ -97,7 +89,7 @@ const ProductDetail = () => {
         }
       }
     } catch (err) {
-      console.error('Error loading product images, using fallback data:', err);
+      console.warn('Error loading product images, using fallback data:', err);
       // Fallback to main product image
       if (product.image) {
         setProductImages([{
@@ -212,7 +204,7 @@ const ProductDetail = () => {
     return t('shop.product.add_to_cart');
   };
 
-  console.log('ProductDetail render - product:', product.title, 'productImages:', productImages.length);
+  console.log('ProductDetail render - productImages:', productImages);
 
   return (
     <>
