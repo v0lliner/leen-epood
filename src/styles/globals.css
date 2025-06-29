@@ -172,9 +172,10 @@ img {
   opacity: 1;
 }
 
-@media (hover: none) {
+/* Mobile: Always show yellow background */
+@media (max-width: 768px) {
   .arrow-wrapper::before {
-    display: none;
+    opacity: 1;
   }
 }
 
