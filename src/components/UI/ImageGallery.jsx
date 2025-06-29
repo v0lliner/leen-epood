@@ -28,29 +28,15 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
     
-    // Prevent background scrolling and fix modal position
-    document.body.style.overflow = 'hidden'
-    document.body.style.position = 'fixed'
-    document.body.style.top = `-${window.scrollY}px`
-    document.body.style.width = '100%'
+    // Allow background scrolling but keep modal fixed
+    document.body.classList.add('modal-open')
   }
 
   const closeModal = () => {
-    // Get the scroll position before restoring
-    const scrollY = document.body.style.top
+    setIsModalOpen(false)
     
     // Restore normal scrolling
-    document.body.style.overflow = ''
-    document.body.style.position = ''
-    document.body.style.top = ''
-    document.body.style.width = ''
-    
-    // Restore scroll position
-    if (scrollY) {
-      window.scrollTo(0, parseInt(scrollY || '0') * -1)
-    }
-    
-    setIsModalOpen(false)
+    document.body.classList.remove('modal-open')
   }
 
   const nextImage = () => {
@@ -88,19 +74,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [isModalOpen])
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      if (isModalOpen) {
-        // Cleanup if component unmounts while modal is open
-        document.body.style.overflow = ''
-        document.body.style.position = ''
-        document.body.style.top = ''
-        document.body.style.width = ''
-      }
-    }
-  }, [])
 
   const handleModalClick = (e) => {
     // Close modal when clicking anywhere in the modal background
@@ -405,24 +378,21 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           opacity: 0.7;
         }
 
-        /* Modal Styles - MAXIMUM Z-INDEX AND FIXED POSITIONING */
+        /* Modal Styles - HIGHEST Z-INDEX */
         .modal-overlay {
-          position: fixed !important;
-          top: 0 !important;
-          left: 0 !important;
-          right: 0 !important;
-          bottom: 0 !important;
-          z-index: 2147483647 !important; /* Maximum possible z-index */
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          z-index: 999999;
           background-color: rgba(0, 0, 0, 0.95);
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
+          display: flex;
+          align-items: center;
+          justify-content: center;
           cursor: pointer;
           padding: 40px;
-          margin: 0 !important;
-          width: 100vw !important;
-          height: 100vh !important;
-          overflow: hidden !important;
+          margin: 0;
         }
 
         .modal-content {
@@ -435,7 +405,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           max-width: 100%;
           max-height: 100%;
           cursor: default;
-          z-index: 2147483647 !important;
         }
 
         .modal-image-container {
@@ -445,7 +414,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 2147483647 !important;
+          z-index: 1000000;
         }
 
         .modal-image-container img {
@@ -460,63 +429,63 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         }
 
         .modal-close {
-          position: absolute !important;
-          top: -20px !important;
-          right: -20px !important;
-          background: rgba(255, 255, 255, 0.95) !important;
-          border: none !important;
-          color: #333 !important;
-          font-size: 2.5rem !important;
-          cursor: pointer !important;
-          z-index: 2147483647 !important;
-          padding: 8px 12px !important;
-          line-height: 1 !important;
-          transition: all 0.2s ease !important;
-          border-radius: 50% !important;
-          width: 70px !important;
-          height: 70px !important;
-          display: flex !important;
-          align-items: center !important;
-          justify-content: center !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-          font-weight: 300 !important;
+          position: absolute;
+          top: -20px;
+          right: -20px;
+          background: rgba(255, 255, 255, 0.95);
+          border: none;
+          color: #333;
+          font-size: 2.5rem;
+          cursor: pointer;
+          z-index: 1000001;
+          padding: 8px 12px;
+          line-height: 1;
+          transition: all 0.2s ease;
+          border-radius: 50%;
+          width: 70px;
+          height: 70px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          font-weight: 300;
         }
 
         .modal-close:hover {
-          background: rgba(255, 255, 255, 1) !important;
-          transform: scale(1.1) !important;
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4) !important;
+          background: rgba(255, 255, 255, 1);
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
         }
 
         .modal-nav {
-          position: fixed !important;
-          top: 50% !important;
-          transform: translateY(-50%) !important;
-          background: rgba(255, 255, 255, 0.9) !important;
-          border: none !important;
-          color: #333 !important;
-          font-size: 2rem !important;
-          padding: 12px 16px !important;
-          cursor: pointer !important;
-          border-radius: 8px !important;
-          transition: all 0.2s ease !important;
-          z-index: 2147483647 !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-          font-weight: 300 !important;
+          position: fixed;
+          top: 50%;
+          transform: translateY(-50%);
+          background: rgba(255, 255, 255, 0.9);
+          border: none;
+          color: #333;
+          font-size: 2rem;
+          padding: 12px 16px;
+          cursor: pointer;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+          z-index: 1000001;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          font-weight: 300;
         }
 
         .modal-nav:hover {
-          background: rgba(255, 255, 255, 1) !important;
-          transform: translateY(-50%) scale(1.1) !important;
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3) !important;
+          background: rgba(255, 255, 255, 1);
+          transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
 
         .modal-prev {
-          left: 20px !important;
+          left: 20px;
         }
 
         .modal-next {
-          right: 20px !important;
+          right: 20px;
         }
 
         /* Mobile Responsive */
@@ -565,34 +534,46 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         /* Smaller screens - adjust modal padding */
         @media (max-width: 1200px) {
           .modal-overlay {
-            padding: 30px !important;
+            padding: 30px;
           }
 
           .modal-image-container {
-            max-width: calc(100vw - 100px) !important;
-            max-height: calc(100vh - 100px) !important;
+            max-width: calc(100vw - 100px);
+            max-height: calc(100vh - 100px);
           }
         }
 
         @media (max-width: 900px) {
           .modal-overlay {
-            padding: 20px !important;
+            padding: 20px;
           }
 
           .modal-image-container {
-            max-width: calc(100vw - 80px) !important;
-            max-height: calc(100vh - 80px) !important;
+            max-width: calc(100vw - 80px);
+            max-height: calc(100vh - 80px);
           }
 
           .modal-close {
-            width: 60px !important;
-            height: 60px !important;
-            font-size: 2rem !important;
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
           }
 
           .modal-nav {
-            font-size: 1.5rem !important;
-            padding: 8px 12px !important;
+            font-size: 1.5rem;
+            padding: 8px 12px;
+          }
+        }
+
+        /* Ensure modal is always on top of everything */
+        @media (min-width: 769px) {
+          .modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            z-index: 999999 !important;
           }
         }
       `}</style>
