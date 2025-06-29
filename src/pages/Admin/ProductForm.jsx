@@ -30,7 +30,7 @@ const ProductForm = () => {
     dimensions: {
       height: '',
       width: '',
-      width2: '', // Second width measurement for asymmetric products
+      width2: '', // Second width measurement for asymmetric products (will be shown as "Pikkus")
       depth: ''
     },
     available: true
@@ -78,7 +78,7 @@ const ProductForm = () => {
           dimensions: {
             height: dimensions.height || '',
             width: dimensions.width || '',
-            width2: dimensions.width2 || '', // Support for second width
+            width2: dimensions.width2 || '', // Support for second width (shown as "Pikkus")
             depth: dimensions.depth || ''
           }
         })
@@ -455,7 +455,7 @@ const ProductForm = () => {
                     />
                   </div>
                   <div className="dimension-input">
-                    <label htmlFor="width" className="dimension-label">Laius 1</label>
+                    <label htmlFor="width" className="dimension-label">Laius</label>
                     <input
                       type="number"
                       id="width"
@@ -469,7 +469,7 @@ const ProductForm = () => {
                     />
                   </div>
                   <div className="dimension-input">
-                    <label htmlFor="width2" className="dimension-label">Laius 2</label>
+                    <label htmlFor="width2" className="dimension-label">Pikkus</label>
                     <input
                       type="number"
                       id="width2"

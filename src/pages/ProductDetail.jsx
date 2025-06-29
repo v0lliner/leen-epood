@@ -195,10 +195,10 @@ const ProductDetail = () => {
         value: `${parseFloat(dimensions.width).toString().replace('.', ',')} cm` 
       });
     }
-    // Show second width if it exists and is different from first width
+    // Show second width as "Pikkus" if it exists and is different from first width
     if (dimensions.width2 && dimensions.width2 > 0 && dimensions.width2 !== dimensions.width) {
       validDimensions.push({ 
-        label: 'Laius 2', 
+        label: 'Pikkus', 
         value: `${parseFloat(dimensions.width2).toString().replace('.', ',')} cm` 
       });
     }
