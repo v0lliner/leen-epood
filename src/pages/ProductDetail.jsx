@@ -295,9 +295,7 @@ const ProductDetail = () => {
                 <h2 className="related-title">{t('shop.product.related')}</h2>
                 <div className="related-products">
                   {relatedProducts.map((relatedProduct) => (
-                    <FadeInSection key={relatedProduct.id}>
-                      <ProductCard product={relatedProduct} />
-                    </FadeInSection>
+                    <ProductCard key={relatedProduct.id} product={relatedProduct} />
                   ))}
                 </div>
               </FadeInSection>
@@ -508,7 +506,7 @@ const ProductDetail = () => {
 
         .related-products {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 48px;
         }
 
@@ -582,7 +580,7 @@ const ProductDetail = () => {
           }
 
           .related-products {
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 32px;
           }
 
@@ -597,13 +595,6 @@ const ProductDetail = () => {
 
           .product-faq-content h3 {
             font-size: 1.125rem;
-          }
-        }
-
-        @media (max-width: 480px) {
-          .related-products {
-            grid-template-columns: 1fr;
-            gap: 24px;
           }
         }
       `}</style>
