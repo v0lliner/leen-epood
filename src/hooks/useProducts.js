@@ -61,8 +61,8 @@ export const useProducts = () => {
 
   const getRelatedProducts = (product, limit = 3) => {
     return products
-      .filter(p => p.category === product.category && p.id !== product.id)
-      .slice(0, limit)
+      .filter(p => p.category === product.category && p.id !== product.id && p.available) // Filter available products first
+      .slice(0, limit) // Then apply the limit
   }
 
   const getCategoryBySlug = (slug) => {
