@@ -295,7 +295,7 @@ const ProductDetail = () => {
                 <h2 className="related-title">{t('shop.product.related')}</h2>
                 <div className="related-products">
                   {relatedProducts.map((relatedProduct) => (
-                    <div key={relatedProduct.id} className="related-product-wrapper">
+                    <div key={relatedProduct.id} className="related-product-card">
                       <ProductCard product={relatedProduct} />
                     </div>
                   ))}
@@ -512,22 +512,22 @@ const ProductDetail = () => {
           gap: 48px;
         }
 
-        /* Override ProductCard styles specifically for related products to match home page */
-        .related-product-wrapper :global(.product-info h3) {
+        /* Specific styling for related product cards to match home page exactly */
+        .related-product-card :global(.product-title) {
           font-family: var(--font-heading);
           font-size: 1.125rem !important;
-          font-weight: 400;
-          margin-bottom: 8px;
-          color: var(--color-text);
-          margin-top: 0;
+          font-weight: 400 !important;
+          margin-bottom: 8px !important;
+          color: var(--color-text) !important;
+          margin-top: 0 !important;
         }
 
-        .related-product-wrapper :global(.product-info .product-price) {
+        .related-product-card :global(.product-price) {
           font-family: var(--font-heading);
           font-size: 1rem !important;
-          font-weight: 500;
-          color: var(--color-ultramarine);
-          margin: 0;
+          font-weight: 500 !important;
+          color: var(--color-ultramarine) !important;
+          margin: 0 !important;
         }
 
         .product-faq-section {
