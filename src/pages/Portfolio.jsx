@@ -174,10 +174,8 @@ const Portfolio = () => {
               {filteredItems.map((item, index) => (
                 <FadeInSection key={item.id} className="portfolio-item">
                   <div className={`portfolio-content ${index % 2 === 1 ? 'reverse' : ''}`}>
-                    <div className="portfolio-image-container">
-                      <div className="portfolio-image">
-                        <img src={item.image} alt={item.title} />
-                      </div>
+                    <div className="portfolio-image">
+                      <img src={item.image} alt={item.title} />
                     </div>
                     <div className="portfolio-info">
                       <div className="portfolio-meta">
@@ -231,23 +229,16 @@ const Portfolio = () => {
           flex-direction: row-reverse;
         }
 
-        .portfolio-image-container {
-          flex: 0 0 400px;
-          display: flex;
-          align-items: flex-start;
-          justify-content: center;
-        }
-
-        .portfolio-content.reverse .portfolio-image-container {
-          justify-content: flex-start;
-        }
-
         .portfolio-image {
-          width: 100%;
-          max-width: 400px;
+          flex: 0 0 45%;
+          max-height: 500px;
           display: flex;
           align-items: center;
           justify-content: center;
+        }
+
+        .portfolio-content.reverse .portfolio-image {
+          justify-content: flex-start;
         }
 
         .portfolio-image img {
@@ -258,8 +249,7 @@ const Portfolio = () => {
         }
 
         .portfolio-info {
-          flex: 1;
-          min-width: 0;
+          flex: 1 1 55%;
         }
 
         .portfolio-content.reverse .portfolio-info {
@@ -356,13 +346,9 @@ const Portfolio = () => {
             gap: 32px;
           }
 
-          .portfolio-image-container {
-            flex: none;
-            max-width: 100%;
-          }
-
           .portfolio-image {
-            max-width: 100%;
+            flex: none;
+            max-height: 400px;
           }
 
           .portfolio-image img {
