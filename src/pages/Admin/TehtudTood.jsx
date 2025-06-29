@@ -31,7 +31,7 @@ const AdminTehtudTood = () => {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Kas olete kindel, et soovite selle pala kustutada?')) {
+    if (!confirm('Kas olete kindel, et soovite selle lemmiku kustutada?')) {
       return
     }
 
@@ -103,7 +103,7 @@ const AdminTehtudTood = () => {
       <div className="portfolio-container">
         <div className="portfolio-header">
           <h1>{t('admin.portfolio.title')} ({portfolioItems.length})</h1>
-          <Link to="/admin/parimad-palad/new" className="btn btn-primary">
+          <Link to="/admin/minu-lemmikud/new" className="btn btn-primary">
             ➕ {t('admin.portfolio.add_new')}
           </Link>
         </div>
@@ -118,7 +118,7 @@ const AdminTehtudTood = () => {
         <div className="filters-section">
           <div className="filters-grid">
             <div className="filter-group">
-              <label>Otsi palasid</label>
+              <label>Otsi lemmikuid</label>
               <input
                 type="text"
                 placeholder="Otsi pealkirja või tehnika järgi..."
@@ -148,7 +148,7 @@ const AdminTehtudTood = () => {
         <div className="ordering-info">
           <div className="info-card">
             <h3>📋 Järjestuse muutmine</h3>
-            <p>Kasutage ↑ ja ↓ nuppe, et muuta palaside järjekorda kodulehel. Ülemine pala kuvatakse esimesena.</p>
+            <p>Kasutage ↑ ja ↓ nuppe, et muuta lemmikute järjekorda kodulehel. Ülemine lemmik kuvatakse esimesena.</p>
           </div>
         </div>
 
@@ -159,15 +159,15 @@ const AdminTehtudTood = () => {
                 <>
                   <div className="empty-icon">🎨</div>
                   <h3>{t('admin.portfolio.no_items')}</h3>
-                  <p>Alustage oma portfoolio loomist esimese palaga</p>
-                  <Link to="/admin/parimad-palad/new" className="btn btn-primary">
+                  <p>Alustage oma lemmikute loomist esimese tööga</p>
+                  <Link to="/admin/minu-lemmikud/new" className="btn btn-primary">
                     {t('admin.portfolio.add_first')}
                   </Link>
                 </>
               ) : (
                 <>
                   <div className="empty-icon">🔍</div>
-                  <h3>Otsingule vastavaid palasid ei leitud</h3>
+                  <h3>Otsingule vastavaid lemmikuid ei leitud</h3>
                   <p>Proovige muuta otsingukriteeriumeid</p>
                 </>
               )}
@@ -217,7 +217,7 @@ const AdminTehtudTood = () => {
 
                 <div className="item-actions">
                   <Link 
-                    to={`/admin/parimad-palad/${item.id}/edit`}
+                    to={`/admin/minu-lemmikud/${item.id}/edit`}
                     className="btn btn-secondary"
                   >
                     ✏️ Muuda

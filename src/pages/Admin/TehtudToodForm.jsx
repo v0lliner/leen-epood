@@ -82,7 +82,7 @@ const TehtudToodForm = () => {
 
   const validateForm = () => {
     if (!formData.title.trim()) {
-      setError('Pala pealkiri on kohustuslik')
+      setError('Töö pealkiri on kohustuslik')
       return false
     }
     if (!formData.category) {
@@ -117,9 +117,9 @@ const TehtudToodForm = () => {
       if (error) {
         setError(error.message)
       } else {
-        setSuccess(isEdit ? 'Pala edukalt uuendatud!' : 'Pala edukalt lisatud!')
+        setSuccess(isEdit ? 'Lemmik edukalt uuendatud!' : 'Lemmik edukalt lisatud!')
         setTimeout(() => {
-          navigate('/admin/parimad-palad')
+          navigate('/admin/minu-lemmikud')
         }, 1500)
       }
     } catch (err) {
@@ -146,7 +146,7 @@ const TehtudToodForm = () => {
         <div className="form-header">
           <h1>{isEdit ? t('admin.portfolio.form.edit_title') : t('admin.portfolio.form.create_title')}</h1>
           <button 
-            onClick={() => navigate('/admin/parimad-palad')}
+            onClick={() => navigate('/admin/minu-lemmikud')}
             className="btn btn-secondary"
           >
             Tagasi
@@ -250,7 +250,7 @@ const TehtudToodForm = () => {
                   currentImage={formData.image}
                   onImageChange={handleImageChange}
                   onImageRemove={handleImageRemove}
-                  placeholder="Lohistage pala pilt siia või klõpsake valimiseks"
+                  placeholder="Lohistage töö pilt siia või klõpsake valimiseks"
                 />
               </div>
             </div>
@@ -259,7 +259,7 @@ const TehtudToodForm = () => {
           <div className="form-actions">
             <button 
               type="button"
-              onClick={() => navigate('/admin/parimad-palad')}
+              onClick={() => navigate('/admin/minu-lemmikud')}
               className="btn btn-secondary"
             >
               Tühista

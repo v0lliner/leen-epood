@@ -28,7 +28,7 @@ const AdminLayout = ({ children }) => {
     },
     {
       name: t('admin.nav.portfolio'),
-      href: '/admin/parimad-palad',
+      href: '/admin/minu-lemmikud',
       icon: '🎨'
     },
     {
@@ -67,8 +67,9 @@ const AdminLayout = ({ children }) => {
     if (href === '/admin/dashboard') {
       return location.pathname === '/admin/dashboard' || location.pathname === '/admin'
     }
-    if (href === '/admin/parimad-palad') {
-      return location.pathname.startsWith('/admin/parimad-palad') || 
+    if (href === '/admin/minu-lemmikud') {
+      return location.pathname.startsWith('/admin/minu-lemmikud') || 
+             location.pathname.startsWith('/admin/parimad-palad') ||
              location.pathname.startsWith('/admin/tehtud-tood')
     }
     return location.pathname.startsWith(href)

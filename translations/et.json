@@ -2,7 +2,7 @@
   "nav": {
     "home": "Avaleht",
     "about": "Minust",
-    "portfolio": "Parimad palad",
+    "portfolio": "Minu lemmikud",
     "shop": "E-pood",
     "contact": "Kontakt",
     "cart": "Ostukorv"
@@ -10,7 +10,7 @@
   "footer": {
     "faq": "KKK",
     "shop": "POOD",
-    "portfolio": "PARIMAD PALAD",
+    "portfolio": "MINU LEMMIKUD",
     "about": "MINUST",
     "contact": "KONTAKT",
     "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
@@ -25,7 +25,7 @@
   "home": {
     "recent_products": "Hiljuti lisatud tooted",
     "view_all": "Vaata kõiki tooteid",
-    "portfolio_cta": "Tutvu parimatega"
+    "portfolio_cta": "Tutvu lemmikutega"
   },
   "intro": {
     "text": "Leen on looja, kelle looming kannab isiklikku sõnumit. Tema töödes kohtuvad vorm, funktsioon ja mälestus."
@@ -66,7 +66,7 @@
     "cta_button": "Vaata tooteid"
   },
   "portfolio": {
-    "title": "Parimad palad",
+    "title": "Minu lemmikud",
     "description": "Vaadake Leen Väräneni keraamika ja rõivadisaini töid",
     "ceramics": "Keraamika",
     "clothing": "Rõivad",
@@ -297,7 +297,7 @@
     "nav": {
       "dashboard": "Töölaud",
       "products": "Tooted",
-      "portfolio": "Parimad palad",
+      "portfolio": "Minu lemmikud",
       "orders": "Tellimused",
       "messages": "Sõnumid",
       "settings": "Seaded"
@@ -308,15 +308,15 @@
       "quick_actions": "Kiirtoimingud",
       "stats": {
         "products": "Tooted",
-        "portfolio": "Parimad palad",
+        "portfolio": "Minu lemmikud",
         "orders": "Tellimused",
         "messages": "Sõnumid"
       },
       "actions": {
         "add_product": "Lisa toode",
         "add_product_desc": "Lisage uus toode e-poodi",
-        "add_portfolio": "Lisa parim pala",
-        "add_portfolio_desc": "Lisage uus töö portfooliosse",
+        "add_portfolio": "Lisa lemmik",
+        "add_portfolio_desc": "Lisage uus töö lemmikute hulka",
         "view_orders": "Vaata tellimusi",
         "view_orders_desc": "Hallake sissetulevaid tellimusi"
       }
@@ -362,17 +362,17 @@
       }
     },
     "portfolio": {
-      "title": "Parimad palad",
-      "add_new": "Lisa uus pala",
-      "no_items": "Parimaid palasid pole veel lisatud",
-      "add_first": "Lisa esimene pala",
-      "delete_confirm": "Kas olete kindel, et soovite selle pala kustutada?",
+      "title": "Minu lemmikud",
+      "add_new": "Lisa uus lemmik",
+      "no_items": "Lemmikuid pole veel lisatud",
+      "add_first": "Lisa esimene lemmik",
+      "delete_confirm": "Kas olete kindel, et soovite selle lemmiku kustutada?",
       "form": {
-        "create_title": "Lisa uus parim pala",
-        "edit_title": "Muuda parimat pala",
-        "title": "Pala pealkiri",
+        "create_title": "Lisa uus lemmik",
+        "edit_title": "Muuda lemmikut",
+        "title": "Töö pealkiri",
         "title_placeholder": "Nt. Käsitöövaas 'Mälestus'",
-        "title_required": "Pala pealkiri on kohustuslik",
+        "title_required": "Töö pealkiri on kohustuslik",
         "technique": "Tehnika",
         "technique_placeholder": "Nt. Käsitsi vormitud, glasuuritud",
         "dimensions": "Mõõdud",
@@ -380,12 +380,12 @@
         "year": "Valmimisaasta",
         "category": "Kategooria",
         "category_required": "Kategooria on kohustuslik",
-        "image": "Pala pilt",
-        "image_required": "Pala pilt on kohustuslik",
-        "create": "Lisa pala",
-        "update": "Uuenda pala",
-        "created_success": "Pala edukalt lisatud!",
-        "updated_success": "Pala edukalt uuendatud!",
+        "image": "Töö pilt",
+        "image_required": "Töö pilt on kohustuslik",
+        "create": "Lisa lemmik",
+        "update": "Uuenda lemmik",
+        "created_success": "Lemmik edukalt lisatud!",
+        "updated_success": "Lemmik edukalt uuendatud!",
         "network_error": "Võrguühenduse viga"
       }
     }
@@ -400,7 +400,7 @@
       "description": "Tutvuge keraamiku ja rõivadisainer Leen Väränenga. Pikaaegne õpetaja ja looja, kes leiab inspiratsiooni vormidest, värvidest ja mälestustest."
     },
     "portfolio": {
-      "title": "Parimad palad - Leen Väränen",
+      "title": "Minu lemmikud - Leen Väränen",
       "description": "Vaadake Leen Väräneni keraamika ja rõivadisaini töid. Iga ese on loodud hoolikalt ja kannab endas isiklikku sõnumit."
     },
     "shop": {
