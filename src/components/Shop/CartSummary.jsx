@@ -35,7 +35,7 @@ const CartSummary = ({ isOpen, onClose }) => {
               <h4>Küsimusi ostlemise kohta?</h4>
               <p>Vaadake meie KKK lehelt vastuseid kõige sagedamini küsitavatele küsimustele.</p>
               <Link to="/kkk" className="link-with-arrow cart-faq-link" onClick={handleLinkClick}>
-                Vaata KKK <span className="arrow-wrapper">→</span>
+                Korduma Kippuvad Küsimused <span className="arrow-wrapper">→</span>
               </Link>
             </div>
           </div>
