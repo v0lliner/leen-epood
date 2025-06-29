@@ -84,7 +84,6 @@ const ProductCard = ({ product }) => {
           top: 50%;
           left: 50%;
           transform: translate(-50%, -50%);
-          background-color: rgba(0, 0, 0, 0.8);
           color: white;
           padding: 12px 24px;
           border-radius: 4px;
@@ -92,8 +91,12 @@ const ProductCard = ({ product }) => {
           font-family: var(--font-heading);
         }
 
+        .sold-overlay {
+          background-color: var(--color-ultramarine);
+        }
+
         .in-cart-overlay {
-          background-color: rgba(47, 62, 156, 0.9);
+          background-color: var(--color-ultramarine);
         }
 
         .add-to-cart-overlay {
