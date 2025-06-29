@@ -1,19 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 
 const AdminLogin = () => {
   const { t } = useTranslation()
-  const { signIn } = useAuth()
+  const { signIn, user, loading } = useAuth()
   const navigate = useNavigate()
   
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
-  const [loading, setLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/admin/dashboard', { replace: true })
+    }
+  }, [user, loading, navigate])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -27,7 +34,7 @@ const AdminLogin = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
+    setIsLoading(true)
     setError('')
 
     try {
@@ -40,10 +47,27 @@ const AdminLogin = () => {
         navigate('/admin/dashboard', { replace: true })
       }
     } catch (err) {
+      console.error('Login error:', err)
       setError(t('admin.login.error_network'))
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
+  }
+
+  // Show loading while checking auth state
+  if (loading) {
+    return (
+      <div className="login-container">
+        <div className="login-content">
+          <div className="login-card">
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Laadin...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -77,7 +101,7 @@ const AdminLogin = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
-                disabled={loading}
+                disabled={isLoading}
                 className="form-input"
                 autoComplete="email"
               />
@@ -92,7 +116,7 @@ const AdminLogin = () => {
                 value={formData.password}
                 onChange={handleInputChange}
                 required
-                disabled={loading}
+                disabled={isLoading}
                 className="form-input"
                 autoComplete="current-password"
               />
@@ -100,10 +124,10 @@ const AdminLogin = () => {
 
             <button 
               type="submit" 
-              disabled={loading}
+              disabled={isLoading}
               className="login-button"
             >
-              {loading ? t('admin.login.signing_in') : t('admin.login.sign_in')}
+              {isLoading ? t('admin.login.signing_in') : t('admin.login.sign_in')}
             </button>
           </form>
         </div>
@@ -176,6 +200,29 @@ const AdminLogin = () => {
           gap: 24px;
         }
 
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 32px;
+          gap: 16px;
+        }
+
+        .loading-spinner {
+          width: 32px;
+          height: 32px;
+          border: 3px solid #f3f3f3;
+          border-top: 3px solid var(--color-ultramarine);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
         .error-message {
           background-color: #fee;
           color: #c33;
@@ -216,6 +263,7 @@ const AdminLogin = () => {
         .form-input:disabled {
           background-color: #f5f5f5;
           cursor: not-allowed;
+          opacity: 0.7;
         }
 
         .login-button {

@@ -4,12 +4,13 @@
 export const products = [
   {
     id: 1,
-    slug: 'kasitoo-vaas-malestus',
+    slug: 'kuju-karp',
     category: 'keraamika',
-    subcategory: 'vaasid',
-    title: 'Käsitöövaas "Mälestus"',
-    price: '85€',
-    description: 'Käsitsi vormitud ja glasuuritud vaas, iga ese on ainulaadne. Inspireeritud lapsepõlvemälestustest ja looduse vormidest.',
+    subcategory: 'kujud',
+    title: 'Kuju "Kärp"',
+    price: '349€',
+    priceId: 'price_1RfOoRP1VBbJ3P2LKofFkMPc', // Stripe price ID
+    description: 'Kõrgkuumuskeraamika. Käsitsi vormitud ja põletatud kuju, mis kannab endas looduse jõudu ja ilu.',
     image: 'https://images.pexels.com/photos/4207892/pexels-photo-4207892.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
     dimensions: {
       height: 25,
@@ -142,6 +143,6 @@ export const getProductsByCategory = (category) => {
 
 export const getRelatedProducts = (product, limit = 3) => {
   return products
-    .filter(p => p.category === product.category && p.id !== product.id)
-    .slice(0, limit);
+    .filter(p => p.category === product.category && p.id !== product.id && p.available) // Filter available products first
+    .slice(0, limit); // Then apply the limit
 };

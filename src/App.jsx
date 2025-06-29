@@ -12,6 +12,7 @@ import Portfolio from './pages/Portfolio';
 import Shop from './pages/Shop';
 import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
+import CheckoutSuccess from './pages/CheckoutSuccess';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
 import NotFound from './pages/NotFound';
@@ -97,6 +98,13 @@ function App() {
                   <div className="app">
                     <Navigation />
                     <Checkout />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/checkout/success" element={
+                  <div className="app">
+                    <Navigation />
+                    <CheckoutSuccess />
                     <Footer />
                   </div>
                 } />

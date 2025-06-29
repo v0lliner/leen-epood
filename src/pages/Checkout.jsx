@@ -1,44 +1,106 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { createCheckoutSession } from '../utils/stripe';
+import { getStripeProductByPriceId } from '../stripe-config';
 
 const Checkout = () => {
   const { t } = useTranslation();
   const { items, getTotalPrice, clearCart } = useCart();
-  const [isCompleted, setIsCompleted] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    address: ''
-  });
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate('/admin/login?redirect=/checkout', { replace: true });
+    }
+  }, [user, authLoading, navigate]);
+
+  const handleCheckout = async () => {
+    if (!user) {
+      navigate('/admin/login?redirect=/checkout');
+      return;
+    }
+
+    if (items.length === 0) {
+      setError('Ostukorv on tühi');
+      return;
+    }
+
+    setIsProcessing(true);
+    setError('');
+
+    try {
+      // For now, we'll handle single item checkout
+      // In a real implementation, you might want to create a single checkout session
+      // with multiple line items or handle each item separately
+      const firstItem = items[0];
+      
+      // Find the corresponding Stripe product
+      const stripeProduct = getStripeProductByPriceId(firstItem.priceId);
+      
+      if (!stripeProduct) {
+        setError('Toode ei ole saadaval makseks');
+        setIsProcessing(false);
+        return;
+      }
+
+      const { data, error: checkoutError } = await createCheckoutSession({
+        priceId: stripeProduct.priceId,
+        mode: stripeProduct.mode,
+        successUrl: `${window.location.origin}/checkout/success`,
+        cancelUrl: `${window.location.origin}/checkout`,
+      });
+
+      if (checkoutError) {
+        setError(checkoutError);
+        setIsProcessing(false);
+        return;
+      }
+
+      if (data?.url) {
+        // Clear cart before redirecting
+        await clearCart();
+        // Redirect to Stripe Checkout
+        window.location.href = data.url;
+      } else {
+        setError('Maksesessiooni loomine ebaõnnestus');
+        setIsProcessing(false);
+      }
+    } catch (err) {
+      console.error('Checkout error:', err);
+      setError('Maksesessiooni loomine ebaõnnestus');
+      setIsProcessing(false);
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Simulate payment processing
-    console.log('Order submitted:', {
-      items,
-      customer: formData,
-      total: getTotalPrice()
-    });
-    
-    // Clear cart and show thank you message
-    clearCart();
-    setIsCompleted(true);
-  };
+  // Show loading while checking auth
+  if (authLoading) {
+    return (
+      <>
+        <SEOHead page="shop" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Laadin...</p>
+              </div>
+            </div>
+          </section>
+        </main>
+      </>
+    );
+  }
 
-  if (items.length === 0 && !isCompleted) {
+  if (items.length === 0) {
     return (
       <>
         <SEOHead page="shop" />
@@ -60,47 +122,6 @@ const Checkout = () => {
     );
   }
 
-  if (isCompleted) {
-    return (
-      <>
-        <SEOHead page="shop" />
-        <main>
-          <section className="section-large">
-            <div className="container">
-              <FadeInSection>
-                <div className="thank-you">
-                  <h1>{t('checkout.thank_you.title')}</h1>
-                  <p>{t('checkout.thank_you.message')}</p>
-                  <Link to="/epood" className="btn btn-primary">
-                    {t('checkout.thank_you.back_to_shop')}
-                  </Link>
-                </div>
-              </FadeInSection>
-            </div>
-          </section>
-        </main>
-
-        <style jsx>{`
-          .thank-you {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto;
-          }
-
-          .thank-you h1 {
-            color: var(--color-ultramarine);
-            margin-bottom: 24px;
-          }
-
-          .thank-you p {
-            margin-bottom: 32px;
-            color: #666;
-          }
-        `}</style>
-      </>
-    );
-  }
-
   return (
     <>
       <SEOHead page="shop" />
@@ -112,55 +133,8 @@ const Checkout = () => {
             </FadeInSection>
 
             <div className="checkout-layout">
-              <FadeInSection className="checkout-form-section">
-                <form onSubmit={handleSubmit} className="checkout-form">
-                  <div className="form-group">
-                    <label htmlFor="name">{t('checkout.form.name')}</label>
-                    <input
-                      type="text"
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="email">{t('checkout.form.email')}</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="address">{t('checkout.form.address')}</label>
-                    <textarea
-                      id="address"
-                      name="address"
-                      rows="3"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      required
-                      className="form-input"
-                    ></textarea>
-                  </div>
-                  
-                  <button type="submit" className="btn btn-primary pay-button">
-                    {t('checkout.form.pay')}
-                  </button>
-                </form>
-              </FadeInSection>
-
-              <FadeInSection className="order-summary-section">
-                <div className="order-summary">
+              <FadeInSection className="checkout-summary-section">
+                <div className="checkout-summary">
                   <h3>{t('checkout.summary')}</h3>
                   
                   <div className="order-items">
@@ -168,7 +142,7 @@ const Checkout = () => {
                       <div key={item.id} className="order-item">
                         <div className="item-info">
                           <span className="item-name">{item.title}</span>
-                          <span className="item-quantity">× {item.quantity}</span>
+                          <span className="item-quantity">× 1</span>
                         </div>
                         <span className="item-price">{item.price}</span>
                       </div>
@@ -178,6 +152,24 @@ const Checkout = () => {
                   <div className="order-total">
                     <strong>{t('checkout.total')}: {getTotalPrice().toFixed(2)}€</strong>
                   </div>
+
+                  {error && (
+                    <div className="error-message">
+                      {error}
+                    </div>
+                  )}
+
+                  <button 
+                    onClick={handleCheckout}
+                    disabled={isProcessing || items.length === 0}
+                    className="checkout-button"
+                  >
+                    {isProcessing ? 'Töötlemine...' : t('checkout.form.pay')}
+                  </button>
+
+                  <div className="checkout-info">
+                    <p>Teid suunatakse turvalisele Stripe makseleheküljele.</p>
+                  </div>
                 </div>
               </FadeInSection>
             </div>
@@ -186,65 +178,44 @@ const Checkout = () => {
       </main>
 
       <style jsx>{`
+        .loading-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 64px;
+          gap: 16px;
+        }
+
+        .loading-spinner {
+          width: 40px;
+          height: 40px;
+          border: 3px solid #f3f3f3;
+          border-top: 3px solid var(--color-ultramarine);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
         .checkout-layout {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 64px;
+          display: flex;
+          justify-content: center;
           margin-top: 64px;
-          align-items: start;
         }
 
-        .checkout-form {
+        .checkout-summary {
           max-width: 500px;
-        }
-
-        .form-group {
-          margin-bottom: 24px;
-        }
-
-        .form-group label {
-          display: block;
-          margin-bottom: 8px;
-          font-family: var(--font-heading);
-          font-weight: 500;
-          color: var(--color-text);
-        }
-
-        .form-input {
-          width: 100%;
-          padding: 12px 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-size: 1rem;
-          transition: border-color 0.2s ease;
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: var(--color-ultramarine);
-        }
-
-        .form-input[type="textarea"] {
-          resize: vertical;
-          min-height: 80px;
-        }
-
-        .pay-button {
-          width: 100%;
-          padding: 16px;
-          font-size: 1rem;
-          font-weight: 500;
-          text-align: center;
-        }
-
-        .order-summary {
           padding: 32px;
           border: 1px solid #f0f0f0;
-          border-radius: 4px;
+          border-radius: 8px;
+          background: white;
         }
 
-        .order-summary h3 {
+        .checkout-summary h3 {
           font-family: var(--font-heading);
           font-size: 1.25rem;
           font-weight: 500;
@@ -297,6 +268,51 @@ const Checkout = () => {
           font-size: 1.125rem;
           text-align: right;
           color: var(--color-text);
+          margin-bottom: 24px;
+        }
+
+        .error-message {
+          background-color: #fee;
+          color: #c33;
+          padding: 12px 16px;
+          border-radius: 4px;
+          border: 1px solid #fcc;
+          margin-bottom: 24px;
+          font-size: 0.9rem;
+        }
+
+        .checkout-button {
+          width: 100%;
+          padding: 16px;
+          background-color: var(--color-ultramarine);
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-family: var(--font-body);
+          font-weight: 500;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: opacity 0.2s ease;
+          margin-bottom: 16px;
+        }
+
+        .checkout-button:hover:not(:disabled) {
+          opacity: 0.9;
+        }
+
+        .checkout-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .checkout-info {
+          text-align: center;
+        }
+
+        .checkout-info p {
+          color: #666;
+          font-size: 0.9rem;
+          line-height: 1.4;
         }
 
         .empty-cart {
@@ -311,17 +327,9 @@ const Checkout = () => {
         }
 
         @media (max-width: 768px) {
-          .checkout-layout {
-            grid-template-columns: 1fr;
-            gap: 48px;
-          }
-
-          .checkout-form {
-            max-width: none;
-          }
-
-          .order-summary {
+          .checkout-summary {
             padding: 24px;
+            margin: 0 16px;
           }
         }
       `}</style>
