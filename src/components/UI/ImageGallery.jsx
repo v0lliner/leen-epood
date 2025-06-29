@@ -28,15 +28,29 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
     
-    // Allow background scrolling but keep modal fixed
-    document.body.classList.add('modal-open')
+    // Prevent body scroll and ensure modal stays fixed
+    document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = `-${window.scrollY}px`
+    document.body.style.width = '100%'
   }
 
   const closeModal = () => {
+    // Get the scroll position before closing
+    const scrollY = document.body.style.top
+    
     setIsModalOpen(false)
     
-    // Restore normal scrolling
-    document.body.classList.remove('modal-open')
+    // Restore body scroll and position
+    document.body.style.overflow = ''
+    document.body.style.position = ''
+    document.body.style.top = ''
+    document.body.style.width = ''
+    
+    // Restore scroll position
+    if (scrollY) {
+      window.scrollTo(0, parseInt(scrollY || '0') * -1)
+    }
   }
 
   const nextImage = () => {
@@ -74,6 +88,18 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [isModalOpen])
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (isModalOpen) {
+        document.body.style.overflow = ''
+        document.body.style.position = ''
+        document.body.style.top = ''
+        document.body.style.width = ''
+      }
+    }
+  }, [])
 
   const handleModalClick = (e) => {
     // Close modal when clicking anywhere in the modal background
@@ -378,21 +404,25 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           opacity: 0.7;
         }
 
-        /* Modal Styles - HIGHEST Z-INDEX */
+        /* Modal Styles - FIXED POSITIONING */
         .modal-overlay {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           bottom: 0;
-          z-index: 999999;
+          z-index: 2147483647; /* Maximum z-index value */
           background-color: rgba(0, 0, 0, 0.95);
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          padding: 40px;
+          padding: 0;
           margin: 0;
+          /* Ensure modal is always centered and fixed */
+          width: 100vw;
+          height: 100vh;
+          overflow: hidden;
         }
 
         .modal-content {
@@ -400,21 +430,23 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 100%;
-          height: 100%;
-          max-width: 100%;
-          max-height: 100%;
+          width: 90vw;
+          height: 90vh;
+          max-width: 90vw;
+          max-height: 90vh;
           cursor: default;
+          /* Center the content within the modal */
+          margin: auto;
         }
 
         .modal-image-container {
           position: relative;
-          max-width: calc(100vw - 120px);
-          max-height: calc(100vh - 120px);
+          max-width: 100%;
+          max-height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 1000000;
+          z-index: 2147483648;
         }
 
         .modal-image-container img {
@@ -425,19 +457,22 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           object-fit: contain;
           border-radius: 8px;
           cursor: default;
-          box-shadow: 0 12px 48px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+          /* Ensure image doesn't exceed viewport */
+          max-width: 85vw;
+          max-height: 85vh;
         }
 
         .modal-close {
           position: absolute;
-          top: -20px;
-          right: -20px;
+          top: -25px;
+          right: -25px;
           background: rgba(255, 255, 255, 0.95);
           border: none;
           color: #333;
           font-size: 2.5rem;
           cursor: pointer;
-          z-index: 1000001;
+          z-index: 2147483649;
           padding: 8px 12px;
           line-height: 1;
           transition: all 0.2s ease;
@@ -447,14 +482,15 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
           font-weight: 300;
+          backdrop-filter: blur(10px);
         }
 
         .modal-close:hover {
           background: rgba(255, 255, 255, 1);
           transform: scale(1.1);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
         }
 
         .modal-nav {
@@ -469,23 +505,24 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           cursor: pointer;
           border-radius: 8px;
           transition: all 0.2s ease;
-          z-index: 1000001;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          z-index: 2147483649;
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
           font-weight: 300;
+          backdrop-filter: blur(10px);
         }
 
         .modal-nav:hover {
           background: rgba(255, 255, 255, 1);
           transform: translateY(-50%) scale(1.1);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
         .modal-prev {
-          left: 20px;
+          left: 30px;
         }
 
         .modal-next {
-          right: 20px;
+          right: 30px;
         }
 
         /* Mobile Responsive */
@@ -531,49 +568,57 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           }
         }
 
-        /* Smaller screens - adjust modal padding */
+        /* Smaller screens - adjust modal content */
         @media (max-width: 1200px) {
-          .modal-overlay {
-            padding: 30px;
+          .modal-content {
+            width: 95vw;
+            height: 95vh;
           }
 
-          .modal-image-container {
-            max-width: calc(100vw - 100px);
-            max-height: calc(100vh - 100px);
+          .modal-image-container img {
+            max-width: 90vw;
+            max-height: 90vh;
           }
         }
 
         @media (max-width: 900px) {
-          .modal-overlay {
-            padding: 20px;
+          .modal-content {
+            width: 98vw;
+            height: 98vh;
           }
 
-          .modal-image-container {
-            max-width: calc(100vw - 80px);
-            max-height: calc(100vh - 80px);
+          .modal-image-container img {
+            max-width: 95vw;
+            max-height: 95vh;
           }
 
           .modal-close {
             width: 60px;
             height: 60px;
             font-size: 2rem;
+            top: -20px;
+            right: -20px;
           }
 
           .modal-nav {
             font-size: 1.5rem;
             padding: 8px 12px;
           }
+
+          .modal-prev {
+            left: 20px;
+          }
+
+          .modal-next {
+            right: 20px;
+          }
         }
 
-        /* Ensure modal is always on top of everything */
-        @media (min-width: 769px) {
-          .modal-overlay {
-            position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            right: 0 !important;
-            bottom: 0 !important;
-            z-index: 999999 !important;
+        /* Ultra-wide screens */
+        @media (min-width: 1920px) {
+          .modal-image-container img {
+            max-width: 80vw;
+            max-height: 80vh;
           }
         }
       `}</style>
