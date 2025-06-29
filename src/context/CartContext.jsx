@@ -49,19 +49,8 @@ export const CartProvider = ({ children }) => {
     // Add to cart first
     dispatch({ type: 'ADD_ITEM', payload: product });
 
-    // Update product availability in database
-    try {
-      // Remove quantity property before updating database
-      const { quantity, ...productData } = product;
-      await productService.upsertProduct({
-        ...productData,
-        available: false
-      });
-    } catch (error) {
-      console.error('Failed to update product availability:', error);
-      // If database update fails, remove from cart
-      dispatch({ type: 'REMOVE_ITEM', payload: product.id });
-    }
+    // NOTE: We no longer automatically mark products as unavailable when added to cart
+    // Products will only be marked as sold when the order is completed
   };
 
   const removeItem = async (productId) => {
@@ -72,37 +61,14 @@ export const CartProvider = ({ children }) => {
     // Remove from cart
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
 
-    // Update product availability in database
-    try {
-      // Remove quantity property before updating database
-      const { quantity, ...productData } = cartItem;
-      await productService.upsertProduct({
-        ...productData,
-        available: true
-      });
-    } catch (error) {
-      console.error('Failed to update product availability:', error);
-    }
+    // NOTE: We no longer automatically mark products as available when removed from cart
+    // since they weren't marked as unavailable when added
   };
 
   const clearCart = async () => {
-    // Update all cart items to be available again
-    const updatePromises = state.items.map(async (item) => {
-      try {
-        // Remove quantity property before updating database
-        const { quantity, ...productData } = item;
-        await productService.upsertProduct({
-          ...productData,
-          available: true
-        });
-      } catch (error) {
-        console.error('Failed to update product availability for item:', item.id, error);
-      }
-    });
-
-    // Wait for all updates to complete
-    await Promise.all(updatePromises);
-
+    // NOTE: We no longer need to update product availability when clearing cart
+    // since products aren't marked as unavailable when added to cart
+    
     // Clear the cart
     dispatch({ type: 'CLEAR_CART' });
   };

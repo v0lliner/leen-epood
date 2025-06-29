@@ -34,8 +34,8 @@ const CartSummary = ({ isOpen, onClose }) => {
             <div className="cart-faq-section">
               <h4>Küsimusi ostlemise kohta?</h4>
               <p>Vaadake meie KKK lehelt vastuseid kõige sagedamini küsitavatele küsimustele.</p>
-              <Link to="/kkk" className="cart-faq-link" onClick={handleLinkClick}>
-                Vaata KKK →
+              <Link to="/kkk" className="link-with-arrow cart-faq-link" onClick={handleLinkClick}>
+                Vaata KKK <span className="arrow-wrapper">→</span>
               </Link>
             </div>
           </div>
@@ -122,9 +122,9 @@ const CartSummary = ({ isOpen, onClose }) => {
 
           .cart-faq-section {
             padding: 24px 16px;
-            background: #f8f9fa;
             border-radius: 8px;
             margin-top: 24px;
+            text-align: center;
           }
 
           .cart-faq-section h4 {
@@ -144,14 +144,13 @@ const CartSummary = ({ isOpen, onClose }) => {
           .cart-faq-link {
             color: var(--color-ultramarine);
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 0.9rem;
             transition: opacity 0.2s ease;
           }
 
           .cart-faq-link:hover {
             opacity: 0.8;
-            text-decoration: underline;
           }
 
           @media (max-width: 480px) {
@@ -202,18 +201,18 @@ const CartSummary = ({ isOpen, onClose }) => {
             </div>
             <Link 
               to="/checkout" 
-              className="checkout-button"
+              className="link-with-arrow checkout-button"
               onClick={handleLinkClick}
             >
-              {t('cart.continue')}
+              {t('cart.continue')} <span className="arrow-wrapper">→</span>
             </Link>
 
             {/* FAQ Reference for filled cart */}
             <div className="cart-faq-section">
               <h4>Küsimusi tellimise kohta?</h4>
               <p>Leiate vastused saatmise, maksmise ja hoolduse kohta meie KKK lehelt.</p>
-              <Link to="/kkk" className="cart-faq-link" onClick={handleLinkClick}>
-                Vaata KKK →
+              <Link to="/kkk" className="link-with-arrow cart-faq-link" onClick={handleLinkClick}>
+                Vaata KKK <span className="arrow-wrapper">→</span>
               </Link>
             </div>
           </div>
@@ -379,7 +378,7 @@ const CartSummary = ({ isOpen, onClose }) => {
             text-align: center;
             border-radius: 4px;
             font-family: var(--font-body);
-            font-weight: 500;
+            font-weight: 600;
             transition: opacity 0.2s ease;
             margin-bottom: 24px;
           }
@@ -390,7 +389,6 @@ const CartSummary = ({ isOpen, onClose }) => {
 
           .cart-faq-section {
             padding: 20px 16px;
-            background: #f8f9fa;
             border-radius: 8px;
             text-align: center;
           }
@@ -412,14 +410,13 @@ const CartSummary = ({ isOpen, onClose }) => {
           .cart-faq-link {
             color: var(--color-ultramarine);
             text-decoration: none;
-            font-weight: 500;
+            font-weight: 600;
             font-size: 0.9rem;
             transition: opacity 0.2s ease;
           }
 
           .cart-faq-link:hover {
             opacity: 0.8;
-            text-decoration: underline;
           }
 
           @media (max-width: 480px) {

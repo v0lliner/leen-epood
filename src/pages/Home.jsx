@@ -10,8 +10,9 @@ const Home = () => {
   const { t } = useTranslation();
   const { products, loading } = useProducts();
   
-  // Get the 6 most recent products (using the 'id' field as a proxy for recency)
+  // Get the 6 most recent available products (using the 'id' field as a proxy for recency)
   const recentProducts = [...products]
+    .filter(product => product.available) // Only show available products
     .sort((a, b) => b.id - a.id)
     .slice(0, 6);
 

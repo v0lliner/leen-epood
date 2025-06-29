@@ -162,7 +162,8 @@ const ProductDetail = () => {
     );
   }
 
-  const relatedProducts = getRelatedProducts(product);
+  // Filter out sold products from related products
+  const relatedProducts = getRelatedProducts(product).filter(p => p.available);
   const isProductInCart = isInCart(product.id);
   const canAddToCart = product.available && !isProductInCart;
 
@@ -511,9 +512,8 @@ const ProductDetail = () => {
 
         .product-faq-section {
           margin-top: 96px;
-          padding: 48px 32px;
-          border-radius: 8px;
-          background: #f8f9fa;
+          padding-top: 48px;
+          border-top: 1px solid #f0f0f0;
           text-align: center;
         }
 
@@ -590,7 +590,7 @@ const ProductDetail = () => {
 
           .product-faq-section {
             margin-top: 64px;
-            padding: 32px 24px;
+            padding-top: 32px;
           }
 
           .product-faq-content h3 {
