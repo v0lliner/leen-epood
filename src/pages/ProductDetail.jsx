@@ -30,7 +30,6 @@ const ProductDetail = () => {
     
     setImagesLoading(true);
     try {
-      console.log('Loading images for product:', product.id);
       const { data, error } = await productImageService.getProductImages(product.id);
       
       if (error) {
@@ -45,7 +44,6 @@ const ProductDetail = () => {
           }]);
         }
       } else {
-        console.log('Loaded product images:', data);
         // If we have images from database, use them
         if (data && data.length > 0) {
           setProductImages(data);
@@ -173,8 +171,6 @@ const ProductDetail = () => {
     return t('shop.product.add_to_cart');
   };
 
-  console.log('Product images to display:', productImages);
-
   return (
     <>
       <SEOHead page="shop" />
@@ -192,16 +188,10 @@ const ProductDetail = () => {
             <FadeInSection>
               <div className="product-detail">
                 <div className="product-images">
-                  {productImages.length > 0 ? (
-                    <ImageGallery 
-                      images={productImages} 
-                      productTitle={product.title}
-                    />
-                  ) : (
-                    <div className="no-images">
-                      <p>Pilte ei leitud</p>
-                    </div>
-                  )}
+                  <ImageGallery 
+                    images={productImages} 
+                    productTitle={product.title}
+                  />
                 </div>
                 
                 <div className="product-info">
@@ -306,14 +296,6 @@ const ProductDetail = () => {
 
         .product-images {
           width: 100%;
-        }
-
-        .no-images {
-          padding: 64px;
-          text-align: center;
-          background: #f5f5f5;
-          border-radius: 4px;
-          color: #666;
         }
 
         .product-title {
