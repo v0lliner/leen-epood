@@ -29,7 +29,7 @@ export const productImageService = {
   },
 
   /**
-   * Add image to product
+   * Add image to product with proper error handling and validation
    * @param {string} productId - Product ID
    * @param {string} imageUrl - Image URL
    * @param {string} imagePath - Storage path
@@ -47,29 +47,66 @@ export const productImageService = {
         displayOrder
       })
 
+      // Validate inputs
+      if (!productId || !imageUrl) {
+        return { data: null, error: { message: 'Product ID and image URL are required' } }
+      }
+
       // If this is set as primary, first remove primary from all other images
       if (isPrimary) {
-        await supabase
+        console.log('Removing primary status from other images...')
+        const { error: updateError } = await supabase
           .from('product_images')
           .update({ is_primary: false })
           .eq('product_id', productId)
+        
+        if (updateError) {
+          console.error('Error updating existing primary images:', updateError)
+        }
       }
+
+      const imageData = {
+        product_id: productId,
+        image_url: imageUrl,
+        image_path: imagePath,
+        is_primary: isPrimary,
+        display_order: displayOrder
+      }
+
+      console.log('Inserting image data:', imageData)
 
       const { data, error } = await supabase
         .from('product_images')
-        .insert({
-          product_id: productId,
-          image_url: imageUrl,
-          image_path: imagePath,
-          is_primary: isPrimary,
-          display_order: displayOrder
-        })
+        .insert(imageData)
         .select()
         .single()
       
       console.log('Add product image result:', { data, error })
       
-      return { data, error }
+      if (error) {
+        console.error('Database insert error:', error)
+        return { data: null, error }
+      }
+
+      // Verify the image was actually inserted
+      if (data) {
+        console.log('Successfully inserted image with ID:', data.id)
+        
+        // Double-check by fetching the image
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('product_images')
+          .select('*')
+          .eq('id', data.id)
+          .single()
+        
+        if (verifyError) {
+          console.error('Error verifying inserted image:', verifyError)
+        } else {
+          console.log('Verified inserted image:', verifyData)
+        }
+      }
+      
+      return { data, error: null }
     } catch (error) {
       console.error('Error in addProductImage:', error)
       return { data: null, error: { message: 'Network error occurred' } }
@@ -172,6 +209,26 @@ export const productImageService = {
     } catch (error) {
       console.error('Error in reorderImages:', error)
       return { error: { message: 'Network error occurred' } }
+    }
+  },
+
+  /**
+   * Get product images count for debugging
+   * @param {string} productId - Product ID
+   * @returns {Promise<{count: number, error: object|null}>}
+   */
+  async getProductImagesCount(productId) {
+    try {
+      const { count, error } = await supabase
+        .from('product_images')
+        .select('*', { count: 'exact', head: true })
+        .eq('product_id', productId)
+      
+      console.log(`Product ${productId} has ${count} images`)
+      return { count: count || 0, error }
+    } catch (error) {
+      console.error('Error getting product images count:', error)
+      return { count: 0, error: { message: 'Network error occurred' } }
     }
   }
 }

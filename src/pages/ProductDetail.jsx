@@ -32,10 +32,30 @@ const ProductDetail = () => {
     console.log('Loading images for product:', product.id);
     
     try {
-      const { data, error } = await productImageService.getProductImages(product.id);
-      
-      if (error) {
-        console.warn('Failed to load product images:', error);
+      // Try multiple times to ensure we get the images
+      let retryCount = 0;
+      const maxRetries = 3;
+      let imagesData = null;
+      let lastError = null;
+
+      while (retryCount < maxRetries && !imagesData) {
+        const { data, error } = await productImageService.getProductImages(product.id);
+        
+        if (error) {
+          console.warn(`Failed to load product images (attempt ${retryCount + 1}):`, error);
+          lastError = error;
+          retryCount++;
+          if (retryCount < maxRetries) {
+            await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+          }
+        } else {
+          imagesData = data;
+          break;
+        }
+      }
+
+      if (lastError && !imagesData) {
+        console.warn('Failed to load product images after retries, using fallback:', lastError);
         // Fallback to main product image
         if (product.image) {
           console.log('Using fallback image:', product.image);
@@ -49,11 +69,11 @@ const ProductDetail = () => {
           setProductImages([]);
         }
       } else {
-        console.log('Loaded product images from database:', data);
+        console.log('Loaded product images from database:', imagesData);
         
         // If we have images from database, use them
-        if (data && data.length > 0) {
-          setProductImages(data);
+        if (imagesData && imagesData.length > 0) {
+          setProductImages(imagesData);
         } else if (product.image) {
           // If no images in database but product has main image, use it as fallback
           console.log('No images in database, using product main image as fallback');
@@ -69,7 +89,7 @@ const ProductDetail = () => {
         }
       }
     } catch (err) {
-      console.warn('Error loading product images:', err);
+      console.warn('Error loading product images, using fallback data:', err);
       // Fallback to main product image
       if (product.image) {
         setProductImages([{

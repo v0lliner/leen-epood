@@ -27,22 +27,40 @@ const MultiImageUpload = ({
     }
 
     setUploading(true)
+    console.log('Starting file upload process for', fileArray.length, 'files')
 
     try {
       const uploadPromises = fileArray.map(async (file, index) => {
+        console.log(`Processing file ${index + 1}:`, file.name)
+        
         // Validate file
         const validation = storageService.validateImage(file)
         if (!validation.valid) {
+          console.error('File validation failed:', validation.error)
           throw new Error(validation.error)
         }
 
+        console.log('Uploading file to storage...')
         const { data, error } = await storageService.uploadImage(file, 'products')
-        if (error) throw new Error(error.message)
+        if (error) {
+          console.error('Storage upload failed:', error)
+          throw new Error(error.message)
+        }
+
+        console.log('File uploaded to storage successfully:', data)
 
         // Add to database if productId exists
         if (productId) {
           const isPrimary = images.length === 0 && index === 0 // First image is primary
           const displayOrder = images.length + index
+          
+          console.log('Adding image to database:', {
+            productId,
+            url: data.url,
+            path: data.path,
+            isPrimary,
+            displayOrder
+          })
           
           const { data: imageData, error: dbError } = await productImageService.addProductImage(
             productId,
@@ -54,6 +72,12 @@ const MultiImageUpload = ({
           
           if (dbError) {
             console.error('Database error when adding image:', dbError)
+            // Try to clean up uploaded file
+            try {
+              await storageService.deleteImage(data.path)
+            } catch (cleanupError) {
+              console.error('Failed to cleanup uploaded file:', cleanupError)
+            }
             throw new Error(dbError.message)
           }
           
@@ -61,16 +85,19 @@ const MultiImageUpload = ({
           return imageData
         } else {
           // Return image data for form preview
-          return {
+          const tempImage = {
             id: `temp-${Date.now()}-${index}`,
             image_url: data.url,
             image_path: data.path,
             is_primary: images.length === 0 && index === 0,
             display_order: images.length + index
           }
+          console.log('Created temporary image object:', tempImage)
+          return tempImage
         }
       })
 
+      console.log('Waiting for all uploads to complete...')
       const newImages = await Promise.all(uploadPromises)
       console.log('All images uploaded successfully:', newImages)
       
@@ -78,6 +105,22 @@ const MultiImageUpload = ({
       const updatedImages = [...images, ...newImages]
       console.log('Updated images array:', updatedImages)
       onImagesChange(updatedImages)
+      
+      // Force reload of images if we have a productId to ensure consistency
+      if (productId) {
+        console.log('Reloading images from database to ensure consistency...')
+        setTimeout(async () => {
+          try {
+            const { data: refreshedImages } = await productImageService.getProductImages(productId)
+            if (refreshedImages) {
+              console.log('Refreshed images from database:', refreshedImages)
+              onImagesChange(refreshedImages)
+            }
+          } catch (refreshError) {
+            console.error('Error refreshing images:', refreshError)
+          }
+        }, 500)
+      }
       
     } catch (err) {
       console.error('Error uploading images:', err)

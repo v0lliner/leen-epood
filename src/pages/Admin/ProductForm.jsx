@@ -75,16 +75,27 @@ const ProductForm = () => {
           dimensions: productData.dimensions || { height: '', width: '', depth: '' }
         })
 
-        // Load product images
+        // Load product images with retry mechanism
         console.log('Loading images for product:', id)
-        const { data: imagesData, error: imagesError } = await productImageService.getProductImages(id)
+        let retryCount = 0
+        const maxRetries = 3
         
-        if (imagesError) {
-          console.warn('Failed to load product images:', imagesError)
-          setImages([])
-        } else {
-          console.log('Loaded product images:', imagesData)
-          setImages(imagesData || [])
+        while (retryCount < maxRetries) {
+          const { data: imagesData, error: imagesError } = await productImageService.getProductImages(id)
+          
+          if (imagesError) {
+            console.warn(`Failed to load product images (attempt ${retryCount + 1}):`, imagesError)
+            retryCount++
+            if (retryCount < maxRetries) {
+              await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second before retry
+            } else {
+              setImages([])
+            }
+          } else {
+            console.log('Loaded product images:', imagesData)
+            setImages(imagesData || [])
+            break
+          }
         }
       }
     } catch (err) {
@@ -222,6 +233,29 @@ const ProductForm = () => {
         setError(error.message)
       } else {
         console.log('Product saved successfully:', data)
+        
+        // If this is a new product and we have temporary images, we need to associate them
+        if (!isEdit && data?.id && images.some(img => img.id.startsWith('temp-'))) {
+          console.log('Associating temporary images with new product...')
+          try {
+            // Re-upload images for the new product
+            const tempImages = images.filter(img => img.id.startsWith('temp-'))
+            for (let i = 0; i < tempImages.length; i++) {
+              const tempImage = tempImages[i]
+              await productImageService.addProductImage(
+                data.id,
+                tempImage.image_url,
+                tempImage.image_path,
+                tempImage.is_primary,
+                tempImage.display_order
+              )
+            }
+            console.log('Successfully associated all images with new product')
+          } catch (imageError) {
+            console.error('Error associating images with new product:', imageError)
+          }
+        }
+        
         setSuccess(isEdit ? t('admin.products.form.updated_success') : t('admin.products.form.created_success'))
         setTimeout(() => {
           navigate('/admin/products')
@@ -235,10 +269,15 @@ const ProductForm = () => {
     }
   }
 
-  // Handle images change with logging
+  // Handle images change with logging and validation
   const handleImagesChange = (newImages) => {
     console.log('Images changed in ProductForm:', newImages)
     setImages(newImages)
+    
+    // Clear error if we now have images
+    if (newImages.length > 0 && error === 'Vähemalt üks pilt on kohustuslik') {
+      setError('')
+    }
   }
 
   if (loading && isEdit) {
