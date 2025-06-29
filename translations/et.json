@@ -150,6 +150,8 @@
     },
     "product": {
       "available": "Saadaval",
+      "sold_out": "Müüdud",
+      "in_cart": "Ostukorvis",
       "add_to_cart": "Lisa ostukorvi",
       "dimensions_label": "Mõõdud",
       "related": "Vaata ka"

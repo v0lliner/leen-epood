@@ -139,7 +139,7 @@ const CartSummary = ({ isOpen, onClose }) => {
                 <div className="item-details">
                   <h4 className="item-title">{item.title}</h4>
                   <p className="item-price">{item.price}</p>
-                  <p className="item-quantity">{t('cart.quantity')}: {item.quantity}</p>
+                  <p className="item-quantity">{t('cart.quantity')}: 1</p>
                 </div>
                 <button 
                   className="remove-item"

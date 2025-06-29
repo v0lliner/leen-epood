@@ -150,6 +150,8 @@
     },
     "product": {
       "available": "Available",
+      "sold_out": "Sold Out",
+      "in_cart": "In Cart",
       "add_to_cart": "Add to cart",
       "dimensions_label": "Dimensions",
       "related": "Related products"

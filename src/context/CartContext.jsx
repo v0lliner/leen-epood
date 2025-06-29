@@ -1,21 +1,18 @@
 import { createContext, useContext, useReducer } from 'react';
+import { productService } from '../utils/supabase/products';
 
 const CartContext = createContext();
 
 const cartReducer = (state, action) => {
   switch (action.type) {
     case 'ADD_ITEM':
+      // Check if item already exists in cart
       const existingItem = state.items.find(item => item.id === action.payload.id);
       if (existingItem) {
-        return {
-          ...state,
-          items: state.items.map(item =>
-            item.id === action.payload.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          )
-        };
+        // Item already in cart, don't add again
+        return state;
       }
+      // Add new item with quantity 1
       return {
         ...state,
         items: [...state.items, { ...action.payload, quantity: 1 }]
@@ -25,16 +22,6 @@ const cartReducer = (state, action) => {
       return {
         ...state,
         items: state.items.filter(item => item.id !== action.payload)
-      };
-    
-    case 'UPDATE_QUANTITY':
-      return {
-        ...state,
-        items: state.items.map(item =>
-          item.id === action.payload.id
-            ? { ...item, quantity: action.payload.quantity }
-            : item
-        )
       };
     
     case 'CLEAR_CART':
@@ -51,35 +38,82 @@ const cartReducer = (state, action) => {
 export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
-  const addItem = (product) => {
+  const addItem = async (product) => {
+    // Check if product is already in cart
+    const existingItem = state.items.find(item => item.id === product.id);
+    if (existingItem) {
+      console.log('Product already in cart');
+      return;
+    }
+
+    // Add to cart first
     dispatch({ type: 'ADD_ITEM', payload: product });
-  };
 
-  const removeItem = (productId) => {
-    dispatch({ type: 'REMOVE_ITEM', payload: productId });
-  };
-
-  const updateQuantity = (productId, quantity) => {
-    if (quantity <= 0) {
-      removeItem(productId);
-    } else {
-      dispatch({ type: 'UPDATE_QUANTITY', payload: { id: productId, quantity } });
+    // Update product availability in database
+    try {
+      await productService.upsertProduct({
+        ...product,
+        available: false
+      });
+    } catch (error) {
+      console.error('Failed to update product availability:', error);
+      // If database update fails, remove from cart
+      dispatch({ type: 'REMOVE_ITEM', payload: product.id });
     }
   };
 
-  const clearCart = () => {
+  const removeItem = async (productId) => {
+    // Find the product in cart
+    const cartItem = state.items.find(item => item.id === productId);
+    if (!cartItem) return;
+
+    // Remove from cart
+    dispatch({ type: 'REMOVE_ITEM', payload: productId });
+
+    // Update product availability in database
+    try {
+      await productService.upsertProduct({
+        ...cartItem,
+        available: true
+      });
+    } catch (error) {
+      console.error('Failed to update product availability:', error);
+    }
+  };
+
+  const clearCart = async () => {
+    // Update all cart items to be available again
+    const updatePromises = state.items.map(async (item) => {
+      try {
+        await productService.upsertProduct({
+          ...item,
+          available: true
+        });
+      } catch (error) {
+        console.error('Failed to update product availability for item:', item.id, error);
+      }
+    });
+
+    // Wait for all updates to complete
+    await Promise.all(updatePromises);
+
+    // Clear the cart
     dispatch({ type: 'CLEAR_CART' });
   };
 
   const getTotalPrice = () => {
     return state.items.reduce((total, item) => {
       const price = parseFloat(item.price.replace('€', ''));
-      return total + (price * item.quantity);
+      return total + price; // Each item has quantity 1
     }, 0);
   };
 
   const getTotalItems = () => {
-    return state.items.reduce((total, item) => total + item.quantity, 0);
+    return state.items.length; // Each item is unique
+  };
+
+  const isInCart = (productId) => {
+    return state.items.some(item => item.id === productId);
   };
 
   return (
@@ -87,10 +121,10 @@ export const CartProvider = ({ children }) => {
       items: state.items,
       addItem,
       removeItem,
-      updateQuantity,
       clearCart,
       getTotalPrice,
-      getTotalItems
+      getTotalItems,
+      isInCart
     }}>
       {children}
     </CartContext.Provider>

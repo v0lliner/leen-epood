@@ -12,7 +12,7 @@ import { productImageService } from '../utils/supabase/productImages';
 const ProductDetail = () => {
   const { slug } = useParams();
   const { t } = useTranslation();
-  const { addItem } = useCart();
+  const { addItem, isInCart } = useCart();
   const { products, getProductBySlug, getRelatedProducts, loading } = useProducts();
   const [productImages, setProductImages] = useState([]);
   const [imagesLoading, setImagesLoading] = useState(true);
@@ -129,9 +129,13 @@ const ProductDetail = () => {
   }
 
   const relatedProducts = getRelatedProducts(product);
+  const isProductInCart = isInCart(product.id);
+  const canAddToCart = product.available && !isProductInCart;
 
   const handleAddToCart = () => {
-    addItem(product);
+    if (canAddToCart) {
+      addItem(product);
+    }
   };
 
   // Helper function to get valid dimensions
@@ -154,6 +158,28 @@ const ProductDetail = () => {
   };
 
   const validDimensions = getValidDimensions(product.dimensions);
+
+  // Get availability text
+  const getAvailabilityText = () => {
+    if (!product.available) {
+      return t('shop.product.sold_out');
+    }
+    if (isProductInCart) {
+      return t('shop.product.in_cart');
+    }
+    return t('shop.product.available');
+  };
+
+  // Get button text
+  const getButtonText = () => {
+    if (!product.available) {
+      return t('shop.product.sold_out');
+    }
+    if (isProductInCart) {
+      return t('shop.product.in_cart');
+    }
+    return t('shop.product.add_to_cart');
+  };
 
   return (
     <>
@@ -199,14 +225,21 @@ const ProductDetail = () => {
                   <p className="product-description">{product.description}</p>
                   
                   <div className="product-actions">
-                    <p className="availability">{t('shop.product.available')}</p>
-                    {product.available && (
+                    <p className={`availability ${!product.available ? 'sold-out' : isProductInCart ? 'in-cart' : 'available'}`}>
+                      {getAvailabilityText()}
+                    </p>
+                    {canAddToCart && (
                       <button 
                         className="link-with-arrow add-to-cart-btn"
                         onClick={handleAddToCart}
                       >
-                        {t('shop.product.add_to_cart')} <span className="arrow-wrapper">→</span>
+                        {getButtonText()} <span className="arrow-wrapper">→</span>
                       </button>
+                    )}
+                    {!canAddToCart && (
+                      <div className="unavailable-btn">
+                        {getButtonText()}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -341,8 +374,20 @@ const ProductDetail = () => {
 
         .availability {
           font-size: 0.9rem;
-          color: #666;
           margin: 0;
+          font-weight: 500;
+        }
+
+        .availability.available {
+          color: #28a745;
+        }
+
+        .availability.sold-out {
+          color: #dc3545;
+        }
+
+        .availability.in-cart {
+          color: var(--color-ultramarine);
         }
 
         .add-to-cart-btn {
@@ -364,6 +409,18 @@ const ProductDetail = () => {
 
         .add-to-cart-btn:hover {
           opacity: 0.8;
+        }
+
+        .unavailable-btn {
+          align-self: flex-start;
+          font-family: var(--font-body);
+          font-size: 1.25rem;
+          font-weight: 600;
+          color: #999;
+          padding: 0;
+          display: inline-flex;
+          align-items: center;
+          gap: 8px;
         }
 
         .related-section {
@@ -411,7 +468,8 @@ const ProductDetail = () => {
             font-size: 1.25rem;
           }
 
-          .add-to-cart-btn {
+          .add-to-cart-btn,
+          .unavailable-btn {
             font-size: 1.125rem;
             align-self: stretch;
             text-align: left;

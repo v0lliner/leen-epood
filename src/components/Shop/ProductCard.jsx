@@ -5,14 +5,23 @@ import { useTranslation } from 'react-i18next';
 
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const { addItem } = useCart();
+  const { addItem, isInCart } = useCart();
   const { t } = useTranslation();
 
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    
+    // Don't add if already in cart or not available
+    if (isInCart(product.id) || !product.available) {
+      return;
+    }
+    
     addItem(product);
   };
+
+  const isProductInCart = isInCart(product.id);
+  const canAddToCart = product.available && !isProductInCart;
 
   return (
     <Link 
@@ -24,9 +33,12 @@ const ProductCard = ({ product }) => {
       <div className="product-image">
         <img src={product.image} alt={product.title} />
         {!product.available && (
-          <div className="sold-overlay">Müüdud</div>
+          <div className="sold-overlay">{t('shop.product.sold_out')}</div>
         )}
-        {isHovered && product.available && (
+        {isProductInCart && product.available && (
+          <div className="in-cart-overlay">{t('shop.product.in_cart')}</div>
+        )}
+        {isHovered && canAddToCart && (
           <button 
             className="add-to-cart-overlay"
             onClick={handleAddToCart}
@@ -66,7 +78,8 @@ const ProductCard = ({ product }) => {
           transform: scale(1.05);
         }
 
-        .sold-overlay {
+        .sold-overlay,
+        .in-cart-overlay {
           position: absolute;
           top: 50%;
           left: 50%;
@@ -77,6 +90,10 @@ const ProductCard = ({ product }) => {
           border-radius: 4px;
           font-weight: 500;
           font-family: var(--font-heading);
+        }
+
+        .in-cart-overlay {
+          background-color: rgba(47, 62, 156, 0.9);
         }
 
         .add-to-cart-overlay {
