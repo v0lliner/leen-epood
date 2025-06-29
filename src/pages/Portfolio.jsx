@@ -237,14 +237,21 @@ const Portfolio = () => {
           width: 500px;
           height: 500px;
           display: flex;
-          align-items: center;
-          justify-content: center;
           overflow: hidden;
         }
 
+        /* Align image to the text side */
+        .portfolio-content .portfolio-image-container {
+          justify-content: flex-end; /* Align to right (towards text) */
+        }
+
+        .portfolio-content.reverse .portfolio-image-container {
+          justify-content: flex-start; /* Align to left (towards text) */
+        }
+
         .portfolio-image {
-          width: 100%;
-          height: 100%;
+          max-width: 100%;
+          max-height: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -257,13 +264,6 @@ const Portfolio = () => {
           height: auto;
           object-fit: contain;
           border-radius: 4px;
-        }
-
-        /* Ensure one dimension is always 500px */
-        .portfolio-image img {
-          min-width: 100%;
-          min-height: 100%;
-          object-fit: cover;
         }
 
         .portfolio-info {
@@ -371,6 +371,7 @@ const Portfolio = () => {
             width: 100%;
             max-width: 400px;
             height: 400px;
+            justify-content: center !important;
           }
 
           .portfolio-info,
