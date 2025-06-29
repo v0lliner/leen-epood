@@ -20,6 +20,10 @@ const ProductCard = ({ product }) => {
     addItem(product);
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const isProductInCart = isInCart(product.id);
   const canAddToCart = product.available && !isProductInCart;
 
@@ -29,6 +33,7 @@ const ProductCard = ({ product }) => {
       className="product-card"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={scrollToTop}
     >
       <div className="product-image">
         <img src={product.image} alt={product.title} />

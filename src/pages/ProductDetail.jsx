@@ -172,6 +172,10 @@ const ProductDetail = () => {
     }
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Helper function to get valid dimensions
   const getValidDimensions = (dimensions) => {
     if (!dimensions) return [];
@@ -214,7 +218,7 @@ const ProductDetail = () => {
           <div className="container">
             <FadeInSection>
               <div className="breadcrumb">
-                <Link to="/epood" className="breadcrumb-link">{t('shop.title')}</Link>
+                <Link to="/epood" className="breadcrumb-link" onClick={scrollToTop}>{t('shop.title')}</Link>
                 <span className="breadcrumb-separator"> / </span>
                 <span className="breadcrumb-current">{product.title}</span>
               </div>

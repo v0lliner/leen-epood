@@ -8,6 +8,10 @@ const About = () => {
   const { t } = useTranslation();
   const { loading, getSection } = useAboutPage();
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <>
@@ -136,7 +140,7 @@ const About = () => {
             <FadeInSection className="about-cta-section">
               <div className="about-cta-content">
                 <p>{ctaSection.content || t('about.cta_text')}</p>
-                <Link to="/epood" className="link-with-arrow about-cta">
+                <Link to="/epood" className="link-with-arrow about-cta" onClick={scrollToTop}>
                   {t('about.cta_button')} <span className="arrow-wrapper">→</span>
                 </Link>
               </div>

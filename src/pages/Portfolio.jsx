@@ -144,6 +144,10 @@ const Portfolio = () => {
     }
   };
 
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   if (loading) {
     return (
       <>
@@ -243,7 +247,7 @@ const Portfolio = () => {
             <FadeInSection className="portfolio-cta-section">
               <div className="portfolio-cta-content">
                 <p>{t('portfolio.cta_text')}</p>
-                <Link to="/epood" className="link-with-arrow portfolio-cta">
+                <Link to="/epood" className="link-with-arrow portfolio-cta" onClick={scrollToTop}>
                   {t('portfolio.cta_button')} <span className="arrow-wrapper">→</span>
                 </Link>
               </div>

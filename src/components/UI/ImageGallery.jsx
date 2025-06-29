@@ -28,25 +28,15 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
     
-    // Prevent body scroll and ensure modal is always centered
-    document.body.style.overflow = 'hidden'
-    document.body.style.position = 'fixed'
-    document.body.style.top = '0'
-    document.body.style.left = '0'
-    document.body.style.right = '0'
-    document.body.style.bottom = '0'
+    // Allow background scrolling but keep modal fixed
+    document.body.classList.add('modal-open')
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
     
-    // Restore body scroll and positioning
-    document.body.style.overflow = 'unset'
-    document.body.style.position = 'unset'
-    document.body.style.top = 'unset'
-    document.body.style.left = 'unset'
-    document.body.style.right = 'unset'
-    document.body.style.bottom = 'unset'
+    // Restore normal scrolling
+    document.body.classList.remove('modal-open')
   }
 
   const nextImage = () => {
@@ -213,12 +203,12 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
                 alt={`${productTitle} pilt ${selectedIndex + 1}`}
                 onClick={handleImageClick}
               />
+              
+              {/* Close button positioned on top-right of image */}
+              <button className="modal-close" onClick={closeModal} aria-label="Sulge">
+                ×
+              </button>
             </div>
-            
-            {/* Close button */}
-            <button className="modal-close" onClick={closeModal} aria-label="Sulge">
-              ×
-            </button>
 
             {/* Navigation arrows */}
             {sortedImages.length > 1 && (
@@ -238,13 +228,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
                   ›
                 </button>
               </>
-            )}
-
-            {/* Image counter */}
-            {sortedImages.length > 1 && (
-              <div className="modal-counter">
-                {selectedIndex + 1} / {sortedImages.length}
-              </div>
             )}
           </div>
         </div>
@@ -444,21 +427,21 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         }
 
         .modal-close {
-          position: fixed;
-          top: 20px;
-          right: 20px;
+          position: absolute;
+          top: -20px;
+          right: -20px;
           background: rgba(255, 255, 255, 0.95);
           border: none;
           color: #333;
-          font-size: 2.5rem;
+          font-size: 3rem;
           cursor: pointer;
           z-index: 1000001;
           padding: 8px 12px;
           line-height: 1;
           transition: all 0.2s ease;
           border-radius: 50%;
-          width: 60px;
-          height: 60px;
+          width: 80px;
+          height: 80px;
           display: flex;
           align-items: center;
           justify-content: center;
@@ -501,21 +484,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
 
         .modal-next {
           right: 20px;
-        }
-
-        .modal-counter {
-          position: fixed;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          background: rgba(255, 255, 255, 0.9);
-          color: #333;
-          padding: 8px 16px;
-          border-radius: 20px;
-          font-size: 0.9rem;
-          font-weight: 500;
-          z-index: 1000001;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         /* Mobile Responsive */
