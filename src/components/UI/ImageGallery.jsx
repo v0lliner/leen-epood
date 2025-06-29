@@ -28,29 +28,32 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex(index)
     setIsModalOpen(true)
     
-    // Prevent body scroll and ensure modal stays fixed
-    document.body.style.overflow = 'hidden'
+    // Lock body scroll and position
+    const scrollY = window.scrollY
     document.body.style.position = 'fixed'
-    document.body.style.top = `-${window.scrollY}px`
+    document.body.style.top = `-${scrollY}px`
+    document.body.style.left = '0'
+    document.body.style.right = '0'
+    document.body.style.overflow = 'hidden'
     document.body.style.width = '100%'
+    document.body.dataset.scrollY = scrollY.toString()
   }
 
   const closeModal = () => {
-    // Get the scroll position before closing
-    const scrollY = document.body.style.top
-    
     setIsModalOpen(false)
     
     // Restore body scroll and position
-    document.body.style.overflow = ''
+    const scrollY = parseInt(document.body.dataset.scrollY || '0')
     document.body.style.position = ''
     document.body.style.top = ''
+    document.body.style.left = ''
+    document.body.style.right = ''
+    document.body.style.overflow = ''
     document.body.style.width = ''
+    delete document.body.dataset.scrollY
     
     // Restore scroll position
-    if (scrollY) {
-      window.scrollTo(0, parseInt(scrollY || '0') * -1)
-    }
+    window.scrollTo(0, scrollY)
   }
 
   const nextImage = () => {
@@ -93,24 +96,22 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   useEffect(() => {
     return () => {
       if (isModalOpen) {
-        document.body.style.overflow = ''
         document.body.style.position = ''
         document.body.style.top = ''
+        document.body.style.left = ''
+        document.body.style.right = ''
+        document.body.style.overflow = ''
         document.body.style.width = ''
+        delete document.body.dataset.scrollY
       }
     }
   }, [])
 
-  const handleModalClick = (e) => {
-    // Close modal when clicking anywhere in the modal background
+  const handleModalBackdropClick = (e) => {
+    // Close modal when clicking on backdrop
     if (e.target === e.currentTarget) {
       closeModal()
     }
-  }
-
-  const handleImageClick = (e) => {
-    // Prevent modal from closing when clicking on the image itself
-    e.stopPropagation()
   }
 
   // Mobile carousel navigation
@@ -217,38 +218,38 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
 
       {/* Modal - Only on desktop */}
       {isModalOpen && !isMobile() && (
-        <div 
-          className="modal-overlay" 
-          onClick={handleModalClick}
-          tabIndex={0}
-        >
-          <div className="modal-content">
+        <div className="modal-overlay" onClick={handleModalBackdropClick}>
+          <div className="modal-container">
+            {/* Close button */}
+            <button 
+              className="modal-close" 
+              onClick={closeModal} 
+              aria-label="Sulge"
+            >
+              ×
+            </button>
+
+            {/* Image container */}
             <div className="modal-image-container">
               <img 
                 src={sortedImages[selectedIndex].image_url} 
                 alt={`${productTitle} pilt ${selectedIndex + 1}`}
-                onClick={handleImageClick}
               />
-              
-              {/* Close button positioned on top-right of image */}
-              <button className="modal-close" onClick={closeModal} aria-label="Sulge">
-                ×
-              </button>
             </div>
 
-            {/* Navigation arrows */}
+            {/* Navigation arrows - only show if more than 1 image */}
             {sortedImages.length > 1 && (
               <>
                 <button 
                   className="modal-nav modal-prev" 
-                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                  onClick={prevImage}
                   aria-label="Eelmine pilt"
                 >
                   ‹
                 </button>
                 <button 
                   className="modal-nav modal-next" 
-                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                  onClick={nextImage}
                   aria-label="Järgmine pilt"
                 >
                   ›
@@ -404,111 +405,161 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           opacity: 0.7;
         }
 
-        /* Modal Styles - FIXED POSITIONING */
+        /* MODAL STYLES - PROFESSIONAL IMPLEMENTATION */
         .modal-overlay {
+          /* Fixed positioning - always centered on screen */
           position: fixed;
           top: 0;
           left: 0;
-          right: 0;
-          bottom: 0;
-          z-index: 2147483647; /* Maximum z-index value */
-          background-color: rgba(0, 0, 0, 0.95);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          cursor: pointer;
-          padding: 0;
-          margin: 0;
-          /* Ensure modal is always centered and fixed */
           width: 100vw;
           height: 100vh;
-          overflow: hidden;
-        }
-
-        .modal-content {
-          position: relative;
+          
+          /* Maximum z-index to ensure nothing appears above */
+          z-index: 2147483647;
+          
+          /* Dark backdrop */
+          background-color: rgba(0, 0, 0, 0.95);
+          
+          /* Center content */
           display: flex;
           align-items: center;
           justify-content: center;
-          width: 90vw;
-          height: 90vh;
-          max-width: 90vw;
-          max-height: 90vh;
+          
+          /* Prevent any scrolling or movement */
+          overflow: hidden;
+          
+          /* Cursor indicates clickable backdrop */
+          cursor: pointer;
+        }
+
+        .modal-container {
+          /* Container for modal content */
+          position: relative;
+          
+          /* Size constraints - smaller than viewport */
+          width: 85vw;
+          height: 85vh;
+          max-width: 1200px;
+          max-height: 800px;
+          
+          /* Center the container */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          /* Remove cursor pointer from container */
           cursor: default;
-          /* Center the content within the modal */
-          margin: auto;
         }
 
         .modal-image-container {
+          /* Image container */
           position: relative;
           max-width: 100%;
           max-height: 100%;
+          
+          /* Center image within container */
           display: flex;
           align-items: center;
           justify-content: center;
-          z-index: 2147483648;
         }
 
         .modal-image-container img {
+          /* Image sizing - maintain aspect ratio, no cropping */
           max-width: 100%;
           max-height: 100%;
           width: auto;
           height: auto;
           object-fit: contain;
+          
+          /* Visual enhancements */
           border-radius: 8px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+          
+          /* Prevent image from being clickable */
           cursor: default;
-          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-          /* Ensure image doesn't exceed viewport */
-          max-width: 85vw;
-          max-height: 85vh;
+          pointer-events: none;
         }
 
+        /* CLOSE BUTTON - Top right of image */
         .modal-close {
           position: absolute;
-          top: -25px;
-          right: -25px;
-          background: rgba(255, 255, 255, 0.95);
-          border: none;
-          color: #333;
-          font-size: 2.5rem;
-          cursor: pointer;
-          z-index: 2147483649;
-          padding: 8px 12px;
-          line-height: 1;
-          transition: all 0.2s ease;
+          top: -30px;
+          right: -30px;
+          
+          /* Styling */
+          width: 80px;
+          height: 80px;
           border-radius: 50%;
-          width: 70px;
-          height: 70px;
+          border: none;
+          
+          /* Background with blur effect */
+          background: rgba(255, 255, 255, 0.95);
+          backdrop-filter: blur(10px);
+          
+          /* Text styling */
+          color: #333;
+          font-size: 3rem;
+          font-weight: 300;
+          line-height: 1;
+          
+          /* Layout */
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-          font-weight: 300;
-          backdrop-filter: blur(10px);
+          
+          /* Interactions */
+          cursor: pointer;
+          transition: all 0.3s ease;
+          
+          /* Layering */
+          z-index: 2147483648;
+          
+          /* Shadow */
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
         .modal-close:hover {
           background: rgba(255, 255, 255, 1);
           transform: scale(1.1);
-          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+          box-shadow: 0 12px 35px rgba(0, 0, 0, 0.4);
         }
 
+        /* NAVIGATION ARROWS */
         .modal-nav {
-          position: fixed;
+          position: absolute;
           top: 50%;
           transform: translateY(-50%);
-          background: rgba(255, 255, 255, 0.9);
+          
+          /* Styling */
+          width: 70px;
+          height: 70px;
+          border-radius: 50%;
           border: none;
-          color: #333;
-          font-size: 2rem;
-          padding: 12px 16px;
-          cursor: pointer;
-          border-radius: 8px;
-          transition: all 0.2s ease;
-          z-index: 2147483649;
-          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-          font-weight: 300;
+          
+          /* Background with blur effect */
+          background: rgba(255, 255, 255, 0.9);
           backdrop-filter: blur(10px);
+          
+          /* Text styling */
+          color: #333;
+          font-size: 2.5rem;
+          font-weight: 300;
+          line-height: 1;
+          
+          /* Layout */
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          
+          /* Interactions */
+          cursor: pointer;
+          transition: all 0.3s ease;
+          
+          /* Layering */
+          z-index: 2147483648;
+          
+          /* Shadow */
+          box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
         }
 
         .modal-nav:hover {
@@ -518,14 +569,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         }
 
         .modal-prev {
-          left: 30px;
+          left: -100px;
         }
 
         .modal-next {
-          right: 30px;
+          right: -100px;
         }
 
-        /* Mobile Responsive */
+        /* RESPONSIVE ADJUSTMENTS */
         @media (max-width: 768px) {
           /* Hide desktop gallery, show mobile carousel */
           .desktop-gallery {
@@ -535,11 +586,78 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .mobile-carousel {
             display: block;
           }
+        }
 
-          /* Adjust additional images grid for smaller screens when desktop is shown */
-          .additional-images {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 6px;
+        @media (max-width: 1400px) {
+          .modal-container {
+            width: 90vw;
+            height: 90vh;
+          }
+          
+          .modal-prev {
+            left: -80px;
+          }
+
+          .modal-next {
+            right: -80px;
+          }
+        }
+
+        @media (max-width: 1200px) {
+          .modal-container {
+            width: 95vw;
+            height: 95vh;
+          }
+          
+          .modal-close {
+            width: 70px;
+            height: 70px;
+            font-size: 2.5rem;
+            top: -25px;
+            right: -25px;
+          }
+          
+          .modal-nav {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+          }
+          
+          .modal-prev {
+            left: -60px;
+          }
+
+          .modal-next {
+            right: -60px;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .modal-container {
+            width: 98vw;
+            height: 98vh;
+          }
+          
+          .modal-close {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+            top: -20px;
+            right: -20px;
+          }
+          
+          .modal-nav {
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+          }
+          
+          .modal-prev {
+            left: -40px;
+          }
+
+          .modal-next {
+            right: -40px;
           }
         }
 
@@ -565,60 +683,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .carousel-dot {
             width: 10px;
             height: 10px;
-          }
-        }
-
-        /* Smaller screens - adjust modal content */
-        @media (max-width: 1200px) {
-          .modal-content {
-            width: 95vw;
-            height: 95vh;
-          }
-
-          .modal-image-container img {
-            max-width: 90vw;
-            max-height: 90vh;
-          }
-        }
-
-        @media (max-width: 900px) {
-          .modal-content {
-            width: 98vw;
-            height: 98vh;
-          }
-
-          .modal-image-container img {
-            max-width: 95vw;
-            max-height: 95vh;
-          }
-
-          .modal-close {
-            width: 60px;
-            height: 60px;
-            font-size: 2rem;
-            top: -20px;
-            right: -20px;
-          }
-
-          .modal-nav {
-            font-size: 1.5rem;
-            padding: 8px 12px;
-          }
-
-          .modal-prev {
-            left: 20px;
-          }
-
-          .modal-next {
-            right: 20px;
-          }
-        }
-
-        /* Ultra-wide screens */
-        @media (min-width: 1920px) {
-          .modal-image-container img {
-            max-width: 80vw;
-            max-height: 80vh;
           }
         }
       `}</style>
