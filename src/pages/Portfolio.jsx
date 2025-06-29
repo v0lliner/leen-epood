@@ -120,12 +120,12 @@ const Portfolio = () => {
     const mobile = isMobile();
     
     if (mobile) {
-      // Mobile: Always constrain to screen width with max height
+      // Mobile: Fit to screen width, maintain aspect ratio, NO CROPPING
       img.style.width = '100%';
       img.style.height = 'auto';
       img.style.maxWidth = '100%';
-      img.style.maxHeight = '300px';
-      img.style.objectFit = 'cover';
+      img.style.maxHeight = 'none'; // Remove height constraint
+      img.style.objectFit = 'contain'; // Changed from 'cover' to 'contain'
     } else {
       // Desktop: Pikim külg alati 500px
       if (isLandscape) {
@@ -421,12 +421,12 @@ const Portfolio = () => {
           }
 
           .portfolio-image img {
-            /* Mobile constraints - will be overridden by onLoad */
+            /* Mobile: NO CROPPING - fit to width, maintain aspect ratio */
             max-width: 100% !important;
-            max-height: 300px !important;
+            max-height: none !important;
             width: 100% !important;
             height: auto !important;
-            object-fit: cover !important;
+            object-fit: contain !important; /* This prevents cropping */
           }
 
           /* Mobile: Center all text */
@@ -456,10 +456,6 @@ const Portfolio = () => {
         @media (max-width: 480px) {
           .portfolio-content {
             gap: 20px;
-          }
-
-          .portfolio-image img {
-            max-height: 250px !important;
           }
 
           .portfolio-info h3 {
