@@ -177,20 +177,36 @@ const ProductDetail = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Helper function to get valid dimensions
+  // Helper function to get valid dimensions with improved formatting
   const getValidDimensions = (dimensions) => {
     if (!dimensions) return [];
     
     const validDimensions = [];
     
     if (dimensions.height && dimensions.height > 0) {
-      validDimensions.push({ label: 'Kõrgus', value: `${dimensions.height}cm` });
+      validDimensions.push({ 
+        label: 'Kõrgus', 
+        value: `${parseFloat(dimensions.height).toString().replace('.', ',')} cm` 
+      });
     }
     if (dimensions.width && dimensions.width > 0) {
-      validDimensions.push({ label: 'Laius', value: `${dimensions.width}cm` });
+      validDimensions.push({ 
+        label: 'Laius', 
+        value: `${parseFloat(dimensions.width).toString().replace('.', ',')} cm` 
+      });
+    }
+    // Show second width if it exists and is different from first width
+    if (dimensions.width2 && dimensions.width2 > 0 && dimensions.width2 !== dimensions.width) {
+      validDimensions.push({ 
+        label: 'Laius 2', 
+        value: `${parseFloat(dimensions.width2).toString().replace('.', ',')} cm` 
+      });
     }
     if (dimensions.depth && dimensions.depth > 0) {
-      validDimensions.push({ label: 'Sügavus', value: `${dimensions.depth}cm` });
+      validDimensions.push({ 
+        label: 'Sügavus', 
+        value: `${parseFloat(dimensions.depth).toString().replace('.', ',')} cm` 
+      });
     }
     
     return validDimensions;
@@ -422,7 +438,7 @@ const ProductDetail = () => {
           font-family: var(--font-body);
           font-weight: 400;
           color: var(--color-text);
-          min-width: 60px;
+          min-width: 70px;
         }
 
         .dimension-value {

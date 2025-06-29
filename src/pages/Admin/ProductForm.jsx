@@ -30,6 +30,7 @@ const ProductForm = () => {
     dimensions: {
       height: '',
       width: '',
+      width2: '', // Second width measurement for asymmetric products
       depth: ''
     },
     available: true
@@ -70,9 +71,16 @@ const ProductForm = () => {
       }
 
       if (productData) {
+        // Ensure dimensions object has all required fields
+        const dimensions = productData.dimensions || {}
         setFormData({
           ...productData,
-          dimensions: productData.dimensions || { height: '', width: '', depth: '' }
+          dimensions: {
+            height: dimensions.height || '',
+            width: dimensions.width || '',
+            width2: dimensions.width2 || '', // Support for second width
+            depth: dimensions.depth || ''
+          }
         })
 
         // Load product images with retry mechanism
@@ -130,11 +138,13 @@ const ProductForm = () => {
       }))
     } else if (name.startsWith('dimensions.')) {
       const dimensionKey = name.split('.')[1]
+      // Allow decimal numbers for dimensions
+      const numericValue = value === '' ? '' : value
       setFormData(prev => ({
         ...prev,
         dimensions: {
           ...prev.dimensions,
-          [dimensionKey]: value
+          [dimensionKey]: numericValue
         }
       }))
     } else {
@@ -206,15 +216,22 @@ const ProductForm = () => {
         return
       }
 
+      // Process dimensions - convert to numbers where possible, keep as strings for decimals
+      const processedDimensions = {}
+      Object.keys(formData.dimensions).forEach(key => {
+        const value = formData.dimensions[key]
+        if (value !== '') {
+          // Parse as float to support decimal values
+          const numValue = parseFloat(value)
+          processedDimensions[key] = isNaN(numValue) ? 0 : numValue
+        }
+      })
+
       const productData = {
         ...formData,
         slug: uniqueSlug, // Use the guaranteed unique slug
         price: formData.price.includes('€') ? formData.price : `${formData.price}€`,
-        dimensions: {
-          height: parseInt(formData.dimensions.height) || 0,
-          width: parseInt(formData.dimensions.width) || 0,
-          depth: parseInt(formData.dimensions.depth) || 0
-        },
+        dimensions: processedDimensions,
         // Set primary image for backward compatibility
         image: images.find(img => img.is_primary)?.image_url || images[0]?.image_url || '',
         image_path: images.find(img => img.is_primary)?.image_path || images[0]?.image_path || ''
@@ -421,32 +438,68 @@ const ProductForm = () => {
               </div>
 
               <div className="form-group">
-                <label>{t('admin.products.form.dimensions')}</label>
+                <label>{t('admin.products.form.dimensions')} (cm)</label>
                 <div className="dimensions-grid">
-                  <input
-                    type="number"
-                    name="dimensions.height"
-                    value={formData.dimensions.height}
-                    onChange={handleInputChange}
-                    placeholder={t('admin.products.form.height')}
-                    className="form-input"
-                  />
-                  <input
-                    type="number"
-                    name="dimensions.width"
-                    value={formData.dimensions.width}
-                    onChange={handleInputChange}
-                    placeholder={t('admin.products.form.width')}
-                    className="form-input"
-                  />
-                  <input
-                    type="number"
-                    name="dimensions.depth"
-                    value={formData.dimensions.depth}
-                    onChange={handleInputChange}
-                    placeholder={t('admin.products.form.depth')}
-                    className="form-input"
-                  />
+                  <div className="dimension-input">
+                    <label htmlFor="height" className="dimension-label">Kõrgus</label>
+                    <input
+                      type="number"
+                      id="height"
+                      name="dimensions.height"
+                      value={formData.dimensions.height}
+                      onChange={handleInputChange}
+                      step="0.1"
+                      min="0"
+                      placeholder="nt. 25.5"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="dimension-input">
+                    <label htmlFor="width" className="dimension-label">Laius 1</label>
+                    <input
+                      type="number"
+                      id="width"
+                      name="dimensions.width"
+                      value={formData.dimensions.width}
+                      onChange={handleInputChange}
+                      step="0.1"
+                      min="0"
+                      placeholder="nt. 15.2"
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="dimension-input">
+                    <label htmlFor="width2" className="dimension-label">Laius 2</label>
+                    <input
+                      type="number"
+                      id="width2"
+                      name="dimensions.width2"
+                      value={formData.dimensions.width2}
+                      onChange={handleInputChange}
+                      step="0.1"
+                      min="0"
+                      placeholder="nt. 12.8"
+                      className="form-input"
+                    />
+                    <small className="dimension-help">Mittesümmeetriliste toodete jaoks</small>
+                  </div>
+                  <div className="dimension-input">
+                    <label htmlFor="depth" className="dimension-label">Sügavus</label>
+                    <input
+                      type="number"
+                      id="depth"
+                      name="dimensions.depth"
+                      value={formData.dimensions.depth}
+                      onChange={handleInputChange}
+                      step="0.1"
+                      min="0"
+                      placeholder="nt. 8.3"
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+                <div className="dimensions-help">
+                  <small>Sisestage mõõdud sentimeetrites. Komakohad on lubatud (nt. 2.3).</small>
                 </div>
               </div>
 
@@ -626,8 +679,43 @@ const ProductForm = () => {
 
         .dimensions-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 8px;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+
+        .dimension-input {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .dimension-label {
+          font-family: var(--font-heading) !important;
+          font-weight: 500 !important;
+          color: var(--color-text) !important;
+          font-size: 0.8rem !important;
+          margin-bottom: 4px;
+        }
+
+        .dimension-help {
+          font-size: 0.7rem !important;
+          color: #888 !important;
+          font-style: italic;
+          margin-top: 2px;
+        }
+
+        .dimensions-help {
+          margin-top: 12px;
+          padding: 12px;
+          background: #f8f9fa;
+          border-radius: 4px;
+          border-left: 3px solid var(--color-ultramarine);
+        }
+
+        .dimensions-help small {
+          color: #666;
+          font-size: 0.85rem;
+          line-height: 1.4;
         }
 
         .checkbox-label {
@@ -720,7 +808,7 @@ const ProductForm = () => {
 
           .dimensions-grid {
             grid-template-columns: 1fr;
-            gap: 8px;
+            gap: 12px;
           }
 
           .form-actions {
