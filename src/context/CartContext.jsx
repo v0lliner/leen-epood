@@ -51,8 +51,10 @@ export const CartProvider = ({ children }) => {
 
     // Update product availability in database
     try {
+      // Remove quantity property before updating database
+      const { quantity, ...productData } = product;
       await productService.upsertProduct({
-        ...product,
+        ...productData,
         available: false
       });
     } catch (error) {
@@ -72,8 +74,10 @@ export const CartProvider = ({ children }) => {
 
     // Update product availability in database
     try {
+      // Remove quantity property before updating database
+      const { quantity, ...productData } = cartItem;
       await productService.upsertProduct({
-        ...cartItem,
+        ...productData,
         available: true
       });
     } catch (error) {
@@ -85,8 +89,10 @@ export const CartProvider = ({ children }) => {
     // Update all cart items to be available again
     const updatePromises = state.items.map(async (item) => {
       try {
+        // Remove quantity property before updating database
+        const { quantity, ...productData } = item;
         await productService.upsertProduct({
-          ...item,
+          ...productData,
           available: true
         });
       } catch (error) {
