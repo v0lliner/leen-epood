@@ -217,10 +217,10 @@ const TehtudToodForm = () => {
                   name="year"
                   value={formData.year}
                   onChange={handleInputChange}
-                  min="2020"
-                  max={new Date().getFullYear() + 1}
                   className="form-input"
+                  placeholder="Nt. 1995"
                 />
+                <small className="form-hint">Jätke tühjaks, kui aasta pole teada</small>
               </div>
 
               <div className="form-group">
@@ -386,6 +386,13 @@ const TehtudToodForm = () => {
 
         .form-input::placeholder {
           color: #999;
+        }
+
+        .form-hint {
+          color: #666;
+          font-size: 0.8rem;
+          font-style: italic;
+          margin-top: 4px;
         }
 
         .form-actions {
