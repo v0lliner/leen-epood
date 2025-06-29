@@ -44,16 +44,17 @@ const ProductDetail = () => {
           }]);
         }
       } else {
-        // If no images in database, use fallback
-        if (data.length === 0 && product.image) {
+        // If we have images from database, use them
+        if (data && data.length > 0) {
+          setProductImages(data);
+        } else if (product.image) {
+          // If no images in database but product has main image, use it as fallback
           setProductImages([{
             id: 'fallback',
             image_url: product.image,
             is_primary: true,
             display_order: 0
           }]);
-        } else {
-          setProductImages(data);
         }
       }
     } catch (err) {
@@ -211,7 +212,13 @@ const ProductDetail = () => {
                     </div>
                   )}
                   
-                  <p className="product-description">{product.description}</p>
+                  {product.description && (
+                    <div className="product-description">
+                      {product.description.split('\n').map((paragraph, index) => (
+                        <p key={index}>{paragraph}</p>
+                      ))}
+                    </div>
+                  )}
                   
                   <div className="product-actions">
                     {canAddToCart && (
@@ -350,6 +357,14 @@ const ProductDetail = () => {
           line-height: 1.6;
           margin-bottom: 32px;
           color: var(--color-text);
+        }
+
+        .product-description p {
+          margin-bottom: 16px;
+        }
+
+        .product-description p:last-child {
+          margin-bottom: 0;
         }
 
         .product-actions {
