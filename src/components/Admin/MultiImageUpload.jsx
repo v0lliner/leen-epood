@@ -6,7 +6,7 @@ const MultiImageUpload = ({
   productId,
   images = [],
   onImagesChange,
-  maxImages = 3,
+  maxImages = 4, // Changed from 3 to 4
   className = ''
 }) => {
   const [uploading, setUploading] = useState(false)
@@ -305,7 +305,7 @@ const MultiImageUpload = ({
 
         .images-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
           gap: 16px;
           margin-bottom: 16px;
         }
@@ -511,7 +511,7 @@ const MultiImageUpload = ({
 
         @media (max-width: 768px) {
           .images-grid {
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 12px;
           }
 

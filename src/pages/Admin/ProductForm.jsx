@@ -413,12 +413,12 @@ const ProductForm = () => {
 
           {/* Images Section */}
           <div className="images-section">
-            <h3>Toote pildid *</h3>
+            <h3>Toote pildid * (kuni 4 pilti)</h3>
             <MultiImageUpload
               productId={isEdit ? id : null}
               images={images}
               onImagesChange={setImages}
-              maxImages={3}
+              maxImages={4}
             />
           </div>
 

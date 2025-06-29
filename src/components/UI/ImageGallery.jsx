@@ -63,7 +63,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           />
         </div>
 
-        {/* Thumbnail Grid */}
+        {/* Thumbnail Grid - Optimized for up to 4 images */}
         {sortedImages.length > 1 && (
           <div className="thumbnails">
             {sortedImages.map((image, index) => (
@@ -159,9 +159,9 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
 
         .thumbnails {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
           gap: 8px;
-          max-width: 300px;
+          max-width: 320px;
         }
 
         .thumbnail {
@@ -311,6 +311,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .thumbnails {
             grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
             gap: 6px;
+            max-width: 280px;
           }
 
           .modal-close {
