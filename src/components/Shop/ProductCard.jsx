@@ -144,7 +144,7 @@ const ProductCard = ({ product }) => {
 
         .product-info .product-price {
           font-family: var(--font-heading);
-          font-size: 1rem !important;
+          font-size: 1.125rem !important;
           font-weight: 500;
           color: var(--color-ultramarine);
           margin: 0;
