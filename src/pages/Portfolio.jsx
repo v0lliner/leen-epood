@@ -226,17 +226,21 @@ const Portfolio = () => {
         .portfolio-content {
           display: flex;
           gap: 64px;
-          align-items: center;
+          align-items: flex-start;
         }
 
         .portfolio-image {
           flex: 1;
+          max-height: 500px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
 
         .portfolio-image img {
           width: 100%;
-          aspect-ratio: 4/3;
-          object-fit: cover;
+          max-height: 500px;
+          object-fit: contain;
           border-radius: 4px;
         }
 
@@ -327,6 +331,14 @@ const Portfolio = () => {
           .portfolio-content {
             flex-direction: column !important;
             gap: 32px;
+          }
+
+          .portfolio-image {
+            max-height: 400px;
+          }
+
+          .portfolio-image img {
+            max-height: 400px;
           }
 
           .portfolio-info h3 {
