@@ -179,7 +179,7 @@ img {
   }
 }
 
-/* Tab styles */
+/* Tab styles with yellow underlines */
 .tab-button {
   background: none;
   border: none;
@@ -206,7 +206,7 @@ img {
   left: 0;
   width: 100%;
   height: 2px;
-  background-color: var(--color-ultramarine);
+  background-color: #F1BF25;
 }
 
 .text-center {
