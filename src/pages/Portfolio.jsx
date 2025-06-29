@@ -188,10 +188,19 @@ const Portfolio = () => {
                           onLoad={(e) => {
                             const img = e.target;
                             const isLandscape = img.naturalWidth > img.naturalHeight;
+                            
                             if (isLandscape) {
-                              img.classList.add('landscape');
+                              // Landscape: width is the longest side, set to 500px
+                              img.style.width = '500px';
+                              img.style.height = 'auto';
+                              img.style.maxWidth = '500px';
+                              img.style.maxHeight = 'none';
                             } else {
-                              img.classList.add('portrait');
+                              // Portrait: height is the longest side, set to 500px
+                              img.style.height = '500px';
+                              img.style.width = 'auto';
+                              img.style.maxHeight = '500px';
+                              img.style.maxWidth = 'none';
                             }
                           }}
                         />
@@ -249,10 +258,9 @@ const Portfolio = () => {
           flex-direction: row-reverse;
         }
 
-        /* Fixed-width container for consistent spacing */
+        /* Dynamic container that adapts to image size */
         .portfolio-image-container {
-          flex: 0 0 500px;
-          width: 500px;
+          flex: 0 0 auto;
           display: flex;
           overflow: hidden;
         }
@@ -267,32 +275,19 @@ const Portfolio = () => {
         }
 
         .portfolio-image {
-          max-width: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
         }
 
         .portfolio-image img {
-          max-width: 100%;
-          width: auto;
-          height: auto;
           border-radius: 4px;
           display: block;
-        }
-
-        /* Portrait images - keep original behavior */
-        .portfolio-image img.portrait {
+          /* Initial constraints - will be overridden by onLoad */
+          max-width: 500px;
           max-height: 500px;
-          object-fit: contain;
-        }
-
-        /* Landscape images - eliminate empty space */
-        .portfolio-image img.landscape {
-          width: 100%;
-          height: 350px;
-          object-fit: cover;
-          object-position: center;
+          width: auto;
+          height: auto;
         }
 
         .portfolio-info {
@@ -396,23 +391,17 @@ const Portfolio = () => {
           }
 
           .portfolio-image-container {
-            flex: none;
-            width: 100%;
-            max-width: 400px;
             justify-content: center !important;
           }
 
-          .portfolio-image img.landscape {
-            height: 250px;
-          }
-
-          .portfolio-image img.portrait {
+          .portfolio-image img {
+            /* Mobile: scale down if needed */
+            max-width: 100%;
             max-height: 400px;
           }
 
           .portfolio-info,
           .portfolio-content.reverse .portfolio-info {
-            flex: none;
             text-align: center;
             width: 100%;
           }
