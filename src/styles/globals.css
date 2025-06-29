@@ -33,6 +33,16 @@ body {
   font-size: 16px;
 }
 
+/* Ensure modal overlay is always on top */
+body.modal-open {
+  overflow: hidden !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+}
+
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
   font-weight: 400;
@@ -230,6 +240,21 @@ img {
 .value-block h3 {
   color: var(--color-ultramarine);
   margin-bottom: 16px;
+}
+
+/* Ensure no elements interfere with modal */
+.modal-overlay ~ * {
+  z-index: 1 !important;
+}
+
+/* Override any potential z-index conflicts */
+nav, header, footer, .navigation, .nav-container {
+  z-index: 100 !important;
+}
+
+/* Ensure modal is always highest */
+.modal-overlay {
+  z-index: 999999 !important;
 }
 
 @media (max-width: 768px) {

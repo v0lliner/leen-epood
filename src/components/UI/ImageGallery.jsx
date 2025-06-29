@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 const ImageGallery = ({ images = [], productTitle = '' }) => {
   const [selectedIndex, setSelectedIndex] = useState(0)
@@ -27,14 +27,26 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     
     setSelectedIndex(index)
     setIsModalOpen(true)
-    // Prevent body scroll when modal is open
+    
+    // Prevent body scroll and ensure modal is always centered
     document.body.style.overflow = 'hidden'
+    document.body.style.position = 'fixed'
+    document.body.style.top = '0'
+    document.body.style.left = '0'
+    document.body.style.right = '0'
+    document.body.style.bottom = '0'
   }
 
   const closeModal = () => {
     setIsModalOpen(false)
-    // Restore body scroll
+    
+    // Restore body scroll and positioning
     document.body.style.overflow = 'unset'
+    document.body.style.position = 'unset'
+    document.body.style.top = 'unset'
+    document.body.style.left = 'unset'
+    document.body.style.right = 'unset'
+    document.body.style.bottom = 'unset'
   }
 
   const nextImage = () => {
@@ -45,15 +57,39 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex((prev) => (prev - 1 + sortedImages.length) % sortedImages.length)
   }
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Escape') closeModal()
-    if (e.key === 'ArrowRight') nextImage()
-    if (e.key === 'ArrowLeft') prevImage()
-  }
+  // Handle keyboard events
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!isModalOpen) return
+      
+      if (e.key === 'Escape') closeModal()
+      if (e.key === 'ArrowRight') nextImage()
+      if (e.key === 'ArrowLeft') prevImage()
+    }
+
+    if (isModalOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isModalOpen])
+
+  // Handle window resize to close modal on mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (isModalOpen && isMobile()) {
+        closeModal()
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [isModalOpen])
 
   const handleModalClick = (e) => {
-    // Close modal when clicking anywhere in the modal
-    closeModal()
+    // Close modal when clicking anywhere in the modal background
+    if (e.target === e.currentTarget) {
+      closeModal()
+    }
   }
 
   const handleImageClick = (e) => {
@@ -168,32 +204,49 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         <div 
           className="modal-overlay" 
           onClick={handleModalClick}
-          onKeyDown={handleKeyDown}
           tabIndex={0}
         >
-          <div className="modal-image-container">
-            <img 
-              src={sortedImages[selectedIndex].image_url} 
-              alt={`${productTitle} pilt ${selectedIndex + 1}`}
-              onClick={handleImageClick}
-            />
+          <div className="modal-content">
+            <div className="modal-image-container">
+              <img 
+                src={sortedImages[selectedIndex].image_url} 
+                alt={`${productTitle} pilt ${selectedIndex + 1}`}
+                onClick={handleImageClick}
+              />
+            </div>
             
-            {/* Close button positioned at top-right of image */}
-            <button className="modal-close" onClick={closeModal}>
+            {/* Close button */}
+            <button className="modal-close" onClick={closeModal} aria-label="Sulge">
               ×
             </button>
-          </div>
 
-          {sortedImages.length > 1 && (
-            <>
-              <button className="modal-nav modal-prev" onClick={(e) => { e.stopPropagation(); prevImage(); }}>
-                ‹
-              </button>
-              <button className="modal-nav modal-next" onClick={(e) => { e.stopPropagation(); nextImage(); }}>
-                ›
-              </button>
-            </>
-          )}
+            {/* Navigation arrows */}
+            {sortedImages.length > 1 && (
+              <>
+                <button 
+                  className="modal-nav modal-prev" 
+                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                  aria-label="Eelmine pilt"
+                >
+                  ‹
+                </button>
+                <button 
+                  className="modal-nav modal-next" 
+                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                  aria-label="Järgmine pilt"
+                >
+                  ›
+                </button>
+              </>
+            )}
+
+            {/* Image counter */}
+            {sortedImages.length > 1 && (
+              <div className="modal-counter">
+                {selectedIndex + 1} / {sortedImages.length}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -342,20 +395,33 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           opacity: 0.7;
         }
 
-        /* Modal Styles */
+        /* Modal Styles - HIGHEST Z-INDEX */
         .modal-overlay {
           position: fixed;
           top: 0;
           left: 0;
           right: 0;
           bottom: 0;
-          z-index: 99999;
+          z-index: 999999;
+          background-color: rgba(0, 0, 0, 0.95);
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 20px;
           cursor: pointer;
-          background-color: rgba(0, 0, 0, 0.95);
+          padding: 0;
+          margin: 0;
+        }
+
+        .modal-content {
+          position: relative;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 100%;
+          height: 100%;
+          max-width: 100vw;
+          max-height: 100vh;
+          cursor: default;
         }
 
         .modal-image-container {
@@ -365,8 +431,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: default;
-          z-index: 100000;
+          z-index: 1000000;
         }
 
         .modal-image-container img {
@@ -375,38 +440,40 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           object-fit: contain;
           border-radius: 4px;
           cursor: default;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         .modal-close {
-          position: absolute;
-          top: -20px;
-          right: -20px;
+          position: fixed;
+          top: 20px;
+          right: 20px;
           background: rgba(255, 255, 255, 0.95);
           border: none;
           color: #333;
-          font-size: 3rem;
+          font-size: 2.5rem;
           cursor: pointer;
-          z-index: 100001;
-          padding: 12px 16px;
+          z-index: 1000001;
+          padding: 8px 12px;
           line-height: 1;
           transition: all 0.2s ease;
           border-radius: 50%;
-          width: 72px;
-          height: 72px;
+          width: 60px;
+          height: 60px;
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          font-weight: 300;
         }
 
         .modal-close:hover {
           background: rgba(255, 255, 255, 1);
           transform: scale(1.1);
-          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
 
         .modal-nav {
-          position: absolute;
+          position: fixed;
           top: 50%;
           transform: translateY(-50%);
           background: rgba(255, 255, 255, 0.9);
@@ -415,14 +482,17 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           font-size: 2rem;
           padding: 12px 16px;
           cursor: pointer;
-          border-radius: 4px;
+          border-radius: 8px;
           transition: all 0.2s ease;
-          z-index: 100000;
+          z-index: 1000001;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+          font-weight: 300;
         }
 
         .modal-nav:hover {
           background: rgba(255, 255, 255, 1);
           transform: translateY(-50%) scale(1.1);
+          box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
 
         .modal-prev {
@@ -431,6 +501,21 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
 
         .modal-next {
           right: 20px;
+        }
+
+        .modal-counter {
+          position: fixed;
+          bottom: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          background: rgba(255, 255, 255, 0.9);
+          color: #333;
+          padding: 8px 16px;
+          border-radius: 20px;
+          font-size: 0.9rem;
+          font-weight: 500;
+          z-index: 1000001;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         /* Mobile Responsive */
@@ -473,6 +558,18 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           .carousel-dot {
             width: 10px;
             height: 10px;
+          }
+        }
+
+        /* Ensure modal is always on top of everything */
+        @media (min-width: 769px) {
+          .modal-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            z-index: 999999 !important;
           }
         }
       `}</style>
