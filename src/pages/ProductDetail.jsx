@@ -295,7 +295,9 @@ const ProductDetail = () => {
                 <h2 className="related-title">{t('shop.product.related')}</h2>
                 <div className="related-products">
                   {relatedProducts.map((relatedProduct) => (
-                    <ProductCard key={relatedProduct.id} product={relatedProduct} />
+                    <FadeInSection key={relatedProduct.id}>
+                      <ProductCard product={relatedProduct} />
+                    </FadeInSection>
                   ))}
                 </div>
               </FadeInSection>
