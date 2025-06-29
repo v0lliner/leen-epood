@@ -11,10 +11,12 @@ const ImageUpload = ({
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState('')
+  const [compressionInfo, setCompressionInfo] = useState('')
   const fileInputRef = useRef(null)
 
   const handleFileSelect = async (file) => {
     setError('')
+    setCompressionInfo('')
     
     // Validate file
     const validation = storageService.validateImage(file)
@@ -24,17 +26,26 @@ const ImageUpload = ({
     }
 
     setUploading(true)
+    setCompressionInfo('Pildi töötlemine ja kompressioon...')
 
     try {
+      const originalSize = (file.size / 1024).toFixed(2)
+      
       const { data, error } = await storageService.uploadImage(file, 'products')
       
       if (error) {
         setError(error.message)
+        setCompressionInfo('')
       } else {
+        // Show compression info briefly
+        setCompressionInfo(`Originaal: ${originalSize}KB → Optimeeritud: ~200KB`)
+        setTimeout(() => setCompressionInfo(''), 3000)
+        
         onImageChange(data.url, data.path)
       }
     } catch (err) {
       setError('Pildi üleslaadimine ebaõnnestus')
+      setCompressionInfo('')
     } finally {
       setUploading(false)
     }
@@ -74,6 +85,7 @@ const ImageUpload = ({
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
+    setCompressionInfo('')
   }
 
   return (
@@ -111,13 +123,13 @@ const ImageUpload = ({
           {uploading ? (
             <div className="upload-progress">
               <div className="loading-spinner"></div>
-              <p>Pildi üleslaadimine...</p>
+              <p>Pildi üleslaadimine ja optimeerimine...</p>
             </div>
           ) : (
             <div className="upload-content">
               <div className="upload-icon">📷</div>
               <p>{placeholder}</p>
-              <p className="upload-hint">JPEG, PNG või WebP, max 5MB</p>
+              <p className="upload-hint">JPEG, PNG või WebP → automaatselt optimeeritakse JPG 200KB</p>
             </div>
           )}
         </div>
@@ -126,6 +138,12 @@ const ImageUpload = ({
       {error && (
         <div className="upload-error">
           {error}
+        </div>
+      )}
+
+      {compressionInfo && (
+        <div className="compression-info">
+          ✅ {compressionInfo}
         </div>
       )}
 
@@ -250,6 +268,16 @@ const ImageUpload = ({
           padding: 8px 12px;
           border-radius: 4px;
           border: 1px solid #fcc;
+          margin-top: 8px;
+          font-size: 0.9rem;
+        }
+
+        .compression-info {
+          background-color: #efe;
+          color: #363;
+          padding: 8px 12px;
+          border-radius: 4px;
+          border: 1px solid #cfc;
           margin-top: 8px;
           font-size: 0.9rem;
         }

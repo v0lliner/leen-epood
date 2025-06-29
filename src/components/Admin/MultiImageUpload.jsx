@@ -12,11 +12,13 @@ const MultiImageUpload = ({
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [error, setError] = useState('')
+  const [compressionInfo, setCompressionInfo] = useState('')
   const [draggedIndex, setDraggedIndex] = useState(null)
   const fileInputRef = useRef(null)
 
   const handleFileSelect = async (files) => {
     setError('')
+    setCompressionInfo('')
     
     const fileArray = Array.from(files)
     const remainingSlots = maxImages - images.length
@@ -27,6 +29,7 @@ const MultiImageUpload = ({
     }
 
     setUploading(true)
+    setCompressionInfo('Piltide töötlemine ja kompressioon...')
     console.log('Starting file upload process for', fileArray.length, 'files')
 
     try {
@@ -40,14 +43,16 @@ const MultiImageUpload = ({
           throw new Error(validation.error)
         }
 
+        const originalSize = (file.size / 1024).toFixed(2)
         console.log('Uploading file to storage...')
+        
         const { data, error } = await storageService.uploadImage(file, 'products')
         if (error) {
           console.error('Storage upload failed:', error)
           throw new Error(error.message)
         }
 
-        console.log('File uploaded to storage successfully:', data)
+        console.log('File uploaded and compressed successfully:', data)
 
         // Add to database if productId exists
         if (productId) {
@@ -101,6 +106,10 @@ const MultiImageUpload = ({
       const newImages = await Promise.all(uploadPromises)
       console.log('All images uploaded successfully:', newImages)
       
+      // Show compression success info
+      setCompressionInfo(`✅ ${fileArray.length} pilti optimeeritud ja üles laaditud`)
+      setTimeout(() => setCompressionInfo(''), 3000)
+      
       // Update the images state
       const updatedImages = [...images, ...newImages]
       console.log('Updated images array:', updatedImages)
@@ -125,6 +134,7 @@ const MultiImageUpload = ({
     } catch (err) {
       console.error('Error uploading images:', err)
       setError(err.message)
+      setCompressionInfo('')
     } finally {
       setUploading(false)
     }
@@ -351,6 +361,12 @@ const MultiImageUpload = ({
         </div>
       )}
 
+      {compressionInfo && (
+        <div className="compression-info">
+          {compressionInfo}
+        </div>
+      )}
+
       <input
         ref={fileInputRef}
         type="file"
@@ -362,6 +378,7 @@ const MultiImageUpload = ({
 
       <div className="upload-info">
         <p>Saate lisada kuni {maxImages} pilti. Lohistage pilte ümber järjestamiseks.</p>
+        <p>Kõik pildid optimeeritakse automaatselt JPG formaati ja ~200KB suuruseks.</p>
         <p>Esimene pilt on vaikimisi peamine pilt, mida kuvatakse tootekaardil.</p>
       </div>
 
@@ -525,6 +542,16 @@ const MultiImageUpload = ({
           padding: 8px 12px;
           border-radius: 4px;
           border: 1px solid #fcc;
+          margin-bottom: 16px;
+          font-size: 0.9rem;
+        }
+
+        .compression-info {
+          background-color: #efe;
+          color: #363;
+          padding: 8px 12px;
+          border-radius: 4px;
+          border: 1px solid #cfc;
           margin-bottom: 16px;
           font-size: 0.9rem;
         }

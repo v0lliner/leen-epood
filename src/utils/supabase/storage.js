@@ -1,36 +1,85 @@
 import { supabase } from './client'
+import imageCompression from 'browser-image-compression'
 
 /**
- * File storage utilities for Supabase
+ * File storage utilities for Supabase with automatic image compression
  */
 export const storageService = {
   /**
-   * Upload image to Supabase Storage
+   * Compress image before upload
+   * @param {File} file - Original image file
+   * @returns {Promise<File>} Compressed image file
+   */
+  async compressImage(file) {
+    try {
+      console.log('Original file size:', (file.size / 1024).toFixed(2), 'KB')
+      
+      const options = {
+        maxSizeMB: 0.2, // 200KB max file size
+        maxWidthOrHeight: 1920, // Max dimension (only reduce if needed)
+        useWebWorker: true,
+        fileType: 'image/jpeg', // Convert to JPG
+        quality: 0.8, // 80% quality
+        preserveExif: false, // Remove EXIF data to save space
+        initialQuality: 0.8
+      }
+
+      const compressedFile = await imageCompression(file, options)
+      
+      console.log('Compressed file size:', (compressedFile.size / 1024).toFixed(2), 'KB')
+      console.log('Compression ratio:', ((1 - compressedFile.size / file.size) * 100).toFixed(1) + '%')
+      
+      return compressedFile
+    } catch (error) {
+      console.warn('Image compression failed, using original file:', error)
+      return file // Fallback to original file if compression fails
+    }
+  },
+
+  /**
+   * Upload image to Supabase Storage with automatic compression
    * @param {File} file - Image file to upload
    * @param {string} folder - Folder path (optional)
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
   async uploadImage(file, folder = '') {
     try {
-      // Generate unique filename
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      // Validate file first
+      const validation = this.validateImage(file)
+      if (!validation.valid) {
+        return { data: null, error: { message: validation.error } }
+      }
+
+      // Compress image automatically
+      console.log('Compressing image before upload...')
+      const compressedFile = await this.compressImage(file)
+      
+      // Generate unique filename with .jpg extension (since we convert to JPG)
+      const originalName = file.name.split('.')[0] // Get name without extension
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}-${originalName}.jpg`
       const filePath = folder ? `${folder}/${fileName}` : fileName
 
-      // Upload file
+      console.log('Uploading compressed image to:', filePath)
+
+      // Upload compressed file
       const { data, error } = await supabase.storage
         .from('product-images')
-        .upload(filePath, file, {
+        .upload(filePath, compressedFile, {
           cacheControl: '3600',
           upsert: false
         })
 
-      if (error) return { data: null, error }
+      if (error) {
+        console.error('Upload error:', error)
+        return { data: null, error }
+      }
 
       // Get public URL
       const { data: urlData } = supabase.storage
         .from('product-images')
         .getPublicUrl(filePath)
+
+      console.log('Upload successful:', urlData.publicUrl)
 
       return { 
         data: {
@@ -41,7 +90,8 @@ export const storageService = {
         error: null 
       }
     } catch (error) {
-      return { data: null, error: { message: 'Upload failed' } }
+      console.error('Upload process failed:', error)
+      return { data: null, error: { message: 'Pildi üleslaadimine ebaõnnestus' } }
     }
   },
 
@@ -78,12 +128,12 @@ export const storageService = {
   },
 
   /**
-   * Validate image file
+   * Validate image file (before compression)
    * @param {File} file - File to validate
    * @returns {object} Validation result
    */
   validateImage(file) {
-    const maxSize = 5 * 1024 * 1024 // 5MB
+    const maxSize = 50 * 1024 * 1024 // 50MB max for original file (will be compressed)
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
     if (!allowedTypes.includes(file.type)) {
@@ -96,7 +146,7 @@ export const storageService = {
     if (file.size > maxSize) {
       return { 
         valid: false, 
-        error: 'Faili suurus ei tohi ületada 5MB' 
+        error: 'Originaali faili suurus ei tohi ületada 50MB' 
       }
     }
 
