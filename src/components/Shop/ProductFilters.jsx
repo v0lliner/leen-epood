@@ -7,7 +7,8 @@ const ProductFilters = ({
   filters, 
   onFiltersChange, 
   isOpen, 
-  onToggle 
+  onToggle,
+  products = [] // Add products prop to calculate counts
 }) => {
   const { t } = useTranslation();
   const [categories, setCategories] = useState([]);
@@ -70,6 +71,27 @@ const ProductFilters = ({
     return parentCategory?.children || [];
   };
 
+  // Calculate product count for each subcategory
+  const getProductCount = (subcategorySlug) => {
+    if (!products || products.length === 0) return 0;
+    
+    return products.filter(product => 
+      product.category === activeCategory && 
+      product.subcategory === subcategorySlug &&
+      product.available // Only count available products
+    ).length;
+  };
+
+  // Get total available products in current category
+  const getTotalProductCount = () => {
+    if (!products || products.length === 0) return 0;
+    
+    return products.filter(product => 
+      product.category === activeCategory &&
+      product.available
+    ).length;
+  };
+
   const subcategoryOptions = getSubcategories();
 
   return (
@@ -87,17 +109,25 @@ const ProductFilters = ({
             <div className="filter-group primary-filter">
               <label className="filter-label">
                 {t('shop.filters.subcategory')}
+                <span className="total-count">({getTotalProductCount()})</span>
               </label>
               <div className="subcategory-list">
-                {subcategoryOptions.map(subcategory => (
-                  <button
-                    key={subcategory.id}
-                    onClick={() => handleSubcategoryChange(subcategory.slug)}
-                    className={`subcategory-link ${filters.subcategories.includes(subcategory.slug) ? 'active' : ''}`}
-                  >
-                    {subcategory.name}
-                  </button>
-                ))}
+                {subcategoryOptions.map(subcategory => {
+                  const productCount = getProductCount(subcategory.slug);
+                  const isActive = filters.subcategories.includes(subcategory.slug);
+                  
+                  return (
+                    <button
+                      key={subcategory.id}
+                      onClick={() => handleSubcategoryChange(subcategory.slug)}
+                      className={`subcategory-link ${isActive ? 'active' : ''} ${productCount === 0 ? 'disabled' : ''}`}
+                      disabled={productCount === 0}
+                    >
+                      <span className="subcategory-name">{subcategory.name}</span>
+                      <span className="subcategory-count">{productCount}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -213,7 +243,9 @@ const ProductFilters = ({
           }
 
           .filter-label {
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             font-family: var(--font-heading);
             font-weight: 500;
             margin-bottom: 16px;
@@ -221,10 +253,18 @@ const ProductFilters = ({
             font-size: 1rem;
           }
 
+          .total-count {
+            font-family: var(--font-body);
+            font-weight: 400;
+            font-size: 0.9rem;
+            color: #666;
+            opacity: 0.8;
+          }
+
           .subcategory-list {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 4px;
           }
 
           .subcategory-link {
@@ -241,9 +281,12 @@ const ProductFilters = ({
             position: relative;
             text-decoration: none;
             border-bottom: 1px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
           }
 
-          .subcategory-link:hover,
+          .subcategory-link:hover:not(.disabled),
           .subcategory-link.active {
             color: var(--color-ultramarine);
             border-bottom-color: var(--color-ultramarine);
@@ -251,6 +294,40 @@ const ProductFilters = ({
 
           .subcategory-link.active {
             font-weight: 500;
+          }
+
+          .subcategory-link.disabled {
+            color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.5;
+          }
+
+          .subcategory-name {
+            flex: 1;
+          }
+
+          .subcategory-count {
+            font-family: var(--font-heading);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #666;
+            background: #f5f5f5;
+            padding: 2px 8px;
+            border-radius: 12px;
+            min-width: 24px;
+            text-align: center;
+            transition: all 0.2s ease;
+          }
+
+          .subcategory-link:hover:not(.disabled) .subcategory-count,
+          .subcategory-link.active .subcategory-count {
+            background: rgba(47, 62, 156, 0.1);
+            color: var(--color-ultramarine);
+          }
+
+          .subcategory-link.disabled .subcategory-count {
+            background: #f0f0f0;
+            color: #ccc;
           }
 
           .loading-text {

@@ -37,6 +37,11 @@ const Shop = () => {
     setSearchParams(newParams);
   };
 
+  // Get products for current category (for filter calculations)
+  const categoryProducts = useMemo(() => {
+    return products.filter(product => product.category === activeTab);
+  }, [products, activeTab]);
+
   const sortedAndFilteredProducts = useMemo(() => {
     let filtered = products.filter(product => product.category === activeTab);
 
@@ -161,6 +166,7 @@ const Shop = () => {
                 onFiltersChange={setFilters}
                 isOpen={filtersOpen}
                 onToggle={() => setFiltersOpen(!filtersOpen)}
+                products={categoryProducts}
               />
 
               {/* Products Section */}
