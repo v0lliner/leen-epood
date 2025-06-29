@@ -293,9 +293,11 @@ const ProductDetail = () => {
             {relatedProducts.length > 0 && (
               <FadeInSection className="related-section">
                 <h2 className="related-title">{t('shop.product.related')}</h2>
-                <div className="related-products">
+                <div className="related-products-grid">
                   {relatedProducts.map((relatedProduct) => (
-                    <ProductCard key={relatedProduct.id} product={relatedProduct} />
+                    <FadeInSection key={relatedProduct.id}>
+                      <ProductCard product={relatedProduct} />
+                    </FadeInSection>
                   ))}
                 </div>
               </FadeInSection>
@@ -504,9 +506,9 @@ const ProductDetail = () => {
           text-align: center;
         }
 
-        .related-products {
+        .related-products-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
           gap: 48px;
         }
 
@@ -579,8 +581,8 @@ const ProductDetail = () => {
             text-align: left;
           }
 
-          .related-products {
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          .related-products-grid {
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             gap: 32px;
           }
 
@@ -595,6 +597,13 @@ const ProductDetail = () => {
 
           .product-faq-content h3 {
             font-size: 1.125rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .related-products-grid {
+            grid-template-columns: 1fr;
+            gap: 24px;
           }
         }
       `}</style>
