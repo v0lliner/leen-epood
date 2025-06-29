@@ -38,7 +38,7 @@ const AdminLayout = ({ children }) => {
     },
     {
       name: 'KKK',
-      href: '/admin/kkk',
+      href: '/admin/faq',
       icon: '❓'
     },
     {

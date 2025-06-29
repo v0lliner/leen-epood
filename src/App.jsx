@@ -135,7 +135,7 @@ function App() {
                     <AdminAboutPage />
                   </ProtectedRoute>
                 } />
-                <Route path="/admin/kkk" element={
+                <Route path="/admin/faq" element={
                   <ProtectedRoute>
                     <AdminFAQ />
                   </ProtectedRoute>

@@ -25,47 +25,47 @@ export const faqService = {
   },
 
   /**
-   * Get FAQ item by ID
-   * @param {string} id - FAQ item ID
-   * @returns {Promise<{data: object|null, error: object|null}>}
+   * Get FAQ items organized by pairs (ET/EN together)
+   * @returns {Promise<{data: Array, error: object|null}>}
    */
-  async getFAQItem(id) {
+  async getBilingualFAQItems() {
     try {
       const { data, error } = await supabase
         .from('faq_items')
         .select('*')
-        .eq('id', id)
-        .single()
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
       
-      return { data, error }
+      if (error) return { data: [], error }
+      
+      // Group by display_order to create pairs
+      const pairs = {}
+      data.forEach(item => {
+        if (!pairs[item.display_order]) {
+          pairs[item.display_order] = { display_order: item.display_order }
+        }
+        pairs[item.display_order][item.language] = item
+      })
+      
+      // Convert to array and sort by display_order
+      const pairsArray = Object.values(pairs).sort((a, b) => a.display_order - b.display_order)
+      
+      return { data: pairsArray, error: null }
     } catch (error) {
-      return { data: null, error: { message: 'Network error occurred' } }
+      return { data: [], error: { message: 'Network error occurred' } }
     }
   },
 
   /**
    * Create or update FAQ item
-   * @param {object} item - FAQ item data
+   * @param {object} faqItem - FAQ item data
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async upsertFAQItem(item) {
+  async upsertFAQItem(faqItem) {
     try {
-      // If creating new item and no display_order specified, set it to the end
-      if (!item.id && !item.display_order) {
-        const { data: maxOrderData } = await supabase
-          .from('faq_items')
-          .select('display_order')
-          .eq('language', item.language)
-          .order('display_order', { ascending: false })
-          .limit(1)
-        
-        const maxOrder = maxOrderData?.[0]?.display_order || 0
-        item.display_order = maxOrder + 1
-      }
-
       const { data, error } = await supabase
         .from('faq_items')
-        .upsert(item, { 
+        .upsert(faqItem, { 
           onConflict: 'id',
           ignoreDuplicates: false 
         })
@@ -79,142 +79,193 @@ export const faqService = {
   },
 
   /**
-   * Delete FAQ item
-   * @param {string} id - FAQ item ID
+   * Create or update FAQ pair (both languages)
+   * @param {object} etData - Estonian FAQ data
+   * @param {object} enData - English FAQ data
+   * @param {number} displayOrder - Display order
+   * @param {string} etId - Existing ET item ID (for updates)
+   * @param {string} enId - Existing EN item ID (for updates)
    * @returns {Promise<{error: object|null}>}
    */
-  async deleteFAQItem(id) {
+  async upsertFAQPair(etData, enData, displayOrder, etId = null, enId = null) {
     try {
-      const { error } = await supabase
-        .from('faq_items')
-        .delete()
-        .eq('id', id)
+      const operations = []
       
-      return { error }
-    } catch (error) {
-      return { error: { message: 'Network error occurred' } }
-    }
-  },
-
-  /**
-   * Update display order for multiple items
-   * @param {Array} orderUpdates - Array of {id, display_order} objects
-   * @returns {Promise<{error: object|null}>}
-   */
-  async updateDisplayOrder(orderUpdates) {
-    try {
-      const updates = orderUpdates.map(({ id, display_order }) => 
-        supabase
-          .from('faq_items')
-          .update({ display_order })
-          .eq('id', id)
-      )
-
-      await Promise.all(updates)
-      return { error: null }
-    } catch (error) {
-      return { error: { message: 'Network error occurred' } }
-    }
-  },
-
-  /**
-   * Move item up in order
-   * @param {string} id - FAQ item ID
-   * @returns {Promise<{error: object|null}>}
-   */
-  async moveItemUp(id) {
-    try {
-      // Get current item
-      const { data: currentItem, error: currentError } = await this.getFAQItem(id)
-      if (currentError || !currentItem) return { error: currentError }
-
-      // Get item above (lower display_order) in same language
-      const { data: aboveItems, error: aboveError } = await supabase
-        .from('faq_items')
-        .select('*')
-        .eq('language', currentItem.language)
-        .lt('display_order', currentItem.display_order)
-        .order('display_order', { ascending: false })
-        .limit(1)
-
-      if (aboveError) return { error: aboveError }
-      if (!aboveItems || aboveItems.length === 0) return { error: null } // Already at top
-
-      const aboveItem = aboveItems[0]
-
-      // Swap display orders
-      await this.updateDisplayOrder([
-        { id: currentItem.id, display_order: aboveItem.display_order },
-        { id: aboveItem.id, display_order: currentItem.display_order }
-      ])
-
-      return { error: null }
-    } catch (error) {
-      return { error: { message: 'Network error occurred' } }
-    }
-  },
-
-  /**
-   * Move item down in order
-   * @param {string} id - FAQ item ID
-   * @returns {Promise<{error: object|null}>}
-   */
-  async moveItemDown(id) {
-    try {
-      // Get current item
-      const { data: currentItem, error: currentError } = await this.getFAQItem(id)
-      if (currentError || !currentItem) return { error: currentError }
-
-      // Get item below (higher display_order) in same language
-      const { data: belowItems, error: belowError } = await supabase
-        .from('faq_items')
-        .select('*')
-        .eq('language', currentItem.language)
-        .gt('display_order', currentItem.display_order)
-        .order('display_order', { ascending: true })
-        .limit(1)
-
-      if (belowError) return { error: belowError }
-      if (!belowItems || belowItems.length === 0) return { error: null } // Already at bottom
-
-      const belowItem = belowItems[0]
-
-      // Swap display orders
-      await this.updateDisplayOrder([
-        { id: currentItem.id, display_order: belowItem.display_order },
-        { id: belowItem.id, display_order: currentItem.display_order }
-      ])
-
-      return { error: null }
-    } catch (error) {
-      return { error: { message: 'Network error occurred' } }
-    }
-  },
-
-  /**
-   * Get bilingual FAQ items organized by language
-   * @returns {Promise<{data: object, error: object|null}>}
-   */
-  async getBilingualFAQItems() {
-    try {
-      const [etResult, enResult] = await Promise.all([
-        this.getFAQItems('et'),
-        this.getFAQItems('en')
-      ])
-      
-      if (etResult.error && enResult.error) {
-        return { data: {}, error: etResult.error }
+      // Handle Estonian item
+      if (etData) {
+        const etItem = {
+          question: etData.question,
+          answer: etData.answer,
+          language: 'et',
+          display_order: displayOrder,
+          is_active: true
+        }
+        
+        if (etId) {
+          etItem.id = etId
+        }
+        
+        operations.push(
+          supabase
+            .from('faq_items')
+            .upsert(etItem, { onConflict: 'id', ignoreDuplicates: false })
+        )
+      } else if (etId) {
+        // Delete ET item if no data provided but ID exists
+        operations.push(
+          supabase
+            .from('faq_items')
+            .delete()
+            .eq('id', etId)
+        )
       }
       
-      return { 
-        data: {
-          et: etResult.data || [],
-          en: enResult.data || []
-        }, 
-        error: null 
+      // Handle English item
+      if (enData) {
+        const enItem = {
+          question: enData.question,
+          answer: enData.answer,
+          language: 'en',
+          display_order: displayOrder,
+          is_active: true
+        }
+        
+        if (enId) {
+          enItem.id = enId
+        }
+        
+        operations.push(
+          supabase
+            .from('faq_items')
+            .upsert(enItem, { onConflict: 'id', ignoreDuplicates: false })
+        )
+      } else if (enId) {
+        // Delete EN item if no data provided but ID exists
+        operations.push(
+          supabase
+            .from('faq_items')
+            .delete()
+            .eq('id', enId)
+        )
       }
+      
+      // Execute all operations
+      const results = await Promise.all(operations)
+      
+      // Check for errors
+      for (const result of results) {
+        if (result.error) {
+          return { error: result.error }
+        }
+      }
+      
+      return { error: null }
     } catch (error) {
-      return { data: {}, error: { message: 'Network error occurred' } }
+      return { error: { message: 'Network error occurred' } }
+    }
+  },
+
+  /**
+   * Delete FAQ pair (both languages)
+   * @param {string} etId - Estonian item ID
+   * @param {string} enId - English item ID
+   * @returns {Promise<{error: object|null}>}
+   */
+  async deleteFAQPair(etId, enId) {
+    try {
+      const operations = []
+      
+      if (etId) {
+        operations.push(
+          supabase
+            .from('faq_items')
+            .delete()
+            .eq('id', etId)
+        )
+      }
+      
+      if (enId) {
+        operations.push(
+          supabase
+            .from('faq_items')
+            .delete()
+            .eq('id', enId)
+        )
+      }
+      
+      const results = await Promise.all(operations)
+      
+      // Check for errors
+      for (const result of results) {
+        if (result.error) {
+          return { error: result.error }
+        }
+      }
+      
+      return { error: null }
+    } catch (error) {
+      return { error: { message: 'Network error occurred' } }
+    }
+  },
+
+  /**
+   * Move FAQ pair up or down
+   * @param {number} currentOrder - Current display order
+   * @param {string} direction - 'up' or 'down'
+   * @returns {Promise<{error: object|null}>}
+   */
+  async moveFAQPair(currentOrder, direction) {
+    try {
+      const targetOrder = direction === 'up' ? currentOrder - 1 : currentOrder + 1
+      
+      // Get items to swap
+      const { data: currentItems } = await supabase
+        .from('faq_items')
+        .select('*')
+        .eq('display_order', currentOrder)
+      
+      const { data: targetItems } = await supabase
+        .from('faq_items')
+        .select('*')
+        .eq('display_order', targetOrder)
+      
+      if (!currentItems?.length || !targetItems?.length) {
+        return { error: { message: 'Cannot move item' } }
+      }
+      
+      // Swap display orders
+      const operations = []
+      
+      currentItems.forEach(item => {
+        operations.push(
+          supabase
+            .from('faq_items')
+            .update({ display_order: targetOrder })
+            .eq('id', item.id)
+        )
+      })
+      
+      targetItems.forEach(item => {
+        operations.push(
+          supabase
+            .from('faq_items')
+            .update({ display_order: currentOrder })
+            .eq('id', item.id)
+        )
+      })
+      
+      const results = await Promise.all(operations)
+      
+      // Check for errors
+      for (const result of results) {
+        if (result.error) {
+          return { error: result.error }
+        }
+      }
+      
+      return { error: null }
+    } catch (error) {
+      return { error: { message: 'Network error occurred' } }
     }
   }
 }

@@ -4,29 +4,27 @@
   1. New Tables
     - `faq_items`
       - `id` (uuid, primary key)
-      - `question` (text, required)
-      - `answer` (text, required)
+      - `question` (text)
+      - `answer` (text)
       - `language` (text, default 'et')
-      - `display_order` (integer, default 0)
+      - `display_order` (integer)
       - `is_active` (boolean, default true)
-      - `created_at` (timestamp)
-      - `updated_at` (timestamp)
+      - `created_at` (timestamptz)
+      - `updated_at` (timestamptz)
 
   2. Security
     - Enable RLS on `faq_items` table
-    - Add policy for public to read active FAQ items
-    - Add policy for authenticated users to manage FAQ items
+    - Add policies for public read access and authenticated user management
 
-  3. Indexes
-    - Index on language and display_order for efficient querying
-    - Index on is_active for filtering
-    - Index on language for language-specific queries
-
-  4. Triggers
-    - Auto-update updated_at timestamp on changes
+  3. Data
+    - Insert default FAQ items in both Estonian and English
 */
 
-CREATE TABLE IF NOT EXISTS faq_items (
+-- Drop existing table if it exists to start fresh
+DROP TABLE IF EXISTS faq_items CASCADE;
+
+-- Create FAQ items table
+CREATE TABLE faq_items (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   question text NOT NULL,
   answer text NOT NULL,
@@ -40,31 +38,31 @@ CREATE TABLE IF NOT EXISTS faq_items (
 -- Enable RLS
 ALTER TABLE faq_items ENABLE ROW LEVEL SECURITY;
 
--- Policies
-CREATE POLICY "Anyone can read active FAQ items"
+-- Create policies
+CREATE POLICY "faq_public_read"
   ON faq_items
   FOR SELECT
   TO public
   USING (is_active = true);
 
-CREATE POLICY "Authenticated users can manage FAQ items"
+CREATE POLICY "faq_authenticated_manage"
   ON faq_items
   FOR ALL
   TO authenticated
   USING (true)
   WITH CHECK (true);
 
--- Indexes
-CREATE INDEX IF NOT EXISTS faq_items_language_display_order_idx 
+-- Create indexes
+CREATE INDEX faq_items_language_display_order_idx 
   ON faq_items (language, display_order);
 
-CREATE INDEX IF NOT EXISTS faq_items_is_active_idx 
+CREATE INDEX faq_items_is_active_idx 
   ON faq_items (is_active);
 
-CREATE INDEX IF NOT EXISTS faq_items_language_idx 
+CREATE INDEX faq_items_language_idx 
   ON faq_items (language);
 
--- Update trigger
+-- Create or replace update trigger function
 CREATE OR REPLACE FUNCTION update_faq_items_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -73,6 +71,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create trigger
 CREATE TRIGGER update_faq_items_updated_at
   BEFORE UPDATE ON faq_items
   FOR EACH ROW
@@ -136,6 +135,4 @@ For larger orders, we can also agree on partial payments – for example, half u
 
 ('How long does it take to make a new product and when do new items come for sale?', 'Ceramics usually takes 2-3 weeks to complete – clay must dry slowly, then comes the first firing, glaze application and second firing. For clothing, it depends on complexity, but usually 1-2 weeks.
 
-I add new products to the e-shop irregularly – when inspiration comes and hands get them ready. The best way to stay updated is to follow my Facebook page or visit the e-shop from time to time. Each new item is a small event!', 'en', 7, true)
-
-ON CONFLICT DO NOTHING;
+I add new products to the e-shop irregularly – when inspiration comes and hands get them ready. The best way to stay updated is to follow my Facebook page or visit the e-shop from time to time. Each new item is a small event!', 'en', 7, true);
