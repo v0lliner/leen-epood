@@ -572,14 +572,6 @@ const ProductDetail = () => {
             font-size: 1.5rem;
           }
 
-          .product-detail .product-price {
-              font-family: var(--font-heading);
-              font-size: 2.5rem; /* Suurendatud fondisuurus */
-              font-weight: 500;
-              color: var(--color-ultramarine);
-              margin-bottom: 48px; /* Suurendatud vahe nupuga */
-            }
-
           .add-to-cart-btn,
           .unavailable-btn {
             font-size: 1.125rem;
