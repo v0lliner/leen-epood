@@ -196,7 +196,6 @@ const ProductDetail = () => {
                 
                 <div className="product-info">
                   <h1 className="product-title">{product.title}</h1>
-                  <p className="product-price">{product.price}</p>
                   
                   {validDimensions.length > 0 && (
                     <div className="product-dimensions">
@@ -219,6 +218,8 @@ const ProductDetail = () => {
                       ))}
                     </div>
                   )}
+
+                  <p className="product-price">{product.price}</p>
                   
                   <div className="product-actions">
                     {canAddToCart && (
@@ -302,16 +303,8 @@ const ProductDetail = () => {
           font-family: var(--font-heading);
           font-size: 2rem;
           font-weight: 400;
-          margin-bottom: 16px;
-          color: var(--color-text);
-        }
-
-        .product-price {
-          font-family: var(--font-heading);
-          font-size: 1.5rem;
-          font-weight: 500;
-          color: var(--color-ultramarine);
           margin-bottom: 24px;
+          color: var(--color-text);
         }
 
         .product-dimensions {
@@ -365,6 +358,14 @@ const ProductDetail = () => {
 
         .product-description p:last-child {
           margin-bottom: 0;
+        }
+
+        .product-price {
+          font-family: var(--font-heading);
+          font-size: 2rem;
+          font-weight: 500;
+          color: var(--color-ultramarine);
+          margin-bottom: 32px;
         }
 
         .product-actions {
@@ -448,7 +449,7 @@ const ProductDetail = () => {
           }
 
           .product-price {
-            font-size: 1.25rem;
+            font-size: 1.5rem;
           }
 
           .add-to-cart-btn,

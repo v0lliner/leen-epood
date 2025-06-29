@@ -18,7 +18,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   // Get additional images (excluding primary)
   const additionalImages = sortedImages.filter(img => !img.is_primary)
 
+  // Check if we're on mobile
+  const isMobile = () => window.innerWidth <= 768
+
   const openModal = (index) => {
+    // Don't open modal on mobile
+    if (isMobile()) return
+    
     setSelectedIndex(index)
     setIsModalOpen(true)
     // Prevent body scroll when modal is open
@@ -59,7 +65,10 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     <>
       <div className="image-gallery">
         {/* Main Image */}
-        <div className="main-image" onClick={() => openModal(0)}>
+        <div 
+          className={`main-image ${!isMobile() ? 'clickable' : ''}`}
+          onClick={() => openModal(0)}
+        >
           <img 
             src={primaryImage.image_url} 
             alt={productTitle}
@@ -72,7 +81,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             {additionalImages.map((image, index) => (
               <div 
                 key={image.id}
-                className="additional-image"
+                className={`additional-image ${!isMobile() ? 'clickable' : ''}`}
                 onClick={() => openModal(index + 1)} // +1 because primary is at index 0
               >
                 <img 
@@ -85,8 +94,8 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
         )}
       </div>
 
-      {/* Modal */}
-      {isModalOpen && (
+      {/* Modal - Only on desktop */}
+      {isModalOpen && !isMobile() && (
         <div 
           className="modal-overlay" 
           onClick={handleModalClick}
@@ -114,21 +123,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
               <button className="modal-nav modal-next" onClick={(e) => { e.stopPropagation(); nextImage(); }}>
                 ›
               </button>
-              
-              <div className="modal-thumbnails" onClick={handleImageClick}>
-                {sortedImages.map((image, index) => (
-                  <div 
-                    key={image.id}
-                    className={`modal-thumbnail ${index === selectedIndex ? 'active' : ''}`}
-                    onClick={(e) => { e.stopPropagation(); setSelectedIndex(index); }}
-                  >
-                    <img 
-                      src={image.image_url} 
-                      alt={`${productTitle} pilt ${index + 1}`}
-                    />
-                  </div>
-                ))}
-              </div>
             </>
           )}
         </div>
@@ -145,8 +139,11 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           aspect-ratio: 4/3;
           border-radius: 4px;
           overflow: hidden;
-          cursor: pointer;
           margin-bottom: 16px;
+        }
+
+        .main-image.clickable {
+          cursor: pointer;
         }
 
         .main-image img {
@@ -156,7 +153,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           transition: transform 0.3s ease;
         }
 
-        .main-image:hover img {
+        .main-image.clickable:hover img {
           transform: scale(1.05);
         }
 
@@ -171,11 +168,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           aspect-ratio: 4/3;
           border-radius: 4px;
           overflow: hidden;
-          cursor: pointer;
           transition: transform 0.2s ease;
         }
 
-        .additional-image:hover {
+        .additional-image.clickable {
+          cursor: pointer;
+        }
+
+        .additional-image.clickable:hover {
           transform: scale(1.02);
         }
 
@@ -275,76 +275,21 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           right: 20px;
         }
 
-        .modal-thumbnails {
-          position: absolute;
-          bottom: 20px;
-          left: 50%;
-          transform: translateX(-50%);
-          display: flex;
-          gap: 8px;
-          max-width: 80vw;
-          overflow-x: auto;
-          padding: 8px;
-          cursor: default;
-          z-index: 100000;
-        }
-
-        .modal-thumbnail {
-          width: 60px;
-          height: 60px;
-          border-radius: 4px;
-          overflow: hidden;
-          cursor: pointer;
-          border: 2px solid transparent;
-          transition: border-color 0.2s ease;
-          flex-shrink: 0;
-        }
-
-        .modal-thumbnail:hover,
-        .modal-thumbnail.active {
-          border-color: white;
-        }
-
-        .modal-thumbnail img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-        }
-
         @media (max-width: 768px) {
           .additional-images {
             grid-template-columns: repeat(2, 1fr);
             gap: 6px;
           }
 
-          .modal-close {
-            top: -15px;
-            right: -15px;
-            font-size: 2.5rem;
-            width: 60px;
-            height: 60px;
+          /* Remove hover effects on mobile */
+          .main-image img,
+          .additional-image {
+            transition: none;
           }
 
-          .modal-nav {
-            font-size: 1.5rem;
-            padding: 8px 12px;
-          }
-
-          .modal-prev {
-            left: 10px;
-          }
-
-          .modal-next {
-            right: 10px;
-          }
-
-          .modal-thumbnails {
-            bottom: 10px;
-          }
-
-          .modal-thumbnail {
-            width: 50px;
-            height: 50px;
+          .main-image:hover img,
+          .additional-image:hover {
+            transform: none;
           }
         }
 
