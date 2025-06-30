@@ -87,6 +87,9 @@ export const debugImageIssues = {
       }
     }
 
+    // Test CSP issues
+    results.csp = this.checkCSP();
+
     console.log('📊 Diagnostics complete:', results);
     return results;
   },
@@ -102,6 +105,47 @@ export const debugImageIssues = {
     
     console.log('🔧 Environment check:', env);
     return env;
+  },
+
+  /**
+   * Check for CSP issues
+   */
+  checkCSP() {
+    // Check if we're in a browser environment
+    if (typeof document === 'undefined') return { checked: false };
+
+    // Try to create a test image from Supabase
+    const testImg = document.createElement('img');
+    testImg.style.display = 'none';
+    testImg.src = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/test-image.jpg`;
+    
+    // Listen for errors
+    let hasError = false;
+    const errorHandler = () => {
+      hasError = true;
+      console.error('❌ CSP test image failed to load - likely CSP issue');
+    };
+    
+    testImg.addEventListener('error', errorHandler);
+    document.body.appendChild(testImg);
+    
+    // Clean up
+    setTimeout(() => {
+      testImg.removeEventListener('error', errorHandler);
+      document.body.removeChild(testImg);
+    }, 1000);
+    
+    // Check for CSP meta tag
+    const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+    const cspContent = cspMeta ? cspMeta.getAttribute('content') : null;
+    
+    return {
+      checked: true,
+      hasCSPMetaTag: !!cspMeta,
+      cspContent,
+      testImageError: hasError,
+      recommendation: hasError ? 'Add Supabase domain to img-src directive in CSP' : 'No CSP issues detected'
+    };
   }
 };
 
