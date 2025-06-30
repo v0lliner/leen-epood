@@ -39,12 +39,17 @@ const Hero = () => {
           width: 100%;
           max-width: 900px;
           margin: 0 auto 48px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
         }
 
         .hero-image img {
           width: 100%;
-          aspect-ratio: 2/1;
-          object-fit: cover;
+          height: auto;
+          max-width: 100%;
+          max-height: 70vh;
+          object-fit: contain;
           border-radius: 4px;
         }
 
@@ -79,10 +84,21 @@ const Hero = () => {
 
           .hero-image {
             max-width: 100%;
+            margin-bottom: 32px;
+          }
+
+          .hero-image img {
+            max-height: 50vh;
           }
 
           .hero-subtext {
             font-size: 1.125rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .hero-image img {
+            max-height: 40vh;
           }
         }
       `}</style>
