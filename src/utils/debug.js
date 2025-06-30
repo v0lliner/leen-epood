@@ -146,6 +146,57 @@ export const debugImageIssues = {
       testImageError: hasError,
       recommendation: hasError ? 'Add Supabase domain to img-src directive in CSP' : 'No CSP issues detected'
     };
+  },
+
+  /**
+   * Test Stripe checkout
+   */
+  async testStripeCheckout() {
+    try {
+      console.log('🔄 Testing Stripe checkout...');
+      
+      // Create a test item
+      const testItem = {
+        name: 'Test Product',
+        description: 'This is a test product',
+        amount: 1000, // 10.00 in cents
+        quantity: 1,
+        currency: 'eur',
+        image: null
+      };
+      
+      // Get the current origin for success/cancel URLs
+      const origin = window.location.origin;
+      
+      // Call the checkout function directly
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('sb-access-token') || ''}`
+        },
+        body: JSON.stringify({
+          items: [testItem],
+          success_url: `${origin}/checkout/success`,
+          cancel_url: `${origin}/checkout`
+        })
+      });
+      
+      const result = await response.json();
+      console.log('✅ Stripe checkout test result:', result);
+      
+      return {
+        success: response.ok,
+        status: response.status,
+        data: result
+      };
+    } catch (error) {
+      console.error('❌ Stripe checkout test failed:', error);
+      return {
+        success: false,
+        error: error.message
+      };
+    }
   }
 };
 
@@ -154,4 +205,5 @@ if (import.meta.env.DEV) {
   window.debugImageIssues = debugImageIssues;
   console.log('🛠️ Debug utilities available at window.debugImageIssues');
   console.log('Run window.debugImageIssues.runDiagnostics() to test image loading');
+  console.log('Run window.debugImageIssues.testStripeCheckout() to test Stripe integration');
 }
