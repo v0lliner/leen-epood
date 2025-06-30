@@ -6,7 +6,7 @@ const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('
 const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripe = new Stripe(stripeSecret, {
   appInfo: {
-    name: 'Bolt Integration',
+    name: 'Leen Väränen',
     version: '1.0.0',
   },
 });
@@ -133,6 +133,22 @@ Deno.serve(async (req) => {
       mode: 'payment', // One-time payment
       success_url,
       cancel_url,
+      locale: 'et', // Estonian language for checkout
+      billing_address_collection: 'auto',
+      shipping_address_collection: {
+        allowed_countries: ['EE', 'FI', 'LV', 'LT', 'SE'],
+      },
+      phone_number_collection: {
+        enabled: true,
+      },
+      custom_text: {
+        shipping_address: {
+          message: 'Palun sisestage täpne tarneaadress',
+        },
+        submit: {
+          message: 'Teie tellimus töödeldakse 1-3 tööpäeva jooksul',
+        },
+      },
     };
 
     // Only add customer ID if we have one
