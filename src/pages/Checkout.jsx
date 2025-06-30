@@ -4,14 +4,12 @@ import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
-import { useAuth } from '../context/AuthContext';
 import { createCheckoutSession } from '../utils/stripe';
 import { parsePriceToAmount, STRIPE_CURRENCY } from '../stripe-config';
 
 const Checkout = () => {
   const { t } = useTranslation();
   const { items, getTotalPrice, clearCart } = useCart();
-  const { user } = useAuth();
   const navigate = useNavigate();
   
   const [isProcessing, setIsProcessing] = useState(false);
@@ -27,16 +25,6 @@ const Checkout = () => {
     country: 'Estonia',
     notes: ''
   });
-
-  // Pre-fill form with user data if available
-  useEffect(() => {
-    if (user?.email) {
-      setFormData(prev => ({
-        ...prev,
-        email: user.email
-      }));
-    }
-  }, [user]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

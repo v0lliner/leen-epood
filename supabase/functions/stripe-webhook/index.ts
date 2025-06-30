@@ -6,7 +6,7 @@ const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
 const stripeWebhookSecret = Deno.env.get('STRIPE_WEBHOOK_SECRET')!;
 const stripe = new Stripe(stripeSecret, {
   appInfo: {
-    name: 'Bolt Integration',
+    name: 'Leen Väränen',
     version: '1.0.0',
   },
 });
@@ -60,17 +60,6 @@ async function handleEvent(event: Stripe.Event) {
     return;
   }
 
-  if (!('customer' in stripeData)) {
-    return;
-  }
-
-  const { customer: customerId } = stripeData;
-
-  if (!customerId || typeof customerId !== 'string') {
-    console.error(`No customer received on event: ${JSON.stringify(event)}`);
-    return;
-  }
-
   // Handle checkout.session.completed event for one-time payments
   if (event.type === 'checkout.session.completed') {
     const session = stripeData as Stripe.Checkout.Session;
@@ -85,7 +74,14 @@ async function handleEvent(event: Stripe.Event) {
           amount_total,
           currency,
           payment_status,
+          customer: customerId,
         } = session;
+
+        // Skip if no customer ID
+        if (!customerId) {
+          console.log('No customer ID found in session, skipping order creation');
+          return;
+        }
 
         // Insert the order into the stripe_orders table
         const { error: orderError } = await supabase.from('stripe_orders').insert({
