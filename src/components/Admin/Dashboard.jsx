@@ -21,6 +21,7 @@ const AdminDashboard = () => {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [debugInfo, setDebugInfo] = useState('')
 
   useEffect(() => {
     loadDashboardData()
@@ -29,29 +30,44 @@ const AdminDashboard = () => {
   const loadDashboardData = async () => {
     setLoading(true)
     setError('')
+    setDebugInfo('Alustame andmete laadimist...')
     
     try {
-      console.log('Loading dashboard data...')
+      console.log('🔄 Dashboard: Loading data...')
+      setDebugInfo('Laadime tooteid...')
       
-      // Load all data in parallel
+      // Load products first to debug
+      const productsResult = await productService.getProducts()
+      console.log('📦 Dashboard: Products result:', productsResult)
+      
+      if (productsResult.error) {
+        console.error('❌ Dashboard: Products error:', productsResult.error)
+        setDebugInfo(`Toodete laadimine ebaõnnestus: ${productsResult.error.message}`)
+        setError(`Toodete laadimine ebaõnnestus: ${productsResult.error.message}`)
+        return
+      }
+
+      const products = productsResult.data || []
+      console.log('📦 Dashboard: Products count:', products.length)
+      setDebugInfo(`Leitud ${products.length} toodet`)
+
+      // Load other data in parallel
+      setDebugInfo('Laadime ülejäänud andmeid...')
       const [
         subResult, 
         ordersResult, 
-        productsResult, 
         portfolioResult,
         faqResult
       ] = await Promise.all([
         getUserSubscription().catch(err => ({ error: err, data: null })),
         getUserOrders().catch(err => ({ error: err, data: [] })),
-        productService.getProducts().catch(err => ({ error: err, data: [] })),
         portfolioItemService.getPortfolioItems().catch(err => ({ error: err, data: [] })),
         faqService.getFAQItems('et').catch(err => ({ error: err, data: [] }))
       ])
 
-      console.log('Dashboard data loaded:', {
+      console.log('📊 Dashboard: All data loaded:', {
         subscription: subResult,
         orders: ordersResult,
-        products: productsResult,
         portfolio: portfolioResult,
         faq: faqResult
       })
@@ -67,7 +83,6 @@ const AdminDashboard = () => {
       }
 
       // Statistics from real data
-      const products = productsResult.data || []
       const portfolioItems = portfolioResult.data || []
       const faqItems = faqResult.data || []
 
@@ -78,12 +93,14 @@ const AdminDashboard = () => {
         faqItems: faqItems.length
       }
 
-      console.log('Calculated stats:', newStats)
+      console.log('📈 Dashboard: Calculated stats:', newStats)
       setStats(newStats)
+      setDebugInfo(`✅ Andmed laaditud: ${products.length} toodet, ${newStats.availableProducts} saadaval`)
 
     } catch (err) {
-      console.error('Error loading dashboard data:', err)
-      setError('Andmete laadimine ebaõnnestus')
+      console.error('❌ Dashboard: Error loading data:', err)
+      setError(`Andmete laadimine ebaõnnestus: ${err.message}`)
+      setDebugInfo(`❌ Viga: ${err.message}`)
     } finally {
       setLoading(false)
     }
@@ -181,6 +198,7 @@ const AdminDashboard = () => {
         <div className="loading-container">
           <div className="loading-spinner"></div>
           <p>Laadin andmeid...</p>
+          {debugInfo && <p className="debug-info">{debugInfo}</p>}
         </div>
       </AdminLayout>
     )
@@ -193,6 +211,7 @@ const AdminDashboard = () => {
           <div className="error-content">
             <h2>Viga andmete laadimisel</h2>
             <p>{error}</p>
+            {debugInfo && <p className="debug-info">{debugInfo}</p>}
             <button onClick={loadDashboardData} className="btn btn-primary">
               Proovi uuesti
             </button>
@@ -219,6 +238,15 @@ const AdminDashboard = () => {
             })}
           </div>
         </div>
+
+        {/* Debug Info */}
+        {debugInfo && (
+          <div className="debug-card">
+            <h3>🔍 Debug info</h3>
+            <p>{debugInfo}</p>
+            <p>Toodete arv: {stats.products} (saadaval: {stats.availableProducts})</p>
+          </div>
+        )}
 
         {/* Subscription Status */}
         {subscription ? (
@@ -420,6 +448,36 @@ const AdminDashboard = () => {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        .debug-info {
+          background: #f8f9fa;
+          padding: 8px 12px;
+          border-radius: 4px;
+          font-family: monospace;
+          font-size: 0.9rem;
+          color: #666;
+          margin-top: 8px;
+        }
+
+        .debug-card {
+          background: #fff3cd;
+          border: 1px solid #ffeaa7;
+          border-radius: 8px;
+          padding: 16px;
+          margin-bottom: 24px;
+        }
+
+        .debug-card h3 {
+          color: #856404;
+          margin-bottom: 8px;
+          font-size: 1rem;
+        }
+
+        .debug-card p {
+          color: #856404;
+          margin: 4px 0;
+          font-size: 0.9rem;
         }
 
         .error-content {
