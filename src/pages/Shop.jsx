@@ -599,7 +599,7 @@ const Shop = () => {
           .shop-controls {
             flex-direction: column;
             align-items: stretch;
-            gap: 0;
+            gap: 16px;
             margin-bottom: 32px;
           }
 
@@ -614,12 +614,12 @@ const Shop = () => {
             order: 2;
             padding: 16px 0;
             border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
           }
 
           .sort-filter {
             justify-content: center;
             padding: 16px 0;
-            border-top: 1px solid #f0f0f0;
             order: 3;
           }
 
