@@ -80,7 +80,7 @@ const Hero = () => {
 
         @media (max-width: 768px) {
           .hero {
-            padding: 24px 0 var(--section-spacing);
+            padding: 32px 0 var(--section-spacing);
           }
 
           .hero-image {
@@ -90,12 +90,63 @@ const Hero = () => {
 
           .hero-subtext {
             font-size: 1.125rem;
+            margin: 20px 0 28px;
+          }
+
+          .hero-cta {
+            font-size: 1rem;
           }
         }
 
         @media (max-width: 480px) {
+          .hero {
+            padding: 24px 0 48px;
+          }
+
           .hero-image {
             margin-bottom: 24px;
+          }
+
+          .hero-subtext {
+            font-size: 1rem;
+            margin: 16px 0 24px;
+          }
+
+          .hero-cta {
+            font-size: 0.95rem;
+          }
+        }
+
+        @media (max-height: 700px) and (max-width: 768px) {
+          .hero {
+            padding: 16px 0 32px;
+          }
+
+          .hero-image {
+            margin-bottom: 16px;
+          }
+
+          .hero-subtext {
+            margin: 12px 0 20px;
+          }
+        }
+
+        @media (max-height: 600px) and (max-width: 480px) {
+          .hero {
+            padding: 12px 0 24px;
+          }
+
+          .hero-image {
+            margin-bottom: 12px;
+          }
+
+          .hero-subtext {
+            font-size: 0.9rem;
+            margin: 8px 0 16px;
+          }
+
+          .hero-cta {
+            font-size: 0.9rem;
           }
         }
       `}</style>
