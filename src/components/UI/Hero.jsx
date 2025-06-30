@@ -32,23 +32,38 @@ const Hero = () => {
 
       <style jsx>{`
         .hero {
-          padding: 48px 0 var(--section-spacing-large);
+          min-height: 100vh;
+          max-height: 100vh;
+          display: flex;
+          align-items: center;
+          padding: 48px 0;
+          overflow: hidden;
+        }
+
+        .hero .container {
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          gap: 32px;
         }
 
         .hero-image {
           width: 100%;
-          max-width: 1000px;
-          margin: 0 auto 48px;
+          max-width: 800px;
+          height: auto;
+          max-height: 60vh;
           display: flex;
           justify-content: center;
           align-items: center;
-          overflow: visible;
+          overflow: hidden;
         }
 
         .hero-image img {
           width: 100%;
           height: auto;
-          max-width: 100%;
+          max-height: 60vh;
           object-fit: contain;
           border-radius: 4px;
           display: block;
@@ -58,6 +73,7 @@ const Hero = () => {
           text-align: center;
           max-width: 800px;
           margin: 0 auto;
+          flex-shrink: 0;
         }
 
         .hero-subtext {
@@ -80,22 +96,69 @@ const Hero = () => {
 
         @media (max-width: 768px) {
           .hero {
-            padding: 24px 0 var(--section-spacing);
+            min-height: 100vh;
+            max-height: 100vh;
+            padding: 24px 0;
+          }
+
+          .hero .container {
+            gap: 24px;
           }
 
           .hero-image {
             max-width: 100%;
-            margin-bottom: 32px;
+            max-height: 50vh;
+          }
+
+          .hero-image img {
+            max-height: 50vh;
           }
 
           .hero-subtext {
             font-size: 1.125rem;
+            margin: 16px 0 24px;
           }
         }
 
         @media (max-width: 480px) {
+          .hero {
+            padding: 16px 0;
+          }
+
+          .hero .container {
+            gap: 20px;
+          }
+
           .hero-image {
-            margin-bottom: 24px;
+            max-height: 45vh;
+          }
+
+          .hero-image img {
+            max-height: 45vh;
+          }
+
+          .hero-subtext {
+            margin: 12px 0 20px;
+          }
+        }
+
+        @media (max-height: 600px) {
+          .hero {
+            min-height: 100vh;
+            max-height: 100vh;
+          }
+
+          .hero-image {
+            max-height: 40vh;
+          }
+
+          .hero-image img {
+            max-height: 40vh;
+          }
+
+          .hero-subtext {
+            font-size: 1rem;
+            margin: 16px 0 20px;
           }
         }
       `}</style>
