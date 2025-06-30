@@ -27,19 +27,22 @@ export async function createCheckoutSession(
   request: CheckoutSessionRequest
 ): Promise<{ data: CheckoutSessionResponse | null; error: string | null }> {
   try {
-    // Get the current user's session
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    // Get the current user's session if available
+    const { data: { session } } = await supabase.auth.getSession();
     
-    if (sessionError || !session) {
-      return { data: null, error: 'User not authenticated' };
+    // Call the edge function with or without auth token
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    
+    // Add Authorization header if user is logged in
+    if (session?.access_token) {
+      headers.Authorization = `Bearer ${session.access_token}`;
     }
 
-    // Call the edge function
     const { data, error } = await supabase.functions.invoke('stripe-checkout', {
       body: request,
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
+      headers,
     });
 
     if (error) {

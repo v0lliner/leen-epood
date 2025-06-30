@@ -54,70 +54,62 @@ Deno.serve(async (req) => {
       return corsResponse({ error: 'Success and cancel URLs are required' }, 400);
     }
 
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const {
-      data: { user },
-      error: getUserError,
-    } = await supabase.auth.getUser(token);
+    // Try to get user from auth header, but don't require it
+    let customerId: string | undefined = undefined;
+    
+    const authHeader = req.headers.get('Authorization');
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      try {
+        const {
+          data: { user },
+          error: getUserError,
+        } = await supabase.auth.getUser(token);
 
-    if (getUserError) {
-      return corsResponse({ error: 'Failed to authenticate user' }, 401);
-    }
+        if (!getUserError && user) {
+          // User is authenticated, try to get or create Stripe customer
+          const { data: customer, error: getCustomerError } = await supabase
+            .from('stripe_customers')
+            .select('customer_id')
+            .eq('user_id', user.id)
+            .is('deleted_at', null)
+            .maybeSingle();
 
-    if (!user) {
-      return corsResponse({ error: 'User not found' }, 404);
-    }
+          if (!getCustomerError) {
+            if (customer?.customer_id) {
+              // Existing customer found
+              customerId = customer.customer_id;
+            } else {
+              // Create new customer
+              try {
+                const newCustomer = await stripe.customers.create({
+                  email: user.email,
+                  metadata: {
+                    userId: user.id,
+                  },
+                });
 
-    const { data: customer, error: getCustomerError } = await supabase
-      .from('stripe_customers')
-      .select('customer_id')
-      .eq('user_id', user.id)
-      .is('deleted_at', null)
-      .maybeSingle();
+                console.log(`Created new Stripe customer ${newCustomer.id} for user ${user.id}`);
 
-    if (getCustomerError) {
-      console.error('Failed to fetch customer information from the database', getCustomerError);
-      return corsResponse({ error: 'Failed to fetch customer information' }, 500);
-    }
+                const { error: createCustomerError } = await supabase.from('stripe_customers').insert({
+                  user_id: user.id,
+                  customer_id: newCustomer.id,
+                });
 
-    let customerId;
-
-    /**
-     * In case we don't have a mapping yet, the customer does not exist and we need to create one.
-     */
-    if (!customer || !customer.customer_id) {
-      const newCustomer = await stripe.customers.create({
-        email: user.email,
-        metadata: {
-          userId: user.id,
-        },
-      });
-
-      console.log(`Created new Stripe customer ${newCustomer.id} for user ${user.id}`);
-
-      const { error: createCustomerError } = await supabase.from('stripe_customers').insert({
-        user_id: user.id,
-        customer_id: newCustomer.id,
-      });
-
-      if (createCustomerError) {
-        console.error('Failed to save customer information in the database', createCustomerError);
-
-        // Try to clean up the Stripe customer
-        try {
-          await stripe.customers.del(newCustomer.id);
-        } catch (deleteError) {
-          console.error('Failed to clean up after customer mapping error:', deleteError);
+                if (!createCustomerError) {
+                  customerId = newCustomer.id;
+                }
+              } catch (err) {
+                console.error('Failed to create Stripe customer:', err);
+                // Continue without customer ID
+              }
+            }
+          }
         }
-
-        return corsResponse({ error: 'Failed to create customer mapping' }, 500);
+      } catch (err) {
+        console.error('Error processing authentication:', err);
+        // Continue without customer ID
       }
-
-      customerId = newCustomer.id;
-      console.log(`Successfully set up new customer ${customerId}`);
-    } else {
-      customerId = customer.customer_id;
     }
 
     // Convert items to Stripe line_items format
@@ -134,17 +126,23 @@ Deno.serve(async (req) => {
       quantity: item.quantity,
     }));
 
-    // Create Checkout Session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
+    // Create Checkout Session with or without customer ID
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment', // One-time payment
       success_url,
       cancel_url,
-    });
+    };
 
-    console.log(`Created checkout session ${session.id} for customer ${customerId}`);
+    // Only add customer ID if we have one
+    if (customerId) {
+      sessionParams.customer = customerId;
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
+
+    console.log(`Created checkout session ${session.id}${customerId ? ` for customer ${customerId}` : ' for guest'}`);
 
     return corsResponse({ sessionId: session.id, url: session.url });
   } catch (error: any) {

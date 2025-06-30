@@ -11,24 +11,14 @@ import { parsePriceToAmount, STRIPE_CURRENCY } from '../stripe-config';
 const Checkout = () => {
   const { t } = useTranslation();
   const { items, getTotalPrice, clearCart } = useCart();
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!authLoading && !user) {
-      navigate('/admin/login?redirect=/checkout', { replace: true });
-    }
-  }, [user, authLoading, navigate]);
+  // No longer redirecting unauthenticated users to login
 
   const handleCheckout = async () => {
-    if (!user) {
-      navigate('/admin/login?redirect=/checkout');
-      return;
-    }
-
     if (items.length === 0) {
       setError('Ostukorv on tühi');
       return;
@@ -75,25 +65,6 @@ const Checkout = () => {
       setIsProcessing(false);
     }
   };
-
-  // Show loading while checking auth
-  if (authLoading) {
-    return (
-      <>
-        <SEOHead page="shop" />
-        <main>
-          <section className="section-large">
-            <div className="container">
-              <div className="loading-container">
-                <div className="loading-spinner"></div>
-                <p>Laadin...</p>
-              </div>
-            </div>
-          </section>
-        </main>
-      </>
-    );
-  }
 
   if (items.length === 0) {
     return (
