@@ -4,111 +4,189 @@ import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import AdminLayout from './AdminLayout'
 import { getUserSubscription, getUserOrders } from '../../utils/stripe'
+import { productService } from '../../utils/supabase/products'
+import { portfolioItemService } from '../../utils/supabase/portfolioItems'
+import { faqService } from '../../utils/supabase/faq'
 
 const AdminDashboard = () => {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [subscription, setSubscription] = useState(null)
   const [orders, setOrders] = useState([])
+  const [stats, setStats] = useState({
+    products: 0,
+    availableProducts: 0,
+    portfolioItems: 0,
+    faqItems: 0
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    loadUserData()
+    loadDashboardData()
   }, [])
 
-  const loadUserData = async () => {
+  const loadDashboardData = async () => {
     try {
-      const [subResult, ordersResult] = await Promise.all([
+      const [
+        subResult, 
+        ordersResult, 
+        productsResult, 
+        portfolioResult,
+        faqResult
+      ] = await Promise.all([
         getUserSubscription(),
-        getUserOrders()
+        getUserOrders(),
+        productService.getProducts(),
+        portfolioItemService.getPortfolioItems(),
+        faqService.getFAQItems('et')
       ])
 
+      // Subscription data
       if (!subResult.error && subResult.data) {
         setSubscription(subResult.data)
       }
 
+      // Orders data
       if (!ordersResult.error && ordersResult.data) {
         setOrders(ordersResult.data)
       }
+
+      // Statistics
+      const products = productsResult.data || []
+      const portfolioItems = portfolioResult.data || []
+      const faqItems = faqResult.data || []
+
+      setStats({
+        products: products.length,
+        availableProducts: products.filter(p => p.available).length,
+        portfolioItems: portfolioItems.length,
+        faqItems: faqItems.length
+      })
+
     } catch (err) {
-      console.error('Error loading user data:', err)
+      console.error('Error loading dashboard data:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  const stats = [
+  const getRecentActivity = () => {
+    const activities = []
+    
+    // Recent orders
+    orders.slice(0, 3).forEach(order => {
+      activities.push({
+        type: 'order',
+        title: `Uus tellimus #${order.order_id}`,
+        description: `${(order.amount_total / 100).toFixed(2)} ${order.currency.toUpperCase()}`,
+        date: new Date(order.order_date),
+        icon: '📋'
+      })
+    })
+
+    // Sort by date
+    return activities.sort((a, b) => b.date - a.date).slice(0, 5)
+  }
+
+  const getQuickStats = () => [
     {
-      title: t('admin.dashboard.stats.products'),
-      value: '8',
+      title: 'Tooted kokku',
+      value: stats.products.toString(),
+      subtitle: `${stats.availableProducts} saadaval`,
       icon: '📦',
-      link: '/admin/products'
+      link: '/admin/products',
+      color: 'blue'
     },
     {
-      title: t('admin.dashboard.stats.portfolio'),
-      value: '6',
+      title: 'Minu lemmikud',
+      value: stats.portfolioItems.toString(),
+      subtitle: 'portfoolio tööd',
       icon: '🎨',
-      link: '/admin/minu-lemmikud'
+      link: '/admin/minu-lemmikud',
+      color: 'purple'
     },
     {
-      title: t('admin.dashboard.stats.orders'),
+      title: 'Tellimused',
       value: orders.length.toString(),
+      subtitle: 'kokku tellimusi',
       icon: '📋',
-      link: '/admin/orders'
+      link: '/admin/orders',
+      color: 'green'
     },
     {
-      title: t('admin.dashboard.stats.messages'),
-      value: '3',
-      icon: '💬',
-      link: '/admin/messages'
+      title: 'KKK küsimused',
+      value: stats.faqItems.toString(),
+      subtitle: 'vastust eesti keeles',
+      icon: '❓',
+      link: '/admin/faq',
+      color: 'orange'
     }
   ]
 
   const quickActions = [
     {
-      title: t('admin.dashboard.actions.add_product'),
-      description: t('admin.dashboard.actions.add_product_desc'),
+      title: 'Lisa uus toode',
+      description: 'Lisage uus toode e-poodi müügiks',
       link: '/admin/products/new',
-      icon: '➕'
+      icon: '➕',
+      primary: true
     },
     {
-      title: t('admin.dashboard.actions.add_portfolio'),
-      description: t('admin.dashboard.actions.add_portfolio_desc'),
+      title: 'Lisa lemmik',
+      description: 'Lisage uus töö portfooliosse',
       link: '/admin/minu-lemmikud/new',
-      icon: '🖼️'
+      icon: '🖼️',
+      primary: false
     },
     {
-      title: t('admin.dashboard.actions.view_orders'),
-      description: t('admin.dashboard.actions.view_orders_desc'),
-      link: '/admin/orders',
-      icon: '📊'
+      title: 'Muuda minust lehte',
+      description: 'Uuendage oma tutvustust',
+      link: '/admin/about',
+      icon: '👤',
+      primary: false
     }
   ]
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="loading-container">
+          <div className="loading-spinner"></div>
+          <p>Laadin andmeid...</p>
+        </div>
+      </AdminLayout>
+    )
+  }
 
   return (
     <AdminLayout>
       <div className="dashboard-container">
         <div className="dashboard-header">
-          <h1>{t('admin.dashboard.welcome')}, {user?.email}</h1>
-          <p>{t('admin.dashboard.subtitle')}</p>
+          <div className="welcome-section">
+            <h1>Tere tulemast, {user?.email?.split('@')[0]}</h1>
+            <p>Siin on ülevaade teie veebilehe olukorrast</p>
+          </div>
+          <div className="last-updated">
+            Viimati uuendatud: {new Date().toLocaleDateString('et-EE', { 
+              day: 'numeric', 
+              month: 'long', 
+              hour: '2-digit', 
+              minute: '2-digit' 
+            })}
+          </div>
         </div>
 
         {/* Subscription Status */}
-        {loading ? (
-          <div className="subscription-card loading">
-            <div className="loading-spinner"></div>
-            <p>Laadin tellimuse andmeid...</p>
-          </div>
-        ) : subscription ? (
+        {subscription && (
           <div className="subscription-card">
-            <h3>Tellimuse staatus</h3>
+            <h3>💳 Tellimuse staatus</h3>
             <div className="subscription-info">
               <span className={`status-badge ${subscription.subscription_status}`}>
-                {subscription.subscription_status === 'active' ? 'Aktiivne' : 
-                 subscription.subscription_status === 'not_started' ? 'Pole alustatud' :
+                {subscription.subscription_status === 'active' ? '✅ Aktiivne' : 
+                 subscription.subscription_status === 'not_started' ? '⏳ Pole alustatud' :
                  subscription.subscription_status}
               </span>
-              {subscription.subscription_status === 'active' && (
+              {subscription.subscription_status === 'active' && subscription.current_period_end && (
                 <div className="subscription-details">
                   <p>Järgmine arve: {new Date(subscription.current_period_end * 1000).toLocaleDateString('et-EE')}</p>
                   {subscription.payment_method_brand && (
@@ -118,30 +196,31 @@ const AdminDashboard = () => {
               )}
             </div>
           </div>
-        ) : (
-          <div className="subscription-card">
-            <h3>Tellimuse staatus</h3>
-            <p>Tellimuse andmeid ei leitud</p>
-          </div>
         )}
 
-        <div className="stats-grid">
-          {stats.map((stat, index) => (
-            <Link key={index} to={stat.link} className="stat-card">
-              <div className="stat-icon">{stat.icon}</div>
-              <div className="stat-content">
-                <h3>{stat.value}</h3>
-                <p>{stat.title}</p>
-              </div>
-            </Link>
-          ))}
+        {/* Quick Stats */}
+        <div className="stats-section">
+          <h2>📊 Kiire ülevaade</h2>
+          <div className="stats-grid">
+            {getQuickStats().map((stat, index) => (
+              <Link key={index} to={stat.link} className={`stat-card ${stat.color}`}>
+                <div className="stat-icon">{stat.icon}</div>
+                <div className="stat-content">
+                  <h3>{stat.value}</h3>
+                  <p className="stat-title">{stat.title}</p>
+                  <p className="stat-subtitle">{stat.subtitle}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
         </div>
 
-        <div className="quick-actions">
-          <h2>{t('admin.dashboard.quick_actions')}</h2>
+        {/* Quick Actions */}
+        <div className="actions-section">
+          <h2>⚡ Kiirtoimingud</h2>
           <div className="actions-grid">
             {quickActions.map((action, index) => (
-              <Link key={index} to={action.link} className="action-card">
+              <Link key={index} to={action.link} className={`action-card ${action.primary ? 'primary' : ''}`}>
                 <div className="action-icon">{action.icon}</div>
                 <div className="action-content">
                   <h3>{action.title}</h3>
@@ -152,68 +231,110 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        {/* Recent Orders */}
-        {orders.length > 0 && (
-          <div className="recent-orders">
-            <h2>Viimased tellimused</h2>
-            <div className="orders-list">
-              {orders.slice(0, 5).map((order) => (
-                <div key={order.order_id} className="order-item">
-                  <div className="order-info">
-                    <span className="order-id">#{order.order_id}</span>
-                    <span className="order-date">{new Date(order.order_date).toLocaleDateString('et-EE')}</span>
-                  </div>
-                  <div className="order-amount">
-                    {(order.amount_total / 100).toFixed(2)} {order.currency.toUpperCase()}
+        {/* Recent Activity */}
+        {getRecentActivity().length > 0 && (
+          <div className="activity-section">
+            <h2>📈 Viimane tegevus</h2>
+            <div className="activity-list">
+              {getRecentActivity().map((activity, index) => (
+                <div key={index} className="activity-item">
+                  <div className="activity-icon">{activity.icon}</div>
+                  <div className="activity-content">
+                    <h4>{activity.title}</h4>
+                    <p>{activity.description}</p>
+                    <span className="activity-date">
+                      {activity.date.toLocaleDateString('et-EE', { 
+                        day: 'numeric', 
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </span>
                   </div>
                 </div>
               ))}
             </div>
           </div>
         )}
+
+        {/* Website Status */}
+        <div className="status-section">
+          <h2>🌐 Veebilehe staatus</h2>
+          <div className="status-grid">
+            <div className="status-item">
+              <span className="status-indicator active"></span>
+              <div>
+                <h4>Veebileht</h4>
+                <p>Töötab korralikult</p>
+              </div>
+            </div>
+            <div className="status-item">
+              <span className="status-indicator active"></span>
+              <div>
+                <h4>E-pood</h4>
+                <p>{stats.availableProducts} toodet müügis</p>
+              </div>
+            </div>
+            <div className="status-item">
+              <span className="status-indicator active"></span>
+              <div>
+                <h4>Portfoolio</h4>
+                <p>{stats.portfolioItems} tööd kuvatakse</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <style jsx>{`
         .dashboard-container {
           padding: 32px;
+          max-width: 1400px;
+          margin: 0 auto;
         }
 
         .dashboard-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
           margin-bottom: 48px;
+          padding-bottom: 24px;
+          border-bottom: 1px solid #e9ecef;
         }
 
-        .dashboard-header h1 {
+        .welcome-section h1 {
           font-family: var(--font-heading);
           color: var(--color-ultramarine);
           font-size: 2rem;
           margin-bottom: 8px;
         }
 
-        .dashboard-header p {
+        .welcome-section p {
           color: #666;
           font-size: 1.125rem;
+          margin: 0;
         }
 
-        .subscription-card {
-          background: white;
-          border-radius: 8px;
-          padding: 24px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          margin-bottom: 32px;
-          border-left: 4px solid var(--color-ultramarine);
+        .last-updated {
+          color: #888;
+          font-size: 0.9rem;
+          font-style: italic;
         }
 
-        .subscription-card.loading {
+        .loading-container {
           display: flex;
+          flex-direction: column;
           align-items: center;
+          justify-content: center;
+          padding: 64px;
           gap: 16px;
         }
 
         .loading-spinner {
-          width: 24px;
-          height: 24px;
-          border: 2px solid #f3f3f3;
-          border-top: 2px solid var(--color-ultramarine);
+          width: 40px;
+          height: 40px;
+          border: 3px solid #f3f3f3;
+          border-top: 3px solid var(--color-ultramarine);
           border-radius: 50%;
           animation: spin 1s linear infinite;
         }
@@ -223,11 +344,20 @@ const AdminDashboard = () => {
           100% { transform: rotate(360deg); }
         }
 
+        .subscription-card {
+          background: white;
+          border-radius: 12px;
+          padding: 24px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          margin-bottom: 32px;
+          border-left: 4px solid var(--color-ultramarine);
+        }
+
         .subscription-card h3 {
           font-family: var(--font-heading);
           color: var(--color-ultramarine);
           margin-bottom: 16px;
-          font-size: 1.25rem;
+          font-size: 1.125rem;
         }
 
         .subscription-info {
@@ -242,7 +372,6 @@ const AdminDashboard = () => {
           border-radius: 16px;
           font-size: 0.85rem;
           font-weight: 500;
-          text-transform: capitalize;
         }
 
         .status-badge.active {
@@ -251,8 +380,8 @@ const AdminDashboard = () => {
         }
 
         .status-badge.not_started {
-          background: #f8d7da;
-          color: #721c24;
+          background: #fff3cd;
+          color: #856404;
         }
 
         .subscription-details p {
@@ -261,24 +390,41 @@ const AdminDashboard = () => {
           font-size: 0.9rem;
         }
 
+        .stats-section,
+        .actions-section,
+        .activity-section,
+        .status-section {
+          margin-bottom: 48px;
+        }
+
+        .stats-section h2,
+        .actions-section h2,
+        .activity-section h2,
+        .status-section h2 {
+          font-family: var(--font-heading);
+          color: var(--color-text);
+          margin-bottom: 24px;
+          font-size: 1.5rem;
+        }
+
         .stats-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 24px;
-          margin-bottom: 48px;
         }
 
         .stat-card {
           background: white;
-          border-radius: 8px;
+          border-radius: 12px;
           padding: 24px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           text-decoration: none;
           color: inherit;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          transition: all 0.3s ease;
           display: flex;
           align-items: center;
-          gap: 16px;
+          gap: 20px;
+          border-left: 4px solid transparent;
         }
 
         .stat-card:hover {
@@ -286,54 +432,62 @@ const AdminDashboard = () => {
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
 
+        .stat-card.blue { border-left-color: #007bff; }
+        .stat-card.purple { border-left-color: #6f42c1; }
+        .stat-card.green { border-left-color: #28a745; }
+        .stat-card.orange { border-left-color: #fd7e14; }
+
         .stat-icon {
-          font-size: 2rem;
-          width: 60px;
-          height: 60px;
+          font-size: 2.5rem;
+          width: 70px;
+          height: 70px;
           display: flex;
           align-items: center;
           justify-content: center;
           background: rgba(47, 62, 156, 0.1);
           border-radius: 50%;
+          flex-shrink: 0;
         }
 
         .stat-content h3 {
           font-family: var(--font-heading);
-          font-size: 2rem;
+          font-size: 2.5rem;
           color: var(--color-ultramarine);
           margin-bottom: 4px;
+          line-height: 1;
         }
 
-        .stat-content p {
-          color: #666;
-          font-size: 0.9rem;
-          margin: 0;
-        }
-
-        .quick-actions h2 {
-          font-family: var(--font-heading);
+        .stat-title {
           color: var(--color-text);
-          margin-bottom: 24px;
+          font-weight: 500;
+          margin-bottom: 2px;
+          font-size: 1rem;
+        }
+
+        .stat-subtitle {
+          color: #666;
+          font-size: 0.85rem;
+          margin: 0;
         }
 
         .actions-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
           gap: 24px;
-          margin-bottom: 48px;
         }
 
         .action-card {
           background: white;
-          border-radius: 8px;
+          border-radius: 12px;
           padding: 24px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           text-decoration: none;
           color: inherit;
-          transition: transform 0.2s ease, box-shadow 0.2s ease;
+          transition: all 0.3s ease;
           display: flex;
           align-items: flex-start;
           gap: 16px;
+          border: 2px solid transparent;
         }
 
         .action-card:hover {
@@ -341,15 +495,20 @@ const AdminDashboard = () => {
           box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
         }
 
+        .action-card.primary {
+          border-color: var(--color-ultramarine);
+          background: rgba(47, 62, 156, 0.02);
+        }
+
         .action-icon {
-          font-size: 1.5rem;
-          width: 48px;
-          height: 48px;
+          font-size: 1.75rem;
+          width: 50px;
+          height: 50px;
           display: flex;
           align-items: center;
           justify-content: center;
           background: rgba(47, 62, 156, 0.1);
-          border-radius: 8px;
+          border-radius: 10px;
           flex-shrink: 0;
         }
 
@@ -367,64 +526,105 @@ const AdminDashboard = () => {
           margin: 0;
         }
 
-        .recent-orders {
+        .activity-list {
           background: white;
-          border-radius: 8px;
-          padding: 24px;
+          border-radius: 12px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
         }
 
-        .recent-orders h2 {
-          font-family: var(--font-heading);
-          color: var(--color-ultramarine);
-          margin-bottom: 20px;
-          font-size: 1.25rem;
-        }
-
-        .orders-list {
+        .activity-item {
           display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .order-item {
-          display: flex;
-          justify-content: space-between;
           align-items: center;
-          padding: 12px 0;
+          gap: 16px;
+          padding: 20px 24px;
           border-bottom: 1px solid #f0f0f0;
         }
 
-        .order-item:last-child {
+        .activity-item:last-child {
           border-bottom: none;
         }
 
-        .order-info {
+        .activity-icon {
+          font-size: 1.5rem;
+          width: 40px;
+          height: 40px;
           display: flex;
-          flex-direction: column;
-          gap: 4px;
+          align-items: center;
+          justify-content: center;
+          background: rgba(47, 62, 156, 0.1);
+          border-radius: 50%;
+          flex-shrink: 0;
         }
 
-        .order-id {
+        .activity-content h4 {
           font-family: var(--font-heading);
-          font-weight: 500;
           color: var(--color-text);
+          margin-bottom: 4px;
+          font-size: 1rem;
         }
 
-        .order-date {
-          font-size: 0.85rem;
+        .activity-content p {
           color: #666;
+          margin-bottom: 4px;
+          font-size: 0.9rem;
         }
 
-        .order-amount {
+        .activity-date {
+          color: #888;
+          font-size: 0.8rem;
+        }
+
+        .status-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+          gap: 20px;
+        }
+
+        .status-item {
+          background: white;
+          border-radius: 12px;
+          padding: 20px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          display: flex;
+          align-items: center;
+          gap: 16px;
+        }
+
+        .status-indicator {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          flex-shrink: 0;
+        }
+
+        .status-indicator.active {
+          background: #28a745;
+          box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.2);
+        }
+
+        .status-item h4 {
           font-family: var(--font-heading);
-          font-weight: 500;
-          color: var(--color-ultramarine);
+          color: var(--color-text);
+          margin-bottom: 4px;
+          font-size: 1rem;
+        }
+
+        .status-item p {
+          color: #666;
+          font-size: 0.85rem;
+          margin: 0;
         }
 
         @media (max-width: 768px) {
           .dashboard-container {
             padding: 24px 16px;
+          }
+
+          .dashboard-header {
+            flex-direction: column;
+            gap: 16px;
+            align-items: stretch;
           }
 
           .stats-grid {
@@ -435,9 +635,20 @@ const AdminDashboard = () => {
             grid-template-columns: 1fr;
           }
 
-          .subscription-card.loading {
+          .status-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .stat-card {
             flex-direction: column;
             text-align: center;
+            gap: 16px;
+          }
+
+          .action-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 16px;
           }
         }
       `}</style>
