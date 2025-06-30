@@ -2,59 +2,127 @@ import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import Stripe from 'npm:stripe@17.7.0';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
-const supabase = createClient(Deno.env.get('SUPABASE_URL') ?? '', Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '');
-const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY')!;
-const stripe = new Stripe(stripeSecret, {
-  appInfo: {
-    name: 'Leen Väränen',
-    version: '1.0.0',
-  },
-});
-
-// Helper function to create responses with CORS headers
-function corsResponse(body: string | object | null, status = 200) {
-  const headers = {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': '*',
-  };
-
-  // For 204 No Content, don't include Content-Type or body
-  if (status === 204) {
-    return new Response(null, { status, headers });
-  }
-
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      ...headers,
-      'Content-Type': 'application/json',
-    },
-  });
-}
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 Deno.serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders });
+  }
+
   try {
-    if (req.method === 'OPTIONS') {
-      return corsResponse({}, 204);
-    }
-
+    // Only allow POST requests
     if (req.method !== 'POST') {
-      return corsResponse({ error: 'Method not allowed' }, 405);
+      return new Response(
+        JSON.stringify({ error: 'Method not allowed' }),
+        { 
+          status: 405, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    const { items, success_url, cancel_url } = await req.json();
+    // Check for required environment variables
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+    const stripeSecretKey = Deno.env.get('STRIPE_SECRET_KEY');
 
-    // Basic validation
+    if (!supabaseUrl || !supabaseServiceKey || !stripeSecretKey) {
+      console.error('Missing required environment variables');
+      return new Response(
+        JSON.stringify({ error: 'Server configuration error' }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    // Initialize Supabase and Stripe clients
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const stripe = new Stripe(stripeSecretKey, {
+      appInfo: {
+        name: 'Leen Väränen',
+        version: '1.0.0',
+      },
+    });
+
+    // Parse request body
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (error) {
+      console.error('Invalid JSON in request body:', error);
+      return new Response(
+        JSON.stringify({ error: 'Invalid JSON in request body' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
+
+    const { items, success_url, cancel_url } = requestBody;
+
+    // Validate required fields
     if (!items || !Array.isArray(items) || items.length === 0) {
-      return corsResponse({ error: 'Items array is required and must not be empty' }, 400);
+      return new Response(
+        JSON.stringify({ error: 'Items array is required and must not be empty' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
     if (!success_url || !cancel_url) {
-      return corsResponse({ error: 'Success and cancel URLs are required' }, 400);
+      return new Response(
+        JSON.stringify({ error: 'Success and cancel URLs are required' }),
+        { 
+          status: 400, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
     }
 
-    // Try to get user from auth header, but don't require it
+    // Validate items structure
+    for (const item of items) {
+      if (!item.name || !item.amount || !item.quantity || !item.currency) {
+        return new Response(
+          JSON.stringify({ error: 'Each item must have name, amount, quantity, and currency' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      if (typeof item.amount !== 'number' || item.amount <= 0) {
+        return new Response(
+          JSON.stringify({ error: 'Item amount must be a positive number' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+
+      if (typeof item.quantity !== 'number' || item.quantity <= 0) {
+        return new Response(
+          JSON.stringify({ error: 'Item quantity must be a positive number' }),
+          { 
+            status: 400, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    }
+
+    // Try to get user from auth header (optional)
     let customerId: string | undefined = undefined;
     
     const authHeader = req.headers.get('Authorization');
@@ -67,7 +135,9 @@ Deno.serve(async (req) => {
         } = await supabase.auth.getUser(token);
 
         if (!getUserError && user) {
-          // User is authenticated, try to get or create Stripe customer
+          console.log(`Processing checkout for authenticated user: ${user.id}`);
+          
+          // Try to get existing Stripe customer
           const { data: customer, error: getCustomerError } = await supabase
             .from('stripe_customers')
             .select('customer_id')
@@ -79,6 +149,7 @@ Deno.serve(async (req) => {
             if (customer?.customer_id) {
               // Existing customer found
               customerId = customer.customer_id;
+              console.log(`Using existing Stripe customer: ${customerId}`);
             } else {
               // Create new customer
               try {
@@ -98,18 +169,26 @@ Deno.serve(async (req) => {
 
                 if (!createCustomerError) {
                   customerId = newCustomer.id;
+                } else {
+                  console.error('Failed to save customer to database:', createCustomerError);
                 }
-              } catch (err) {
-                console.error('Failed to create Stripe customer:', err);
+              } catch (customerError) {
+                console.error('Failed to create Stripe customer:', customerError);
                 // Continue without customer ID
               }
             }
+          } else {
+            console.error('Error fetching customer from database:', getCustomerError);
           }
+        } else if (getUserError) {
+          console.error('Error getting user from token:', getUserError);
         }
-      } catch (err) {
-        console.error('Error processing authentication:', err);
+      } catch (authError) {
+        console.error('Error processing authentication:', authError);
         // Continue without customer ID
       }
+    } else {
+      console.log('Processing checkout for guest user');
     }
 
     // Convert items to Stripe line_items format
@@ -121,12 +200,12 @@ Deno.serve(async (req) => {
           description: item.description || undefined,
           images: item.image ? [item.image] : undefined,
         },
-        unit_amount: item.amount, // amount in cents
+        unit_amount: Math.round(item.amount), // Ensure it's an integer
       },
-      quantity: item.quantity,
+      quantity: Math.round(item.quantity), // Ensure it's an integer
     }));
 
-    // Create Checkout Session with or without customer ID
+    // Create Checkout Session
     const sessionParams: Stripe.Checkout.SessionCreateParams = {
       payment_method_types: ['card'],
       line_items: lineItems,
@@ -156,13 +235,49 @@ Deno.serve(async (req) => {
       sessionParams.customer = customerId;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    // Create the checkout session
+    let session;
+    try {
+      session = await stripe.checkout.sessions.create(sessionParams);
+    } catch (stripeError: any) {
+      console.error('Stripe API error:', stripeError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to create checkout session',
+          details: stripeError.message 
+        }),
+        { 
+          status: 500, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
 
     console.log(`Created checkout session ${session.id}${customerId ? ` for customer ${customerId}` : ' for guest'}`);
 
-    return corsResponse({ sessionId: session.id, url: session.url });
+    // Return successful response
+    return new Response(
+      JSON.stringify({ 
+        sessionId: session.id, 
+        url: session.url 
+      }),
+      { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
+
   } catch (error: any) {
-    console.error(`Checkout error: ${error.message}`);
-    return corsResponse({ error: error.message }, 500);
+    console.error('Unexpected error in checkout function:', error);
+    return new Response(
+      JSON.stringify({ 
+        error: 'Internal server error',
+        details: error.message 
+      }),
+      { 
+        status: 500, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    );
   }
 });
