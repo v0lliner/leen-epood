@@ -1,4 +1,5 @@
 import { supabase } from './supabase/client';
+import { STRIPE_CURRENCY } from '../stripe-config';
 
 export interface CheckoutItem {
   name: string;
@@ -40,20 +41,43 @@ export async function createCheckoutSession(
       headers.Authorization = `Bearer ${session.access_token}`;
     }
 
-    const { data, error } = await supabase.functions.invoke('stripe-checkout', {
+    console.log('Calling Stripe checkout edge function with request:', {
+      ...request,
+      items: request.items.map(item => ({
+        ...item,
+        name: item.name,
+        amount: item.amount,
+        currency: item.currency
+      }))
+    });
+
+    const response = await supabase.functions.invoke('stripe-checkout', {
       body: request,
       headers,
     });
 
-    if (error) {
-      console.error('Stripe checkout error:', error);
-      return { data: null, error: error.message || 'Failed to create checkout session' };
+    // Check for errors in the response
+    if (response.error) {
+      console.error('Stripe checkout edge function error:', response.error);
+      
+      // Try to extract more detailed error information if available
+      let errorMessage = response.error.message || 'Failed to create checkout session';
+      
+      // Check if there's additional error details in the response data
+      if (response.data && typeof response.data === 'object' && 'error' in response.data) {
+        const errorData = response.data as { error: string, details?: string };
+        errorMessage = errorData.details || errorData.error || errorMessage;
+        console.error('Detailed error from Stripe checkout:', errorData);
+      }
+      
+      return { data: null, error: errorMessage };
     }
 
-    return { data, error: null };
-  } catch (err) {
+    console.log('Stripe checkout session created successfully:', response.data);
+    return { data: response.data as CheckoutSessionResponse, error: null };
+  } catch (err: any) {
     console.error('Unexpected error creating checkout session:', err);
-    return { data: null, error: 'An unexpected error occurred' };
+    return { data: null, error: `An unexpected error occurred: ${err.message}` };
   }
 }
 
@@ -76,9 +100,9 @@ export async function getUserSubscription(): Promise<{
     }
 
     return { data, error: null };
-  } catch (err) {
+  } catch (err: any) {
     console.error('Unexpected error fetching subscription:', err);
-    return { data: null, error: 'An unexpected error occurred' };
+    return { data: null, error: `An unexpected error occurred: ${err.message}` };
   }
 }
 
@@ -101,16 +125,16 @@ export async function getUserOrders(): Promise<{
     }
 
     return { data: data || [], error: null };
-  } catch (err) {
+  } catch (err: any) {
     console.error('Unexpected error fetching orders:', err);
-    return { data: null, error: 'An unexpected error occurred' };
+    return { data: null, error: `An unexpected error occurred: ${err.message}` };
   }
 }
 
 /**
  * Format price for display
  */
-export function formatPrice(amount: number, currency: string = 'EUR'): string {
+export function formatPrice(amount: number, currency: string = STRIPE_CURRENCY): string {
   return new Intl.NumberFormat('et-EE', {
     style: 'currency',
     currency: currency.toUpperCase(),
