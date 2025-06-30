@@ -46,11 +46,8 @@ const Shop = () => {
     newParams.set('page', page.toString());
     setSearchParams(newParams);
     
-    // Scroll to top of products section
-    const productsSection = document.querySelector('.products-section');
-    if (productsSection) {
-      productsSection.scrollIntoView({ behavior: 'smooth' });
-    }
+    // Scroll to top of page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Get products for current category (for filter calculations)
@@ -333,10 +330,12 @@ const Shop = () => {
                     </div>
                   </FadeInSection>
                 )}
-
-                {/* Bottom Pagination */}
-                <Pagination className="pagination-bottom" />
               </div>
+            </div>
+
+            {/* Bottom Pagination - Outside container for full width centering */}
+            <div className="bottom-pagination-wrapper">
+              <Pagination className="pagination-bottom" />
             </div>
 
             {/* Philosophy Section */}
@@ -420,11 +419,22 @@ const Shop = () => {
           order: 2;
         }
 
-        .pagination-bottom {
-          justify-content: center;
+        .bottom-pagination-wrapper {
+          width: 100vw;
+          position: relative;
+          left: 50%;
+          right: 50%;
+          margin-left: -50vw;
+          margin-right: -50vw;
           margin-top: 64px;
           padding-top: 32px;
           border-top: 1px solid #f0f0f0;
+          display: flex;
+          justify-content: center;
+        }
+
+        .pagination-bottom {
+          justify-content: center;
         }
 
         .pagination-number {
@@ -647,7 +657,7 @@ const Shop = () => {
             gap: 32px;
           }
 
-          .pagination-bottom {
+          .bottom-pagination-wrapper {
             margin-top: 48px;
             padding-top: 24px;
           }
