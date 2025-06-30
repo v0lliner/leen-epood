@@ -37,20 +37,21 @@ const Hero = () => {
 
         .hero-image {
           width: 100%;
-          max-width: 900px;
+          max-width: 1000px;
           margin: 0 auto 48px;
           display: flex;
           justify-content: center;
           align-items: center;
+          overflow: visible;
         }
 
         .hero-image img {
           width: 100%;
           height: auto;
           max-width: 100%;
-          max-height: 70vh;
           object-fit: contain;
           border-radius: 4px;
+          display: block;
         }
 
         .hero-content {
@@ -87,18 +88,14 @@ const Hero = () => {
             margin-bottom: 32px;
           }
 
-          .hero-image img {
-            max-height: 50vh;
-          }
-
           .hero-subtext {
             font-size: 1.125rem;
           }
         }
 
         @media (max-width: 480px) {
-          .hero-image img {
-            max-height: 40vh;
+          .hero-image {
+            margin-bottom: 24px;
           }
         }
       `}</style>
