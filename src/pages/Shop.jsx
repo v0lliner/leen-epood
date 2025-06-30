@@ -440,16 +440,26 @@ const Shop = () => {
           border-radius: 4px;
           min-width: 40px;
           text-align: center;
+          position: relative;
         }
 
         .pagination-number:hover {
-          background-color: rgba(47, 62, 156, 0.1);
           color: var(--color-ultramarine);
         }
 
         .pagination-number.active {
+          color: var(--color-ultramarine);
+        }
+
+        .pagination-number.active:after {
+          content: '';
+          position: absolute;
+          bottom: -2px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 20px;
+          height: 2px;
           background-color: var(--color-ultramarine);
-          color: white;
         }
 
         .pagination-ellipsis {
