@@ -20,7 +20,7 @@ const Portfolio = () => {
       technique: t('portfolio.items.ceramic_vase.technique'),
       dimensions: '25cm x 15cm',
       year: 2023,
-      image: 'https://images.pexels.com/photos/4207892/pexels-photo-4207892.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
+      image: '',
       display_order: 1
     },
     {
@@ -30,7 +30,7 @@ const Portfolio = () => {
       technique: t('portfolio.items.linen_dress.technique'),
       dimensions: t('portfolio.items.linen_dress.size'),
       year: 2023,
-      image: 'https://images.pexels.com/photos/7148430/pexels-photo-7148430.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
+      image: '',
       display_order: 2
     },
     {
@@ -40,7 +40,7 @@ const Portfolio = () => {
       technique: t('portfolio.items.coffee_cups.technique'),
       dimensions: t('portfolio.items.coffee_cups.dimensions'),
       year: 2022,
-      image: 'https://images.pexels.com/photos/4226894/pexels-photo-4226894.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
+      image: '',
       display_order: 3
     },
     {
@@ -50,7 +50,7 @@ const Portfolio = () => {
       technique: t('portfolio.items.wool_vest.technique'),
       dimensions: t('portfolio.items.wool_vest.size'),
       year: 2023,
-      image: 'https://images.pexels.com/photos/6069101/pexels-photo-6069101.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
+      image: '',
       display_order: 4
     },
     {
@@ -60,7 +60,7 @@ const Portfolio = () => {
       technique: t('portfolio.items.mixed_plate.technique'),
       dimensions: t('portfolio.items.mixed_plate.dimensions'),
       year: 2024,
-      image: 'https://images.pexels.com/photos/4391470/pexels-photo-4391470.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
+      image: '',
       display_order: 5
     },
     {
@@ -70,7 +70,7 @@ const Portfolio = () => {
       technique: t('portfolio.items.texture_wall.technique'),
       dimensions: t('portfolio.items.texture_wall.dimensions'),
       year: 2024,
-      image: 'https://images.pexels.com/photos/6479546/pexels-photo-6479546.jpeg?auto=compress&cs=tinysrgb&w=800&h=600&dpr=2',
+      image: '',
       display_order: 6
     }
   ];

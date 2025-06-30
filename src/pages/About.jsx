@@ -91,7 +91,7 @@ const About = () => {
               <div className="about-profile">
                 <div className="profile-image">
                   <img 
-                    src={introSection.image_url || "https://images.pexels.com/photos/6185765/pexels-photo-6185765.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"} 
+                    src={introSection.image_url || ""} 
                     alt={t('about.profile_image_alt')}
                   />
                 </div>

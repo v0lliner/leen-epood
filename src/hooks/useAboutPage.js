@@ -19,7 +19,7 @@ export const useAboutPage = () => {
       intro: {
         title: 'Sissejuhatus',
         content: 'Olen Leen Väränen – keraamik ja rõivadisainer, kelle looming sünnib südamest ja mälestustest. Minu tee keraamikani sai alguse juba lapsepõlvekodus, kus saviesemed olid alati au sees. Armastuse keraamika vastu pärisin oma emalt – see kasvas minuga koos ja jõudis lõpuks minu tööde tuumani.\n\nJoonistan, lõikan, põletan ja õmblen – iga ese, mille loon, kannab endas midagi isiklikku. Inspiratsiooni leian loodusest, lihtsatest vormidest ja elu vahehetkedest. Mulle on olulised rahulikud jooned, puhas disain ning taimemotiivid, mis lisavad esemetele elu ja rütmi.',
-        image_url: 'https://images.pexels.com/photos/6185765/pexels-photo-6185765.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+        image_url: ''
       },
       story: {
         title: 'Minu lugu',
@@ -46,7 +46,7 @@ export const useAboutPage = () => {
       intro: {
         title: 'Introduction',
         content: 'I am Leen Väränen – a ceramicist and clothing designer whose work is born from the heart and memories. My journey to ceramics began in my childhood home, where clay objects were always held in high regard. I inherited my love for ceramics from my mother – it grew with me and eventually became the core of my work.\n\nI draw, cut, fire and sew – every object I create carries something personal within it. I find inspiration in nature, simple forms and life\'s fleeting moments. What matters to me are calm lines, clean design and plant motifs that add life and rhythm to objects.',
-        image_url: 'https://images.pexels.com/photos/6185765/pexels-photo-6185765.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+        image_url: ''
       },
       story: {
         title: 'My Story',
