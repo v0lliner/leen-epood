@@ -15,6 +15,8 @@ const Shop = () => {
   
   const activeTab = searchParams.get('tab') || 'keraamika';
   const sortBy = searchParams.get('sort') || 'newest';
+  const currentPage = parseInt(searchParams.get('page') || '1');
+  const productsPerPage = 8;
   
   const [filters, setFilters] = useState({
     price: { min: '', max: '' },
@@ -24,6 +26,7 @@ const Shop = () => {
   const handleTabChange = (tab) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('tab', tab);
+    newParams.set('page', '1'); // Reset to first page when changing tabs
     setSearchParams(newParams);
     setFilters({
       price: { min: '', max: '' },
@@ -34,7 +37,20 @@ const Shop = () => {
   const handleSortChange = (sort) => {
     const newParams = new URLSearchParams(searchParams);
     newParams.set('sort', sort);
+    newParams.set('page', '1'); // Reset to first page when changing sort
     setSearchParams(newParams);
+  };
+
+  const handlePageChange = (page) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', page.toString());
+    setSearchParams(newParams);
+    
+    // Scroll to top of products section
+    const productsSection = document.querySelector('.products-section');
+    if (productsSection) {
+      productsSection.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   // Get products for current category (for filter calculations)
@@ -81,6 +97,54 @@ const Shop = () => {
     return sorted;
   }, [products, activeTab, filters, sortBy]);
 
+  // Calculate pagination
+  const totalProducts = sortedAndFilteredProducts.length;
+  const totalPages = Math.ceil(totalProducts / productsPerPage);
+  const startIndex = (currentPage - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+  const currentProducts = sortedAndFilteredProducts.slice(startIndex, endIndex);
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Show smart pagination
+      if (currentPage <= 3) {
+        // Show first pages
+        for (let i = 1; i <= 4; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        // Show last pages
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 3; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Show middle pages
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   const sortOptions = [
     { value: 'newest', label: t('shop.sort.newest') },
     { value: 'oldest', label: t('shop.sort.oldest') },
@@ -95,6 +159,35 @@ const Shop = () => {
 
   // Get available categories for tabs
   const availableCategories = categories.filter(cat => !cat.parent_id);
+
+  // Pagination component
+  const Pagination = ({ className = '' }) => {
+    if (totalPages <= 1) return null;
+
+    return (
+      <div className={`pagination ${className}`}>
+        {getPageNumbers().map((page, index) => {
+          if (page === '...') {
+            return (
+              <span key={`ellipsis-${index}`} className="pagination-ellipsis">
+                ...
+              </span>
+            );
+          }
+          
+          return (
+            <button
+              key={page}
+              onClick={() => handlePageChange(page)}
+              className={`pagination-number ${currentPage === page ? 'active' : ''}`}
+            >
+              {page}
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   if (loading) {
     return (
@@ -171,7 +264,7 @@ const Shop = () => {
 
               {/* Products Section */}
               <div className="products-section">
-                {/* Category Tabs and Sort Filter */}
+                {/* Category Tabs, Pagination and Sort Filter */}
                 <div className="shop-controls">
                   <div className="shop-tabs">
                     {availableCategories.length > 0 ? (
@@ -203,6 +296,8 @@ const Shop = () => {
                     )}
                   </div>
 
+                  <Pagination className="pagination-top" />
+
                   <div className="sort-filter">
                     <div className="sort-dropdown">
                       <button className="sort-button">
@@ -224,20 +319,23 @@ const Shop = () => {
                 </div>
 
                 <div className="products-grid">
-                  {sortedAndFilteredProducts.map((product) => (
+                  {currentProducts.map((product) => (
                     <FadeInSection key={product.id}>
                       <ProductCard product={product} />
                     </FadeInSection>
                   ))}
                 </div>
 
-                {sortedAndFilteredProducts.length === 0 && (
+                {currentProducts.length === 0 && (
                   <FadeInSection>
                     <div className="no-products">
                       <p>{t('shop.no_products')}</p>
                     </div>
                   </FadeInSection>
                 )}
+
+                {/* Bottom Pagination */}
+                <Pagination className="pagination-bottom" />
               </div>
             </div>
 
@@ -311,10 +409,62 @@ const Shop = () => {
           align-items: baseline;
         }
 
+        .pagination {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-shrink: 0;
+        }
+
+        .pagination-top {
+          order: 2;
+        }
+
+        .pagination-bottom {
+          justify-content: center;
+          margin-top: 64px;
+          padding-top: 32px;
+          border-top: 1px solid #f0f0f0;
+        }
+
+        .pagination-number {
+          background: none;
+          border: none;
+          padding: 8px 12px;
+          font-family: var(--font-heading);
+          font-weight: 500;
+          font-size: 1rem;
+          color: var(--color-text);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          border-radius: 4px;
+          min-width: 40px;
+          text-align: center;
+        }
+
+        .pagination-number:hover {
+          background-color: rgba(47, 62, 156, 0.1);
+          color: var(--color-ultramarine);
+        }
+
+        .pagination-number.active {
+          background-color: var(--color-ultramarine);
+          color: white;
+        }
+
+        .pagination-ellipsis {
+          padding: 8px 4px;
+          font-family: var(--font-heading);
+          font-weight: 500;
+          color: #666;
+          font-size: 1rem;
+        }
+
         .sort-filter {
           display: flex;
           align-items: center;
           flex-shrink: 0;
+          order: 3;
         }
 
         .sort-dropdown {
@@ -446,12 +596,21 @@ const Shop = () => {
           .shop-tabs {
             justify-content: center;
             margin-bottom: 0;
+            order: 1;
+          }
+
+          .pagination-top {
+            justify-content: center;
+            order: 2;
+            padding: 16px 0;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
           }
 
           .sort-filter {
             justify-content: center;
             padding: 16px 0;
-            border-top: 1px solid #f0f0f0;
+            order: 3;
           }
 
           .sort-dropdown {
@@ -478,6 +637,11 @@ const Shop = () => {
             gap: 32px;
           }
 
+          .pagination-bottom {
+            margin-top: 48px;
+            padding-top: 24px;
+          }
+
           .shop-philosophy {
             margin-top: 96px;
           }
@@ -487,6 +651,16 @@ const Shop = () => {
           .products-grid {
             grid-template-columns: 1fr;
             gap: 24px;
+          }
+
+          .pagination-number {
+            padding: 6px 10px;
+            font-size: 0.9rem;
+            min-width: 36px;
+          }
+
+          .pagination {
+            gap: 4px;
           }
         }
       `}</style>
