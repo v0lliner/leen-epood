@@ -32,8 +32,8 @@ const Hero = () => {
 
       <style jsx>{`
         .hero {
-          min-height: 100vh;
-          max-height: 100vh;
+          min-height: calc(100vh - 120px);
+          max-height: calc(100vh - 120px);
           display: flex;
           align-items: center;
           padding: 48px 0;
@@ -53,7 +53,7 @@ const Hero = () => {
           width: 100%;
           max-width: 800px;
           height: auto;
-          max-height: 60vh;
+          max-height: calc(60vh - 72px);
           display: flex;
           justify-content: center;
           align-items: center;
@@ -63,7 +63,7 @@ const Hero = () => {
         .hero-image img {
           width: 100%;
           height: auto;
-          max-height: 60vh;
+          max-height: calc(60vh - 72px);
           object-fit: contain;
           border-radius: 4px;
           display: block;
@@ -96,8 +96,8 @@ const Hero = () => {
 
         @media (max-width: 768px) {
           .hero {
-            min-height: 100vh;
-            max-height: 100vh;
+            min-height: calc(100vh - 100px);
+            max-height: calc(100vh - 100px);
             padding: 24px 0;
           }
 
@@ -107,11 +107,11 @@ const Hero = () => {
 
           .hero-image {
             max-width: 100%;
-            max-height: 50vh;
+            max-height: calc(50vh - 50px);
           }
 
           .hero-image img {
-            max-height: 50vh;
+            max-height: calc(50vh - 50px);
           }
 
           .hero-subtext {
@@ -122,6 +122,8 @@ const Hero = () => {
 
         @media (max-width: 480px) {
           .hero {
+            min-height: calc(100vh - 80px);
+            max-height: calc(100vh - 80px);
             padding: 16px 0;
           }
 
@@ -130,11 +132,11 @@ const Hero = () => {
           }
 
           .hero-image {
-            max-height: 45vh;
+            max-height: calc(45vh - 40px);
           }
 
           .hero-image img {
-            max-height: 45vh;
+            max-height: calc(45vh - 40px);
           }
 
           .hero-subtext {
@@ -144,16 +146,16 @@ const Hero = () => {
 
         @media (max-height: 600px) {
           .hero {
-            min-height: 100vh;
-            max-height: 100vh;
+            min-height: calc(100vh - 80px);
+            max-height: calc(100vh - 80px);
           }
 
           .hero-image {
-            max-height: 40vh;
+            max-height: calc(40vh - 40px);
           }
 
           .hero-image img {
-            max-height: 40vh;
+            max-height: calc(40vh - 40px);
           }
 
           .hero-subtext {
