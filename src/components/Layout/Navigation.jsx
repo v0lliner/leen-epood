@@ -39,6 +39,8 @@ const Navigation = () => {
     return location.pathname.startsWith(href);
   };
 
+  const cartItemCount = getTotalItems();
+
   return (
     <>
       <nav className="nav-container">
@@ -75,20 +77,35 @@ const Navigation = () => {
                   <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                {getTotalItems() > 0 && <span className="cart-count">{getTotalItems()}</span>}
+                {cartItemCount > 0 && <span className="cart-count">{cartItemCount}</span>}
               </button>
               <LanguageToggle />
             </div>
 
-            <button 
-              className="nav-mobile-toggle"
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              aria-label="Toggle menu"
-            >
-              <span></span>
-              <span></span>
-              <span></span>
-            </button>
+            <div className="mobile-actions">
+              <button 
+                className="mobile-cart-button"
+                onClick={() => setIsCartOpen(true)}
+                aria-label={t('nav.cart')}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                {cartItemCount > 0 && <span className="cart-count">{cartItemCount}</span>}
+              </button>
+
+              <button 
+                className="nav-mobile-toggle"
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                aria-label="Toggle menu"
+              >
+                <span></span>
+                <span></span>
+                <span></span>
+              </button>
+            </div>
           </div>
 
           {isMenuOpen && (
@@ -118,7 +135,7 @@ const Navigation = () => {
                       <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                       <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
-                    {t('nav.cart')} {getTotalItems() > 0 && `(${getTotalItems()})`}
+                    {t('nav.cart')} {cartItemCount > 0 && `(${cartItemCount})`}
                   </button>
                 </li>
               </ul>
@@ -240,6 +257,29 @@ const Navigation = () => {
             font-weight: 600;
           }
 
+          .mobile-actions {
+            display: none;
+            align-items: center;
+            gap: 16px;
+            justify-self: end;
+          }
+
+          .mobile-cart-button {
+            background: none;
+            border: none;
+            color: var(--color-text);
+            cursor: pointer;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 0;
+          }
+
+          .mobile-cart-button:hover {
+            color: var(--color-ultramarine);
+          }
+
           .nav-mobile-toggle {
             display: none;
             flex-direction: column;
@@ -248,7 +288,6 @@ const Navigation = () => {
             background: none;
             border: none;
             cursor: pointer;
-            justify-self: end;
           }
 
           .nav-mobile-toggle span {
@@ -314,7 +353,7 @@ const Navigation = () => {
 
           @media (max-width: 768px) {
             .nav-inner {
-              grid-template-columns: auto auto;
+              grid-template-columns: auto 1fr auto;
               gap: 24px;
             }
 
@@ -324,6 +363,10 @@ const Navigation = () => {
 
             .nav-actions {
               display: none;
+            }
+
+            .mobile-actions {
+              display: flex;
             }
 
             .nav-mobile-toggle {
