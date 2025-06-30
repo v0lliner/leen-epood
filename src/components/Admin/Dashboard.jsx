@@ -20,13 +20,20 @@ const AdminDashboard = () => {
     faqItems: 0
   })
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     loadDashboardData()
   }, [])
 
   const loadDashboardData = async () => {
+    setLoading(true)
+    setError('')
+    
     try {
+      console.log('Loading dashboard data...')
+      
+      // Load all data in parallel
       const [
         subResult, 
         ordersResult, 
@@ -34,12 +41,20 @@ const AdminDashboard = () => {
         portfolioResult,
         faqResult
       ] = await Promise.all([
-        getUserSubscription(),
-        getUserOrders(),
-        productService.getProducts(),
-        portfolioItemService.getPortfolioItems(),
-        faqService.getFAQItems('et')
+        getUserSubscription().catch(err => ({ error: err, data: null })),
+        getUserOrders().catch(err => ({ error: err, data: [] })),
+        productService.getProducts().catch(err => ({ error: err, data: [] })),
+        portfolioItemService.getPortfolioItems().catch(err => ({ error: err, data: [] })),
+        faqService.getFAQItems('et').catch(err => ({ error: err, data: [] }))
       ])
+
+      console.log('Dashboard data loaded:', {
+        subscription: subResult,
+        orders: ordersResult,
+        products: productsResult,
+        portfolio: portfolioResult,
+        faq: faqResult
+      })
 
       // Subscription data
       if (!subResult.error && subResult.data) {
@@ -51,20 +66,24 @@ const AdminDashboard = () => {
         setOrders(ordersResult.data)
       }
 
-      // Statistics
+      // Statistics from real data
       const products = productsResult.data || []
       const portfolioItems = portfolioResult.data || []
       const faqItems = faqResult.data || []
 
-      setStats({
+      const newStats = {
         products: products.length,
         availableProducts: products.filter(p => p.available).length,
         portfolioItems: portfolioItems.length,
         faqItems: faqItems.length
-      })
+      }
+
+      console.log('Calculated stats:', newStats)
+      setStats(newStats)
 
     } catch (err) {
       console.error('Error loading dashboard data:', err)
+      setError('Andmete laadimine ebaõnnestus')
     } finally {
       setLoading(false)
     }
@@ -74,17 +93,19 @@ const AdminDashboard = () => {
     const activities = []
     
     // Recent orders
-    orders.slice(0, 3).forEach(order => {
-      activities.push({
-        type: 'order',
-        title: `Uus tellimus #${order.order_id}`,
-        description: `${(order.amount_total / 100).toFixed(2)} ${order.currency.toUpperCase()}`,
-        date: new Date(order.order_date),
-        icon: '📋'
+    if (orders && orders.length > 0) {
+      orders.slice(0, 3).forEach(order => {
+        activities.push({
+          type: 'order',
+          title: `Uus tellimus #${order.order_id}`,
+          description: `${(order.amount_total / 100).toFixed(2)} ${order.currency.toUpperCase()}`,
+          date: new Date(order.order_date),
+          icon: '📋'
+        })
       })
-    })
+    }
 
-    // Sort by date
+    // Sort by date and return latest 5
     return activities.sort((a, b) => b.date - a.date).slice(0, 5)
   }
 
@@ -144,6 +165,13 @@ const AdminDashboard = () => {
       link: '/admin/about',
       icon: '👤',
       primary: false
+    },
+    {
+      title: 'Halda KKK-d',
+      description: 'Lisage või muutke korduma kippuvaid küsimusi',
+      link: '/admin/faq',
+      icon: '❓',
+      primary: false
     }
   ]
 
@@ -158,12 +186,28 @@ const AdminDashboard = () => {
     )
   }
 
+  if (error) {
+    return (
+      <AdminLayout>
+        <div className="error-container">
+          <div className="error-content">
+            <h2>Viga andmete laadimisel</h2>
+            <p>{error}</p>
+            <button onClick={loadDashboardData} className="btn btn-primary">
+              Proovi uuesti
+            </button>
+          </div>
+        </div>
+      </AdminLayout>
+    )
+  }
+
   return (
     <AdminLayout>
       <div className="dashboard-container">
         <div className="dashboard-header">
           <div className="welcome-section">
-            <h1>Tere tulemast, {user?.email?.split('@')[0]}</h1>
+            <h1>Tere tulemast, {user?.email?.split('@')[0] || 'Admin'}</h1>
             <p>Siin on ülevaade teie veebilehe olukorrast</p>
           </div>
           <div className="last-updated">
@@ -177,7 +221,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Subscription Status */}
-        {subscription && (
+        {subscription ? (
           <div className="subscription-card">
             <h3>💳 Tellimuse staatus</h3>
             <div className="subscription-info">
@@ -194,6 +238,16 @@ const AdminDashboard = () => {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        ) : (
+          <div className="subscription-card">
+            <h3>💳 Tellimuse staatus</h3>
+            <div className="subscription-info">
+              <span className="status-badge not_started">
+                ⏳ Tellimuse andmeid ei leitud
+              </span>
+              <p>Stripe tellimuse info pole saadaval või pole veel seadistatud.</p>
             </div>
           </div>
         )}
@@ -232,7 +286,7 @@ const AdminDashboard = () => {
         </div>
 
         {/* Recent Activity */}
-        {getRecentActivity().length > 0 && (
+        {getRecentActivity().length > 0 ? (
           <div className="activity-section">
             <h2>📈 Viimane tegevus</h2>
             <div className="activity-list">
@@ -253,6 +307,15 @@ const AdminDashboard = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        ) : (
+          <div className="activity-section">
+            <h2>📈 Viimane tegevus</h2>
+            <div className="empty-activity">
+              <div className="empty-icon">📭</div>
+              <h4>Tegevusi pole veel</h4>
+              <p>Kui hakkate tooteid müüma või sisu lisama, kuvatakse siin viimased tegevused.</p>
             </div>
           </div>
         )}
@@ -282,7 +345,21 @@ const AdminDashboard = () => {
                 <p>{stats.portfolioItems} tööd kuvatakse</p>
               </div>
             </div>
+            <div className="status-item">
+              <span className="status-indicator active"></span>
+              <div>
+                <h4>KKK</h4>
+                <p>{stats.faqItems} küsimust eesti keeles</p>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Refresh Button */}
+        <div className="refresh-section">
+          <button onClick={loadDashboardData} className="refresh-btn" disabled={loading}>
+            🔄 Uuenda andmeid
+          </button>
         </div>
       </div>
 
@@ -321,7 +398,8 @@ const AdminDashboard = () => {
           font-style: italic;
         }
 
-        .loading-container {
+        .loading-container,
+        .error-container {
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -342,6 +420,19 @@ const AdminDashboard = () => {
         @keyframes spin {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
+        }
+
+        .error-content {
+          text-align: center;
+          background: white;
+          padding: 32px;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .error-content h2 {
+          color: #dc3545;
+          margin-bottom: 16px;
         }
 
         .subscription-card {
@@ -393,7 +484,8 @@ const AdminDashboard = () => {
         .stats-section,
         .actions-section,
         .activity-section,
-        .status-section {
+        .status-section,
+        .refresh-section {
           margin-bottom: 48px;
         }
 
@@ -575,6 +667,30 @@ const AdminDashboard = () => {
           font-size: 0.8rem;
         }
 
+        .empty-activity {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          padding: 48px 24px;
+          text-align: center;
+        }
+
+        .empty-icon {
+          font-size: 3rem;
+          margin-bottom: 16px;
+        }
+
+        .empty-activity h4 {
+          font-family: var(--font-heading);
+          color: var(--color-text);
+          margin-bottom: 8px;
+        }
+
+        .empty-activity p {
+          color: #666;
+          margin: 0;
+        }
+
         .status-grid {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -614,6 +730,54 @@ const AdminDashboard = () => {
           color: #666;
           font-size: 0.85rem;
           margin: 0;
+        }
+
+        .refresh-section {
+          text-align: center;
+          padding-top: 24px;
+          border-top: 1px solid #e9ecef;
+        }
+
+        .refresh-btn {
+          background: var(--color-ultramarine);
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 6px;
+          font-family: var(--font-body);
+          font-weight: 500;
+          cursor: pointer;
+          transition: opacity 0.2s ease;
+        }
+
+        .refresh-btn:hover:not(:disabled) {
+          opacity: 0.9;
+        }
+
+        .refresh-btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .btn {
+          padding: 12px 24px;
+          border: none;
+          border-radius: 4px;
+          font-family: var(--font-body);
+          font-weight: 500;
+          cursor: pointer;
+          transition: opacity 0.2s ease;
+          text-decoration: none;
+          display: inline-block;
+        }
+
+        .btn-primary {
+          background-color: var(--color-ultramarine);
+          color: white;
+        }
+
+        .btn:hover {
+          opacity: 0.9;
         }
 
         @media (max-width: 768px) {
