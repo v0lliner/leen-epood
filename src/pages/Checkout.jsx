@@ -109,8 +109,8 @@ const Checkout = () => {
 
       const { data, error: checkoutError } = await createCheckoutSession({
         items: itemsToCheckout,
-        successUrl: `${window.location.origin}/checkout/success`,
-        cancelUrl: `${window.location.origin}/checkout`,
+        success_url: `${window.location.origin}/checkout/success`,
+        cancel_url: `${window.location.origin}/checkout`,
       });
 
       if (checkoutError) {

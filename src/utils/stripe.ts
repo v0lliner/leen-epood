@@ -11,8 +11,8 @@ export interface CheckoutItem {
 
 export interface CheckoutSessionRequest {
   items: CheckoutItem[];
-  successUrl: string;
-  cancelUrl: string;
+  success_url: string;
+  cancel_url: string;
 }
 
 export interface CheckoutSessionResponse {
