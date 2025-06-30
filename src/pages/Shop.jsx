@@ -609,18 +609,18 @@ const Shop = () => {
             order: 1;
           }
 
-          .pagination-top {
-            justify-content: center;
-            order: 2;
-            padding: 16px 0;
-            border-top: 1px solid #f0f0f0;
-            border-bottom: 1px solid #f0f0f0;
-          }
-
           .sort-filter {
             justify-content: center;
             padding: 16px 0;
+            order: 2;
+          }
+
+          .pagination-top {
+            justify-content: center;
             order: 3;
+            padding: 16px 0;
+            border-top: 1px solid #f0f0f0;
+            border-bottom: 1px solid #f0f0f0;
           }
 
           .sort-dropdown {
