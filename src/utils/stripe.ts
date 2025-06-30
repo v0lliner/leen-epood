@@ -1,9 +1,16 @@
 import { supabase } from './supabase/client';
-import { stripeProducts, type StripeProduct } from '../stripe-config';
+
+export interface CheckoutItem {
+  name: string;
+  description: string;
+  amount: number; // in cents
+  quantity: number;
+  currency: string;
+  image?: string;
+}
 
 export interface CheckoutSessionRequest {
-  priceId: string;
-  mode: 'payment' | 'subscription';
+  items: CheckoutItem[];
   successUrl: string;
   cancelUrl: string;
 }
@@ -95,13 +102,6 @@ export async function getUserOrders(): Promise<{
     console.error('Unexpected error fetching orders:', err);
     return { data: null, error: 'An unexpected error occurred' };
   }
-}
-
-/**
- * Get product information by price ID
- */
-export function getProductByPriceId(priceId: string): StripeProduct | null {
-  return stripeProducts.find(product => product.priceId === priceId) || null;
 }
 
 /**

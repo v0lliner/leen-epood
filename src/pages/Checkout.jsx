@@ -6,7 +6,7 @@ import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { createCheckoutSession } from '../utils/stripe';
-import { getStripeProductByPriceId } from '../stripe-config';
+import { parsePriceToAmount, STRIPE_CURRENCY } from '../stripe-config';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -38,23 +38,18 @@ const Checkout = () => {
     setError('');
 
     try {
-      // For now, we'll handle single item checkout
-      // In a real implementation, you might want to create a single checkout session
-      // with multiple line items or handle each item separately
-      const firstItem = items[0];
-      
-      // Find the corresponding Stripe product
-      const stripeProduct = getStripeProductByPriceId(firstItem.priceId);
-      
-      if (!stripeProduct) {
-        setError('Toode ei ole saadaval makseks');
-        setIsProcessing(false);
-        return;
-      }
+      // Prepare items for checkout
+      const itemsToCheckout = items.map(item => ({
+        name: item.title,
+        description: item.description || '',
+        amount: parsePriceToAmount(item.price), // Convert price string to cents
+        quantity: 1,
+        currency: STRIPE_CURRENCY,
+        image: item.image // Optional image URL
+      }));
 
       const { data, error: checkoutError } = await createCheckoutSession({
-        priceId: stripeProduct.priceId,
-        mode: stripeProduct.mode,
+        items: itemsToCheckout,
         successUrl: `${window.location.origin}/checkout/success`,
         cancelUrl: `${window.location.origin}/checkout`,
       });

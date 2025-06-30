@@ -1,36 +1,24 @@
 /**
- * Stripe product configuration
- * This file contains all the product information for Stripe integration
+ * Stripe configuration
+ * This file contains configuration for Stripe integration
  */
 
-export interface StripeProduct {
-  id: string;
-  priceId: string;
-  name: string;
-  description: string;
-  mode: 'payment' | 'subscription';
-}
-
-export const stripeProducts: StripeProduct[] = [
-  {
-    id: 'prod_SaZyOGVZJ6Yosm',
-    priceId: 'price_1RfOoRP1VBbJ3P2LKofFkMPc',
-    name: 'Kuju "Kärp"',
-    description: 'Kõrgkuumuskeraamika.',
-    mode: 'payment'
-  }
-];
+export const STRIPE_CURRENCY = 'eur';
 
 /**
- * Get product by ID
+ * Parse price string to cents
+ * @param priceString - Price string (e.g. "349€", "10.99€")
+ * @returns Price in cents
  */
-export function getStripeProduct(id: string): StripeProduct | undefined {
-  return stripeProducts.find(product => product.id === id);
-}
-
-/**
- * Get product by price ID
- */
-export function getStripeProductByPriceId(priceId: string): StripeProduct | undefined {
-  return stripeProducts.find(product => product.priceId === priceId);
+export function parsePriceToAmount(priceString: string): number {
+  // Remove currency symbol and any whitespace
+  const cleanPrice = priceString.replace(/[^\d.,]/g, '').trim();
+  
+  // Replace comma with dot for decimal point (European format)
+  const normalizedPrice = cleanPrice.replace(',', '.');
+  
+  // Parse to float and convert to cents
+  const priceInCents = Math.round(parseFloat(normalizedPrice) * 100);
+  
+  return priceInCents;
 }
