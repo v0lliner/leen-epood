@@ -99,7 +99,7 @@ const ProductCard = ({ product }) => {
         }
 
         .sold-overlay {
-          background-color: rgba(0, 0, 0, 0.8);
+          background-color: rgba(0, 0, 0, 0.9);
         }
 
         .in-cart-overlay {
