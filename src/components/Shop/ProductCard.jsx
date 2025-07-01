@@ -49,7 +49,14 @@ const ProductCard = ({ product }) => {
             onClick={handleAddToCart}
             aria-label={t('shop.product.add_to_cart')}
           >
-            {t('shop.product.add_to_cart')}
+            <span className="desktop-text">{t('shop.product.add_to_cart')}</span>
+            <span className="mobile-text">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M9 22C9.55228 22 10 21.5523 10 21C10 20.4477 9.55228 20 9 20C8.44772 20 8 20.4477 8 21C8 21.5523 8.44772 22 9 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M20 22C20.5523 22 21 21.5523 21 21C21 20.4477 20.5523 20 20 20C19.4477 20 19 20.4477 19 21C19 21.5523 19.4477 22 20 22Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M1 1H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </span>
           </button>
         )}
       </div>
@@ -108,9 +115,8 @@ const ProductCard = ({ product }) => {
         .add-to-cart-overlay {
           position: absolute;
           bottom: 0;
-          left: 0;
           right: 0;
-          background-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0);
           color: white;
           padding: 12px;
           text-align: center;
@@ -119,23 +125,27 @@ const ProductCard = ({ product }) => {
           cursor: pointer;
           font-family: var(--font-body);
           font-size: 1rem;
-          transition: background-color 0.2s ease;
+          transition: all 0.2s ease;
           z-index: 10;
+          opacity: 0;
+        }
+
+        .desktop-text {
+          display: inline;
+        }
+
+        .mobile-text {
+          display: none;
+        }
+
+        .add-to-cart-overlay.visible {
+          opacity: 1;
+          background-color: rgba(47, 62, 156, 0.8);
         }
 
         .add-to-cart-overlay:hover {
-          background-color: #1e2a7a;
+          background-color: rgba(30, 42, 122, 0.8);
           color: white !important;
-        }
-
-        @media (min-width: 769px) {
-          .add-to-cart-overlay {
-            opacity: 0;
-          }
-          
-          .add-to-cart-overlay.visible {
-            opacity: 1;
-          }
         }
 
         .product-info {
@@ -160,6 +170,39 @@ const ProductCard = ({ product }) => {
           color: var(--color-ultramarine);
           margin: 0;
           line-height: 1.2;
+        }
+
+        @media (max-width: 768px) {
+          .add-to-cart-overlay {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            bottom: 12px;
+            right: 12px;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            background-color: rgba(47, 62, 156, 0.8);
+            opacity: 1;
+          }
+
+          .desktop-text {
+            display: none;
+          }
+
+          .mobile-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          
+          .mobile-text svg {
+            width: 20px;
+            height: 20px;
+          }
         }
       `}</style>
     </Link>
