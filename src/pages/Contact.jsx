@@ -369,6 +369,19 @@ const Contact = () => {
                         {t('contact.info.phone')}
                       </a>
                     </div>
+                    
+                    <div className="contact-item">
+                      <span className="contact-label">Sotsiaalmeedia</span>
+                      <div className="social-links">
+                        <a href="https://www.facebook.com/leenvaranen" target="_blank" rel="noopener noreferrer" className="btn btn-underline social-link">
+                          Facebook
+                        </a>
+                        <span className="social-separator">·</span>
+                        <a href="https://www.instagram.com/leen.tailor/" target="_blank" rel="noopener noreferrer" className="btn btn-underline social-link">
+                          Instagram
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </FadeInSection>
@@ -395,7 +408,7 @@ const Contact = () => {
         </section>
       </main>
 
-      <style jsx>{`
+      <style>{`
         .contact-layout {
           display: grid;
           grid-template-columns: 1fr 1fr;
@@ -500,6 +513,26 @@ const Contact = () => {
           font-size: 1rem;
           line-height: 1.5;
           color: var(--color-text);
+        }
+
+        .social-links {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .social-link {
+          color: var(--color-ultramarine);
+          text-decoration: none;
+          transition: opacity 0.2s ease;
+        }
+
+        .social-link:hover {
+          opacity: 0.7;
+        }
+
+        .social-separator {
+          color: #666;
         }
 
         .map-section {
