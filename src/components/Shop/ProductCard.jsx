@@ -50,7 +50,7 @@ const ProductCard = ({ product }) => {
             aria-label={t('shop.product.add_to_cart')}
           >
             <span className="desktop-text">{t('shop.product.add_to_cart')}</span>
-            <span className="mobile-text">+</span>
+            <span className="mobile-text">Lisa ostukorvi</span>
           </button>
         )}
       </div>
@@ -122,7 +122,6 @@ const ProductCard = ({ product }) => {
           transition: all 0.2s ease;
           z-index: 10;
           opacity: 0;
-          border-top-left-radius: 4px;
         }
 
         .desktop-text {
@@ -169,17 +168,11 @@ const ProductCard = ({ product }) => {
 
         @media (max-width: 768px) {
           .add-to-cart-overlay {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            bottom: 12px;
-            right: 12px;
-            padding: 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            width: auto;
+            height: auto;
+            right: 0;
+            bottom: 0;
+            padding: 8px 12px;
             background-color: rgba(47, 62, 156, 0.8);
             opacity: 1;
           }
