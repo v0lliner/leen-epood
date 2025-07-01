@@ -7,7 +7,6 @@ const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { addItem, isInCart } = useCart();
   const { t } = useTranslation();
-  const isMobile = window.innerWidth <= 768;
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -50,7 +49,8 @@ const ProductCard = ({ product }) => {
             onClick={handleAddToCart}
             aria-label={t('shop.product.add_to_cart')}
           >
-            {isMobile ? '+' : t('shop.product.add_to_cart')}
+            <span className="desktop-text">{t('shop.product.add_to_cart')}</span>
+            <span className="mobile-text">+</span>
           </button>
         )}
       </div>
@@ -125,6 +125,14 @@ const ProductCard = ({ product }) => {
           border-top-left-radius: 4px;
         }
 
+        .desktop-text {
+          display: inline;
+        }
+
+        .mobile-text {
+          display: none;
+        }
+
         .add-to-cart-overlay.visible {
           opacity: 1;
           background-color: rgba(47, 62, 156, 0.8);
@@ -161,8 +169,8 @@ const ProductCard = ({ product }) => {
 
         @media (max-width: 768px) {
           .add-to-cart-overlay {
-            width: 48px;
-            height: 48px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -174,6 +182,14 @@ const ProductCard = ({ product }) => {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             background-color: rgba(47, 62, 156, 0.8);
             opacity: 1;
+          }
+
+          .desktop-text {
+            display: none;
+          }
+
+          .mobile-text {
+            display: inline;
           }
         }
       `}</style>
