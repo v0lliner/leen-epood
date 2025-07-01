@@ -173,7 +173,7 @@ const ProductCard = ({ product }) => {
             right: 0;
             bottom: 0;
             padding: 8px 12px;
-            background-color: rgba(47, 62, 156, 0.8);
+            background-color: rgba(47, 62, 156, 0.9);
             opacity: 1;
           }
 
