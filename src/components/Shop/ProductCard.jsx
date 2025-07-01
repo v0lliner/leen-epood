@@ -115,6 +115,7 @@ const ProductCard = ({ product }) => {
         .add-to-cart-overlay {
           position: absolute;
           bottom: 0;
+          left: 0;
           right: 0;
           background-color: rgba(47, 62, 156, 0);
           color: white;
@@ -140,11 +141,11 @@ const ProductCard = ({ product }) => {
 
         .add-to-cart-overlay.visible {
           opacity: 1;
-          background-color: rgba(47, 62, 156, 0.8);
+          background-color: var(--color-ultramarine);
         }
 
         .add-to-cart-overlay:hover {
-          background-color: rgba(30, 42, 122, 0.8);
+          background-color: #1e2a7a;
           color: white !important;
         }
 
@@ -174,34 +175,28 @@ const ProductCard = ({ product }) => {
 
         @media (max-width: 768px) {
           .add-to-cart-overlay {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.5rem;
-            bottom: 12px;
-            right: 12px;
-            padding: 0;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            background-color: rgba(47, 62, 156, 0.8);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: var(--color-ultramarine);
+            color: white;
+            padding: 12px;
+            text-align: center;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 1rem;
             opacity: 1;
           }
 
           .desktop-text {
-            display: none;
+            display: inline;
           }
 
           .mobile-text {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          
-          .mobile-text svg {
-            width: 20px;
-            height: 20px;
+            display: none;
           }
         }
       `}</style>
