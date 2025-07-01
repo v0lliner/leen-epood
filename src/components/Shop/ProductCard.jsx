@@ -50,7 +50,7 @@ const ProductCard = ({ product }) => {
             aria-label={t('shop.product.add_to_cart')}
           >
             <span className="desktop-text">{t('shop.product.add_to_cart')}</span>
-            <span className="mobile-text">Lisa ostukorvi</span>
+            <span className="mobile-text">{t('shop.product.add_to_cart')}</span>
           </button>
         )}
       </div>
