@@ -13,7 +13,7 @@ const ProductDetail = () => {
   const { slug } = useParams();
   const { t } = useTranslation();
   const { addItem, isInCart } = useCart();
-  const { products, getProductBySlug, getRelatedProducts, loading } = useProducts();
+  const { products, getProductBySlug, getRelatedProducts, getCategoryBySlug, loading } = useProducts();
   const [productImages, setProductImages] = useState([]);
   const [imagesLoading, setImagesLoading] = useState(true);
   
@@ -225,6 +225,32 @@ const ProductDetail = () => {
     return t('shop.product.add_to_cart');
   };
 
+  // Get subcategory name from slug
+  const getSubcategoryName = () => {
+    if (!product.subcategory) return null;
+    
+    // Try to get from translations first
+    const translationKey = `shop.subcategories.${product.category}.${product.subcategory}`;
+    const translatedName = t(translationKey);
+    
+    // If translation exists and is not the same as the key, use it
+    if (translatedName !== translationKey) {
+      return translatedName;
+    }
+    
+    // Otherwise try to get from categories data
+    const category = getCategoryBySlug(product.category);
+    if (category && category.children) {
+      const subcategory = category.children.find(sub => sub.slug === product.subcategory);
+      if (subcategory) {
+        return subcategory.name;
+      }
+    }
+    
+    // Fallback to capitalized subcategory slug
+    return product.subcategory.charAt(0).toUpperCase() + product.subcategory.slice(1);
+  };
+
   console.log('ProductDetail render - productImages:', productImages);
 
   return (
@@ -236,6 +262,18 @@ const ProductDetail = () => {
             <FadeInSection>
               <div className="breadcrumb">
                 <Link to="/epood" className="breadcrumb-link" onClick={scrollToTop}>{t('shop.title')}</Link>
+                {product.subcategory && (
+                  <>
+                    <span className="breadcrumb-separator"> / </span>
+                    <Link 
+                      to={`/epood?tab=${product.category}&subcategory=${product.subcategory}`} 
+                      className="breadcrumb-link" 
+                      onClick={scrollToTop}
+                    >
+                      {getSubcategoryName()}
+                    </Link>
+                  </>
+                )}
                 <span className="breadcrumb-separator"> / </span>
                 <span className="breadcrumb-current">{product.title}</span>
               </div>
