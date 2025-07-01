@@ -134,11 +134,11 @@ const ProductCard = ({ product }) => {
 
         .add-to-cart-overlay.visible {
           opacity: 1;
-          background-color: rgba(47, 62, 156, 0.5);
+          background-color: rgba(47, 62, 156, 0.9);
         }
 
         .add-to-cart-overlay:hover {
-          background-color: rgba(30, 42, 122, 0.5);
+          background-color: rgba(30, 42, 122, 0.9);
           color: white !important;
         }
 
