@@ -26,11 +26,11 @@ const Footer = () => {
         <div className="social">
           <a href="https://www.facebook.com/leenvaranen" target="_blank" rel="noopener noreferrer">{t('footer.facebook')}</a>
           <span className="separator">·</span>
-          <a href="https://www.instagram.com/leen.tailor/" target="_blank" rel="noopener noreferrer">Instagram</a>
+          <a href="https://www.instagram.com/leen.tailor/" target="_blank" rel="noopener noreferrer">{t('footer.instagram')}</a>
         </div>
         
         <div className="credits">
-          Made by <a href="https://myralum.com/" target="_blank" rel="noopener noreferrer">Myralum</a>
+          {t('footer.made_by')} <a href="https://myralum.com/" target="_blank" rel="noopener noreferrer">Myralum</a>
         </div>
       </div>
 

@@ -14,7 +14,9 @@
     "about": "MINUST",
     "contact": "KONTAKT",
     "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
-    "facebook": "Facebook"
+    "facebook": "Facebook",
+    "instagram": "Instagram",
+    "made_by": "Made by"
   },
   "hero": {
     "heading": "Leen Väränen",
@@ -185,18 +187,83 @@
   },
   "checkout": {
     "title": "Tellimuse vormistamine",
+    "steps": {
+      "review": "Ülevaade",
+      "shipping": "Tarneinfo",
+      "payment": "Makse"
+    },
+    "review": {
+      "title": "Tellimuse ülevaade",
+      "back_to_shop": "Tagasi poodi",
+      "continue": "Jätka tarneinfoga"
+    },
+    "shipping": {
+      "title": "Tarneinfo",
+      "contact": {
+        "title": "Kontaktandmed",
+        "name": "Nimi",
+        "name_placeholder": "Teie täisnimi",
+        "email": "E-post",
+        "email_placeholder": "teie@email.ee",
+        "phone": "Telefon",
+        "phone_placeholder": "+372 5xxx xxxx"
+      },
+      "address": {
+        "title": "Tarneaadress",
+        "address": "Aadress",
+        "address_placeholder": "Tänav, maja, korter",
+        "city": "Linn",
+        "city_placeholder": "Linn või asula",
+        "postal_code": "Postiindeks",
+        "postal_code_placeholder": "12345",
+        "country": "Riik",
+        "countries": {
+          "estonia": "Eesti",
+          "finland": "Soome",
+          "latvia": "Läti",
+          "lithuania": "Leedu",
+          "sweden": "Rootsi"
+        }
+      },
+      "notes": {
+        "title": "Lisainfo",
+        "notes": "Märkused tellimuse kohta",
+        "notes_placeholder": "Soovid või märkused tellimuse kohta"
+      },
+      "back": "Tagasi ülevaatele",
+      "continue": "Jätka maksega"
+    },
+    "summary": {
+      "title": "Tellimuse kokkuvõte",
+      "subtotal": "Vahesumma",
+      "shipping": "Tarne",
+      "total": "Kokku",
+      "continue": "Jätka tarneinfoga",
+      "pay": "Jätka maksega",
+      "processing": "Töötlemine...",
+      "info": {
+        "secure": "Turvaline makse Stripe'i kaudu",
+        "shipping": "Tarne 2-4 tööpäeva jooksul",
+        "personal": "Iga tellimuse juurde käib isiklik märge"
+      }
+    },
     "form": {
       "name": "Nimi",
       "email": "E-mail",
       "address": "Tarneaadress",
       "pay": "Maksa"
     },
-    "summary": "Tellimuse kokkuvõte",
-    "total": "Kokku",
     "thank_you": {
       "title": "Aitäh!",
       "message": "Teie tellimus on edukalt vormistatud. Saadame peagi tellimuse kinnituse e-kirja.",
       "back_to_shop": "Tagasi poodi"
+    },
+    "error": {
+      "required_fields": "Palun täitke kõik kohustuslikud väljad",
+      "invalid_email": "Palun sisestage korrektne e-posti aadress",
+      "empty_cart": "Ostukorv on tühi",
+      "session_failed": "Maksesessiooni loomine ebaõnnestus",
+      "network_error": "Võrguühenduse viga"
     }
   },
   "contact": {
@@ -205,7 +272,7 @@
     "form": {
       "title": "Saatke sõnum",
       "name": "Nimi",
-      "email": "E-mail",
+      "email": "E-post",
       "message": "Sõnum",
       "send": "Saada",
       "success_message": "Sõnum saadetud! Leen vastab teile esimesel võimalusel."
@@ -219,7 +286,8 @@
       "email_label": "E-post",
       "email": "leen@leen.ee",
       "phone_label": "Telefon",
-      "phone": "+372 5380 1413"
+      "phone": "+372 5380 1413",
+      "social_label": "Sotsiaalmeedia"
     },
     "map": {
       "title": "Keldrimäe talu asukoht"
@@ -319,6 +387,63 @@
         "add_portfolio_desc": "Lisage uus töö lemmikute hulka",
         "view_orders": "Vaata tellimusi",
         "view_orders_desc": "Hallake sissetulevaid tellimusi"
+      },
+      "last_updated": "Viimati uuendatud",
+      "subscription": {
+        "title": "Tellimuse staatus",
+        "active": "Aktiivne",
+        "not_started": "Pole alustatud",
+        "next_invoice": "Järgmine arve",
+        "payment_method": "Makseviis",
+        "not_found": "Tellimuse andmeid ei leitud",
+        "no_data": "Stripe tellimuse info pole saadaval või pole veel seadistatud"
+      },
+      "quick_stats": {
+        "title": "Kiire ülevaade",
+        "products_total": "Tooted kokku",
+        "products_available": "saadaval",
+        "portfolio_items": "Minu lemmikud",
+        "portfolio_subtitle": "portfoolio tööd",
+        "orders": "Tellimused",
+        "orders_subtitle": "kokku tellimusi",
+        "faq_items": "KKK küsimused",
+        "faq_subtitle": "vastust eesti keeles"
+      },
+      "quick_actions": {
+        "title": "Kiirtoimingud",
+        "add_product": "Lisa uus toode",
+        "add_product_desc": "Lisage uus toode e-poodi müügiks",
+        "add_portfolio": "Lisa lemmik",
+        "add_portfolio_desc": "Lisage uus töö portfooliosse",
+        "edit_about": "Muuda minust lehte",
+        "edit_about_desc": "Uuendage oma tutvustust",
+        "manage_faq": "Halda KKK-d",
+        "manage_faq_desc": "Lisage või muutke korduma kippuvaid küsimusi"
+      },
+      "recent_activity": {
+        "title": "Viimane tegevus",
+        "new_order": "Uus tellimus",
+        "no_activity": {
+          "title": "Tegevusi pole veel",
+          "message": "Kui hakkate tooteid müüma või sisu lisama, kuvatakse siin viimased tegevused"
+        }
+      },
+      "website_status": {
+        "title": "Veebilehe staatus",
+        "website": "Veebileht",
+        "website_status": "Töötab korralikult",
+        "shop": "E-pood",
+        "shop_status": "toodet müügis",
+        "portfolio": "Portfoolio",
+        "portfolio_status": "tööd kuvatakse",
+        "faq": "KKK",
+        "faq_status": "küsimust eesti keeles"
+      },
+      "refresh_data": "Uuenda andmeid",
+      "loading_data": "Laadin andmeid...",
+      "error": {
+        "title": "Viga andmete laadimisel",
+        "retry": "Proovi uuesti"
       }
     },
     "products": {
@@ -414,6 +539,10 @@
     "faq": {
       "title": "KKK - Leen Väränen",
       "description": "Vastused korduma kippuvatele küsimustele Leen Väräneni käsitöötoodete, tellimuste ja hoolduse kohta."
+    },
+    "404": {
+      "title": "Lehekülge ei leitud - Leen Väränen",
+      "description": "Otsitud lehekülge ei leitud. Minge tagasi avalehele."
     }
   }
 }

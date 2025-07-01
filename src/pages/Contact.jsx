@@ -371,14 +371,14 @@ const Contact = () => {
                     </div>
                     
                     <div className="contact-item">
-                      <span className="contact-label">Sotsiaalmeedia</span>
+                      <span className="contact-label">{t('contact.info.social_label')}</span>
                       <div className="social-links">
                         <a href="https://www.facebook.com/leenvaranen" target="_blank" rel="noopener noreferrer" className="btn btn-underline social-link">
-                          Facebook
+                          {t('footer.facebook')}
                         </a>
                         <span className="social-separator">·</span>
                         <a href="https://www.instagram.com/leen.tailor/" target="_blank" rel="noopener noreferrer" className="btn btn-underline social-link">
-                          Instagram
+                          {t('footer.instagram')}
                         </a>
                       </div>
                     </div>

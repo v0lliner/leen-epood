@@ -14,7 +14,9 @@
     "about": "ABOUT",
     "contact": "CONTACT",
     "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
-    "facebook": "Facebook"
+    "facebook": "Facebook",
+    "instagram": "Instagram",
+    "made_by": "Made by"
   },
   "hero": {
     "heading": "Leen Väränen",
@@ -185,18 +187,83 @@
   },
   "checkout": {
     "title": "Checkout",
+    "steps": {
+      "review": "Review",
+      "shipping": "Shipping",
+      "payment": "Payment"
+    },
+    "review": {
+      "title": "Order Review",
+      "back_to_shop": "Back to shop",
+      "continue": "Continue to shipping"
+    },
+    "shipping": {
+      "title": "Shipping Information",
+      "contact": {
+        "title": "Contact Information",
+        "name": "Name",
+        "name_placeholder": "Your full name",
+        "email": "Email",
+        "email_placeholder": "your@email.com",
+        "phone": "Phone",
+        "phone_placeholder": "+372 5xxx xxxx"
+      },
+      "address": {
+        "title": "Shipping Address",
+        "address": "Address",
+        "address_placeholder": "Street, house, apartment",
+        "city": "City",
+        "city_placeholder": "City or town",
+        "postal_code": "Postal Code",
+        "postal_code_placeholder": "12345",
+        "country": "Country",
+        "countries": {
+          "estonia": "Estonia",
+          "finland": "Finland",
+          "latvia": "Latvia",
+          "lithuania": "Lithuania",
+          "sweden": "Sweden"
+        }
+      },
+      "notes": {
+        "title": "Additional Information",
+        "notes": "Order notes",
+        "notes_placeholder": "Special requests or notes about your order"
+      },
+      "back": "Back to review",
+      "continue": "Continue to payment"
+    },
+    "summary": {
+      "title": "Order Summary",
+      "subtotal": "Subtotal",
+      "shipping": "Shipping",
+      "total": "Total",
+      "continue": "Continue to shipping",
+      "pay": "Continue to payment",
+      "processing": "Processing...",
+      "info": {
+        "secure": "Secure payment via Stripe",
+        "shipping": "Delivery within 2-4 business days",
+        "personal": "Each order includes a personal note"
+      }
+    },
     "form": {
       "name": "Name",
       "email": "Email",
       "address": "Delivery address",
       "pay": "Pay"
     },
-    "summary": "Order summary",
-    "total": "Total",
     "thank_you": {
       "title": "Thank you!",
       "message": "Your order has been successfully placed. We will send you an order confirmation email shortly.",
       "back_to_shop": "Back to shop"
+    },
+    "error": {
+      "required_fields": "Please fill in all required fields",
+      "invalid_email": "Please enter a valid email address",
+      "empty_cart": "Cart is empty",
+      "session_failed": "Failed to create checkout session",
+      "network_error": "Network connection error"
     }
   },
   "contact": {
@@ -219,7 +286,8 @@
       "email_label": "Email",
       "email": "leen@leen.ee",
       "phone_label": "Phone",
-      "phone": "+372 5380 1413"
+      "phone": "+372 5380 1413",
+      "social_label": "Social Media"
     },
     "map": {
       "title": "Keldrimäe farm location"
@@ -319,6 +387,63 @@
         "add_portfolio_desc": "Add a new work to favorites",
         "view_orders": "View Orders",
         "view_orders_desc": "Manage incoming orders"
+      },
+      "last_updated": "Last updated",
+      "subscription": {
+        "title": "Subscription Status",
+        "active": "Active",
+        "not_started": "Not Started",
+        "next_invoice": "Next invoice",
+        "payment_method": "Payment method",
+        "not_found": "Subscription data not found",
+        "no_data": "Stripe subscription info is not available or not yet set up"
+      },
+      "quick_stats": {
+        "title": "Quick Overview",
+        "products_total": "Total Products",
+        "products_available": "available",
+        "portfolio_items": "My Favorites",
+        "portfolio_subtitle": "portfolio works",
+        "orders": "Orders",
+        "orders_subtitle": "total orders",
+        "faq_items": "FAQ Questions",
+        "faq_subtitle": "answers in Estonian"
+      },
+      "quick_actions": {
+        "title": "Quick Actions",
+        "add_product": "Add New Product",
+        "add_product_desc": "Add a new product to the shop for sale",
+        "add_portfolio": "Add Favorite",
+        "add_portfolio_desc": "Add a new work to the portfolio",
+        "edit_about": "Edit About Page",
+        "edit_about_desc": "Update your introduction",
+        "manage_faq": "Manage FAQ",
+        "manage_faq_desc": "Add or edit frequently asked questions"
+      },
+      "recent_activity": {
+        "title": "Recent Activity",
+        "new_order": "New Order",
+        "no_activity": {
+          "title": "No activities yet",
+          "message": "When you start selling products or adding content, recent activities will be shown here"
+        }
+      },
+      "website_status": {
+        "title": "Website Status",
+        "website": "Website",
+        "website_status": "Working properly",
+        "shop": "Shop",
+        "shop_status": "products for sale",
+        "portfolio": "Portfolio",
+        "portfolio_status": "works displayed",
+        "faq": "FAQ",
+        "faq_status": "questions in Estonian"
+      },
+      "refresh_data": "Refresh Data",
+      "loading_data": "Loading data...",
+      "error": {
+        "title": "Error loading data",
+        "retry": "Try again"
       }
     },
     "products": {
@@ -414,6 +539,10 @@
     "faq": {
       "title": "FAQ - Leen Väränen",
       "description": "Answers to frequently asked questions about Leen Väränen's handcrafted products, orders and care."
+    },
+    "404": {
+      "title": "Page not found - Leen Väränen",
+      "description": "The requested page was not found. Return to the homepage."
     }
   }
 }
