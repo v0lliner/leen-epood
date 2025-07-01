@@ -46,7 +46,7 @@ const ProductCard = ({ product }) => {
         )}
         {canAddToCart && (
           <button 
-            className={`add-to-cart-overlay ${isHovered || isMobile ? 'visible' : ''}`}
+            className={`add-to-cart-overlay ${isHovered ? 'visible' : ''}`}
             onClick={handleAddToCart}
             aria-label={t('shop.product.add_to_cart')}
           >
@@ -110,7 +110,7 @@ const ProductCard = ({ product }) => {
           position: absolute;
           bottom: 0;
           right: 0;
-          background-color: rgba(47, 62, 156, 0.9);
+          background-color: rgba(47, 62, 156, 0);
           color: white;
           padding: 12px;
           text-align: center;
@@ -127,10 +127,11 @@ const ProductCard = ({ product }) => {
 
         .add-to-cart-overlay.visible {
           opacity: 1;
+          background-color: rgba(47, 62, 156, 0.8);
         }
 
         .add-to-cart-overlay:hover {
-          background-color: #1e2a7a;
+          background-color: rgba(30, 42, 122, 0.8);
           color: white !important;
         }
 
@@ -172,6 +173,7 @@ const ProductCard = ({ product }) => {
             padding: 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
             background-color: rgba(47, 62, 156, 0.8);
+            opacity: 1;
           }
         }
       `}</style>

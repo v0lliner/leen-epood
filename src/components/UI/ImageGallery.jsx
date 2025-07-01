@@ -88,6 +88,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     }
   }, [])
 
+  const handleModalBackdropClick = (e) => {
+    // Close modal when clicking on backdrop
+    if (e.target === e.currentTarget) {
+      closeModal()
+    }
+  }
+
   // Touch swipe handling for mobile carousel
   const minSwipeDistance = 50
 
@@ -113,13 +120,6 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     
     if (isRightSwipe) {
       prevCarouselImage()
-    }
-  }
-
-  const handleModalBackdropClick = (e) => {
-    // Close modal when clicking on backdrop
-    if (e.target === e.currentTarget) {
-      closeModal()
     }
   }
 
