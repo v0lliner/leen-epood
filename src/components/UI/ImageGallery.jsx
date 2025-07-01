@@ -1,9 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 
 const ImageGallery = ({ images = [], productTitle = '' }) => {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [touchStart, setTouchStart] = useState(null)
+  const [touchEnd, setTouchEnd] = useState(null)
+  const carouselRef = useRef(null)
 
   if (!images || images.length === 0) {
     return null
@@ -84,6 +87,34 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
       }
     }
   }, [])
+
+  // Touch swipe handling for mobile carousel
+  const minSwipeDistance = 50
+
+  const onTouchStart = (e) => {
+    setTouchEnd(null) // Reset touchEnd
+    setTouchStart(e.targetTouches[0].clientX)
+  }
+
+  const onTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return
+    
+    const distance = touchStart - touchEnd
+    const isLeftSwipe = distance > minSwipeDistance
+    const isRightSwipe = distance < -minSwipeDistance
+    
+    if (isLeftSwipe) {
+      nextCarouselImage()
+    }
+    
+    if (isRightSwipe) {
+      prevCarouselImage()
+    }
+  }
 
   const handleModalBackdropClick = (e) => {
     // Close modal when clicking on backdrop
@@ -349,7 +380,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
 
         {/* Mobile Carousel */}
         <div className="mobile-carousel">
-          <div className="carousel-container">
+          <div 
+            className="carousel-container"
+            ref={carouselRef}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
             <div 
               className="carousel-track"
               style={{ transform: `translateX(-${selectedIndex * 100}%)` }}
@@ -475,6 +512,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           overflow: hidden;
           border-radius: 4px;
           background: #f5f5f5;
+          touch-action: pan-y;
         }
 
         .carousel-track {

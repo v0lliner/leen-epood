@@ -7,6 +7,7 @@ const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { addItem, isInCart } = useCart();
   const { t } = useTranslation();
+  const isMobile = window.innerWidth <= 768;
 
   const handleAddToCart = (e) => {
     e.preventDefault();
@@ -43,12 +44,13 @@ const ProductCard = ({ product }) => {
         {isProductInCart && product.available && (
           <div className="in-cart-overlay">{t('shop.product.in_cart')}</div>
         )}
-        {isHovered && canAddToCart && (
+        {canAddToCart && (
           <button 
-            className="add-to-cart-overlay"
+            className={`add-to-cart-overlay ${isHovered || isMobile ? 'visible' : ''}`}
             onClick={handleAddToCart}
+            aria-label={t('shop.product.add_to_cart')}
           >
-            {t('shop.product.add_to_cart')}
+            {isMobile ? '+' : t('shop.product.add_to_cart')}
           </button>
         )}
       </div>
@@ -107,7 +109,6 @@ const ProductCard = ({ product }) => {
         .add-to-cart-overlay {
           position: absolute;
           bottom: 0;
-          left: 0;
           right: 0;
           background-color: var(--color-ultramarine);
           color: white;
@@ -118,8 +119,14 @@ const ProductCard = ({ product }) => {
           cursor: pointer;
           font-family: var(--font-body);
           font-size: 1rem;
-          transition: background-color 0.2s ease;
+          transition: all 0.2s ease;
           z-index: 10;
+          opacity: 0;
+          border-top-left-radius: 4px;
+        }
+
+        .add-to-cart-overlay.visible {
+          opacity: 1;
         }
 
         .add-to-cart-overlay:hover {
@@ -149,6 +156,22 @@ const ProductCard = ({ product }) => {
           color: var(--color-ultramarine);
           margin: 0;
           line-height: 1.2;
+        }
+
+        @media (max-width: 768px) {
+          .add-to-cart-overlay {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            bottom: 12px;
+            right: 12px;
+            padding: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          }
         }
       `}</style>
     </Link>
