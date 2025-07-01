@@ -110,7 +110,7 @@ const ProductCard = ({ product }) => {
           position: absolute;
           bottom: 0;
           right: 0;
-          background-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.9);
           color: white;
           padding: 12px;
           text-align: center;
@@ -171,6 +171,7 @@ const ProductCard = ({ product }) => {
             right: 12px;
             padding: 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            background-color: rgba(47, 62, 156, 0.8);
           }
         }
       `}</style>
