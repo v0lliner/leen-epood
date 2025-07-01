@@ -115,9 +115,8 @@ const ProductCard = ({ product }) => {
         .add-to-cart-overlay {
           position: absolute;
           bottom: 0;
-          left: 0;
           right: 0;
-          background-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0);
           color: white;
           padding: 12px;
           text-align: center;
@@ -126,7 +125,7 @@ const ProductCard = ({ product }) => {
           cursor: pointer;
           font-family: var(--font-body);
           font-size: 1rem;
-          transition: background-color 0.2s ease;
+          transition: all 0.2s ease;
           z-index: 10;
           opacity: 0;
         }
@@ -141,10 +140,11 @@ const ProductCard = ({ product }) => {
 
         .add-to-cart-overlay.visible {
           opacity: 1;
+          background-color: rgba(47, 62, 156, 0.8);
         }
 
         .add-to-cart-overlay:hover {
-          background-color: #1e2a7a;
+          background-color: rgba(30, 42, 122, 0.8);
           color: white !important;
         }
 
@@ -183,10 +183,9 @@ const ProductCard = ({ product }) => {
             font-size: 1.5rem;
             bottom: 12px;
             right: 12px;
-            left: auto;
             padding: 0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-            background-color: var(--color-ultramarine);
+            background-color: rgba(47, 62, 156, 0.8);
             opacity: 1;
           }
 
