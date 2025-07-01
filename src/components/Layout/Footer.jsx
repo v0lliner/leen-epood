@@ -24,11 +24,17 @@ const Footer = () => {
         </div>
 
         <div className="social">
-          <a href="#" target="_blank" rel="noopener noreferrer">{t('footer.facebook')}</a>
+          <a href="https://www.facebook.com/leenvaranen" target="_blank" rel="noopener noreferrer">{t('footer.facebook')}</a>
+          <span className="separator">·</span>
+          <a href="https://www.instagram.com/leen.tailor/" target="_blank" rel="noopener noreferrer">Instagram</a>
+        </div>
+        
+        <div className="credits">
+          Made by <a href="https://myralum.com/" target="_blank" rel="noopener noreferrer">Myralum</a>
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .footer {
           text-align: center;
           padding: var(--section-spacing) 0;
@@ -71,6 +77,10 @@ const Footer = () => {
           color: var(--color-ultramarine);
         }
 
+        .social {
+          margin-bottom: 16px;
+        }
+
         .social a {
           color: var(--color-ultramarine);
           text-decoration: none;
@@ -79,6 +89,27 @@ const Footer = () => {
 
         .social a:hover {
           opacity: 0.7;
+        }
+        
+        .separator {
+          margin: 0 8px;
+          color: #666;
+        }
+        
+        .credits {
+          font-size: 0.85rem;
+          color: #666;
+        }
+        
+        .credits a {
+          color: var(--color-ultramarine);
+          text-decoration: none;
+          transition: opacity 0.2s ease;
+        }
+        
+        .credits a:hover {
+          opacity: 0.7;
+          text-decoration: underline;
         }
 
         @media (max-width: 768px) {
