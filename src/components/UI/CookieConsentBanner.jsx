@@ -256,6 +256,7 @@ const CookieConsentBanner = () => {
           cursor: pointer;
           transition: all 0.2s ease;
           border: none;
+          white-space: nowrap;
         }
 
         .cookie-btn-primary {
