@@ -57,6 +57,7 @@ async function fetchPaymentMethods() {
         username: SHOP_ID,
         password: API_OPEN_KEY
       }, 
+      timeout: 10000, // 10 second timeout
       validateStatus: (status) => true // Accept any status code to handle it manually
     });
     
@@ -130,6 +131,7 @@ async function createTransaction(orderData, paymentMethod) {
         username: SHOP_ID,
         password: API_SECRET_KEY
       },
+      timeout: 15000, // 15 second timeout for transaction creation
       validateStatus: (status) => true // Accept any status code to handle it manually
     });
     
