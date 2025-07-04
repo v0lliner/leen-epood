@@ -6,12 +6,10 @@ import AdminLayout from '../../components/Admin/AdminLayout'
 import { productService } from '../../utils/supabase/products'
 import { portfolioItemService } from '../../utils/supabase/portfolioItems'
 import { faqService } from '../../utils/supabase/faq'
-import { getUserSubscription } from '../../utils/stripe'
 
 const AdminDashboard = () => {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [subscription, setSubscription] = useState(null)
   const [orderStats, setOrderStats] = useState({
     total: 0,
     pending: 0,
@@ -39,16 +37,6 @@ const AdminDashboard = () => {
     
     try {
       console.log('🔄 Dashboard: Loading data...')
-
-      // Load subscription data
-      try {
-        const subscriptionData = await getUserSubscription()
-        setSubscription(subscriptionData)
-        console.log('💳 Dashboard: Subscription data loaded:', subscriptionData)
-      } catch (subscriptionError) {
-        console.error('Error loading subscription:', subscriptionError)
-        setSubscription(null)
-      }
 
       // Load order statistics
       try {
@@ -228,38 +216,6 @@ const AdminDashboard = () => {
             })}
           </div>
         </div>
-
-        {/* Subscription Status */}
-        {subscription ? (
-          <div className="subscription-card">
-            <h3>💳 Tellimuse staatus</h3>
-            <div className="subscription-info">
-              <span className={`status-badge ${subscription.subscription_status}`}>
-                {subscription.subscription_status === 'active' ? '✅ Aktiivne' : 
-                 subscription.subscription_status === 'not_started' ? '⏳ Pole alustatud' :
-                 subscription.subscription_status}
-              </span>
-              {subscription.subscription_status === 'active' && subscription.current_period_end && (
-                <div className="subscription-details">
-                  <p>Järgmine arve: {new Date(subscription.current_period_end * 1000).toLocaleDateString('et-EE')}</p>
-                  {subscription.payment_method_brand && (
-                    <p>Makseviis: {subscription.payment_method_brand} ****{subscription.payment_method_last4}</p>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="subscription-card">
-            <h3>💳 Tellimuse staatus</h3>
-            <div className="subscription-info">
-              <span className="status-badge not_started">
-                ⏳ Tellimuse andmeid ei leitud
-              </span>
-              <p>Stripe tellimuse info pole saadaval või pole veel seadistatud.</p>
-            </div>
-          </div>
-        )}
 
         {/* Quick Stats */}
         <div className="stats-section">
@@ -442,52 +398,6 @@ const AdminDashboard = () => {
         .error-content h2 {
           color: #dc3545;
           margin-bottom: 16px;
-        }
-
-        .subscription-card {
-          background: white;
-          border-radius: 12px;
-          padding: 24px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          margin-bottom: 32px;
-          border-left: 4px solid var(--color-ultramarine);
-        }
-
-        .subscription-card h3 {
-          font-family: var(--font-heading);
-          color: var(--color-ultramarine);
-          margin-bottom: 16px;
-          font-size: 1.125rem;
-        }
-
-        .subscription-info {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .status-badge {
-          display: inline-block;
-          padding: 6px 12px;
-          border-radius: 16px;
-          font-size: 0.85rem;
-          font-weight: 500;
-        }
-
-        .status-badge.active {
-          background: #d4edda;
-          color: #155724;
-        }
-
-        .status-badge.not_started {
-          background: #fff3cd;
-          color: #856404;
-        }
-
-        .subscription-details p {
-          margin: 4px 0;
-          color: #666;
-          font-size: 0.9rem;
         }
 
         .stats-section,
