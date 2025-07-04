@@ -6,6 +6,7 @@ import { ThemeProvider } from './context/ThemeContext';
 import Navigation from './components/Layout/Navigation';
 import Footer from './components/Layout/Footer';
 import ProtectedRoute from './components/Admin/ProtectedRoute';
+import CookieConsentBanner from './components/UI/CookieConsentBanner';
 import Home from './pages/Home';
 import About from './pages/About';
 import Portfolio from './pages/Portfolio';
@@ -37,6 +38,7 @@ function App() {
         <AuthProvider>
           <CartProvider>
             <Router>
+              <CookieConsentBanner />
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={

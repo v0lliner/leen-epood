@@ -244,7 +244,7 @@
       "pay": "Jätka maksega",
       "processing": "Töötlemine...",
       "info": {
-        "secure": "Turvaline makse Stripe'i kaudu",
+        "secure": "Turvaline makse Maksekeskuse kaudu",
         "shipping": "Tarne 2-4 tööpäeva jooksul",
         "personal": "Iga tellimuse juurde käib isiklik märge"
       }
@@ -558,6 +558,30 @@
     "privacy": {
       "title": "Privaatsuspoliitika - Leen Väränen",
       "description": "Leen Väränen e-poe privaatsuspoliitika ja isikuandmete töötlemise põhimõtted."
+    }
+  },
+  "cookies": {
+    "title": "Küpsiste kasutamine",
+    "description": "See veebileht kasutab küpsiseid, et pakkuda teile paremat kasutajakogemust. Küpsised on väikesed tekstifailid, mis salvestatakse teie seadmesse.",
+    "accept": "Nõustun kõigiga",
+    "decline": "Keeldu",
+    "manage": "Halda eelistusi",
+    "more_info": "Lisainfo",
+    "preferences": {
+      "title": "Küpsiste eelistused",
+      "necessary": {
+        "title": "Vajalikud küpsised",
+        "description": "Need küpsised on vajalikud veebilehe põhifunktsioonide toimimiseks ja neid ei saa välja lülitada."
+      },
+      "analytics": {
+        "title": "Analüütika küpsised",
+        "description": "Need küpsised aitavad meil mõista, kuidas külastajad veebilehte kasutavad, et saaksime seda paremaks muuta."
+      },
+      "marketing": {
+        "title": "Turundusküpsised",
+        "description": "Need küpsised jälgivad teie veebikäitumist, et pakkuda teile asjakohaseid reklaame."
+      },
+      "save": "Salvesta eelistused"
     }
   }
 }

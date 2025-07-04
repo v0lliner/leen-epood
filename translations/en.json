@@ -559,5 +559,29 @@
       "title": "Privacy Policy - Leen Väränen",
       "description": "Leen Väränen e-shop privacy policy and principles of personal data processing."
     }
+  },
+  "cookies": {
+    "title": "Cookies on this site",
+    "description": "This website uses cookies to provide you with a better browsing experience. Cookies are small text files that are stored on your device.",
+    "accept": "Accept all",
+    "decline": "Decline",
+    "manage": "Manage preferences",
+    "more_info": "More information",
+    "preferences": {
+      "title": "Cookie preferences",
+      "necessary": {
+        "title": "Necessary cookies",
+        "description": "These cookies are essential for the website to function properly and cannot be turned off."
+      },
+      "analytics": {
+        "title": "Analytics cookies",
+        "description": "These cookies help us understand how visitors use the website so we can improve it."
+      },
+      "marketing": {
+        "title": "Marketing cookies",
+        "description": "These cookies track your online behavior to help deliver relevant advertisements."
+      },
+      "save": "Save preferences"
+    }
   }
 }
