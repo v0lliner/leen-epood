@@ -13,7 +13,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   useEffect(() => {
     if (amount) {
       loadPaymentMethodsData();
-      console.log('PaymentMethods initialized with amount:', amount);
+      console.log('PaymentMethods initialized with amount:', amount, typeof amount);
     }
   }, [amount, retryCount]);
 
@@ -25,10 +25,23 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     
     try {
       // Convert amount to a proper number using our utility function
-      const numericAmount = parsePriceToAmount(amount.toString());
+      let numericAmount;
+      
+      if (typeof amount === 'number') {
+        numericAmount = amount;
+      } else if (typeof amount === 'string') {
+        numericAmount = parsePriceToAmount(amount);
+      } else {
+        throw new Error(`Unsupported amount type: ${typeof amount}`);
+      }
         
       if (isNaN(numericAmount) || numericAmount <= 0) {
-        throw new Error(`Invalid amount: ${amount}`);
+        console.error('Invalid amount after parsing:', { 
+          original: amount, 
+          parsed: numericAmount, 
+          type: typeof amount 
+        });
+        throw new Error(`Invalid amount: ${amount} (parsed: ${numericAmount})`);
       }
       
       console.log('Loading payment methods for amount:', numericAmount);

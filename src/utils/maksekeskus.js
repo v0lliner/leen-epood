@@ -18,10 +18,10 @@ export async function loadPaymentMethods(amount) {
     
     // Format amount to ensure it uses dot as decimal separator
     const formattedAmount = typeof amount === 'number' 
-      ? amount.toFixed(2) 
+      ? amount.toFixed(2)
       : parseFloat(amount.toString().replace(',', '.')).toFixed(2);
 
-    console.log(`Requesting payment methods for amount: ${formattedAmount}€`);
+    console.log(`Requesting payment methods for amount: ${formattedAmount}€ (${typeof formattedAmount})`);
 
     // Ensure amount is a valid number
     if (isNaN(parseFloat(formattedAmount))) {
@@ -31,7 +31,9 @@ export async function loadPaymentMethods(amount) {
     
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
-    const url = `/api/payment-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
+    // Ensure we're sending a clean number without any currency symbols
+    const cleanAmount = parseFloat(formattedAmount).toFixed(2);
+    const url = `/api/payment-methods?amount=${encodeURIComponent(cleanAmount)}&_=${timestamp}`;
     console.log(`Fetching from: ${url}`);
     
     const response = await fetch(url, {
@@ -44,7 +46,7 @@ export async function loadPaymentMethods(amount) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`API error (${response.status}):`, errorText.substring(0, 100));
+      console.error(`API error (${response.status}):`, errorText);
       throw new Error(`Failed to load payment methods (${response.status})`);
     }
     
@@ -58,6 +60,9 @@ export async function loadPaymentMethods(amount) {
     
     if (!data.success) {
       console.error('API error:', data.error || 'Unknown error');
+      if (data.debug) {
+        console.log('Debug info:', data.debug);
+      }
       throw new Error(data.error || 'Payment service unavailable');
     }
     
@@ -84,13 +89,17 @@ export async function createPayment(orderData, paymentMethod) {
     // Prepare items with correct price format
     const items = orderData.items.map(item => ({
       id: item.id,
-      title: item.title,
-      price: parsePriceToAmount(item.price),
-      quantity: 1
+      title: item.title || '',
+      price: typeof item.price === 'number' ? item.price : parsePriceToAmount(item.price),
+      quantity: item.quantity || 1
     }));
     
     // Calculate total
-    const total = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
+    const total = items.reduce((sum, item) => {
+      const price = typeof item.price === 'number' ? item.price : parsePriceToAmount(item.price);
+      const quantity = item.quantity || 1;
+      return sum + (price * quantity);
+    }, 0);
     
     // Prepare request data
     const requestData = {
@@ -104,14 +113,10 @@ export async function createPayment(orderData, paymentMethod) {
     
     console.log('Creating payment with data:', {
       ...requestData,
-      orderData: {
-        ...requestData.orderData,
-        // Don't log sensitive customer data
-        name: '***',
-        email: '***',
-        phone: '***',
-        address: '***'
-      }
+      // Only log non-sensitive data
+      total: requestData.orderData.total,
+      items: requestData.orderData.items.length,
+      paymentMethod: requestData.paymentMethod
     });
     
     // Send request to API
@@ -128,7 +133,7 @@ export async function createPayment(orderData, paymentMethod) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Create payment API error (${response.status}):`, errorText);
+      console.error(`Create payment API error (${response.status}):`, errorText.substring(0, 200));
       throw new Error(`Failed to create payment (${response.status})`);
     }
     

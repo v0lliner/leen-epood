@@ -17,6 +17,7 @@ const Checkout = () => {
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1: Review, 2: Shipping
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+  const [totalPrice, setTotalPrice] = useState('0.00');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -80,6 +81,11 @@ const Checkout = () => {
     return true;
   };
 
+  // Update total price whenever cart items change
+  useEffect(() => {
+    setTotalPrice(getTotalPrice().toFixed(2));
+  }, [items, getTotalPrice]);
+
   const handleNextStep = () => {
     if (step === 1) {
       setStep(2);
@@ -119,7 +125,6 @@ const Checkout = () => {
     setError('');
 
     // Get total price as a properly formatted number
-    const totalPrice = getTotalPrice().toFixed(2);
     console.log('Checkout total price:', totalPrice);
 
     try {
@@ -522,7 +527,7 @@ const Checkout = () => {
                   
                   <div className="summary-total">
                     <span>Kokku</span>
-                    <span>{totalPrice}€</span>
+                    <span>{totalPrice || '0.00'}€</span>
                   </div>
                   
                   {step === 1 && (

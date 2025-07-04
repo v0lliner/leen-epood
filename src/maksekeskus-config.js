@@ -13,13 +13,16 @@ export const CURRENCY = 'EUR';
 export function parsePriceToAmount(priceString) {
   if (!priceString) return NaN;
   
+  // Log input for debugging
+  console.log('parsePriceToAmount input:', priceString, typeof priceString);
+  
   // If already a number, return it
   if (typeof priceString === 'number') {
     return priceString;
   }
   
   // Remove currency symbol and any whitespace
-  const cleanPrice = priceString.replace(/[^\d.,]/g, '').trim();
+  const cleanPrice = priceString.toString().replace(/[^\d.,]/g, '').trim();
   
   // Replace comma with dot for decimal point (European format)
   const normalizedPrice = cleanPrice.replace(',', '.');
@@ -28,7 +31,7 @@ export function parsePriceToAmount(priceString) {
   const result = parseFloat(normalizedPrice);
   
   // Log the parsing result for debugging
-  console.log(`Parsed price: "${priceString}" → "${cleanPrice}" → "${normalizedPrice}" → ${result}`);
+  console.log(`Parsed price: "${priceString}" → "${cleanPrice}" → "${normalizedPrice}" → ${result} (${typeof result})`);
   
   return result;
 }

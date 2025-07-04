@@ -519,7 +519,7 @@ async function markProductsAsSold(orderId) {
 app.get('/api/payment-methods', async (req, res) => {
   try {
     console.log('=== Payment methods request received ===');
-    console.log('Query params:', req.query);
+    console.log('Query params:', req.query, typeof req.query.amount);
     
     // Get amount from query string
     let amount = null;
@@ -527,12 +527,12 @@ app.get('/api/payment-methods', async (req, res) => {
     // Validate amount parameter
     if (req.query.amount) {
       // Parse amount, ensuring it's a valid number
-      console.log('Raw amount:', req.query.amount);
+      console.log('Raw amount:', req.query.amount, typeof req.query.amount);
       const cleanAmount = req.query.amount.toString().trim().replace(',', '.');
       amount = parseFloat(cleanAmount);
       
       // Check if parsing resulted in a valid number
-      console.log('Parsed amount:', amount, typeof amount);
+      console.log('Parsed amount:', amount, typeof amount, 'isNaN:', isNaN(amount));
       if (isNaN(amount)) {
         console.error('Invalid amount format:', req.query.amount);
         return res.status(400).json({
@@ -544,7 +544,7 @@ app.get('/api/payment-methods', async (req, res) => {
     
     // Validate amount is positive
     if (!amount || amount <= 0) {
-      console.error('Amount must be greater than zero:', amount);
+      console.error('Amount must be greater than zero:', amount, typeof amount);
       return res.status(400).json({
         success: false,
         error: 'Amount must be greater than zero'
@@ -553,6 +553,9 @@ app.get('/api/payment-methods', async (req, res) => {
     
     // Fetch payment methods
     console.log('Getting payment methods for amount:', amount, '€');
+
+    // Ensure amount is a valid number with 2 decimal places
+    amount = parseFloat(amount.toFixed(2));
     
     // Use mock methods directly for now to avoid API issues
     const allMethods = getMockPaymentMethods();
@@ -568,16 +571,18 @@ app.get('/api/payment-methods', async (req, res) => {
     // Filter methods based on amount and country
     console.log('Filtering methods for Estonia and amount:', amount, '€');
     const availableMethods = allMethods.filter(method => {
+      // Ensure min_amount and max_amount are numbers
+      const minAmount = typeof method.min_amount === 'number' ? method.min_amount : 0;
+      const maxAmount = typeof method.max_amount === 'number' ? method.max_amount : Number.MAX_SAFE_INTEGER;
+      
       // Check country match
       const countryMatch = method.countries && Array.isArray(method.countries) && 
                           method.countries.includes('ee');
       
       // Check min amount
-      const minAmount = method.min_amount || 0;
       const minAmountOk = amount >= minAmount;
       
       // Check max amount
-      const maxAmount = method.max_amount || Number.MAX_SAFE_INTEGER;
       const maxAmountOk = amount <= maxAmount;
       
       // Log only if there's an issue with the method
@@ -593,6 +598,12 @@ app.get('/api/payment-methods', async (req, res) => {
     // Return payment methods
     console.log('Returning methods:', availableMethods.map(m => m.channel || m.name).join(', '));
     return res.status(200).json({
+      debug: {
+        amount: amount,
+        amount_type: typeof amount,
+        total_methods: allMethods.length,
+        filtered_methods: availableMethods.length
+      },
       success: true,
       methods: availableMethods,
       count: availableMethods.length
@@ -612,6 +623,17 @@ app.get('/api/payment-methods', async (req, res) => {
 app.post('/api/create-payment', async (req, res) => {
   try {
     const { orderData, paymentMethod } = req.body;
+    
+    console.log('=== Create payment request received ===');
+    console.log('Payment method:', paymentMethod);
+    console.log('Order data:', {
+      ...orderData,
+      // Don't log sensitive customer data
+      name: orderData.name ? '***' : undefined,
+      email: orderData.email ? '***' : undefined,
+      phone: orderData.phone ? '***' : undefined,
+      address: orderData.address ? '***' : undefined
+    });
 
     // Validate required fields
     if (!orderData) {
@@ -638,15 +660,35 @@ app.post('/api/create-payment', async (req, res) => {
     
     // Create order in database
     const order = await createOrder(orderData);
-    
-    console.log(`Created order with ID: ${order.id}, order number: ${order.order_number}`);
-    
-    // Create transaction in Maksekeskus
-    const transaction = await createTransaction({
-      ...orderData,
+
+    console.log('Order created in database:', {
       id: order.id,
-      ip: req.ip
-    }, paymentMethod);
+      order_number: order.order_number,
+      total_amount: order.total_amount
+    });
+    
+    // For testing, use a mock transaction instead of calling Maksekeskus API
+    // When ready to use real API, uncomment the createTransaction call
+    // const transaction = await createTransaction({
+    //   ...orderData,
+    //   id: order.id,
+    //   ip: req.ip
+    // }, paymentMethod);
+
+    // Mock transaction for testing
+    const transaction = {
+      transaction_id: `test-${Date.now()}`,
+      payment_url: `https://payment.test.maksekeskus.ee/pay/1/link.html?payment=${paymentMethod}&token=test-token-${Date.now()}`,
+      transaction: {
+        id: `test-${Date.now()}`,
+        status: 'PENDING'
+      }
+    };
+
+    console.log('Transaction created:', {
+      transaction_id: transaction.transaction_id,
+      payment_url: transaction.payment_url ? 'Available' : 'Missing'
+    });
     
     res.status(200).json({
       success: true,
@@ -661,6 +703,11 @@ app.post('/api/create-payment', async (req, res) => {
     
     // Determine appropriate status code
     const statusCode = error.response?.status || 500;
+
+    console.error('Error response:', {
+      status: statusCode,
+      message: error.message
+    });
     
     res.status(statusCode).json({
       success: false,
@@ -747,7 +794,7 @@ app.get('/health', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`=== Maksekeskus API Server ===`);
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
   console.log(`Notification URL: ${SITE_URL}/api/maksekeskus/notification`);
   console.log(`Environment: ${TEST_MODE ? 'TEST' : 'PRODUCTION'}`);
   console.log(`Using mock payment methods: true`);
