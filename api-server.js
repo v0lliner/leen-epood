@@ -15,6 +15,15 @@ const PORT = process.env.PORT || 3001;
 // Initialize Supabase client with service role key for admin operations
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+// Validate environment variables
+if (!supabaseUrl || !supabaseServiceKey) {
+  console.error('Missing required environment variables:');
+  console.error('VITE_SUPABASE_URL:', supabaseUrl ? 'Present' : 'Missing');
+  console.error('SUPABASE_SERVICE_ROLE_KEY:', supabaseServiceKey ? 'Present' : 'Missing');
+  process.exit(1);
+}
+
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Maksekeskus configuration
@@ -765,6 +774,8 @@ app.post('/api/maksekeskus/notification', async (req, res) => {
 // Get all orders
 app.get('/api/admin/orders', async (req, res) => {
   try {
+    console.log('Fetching orders from database...');
+    
     // Get orders from database
     const { data: orders, error } = await supabase
       .from('orders')
@@ -772,22 +783,33 @@ app.get('/api/admin/orders', async (req, res) => {
       .order('created_at', { ascending: false });
     
     if (error) {
-      console.error('Error fetching orders:', error);
+      console.error('Supabase error fetching orders:', {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
       return res.status(500).json({
         success: false,
-        error: `Failed to fetch orders: ${error.message}`
+        error: `Database error: ${error.message}`
       });
     }
+    
+    console.log(`Successfully fetched ${orders?.length || 0} orders`);
     
     return res.status(200).json({
       success: true,
       orders: orders || []
     });
   } catch (error) {
-    console.error('Exception in /api/admin/orders endpoint:', error);
+    console.error('Exception in /api/admin/orders endpoint:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack
+    });
     return res.status(500).json({
       success: false,
-      error: `Internal server error: ${error.message}`
+      error: `Server error: ${error.message}`
     });
   }
 });
