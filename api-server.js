@@ -37,7 +37,9 @@ app.use(express.urlencoded({ extended: true }));
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  console.log('Request query params:', req.query);
+  if (Object.keys(req.query).length > 0) {
+    console.log('Request query params:', req.query);
+  }
   next();
 });
 
@@ -128,7 +130,7 @@ async function fetchPaymentMethods() {
 // Mock payment methods for testing
 function getMockPaymentMethods() {
   console.log('Using mock payment methods data');
-  const mockMethods = [
+  let mockMethods = [
     {
       "name": "Swedbank",
       "display_name": "Swedbank",
@@ -171,6 +173,43 @@ function getMockPaymentMethods() {
     }
   ];
   
+  // Add more mock methods for testing
+  mockMethods = [
+    ...mockMethods,
+    {
+      "name": "Luminor",
+      "display_name": "Luminor",
+      "channel": "luminor",
+      "type": "banklink",
+      "countries": ["ee"],
+      "logo_url": "https://static.maksekeskus.ee/img/channel/luminor.png",
+      "min_amount": 0.01,
+      "max_amount": 15000
+    },
+    {
+      "name": "Citadele",
+      "display_name": "Citadele",
+      "channel": "citadele",
+      "type": "banklink",
+      "countries": ["ee"],
+      "logo_url": "https://static.maksekeskus.ee/img/channel/citadele.png",
+      "min_amount": 0.01,
+      "max_amount": 15000
+    },
+    {
+      "name": "Swedbank",
+      "display_name": "Swedbank (LV)",
+      "channel": "swedbank_lv",
+      "type": "banklink",
+      "countries": ["lv"],
+      "logo_url": "https://static.maksekeskus.ee/img/channel/swedbank.png",
+      "min_amount": 0.01,
+      "max_amount": 15000
+    }
+  ];
+  
+  // Log the mock methods
+  console.log(`Created ${mockMethods.length} mock payment methods`);
   console.log(`Returning ${mockMethods.length} mock payment methods`);
   return mockMethods;
 }
@@ -485,7 +524,7 @@ async function markProductsAsSold(orderId) {
 app.get('/api/payment-methods', async (req, res) => {
   try {
     console.log('\n=== Payment methods request received ===');
-    console.log('Payment methods request received with query:', req.query);
+    console.log('Payment methods request with query params:', req.query);
     
     // Get amount from query string
     let amount = null;
@@ -494,7 +533,7 @@ app.get('/api/payment-methods', async (req, res) => {
     if (req.query.amount) {
       // Parse amount, ensuring it's a valid number
       console.log('Raw amount from request:', req.query.amount, 'type:', typeof req.query.amount);
-      const cleanAmount = req.query.amount.toString().replace(',', '.');
+      const cleanAmount = req.query.amount.toString().trim().replace(',', '.');
       amount = parseFloat(cleanAmount);
       
       // Check if parsing resulted in a valid number
@@ -511,11 +550,11 @@ app.get('/api/payment-methods', async (req, res) => {
     
     // Validate amount is positive
     if (!amount || amount <= 0) {
-      console.log('Amount validation failed:', amount);
-      console.error('Amount must be greater than zero:', amount);
+      console.log('Amount validation failed:', amount, typeof amount);
+      console.error('Amount must be greater than zero:', amount, typeof amount);
       return res.status(400).json({
         success: false,
-        error: 'Amount must be greater than zero'
+        error: `Amount must be greater than zero (received: ${amount}, type: ${typeof amount})`
       });
     }
     
@@ -534,11 +573,19 @@ app.get('/api/payment-methods', async (req, res) => {
     // Filter methods based on amount and country
     console.log('Filtering payment methods for Estonia and amount:', amount, '€');
     const availableMethods = allMethods.filter(method => {
-      const countryMatch = method.countries && method.countries.includes('ee');
-      const minAmountOk = !method.min_amount || amount >= method.min_amount;
-      const maxAmountOk = !method.max_amount || amount <= method.max_amount;
+      // Check country match
+      const countryMatch = method.countries && Array.isArray(method.countries) && 
+                          method.countries.includes('ee');
       
-      console.log(`Method ${method.name} (${method.channel}): country match: ${countryMatch}, min amount ok: ${minAmountOk}, max amount ok: ${maxAmountOk}`);
+      // Check min amount
+      const minAmount = method.min_amount || 0;
+      const minAmountOk = amount >= minAmount;
+      
+      // Check max amount
+      const maxAmount = method.max_amount || Number.MAX_SAFE_INTEGER;
+      const maxAmountOk = amount <= maxAmount;
+      
+      console.log(`Method ${method.name} (${method.channel}): country match: ${countryMatch}, min amount (${minAmount}) ok: ${minAmountOk}, max amount (${maxAmount}) ok: ${maxAmountOk}`);
       
       return countryMatch && minAmountOk && maxAmountOk;
     });
@@ -548,6 +595,12 @@ app.get('/api/payment-methods', async (req, res) => {
     // Return payment methods
     console.log('Returning payment methods:', availableMethods.map(m => m.channel || m.name).join(', '));
     res.status(200).json({
+      debug: {
+        amount: amount,
+        amount_type: typeof amount,
+        total_methods: allMethods.length,
+        filtered_methods: availableMethods.length
+      },
       success: true,
       methods: availableMethods,
       count: availableMethods.length

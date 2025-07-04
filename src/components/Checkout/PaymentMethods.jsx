@@ -11,26 +11,21 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    // Convert amount to number if it's not already
-    const numericAmount = typeof amount === 'number' ? amount : parsePriceToAmount(amount.toString());
-    
-    if (numericAmount > 0) {
+    if (amount) {
       loadPaymentMethodsData();
-      console.log('PaymentMethods component initialized with amount:', numericAmount, typeof numericAmount);
+      console.log('PaymentMethods component initialized with amount:', amount, typeof amount);
     }
   }, [amount, retryCount]);
 
   const loadPaymentMethodsData = async () => {
-    if (!amount || amount <= 0) return;
+    if (!amount) return;
     
     setLoading(true);
     setError('');
     
     try {
-      // Convert amount to number if it's not already
-      const numericAmount = typeof amount === 'number' ? amount : parsePriceToAmount(amount.toString());
-      console.log('Loading payment methods for amount:', numericAmount, typeof numericAmount);
-      const paymentMethods = await loadPaymentMethods(numericAmount);
+      console.log('Loading payment methods for amount:', amount, typeof amount);
+      const paymentMethods = await loadPaymentMethods(amount);
       console.log('Received payment methods:', paymentMethods);
       setMethods(paymentMethods);
     } catch (err) {
@@ -50,6 +45,9 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       <div className="payment-methods-loading">
         <div className="loading-spinner"></div>
         <p>{t('checkout.payment.loading_methods')}</p>
+        <div className="debug-info">
+          <small>Summa: {amount}€</small>
+        </div>
       </div>
     );
   }
@@ -58,6 +56,9 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     return (
       <div className="payment-methods-error">
         <p>{error}</p>
+        <div className="debug-info">
+          <small>Summa: {amount}€</small>
+        </div>
         <button 
           onClick={handleRetry}
           className="retry-button"
@@ -71,7 +72,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   if (methods.length === 0) {
     return (
       <div className="payment-methods-empty">
-        <p>{t('checkout.payment.no_methods')}</p>
+        <p>{t('checkout.payment.no_methods')} (summa: {amount}€)</p>
       </div>
     );
   }
@@ -255,6 +256,12 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
 
         .retry-button:hover {
           opacity: 0.9;
+        }
+
+        .debug-info {
+          margin-top: 8px;
+          font-size: 0.8rem;
+          color: #666;
         }
 
         @media (max-width: 768px) {

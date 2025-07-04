@@ -12,8 +12,8 @@ import { parsePriceToAmount } from '../maksekeskus-config';
 export async function loadPaymentMethods(amount) {
   try {
     if (!amount || amount <= 0) {
-      console.error('Invalid amount in loadPaymentMethods:', amount);
-      throw new Error(`Amount must be greater than zero (received: ${amount})`);
+      console.error('Invalid amount in loadPaymentMethods:', amount, typeof amount);
+      throw new Error(`Amount must be greater than zero (received: ${amount}, type: ${typeof amount})`);
     }
     
     // Format amount to ensure it uses dot as decimal separator
@@ -25,6 +25,12 @@ export async function loadPaymentMethods(amount) {
     }
     
     console.log(`Requesting payment methods for amount: ${formattedAmount}€ (original type: ${typeof amount})`);
+
+    // Ensure amount is a valid number
+    if (isNaN(parseFloat(formattedAmount))) {
+      console.error('Amount is not a valid number after formatting:', formattedAmount);
+      throw new Error(`Invalid amount format: ${formattedAmount}`);
+    }
     
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
@@ -41,8 +47,8 @@ export async function loadPaymentMethods(amount) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Payment methods API error (${response.status}): ${errorText}`);
-      throw new Error(`Failed to load payment methods (${response.status})`);
+      console.error(`Payment methods API error (${response.status}):`, errorText);
+      throw new Error(`Failed to load payment methods (${response.status}): ${errorText.substring(0, 100)}`);
     }
     
     let data;
@@ -64,7 +70,7 @@ export async function loadPaymentMethods(amount) {
     
     return data.methods || [];
   } catch (error) {
-    console.error('Error loading payment methods:', error.message);
+    console.error('Error loading payment methods:', error.message, error.stack);
     throw error;
   }
 }

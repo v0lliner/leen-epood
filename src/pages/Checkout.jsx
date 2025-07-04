@@ -267,7 +267,7 @@ const Checkout = () => {
                       <div className="form-section">
                         <h3>{t('checkout.payment.title')}</h3>
                         <PaymentMethods 
-                          amount={getTotalPrice().toFixed(2)}
+                          amount={getTotalPrice()}
                           onSelectMethod={setSelectedPaymentMethod}
                           selectedMethod={selectedPaymentMethod}
                         />
