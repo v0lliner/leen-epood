@@ -35,6 +35,15 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        rewrite: (path) => `/server${path}`,
+      },
+    },
+  },
   build: {
     rollupOptions: {
       output: {

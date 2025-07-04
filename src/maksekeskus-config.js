@@ -5,7 +5,7 @@
 // API endpoints
 export const MAKSEKESKUS_API = {
   PAYMENT_METHODS: '/api/payment-methods.php',
-  CREATE_PAYMENT: '/server/api/create-payment.php',
+  CREATE_PAYMENT: '/api/create-payment.php',
 };
 
 // Payment status mapping
