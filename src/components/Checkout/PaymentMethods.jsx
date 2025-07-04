@@ -76,9 +76,9 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       <div className="payment-methods-list">
         {methods.map((method) => (
           <div 
-            key={method.method || method.channel}
-            className={`payment-method ${selectedMethod === (method.method || method.channel) ? 'selected' : ''}`}
-            onClick={() => onSelectMethod(method.method || method.channel)}
+            key={method.channel}
+            className={`payment-method ${selectedMethod === method.channel ? 'selected' : ''}`}
+            onClick={() => onSelectMethod(method.channel)}
           >
             <div className="payment-method-logo">
               {method.logo_url ? (
@@ -98,7 +98,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
               )}
             </div>
             <div className="payment-method-select">
-              <div className={`select-indicator ${selectedMethod === (method.method || method.channel) ? 'active' : ''}`}></div>
+              <div className={`select-indicator ${selectedMethod === method.channel ? 'active' : ''}`}></div>
             </div>
           </div>
         ))}

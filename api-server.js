@@ -207,8 +207,28 @@ function generateReference(orderId) {
 
 // Helper function to verify MAC signature
 function verifyMac(payload, mac) {
-  const calculatedMac = crypto.SHA512(payload + API_SECRET_KEY).toString().toUpperCase();
-  return calculatedMac === mac;
+  try {
+    // Create HMAC using SHA-512 with the API secret key
+    const calculatedMac = crypto.HmacSHA512(payload, API_SECRET_KEY).toString().toUpperCase();
+    
+    // Convert received MAC to uppercase for comparison
+    const receivedMac = mac ? mac.toUpperCase() : '';
+    
+    // Compare the calculated MAC with the received MAC
+    const isValid = calculatedMac === receivedMac;
+    
+    if (!isValid) {
+      console.warn('MAC validation failed:', {
+        calculated: calculatedMac.substring(0, 10) + '...',
+        received: receivedMac.substring(0, 10) + '...'
+      });
+    }
+    
+    return isValid;
+  } catch (error) {
+    console.error('Error verifying MAC:', error);
+    return false;
+  }
 }
 
 // Helper function to create order in database
@@ -282,6 +302,14 @@ async function updateOrderPayment(orderId, transactionId, status, paymentMethod,
       .maybeSingle();
     
     if (existingPayment) {
+      console.log(`Duplicate webhook received for transaction ${transactionId}, order ${orderId}`);
+      
+      // Only update if status is changing to a more final state
+      if (existingPayment.status === 'COMPLETED' && status !== 'COMPLETED') {
+        console.log(`Ignoring status change from COMPLETED to ${status}`);
+        return true;
+      }
+      
       // Update existing payment
       const { error } = await supabase
         .from('order_payments')
@@ -379,15 +407,17 @@ async function markProductsAsSold(orderId) {
 app.get('/api/payment-methods', async (req, res) => {
   try {
     // Get amount from query string
-    let amount = 0;
+    let amount = null;
     
     // Validate amount parameter
     if (req.query.amount) {
       // Parse amount, ensuring it's a valid number
-      amount = parseFloat(req.query.amount.replace(',', '.'));
+      const cleanAmount = req.query.amount.toString().replace(',', '.');
+      amount = parseFloat(cleanAmount);
       
       // Check if parsing resulted in a valid number
       if (isNaN(amount)) {
+        console.error('Invalid amount format:', req.query.amount);
         return res.status(400).json({
           success: false,
           error: 'Invalid amount format'
@@ -396,6 +426,7 @@ app.get('/api/payment-methods', async (req, res) => {
     }
     
     if (amount <= 0) {
+      console.error('Amount must be greater than zero:', amount);
       return res.status(400).json({
         success: false,
         error: 'Amount must be greater than zero'
@@ -415,10 +446,12 @@ app.get('/api/payment-methods', async (req, res) => {
     
     // Filter methods based on amount and country
     const availableMethods = allMethods.filter(method => 
-      method.countries.includes('ee') &&
+      (method.countries && method.countries.includes('ee')) &&
       (!method.min_amount || amount >= method.min_amount) &&
       (!method.max_amount || amount <= method.max_amount)
     );
+    
+    console.log(`Filtered ${allMethods.length} methods to ${availableMethods.length} available methods for amount ${amount}`);
     
     // Return payment methods
     res.status(200).json({
@@ -467,6 +500,8 @@ app.post('/api/create-payment', async (req, res) => {
     // Create order in database
     const order = await createOrder(orderData);
     
+    console.log(`Created order with ID: ${order.id}, order number: ${order.order_number}`);
+    
     // Create transaction in Maksekeskus
     const transaction = await createTransaction({
       ...orderData,
@@ -477,6 +512,7 @@ app.post('/api/create-payment', async (req, res) => {
     res.status(200).json({
       success: true,
       order_id: order.id || null,
+      order_number: order.order_number || null,
       transaction_id: transaction.transaction_id || null,
       payment_url: transaction.payment_url || null
     });
@@ -497,7 +533,7 @@ app.post('/api/create-payment', async (req, res) => {
 app.post('/api/maksekeskus/notification', async (req, res) => {
   try {
     // Always respond with 200 OK first to acknowledge receipt
-    res.status(200).send('OK');
+    res.status(200).json({ status: 'OK' });
     
     // Get raw request body and MAC
     const payload = req.body.json;
@@ -511,7 +547,10 @@ app.post('/api/maksekeskus/notification', async (req, res) => {
     
     // Verify MAC signature
     if (!verifyMac(payload, mac)) {
-      console.error('Invalid MAC signature in notification');
+      console.error('Invalid MAC signature in notification', {
+        payload: payload ? payload.substring(0, 100) + '...' : 'missing',
+        mac: mac ? mac.substring(0, 10) + '...' : 'missing'
+      });
       return;
     }
     
@@ -569,6 +608,7 @@ app.get('/health', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Maksekeskus API server running on http://localhost:${PORT}`);
+  console.log(`Notification URL: ${SITE_URL}/api/maksekeskus/notification`);
   console.log(`Environment: ${TEST_MODE ? 'TEST' : 'PRODUCTION'}`);
   console.log(`API Base URL: ${API_BASE_URL}`);
 });

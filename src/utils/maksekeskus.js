@@ -18,9 +18,17 @@ export async function loadPaymentMethods(amount) {
     // Format amount to ensure it uses dot as decimal separator
     const formattedAmount = amount.toString().replace(',', '.');
     
-    console.log(`Requesting payment methods for amount: ${formattedAmount}`);
+    console.log(`Requesting payment methods for amount: ${formattedAmount}€`);
     
-    const response = await fetch(`/api/payment-methods?amount=${formattedAmount}`);
+    // Add a timestamp to prevent caching issues
+    const timestamp = Date.now();
+    const response = await fetch(`/api/payment-methods?amount=${formattedAmount}&_=${timestamp}`, {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
     
     if (!response.ok) {
       const errorText = await response.text();
@@ -97,7 +105,10 @@ export async function createPayment(orderData, paymentMethod) {
     const response = await fetch('/api/create-payment', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
       body: JSON.stringify(requestData)
     });
