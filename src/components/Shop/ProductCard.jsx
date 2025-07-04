@@ -47,6 +47,8 @@ const ProductCard = ({ product, priority = false }) => {
           src={optimizedImageUrl} 
           alt={product.title} 
           loading={priority ? "eager" : "lazy"} 
+          width="280"
+          height="210"
         />
         {!product.available && (
           <div className="sold-overlay">{t('shop.product.sold_out')}</div>
@@ -82,14 +84,16 @@ const ProductCard = ({ product, priority = false }) => {
           width: 100%;
           margin-bottom: 16px;
           overflow: hidden;
+          aspect-ratio: 4/3;
         }
 
         .product-image img {
           width: 100%;
-          aspect-ratio: 4/3;
+          height: 100%;
           object-fit: cover;
           border-radius: 4px;
           transition: transform 0.3s ease;
+          display: block;
         }
 
         .product-card:hover .product-image img {

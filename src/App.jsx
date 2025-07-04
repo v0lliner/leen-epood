@@ -28,7 +28,6 @@ import AdminAboutPage from './pages/Admin/AboutPage';
 import AdminFAQ from './pages/Admin/FAQ';
 import TehtudToodForm from './pages/Admin/TehtudToodForm';
 import ProductForm from './pages/Admin/ProductForm';
-import './styles/globals.css';
 import './i18n';
 
 function App() {

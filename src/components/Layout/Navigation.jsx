@@ -146,7 +146,7 @@ const Navigation = () => {
           )}
         </div>
 
-        <style>{`
+        <style jsx>{`
           .nav-container {
             position: sticky;
             top: 0;
