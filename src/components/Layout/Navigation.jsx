@@ -146,7 +146,7 @@ const Navigation = () => {
           )}
         </div>
 
-        <style>{`
+        <style jsx>{`
           .nav-container {
             position: sticky;
             top: 0;
@@ -175,6 +175,7 @@ const Navigation = () => {
             color: var(--color-ultramarine);
             font-weight: 600;
             margin: 0;
+            font-display: swap;
           }
 
           .nav-center {
