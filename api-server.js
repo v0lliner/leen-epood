@@ -37,6 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  // Only log query params if they exist and don't contain sensitive data
   if (Object.keys(req.query).length > 0) {
     console.log('Request query params:', req.query);
   }
@@ -757,6 +758,266 @@ app.post('/api/maksekeskus/notification', async (req, res) => {
   } catch (error) {
     console.error('Exception in notification endpoint:', error.message, error.stack);
     // We've already sent a 200 OK response, so just log the error
+  }
+});
+
+// Admin API endpoints
+// Get all orders
+app.get('/api/admin/orders', async (req, res) => {
+  try {
+    // Get orders from database
+    const { data: orders, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (error) {
+      console.error('Error fetching orders:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch orders'
+      });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      orders: orders || []
+    });
+  } catch (error) {
+    console.error('Exception in /api/admin/orders endpoint:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Get order details
+app.get('/api/admin/orders/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get order from database
+    const { data: order, error } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', id)
+      .single();
+    
+    if (error) {
+      console.error('Error fetching order:', error);
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+    
+    // Get order items
+    const { data: items, error: itemsError } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', id);
+    
+    if (itemsError) {
+      console.error('Error fetching order items:', itemsError);
+    }
+    
+    // Get order payments
+    const { data: payments, error: paymentsError } = await supabase
+      .from('order_payments')
+      .select('*')
+      .eq('order_id', id);
+    
+    if (paymentsError) {
+      console.error('Error fetching order payments:', paymentsError);
+    }
+    
+    // Return order with items and payments
+    return res.status(200).json({
+      success: true,
+      order: {
+        ...order,
+        items: items || [],
+        payments: payments || []
+      }
+    });
+  } catch (error) {
+    console.error('Exception in /api/admin/orders/:id endpoint:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Update order status
+app.put('/api/admin/orders/:id/status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    
+    // Validate status
+    const validStatuses = ['PENDING', 'PAID', 'PROCESSING', 'SHIPPED', 'COMPLETED', 'CANCELLED', 'REFUNDED'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid status'
+      });
+    }
+    
+    // Update order status
+    const { data, error } = await supabase
+      .from('orders')
+      .update({ status })
+      .eq('id', id)
+      .select()
+      .single();
+    
+    if (error) {
+      console.error('Error updating order status:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to update order status'
+      });
+    }
+    
+    // If status is CANCELLED or REFUNDED, mark products as available again
+    if (status === 'CANCELLED' || status === 'REFUNDED') {
+      try {
+        // Get order items
+        const { data: items } = await supabase
+          .from('order_items')
+          .select('product_id')
+          .eq('order_id', id);
+        
+        // Update product availability
+        if (items && items.length > 0) {
+          for (const item of items) {
+            await supabase
+              .from('products')
+              .update({ available: true })
+              .eq('id', item.product_id);
+          }
+        }
+      } catch (err) {
+        console.error('Error updating product availability:', err);
+        // Continue even if this fails
+      }
+    }
+    
+    return res.status(200).json({
+      success: true,
+      order: data
+    });
+  } catch (error) {
+    console.error('Exception in /api/admin/orders/:id/status endpoint:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Get order statistics
+app.get('/api/admin/orders/stats', async (req, res) => {
+  try {
+    // Get order counts by status
+    const { data, error } = await supabase
+      .from('orders')
+      .select('status');
+    
+    if (error) {
+      console.error('Error fetching order stats:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to fetch order statistics'
+      });
+    }
+    
+    // Calculate counts
+    const stats = {
+      total: data.length,
+      pending: data.filter(order => order.status === 'PENDING').length,
+      paid: data.filter(order => order.status === 'PAID').length,
+      processing: data.filter(order => order.status === 'PROCESSING').length,
+      shipped: data.filter(order => order.status === 'SHIPPED').length,
+      completed: data.filter(order => order.status === 'COMPLETED').length,
+      cancelled: data.filter(order => order.status === 'CANCELLED').length,
+      refunded: data.filter(order => order.status === 'REFUNDED').length
+    };
+    
+    return res.status(200).json({
+      success: true,
+      stats
+    });
+  } catch (error) {
+    console.error('Exception in /api/admin/orders/stats endpoint:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
+  }
+});
+
+// Get order by transaction ID
+app.get('/api/orders/by-transaction/:transactionId', async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+    
+    // Get payment by transaction ID
+    const { data: payment, error: paymentError } = await supabase
+      .from('order_payments')
+      .select('order_id')
+      .eq('transaction_id', transactionId)
+      .single();
+    
+    if (paymentError) {
+      console.error('Error fetching payment:', paymentError);
+      return res.status(404).json({
+        success: false,
+        error: 'Payment not found'
+      });
+    }
+    
+    // Get order
+    const { data: order, error: orderError } = await supabase
+      .from('orders')
+      .select('*')
+      .eq('id', payment.order_id)
+      .single();
+    
+    if (orderError) {
+      console.error('Error fetching order:', orderError);
+      return res.status(404).json({
+        success: false,
+        error: 'Order not found'
+      });
+    }
+    
+    // Get order items
+    const { data: items, error: itemsError } = await supabase
+      .from('order_items')
+      .select('*')
+      .eq('order_id', payment.order_id);
+    
+    if (itemsError) {
+      console.error('Error fetching order items:', itemsError);
+    }
+    
+    // Return order with items
+    return res.status(200).json({
+      success: true,
+      order: {
+        ...order,
+        items: items || []
+      }
+    });
+  } catch (error) {
+    console.error('Exception in /api/orders/by-transaction/:transactionId endpoint:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Internal server error'
+    });
   }
 });
 

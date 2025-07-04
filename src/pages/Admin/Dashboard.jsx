@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useTranslation } from 'react-i18next'
+import { useEffect, useState } from 'react'
 import AdminLayout from '../../components/Admin/AdminLayout'
-import { getUserSubscription, getUserOrders } from '../../utils/stripe'
 import { productService } from '../../utils/supabase/products'
 import { portfolioItemService } from '../../utils/supabase/portfolioItems'
 import { faqService } from '../../utils/supabase/faq'
@@ -11,8 +11,14 @@ import { faqService } from '../../utils/supabase/faq'
 const AdminDashboard = () => {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const [subscription, setSubscription] = useState(null)
-  const [orders, setOrders] = useState([])
+  const [orderStats, setOrderStats] = useState({
+    total: 0,
+    pending: 0,
+    paid: 0,
+    processing: 0,
+    shipped: 0,
+    completed: 0
+  })
   const [stats, setStats] = useState({
     products: 0,
     availableProducts: 0,
@@ -32,6 +38,20 @@ const AdminDashboard = () => {
     
     try {
       console.log('🔄 Dashboard: Loading data...')
+
+      // Load order statistics
+      try {
+        const orderResponse = await fetch('/api/admin/orders/stats')
+        if (orderResponse.ok) {
+          const orderData = await orderResponse.json()
+          if (orderData.success) {
+            setOrderStats(orderData.stats)
+            console.log('📊 Dashboard: Order stats loaded:', orderData.stats)
+          }
+        }
+      } catch (orderError) {
+        console.error('Error loading order stats:', orderError)
+      }
       
       // Load products first
       const productsResult = await productService.getProducts()
@@ -48,33 +68,17 @@ const AdminDashboard = () => {
 
       // Load other data in parallel
       const [
-        subResult, 
-        ordersResult, 
         portfolioResult,
         faqResult
       ] = await Promise.all([
-        getUserSubscription().catch(err => ({ error: err, data: null })),
-        getUserOrders().catch(err => ({ error: err, data: [] })),
         portfolioItemService.getPortfolioItems().catch(err => ({ error: err, data: [] })),
         faqService.getFAQItems('et').catch(err => ({ error: err, data: [] }))
       ])
 
       console.log('📊 Dashboard: All data loaded:', {
-        subscription: subResult,
-        orders: ordersResult,
         portfolio: portfolioResult,
         faq: faqResult
       })
-
-      // Subscription data
-      if (!subResult.error && subResult.data) {
-        setSubscription(subResult.data)
-      }
-
-      // Orders data
-      if (!ordersResult.error && ordersResult.data) {
-        setOrders(ordersResult.data)
-      }
 
       // Statistics from real data
       const portfolioItems = portfolioResult.data || []
@@ -100,22 +104,7 @@ const AdminDashboard = () => {
 
   const getRecentActivity = () => {
     const activities = []
-    
-    // Recent orders
-    if (orders && orders.length > 0) {
-      orders.slice(0, 3).forEach(order => {
-        activities.push({
-          type: 'order',
-          title: `Uus tellimus #${order.order_id}`,
-          description: `${(order.amount_total / 100).toFixed(2)} ${order.currency.toUpperCase()}`,
-          date: new Date(order.order_date),
-          icon: '📋'
-        })
-      })
-    }
-
-    // Sort by date and return latest 5
-    return activities.sort((a, b) => b.date - a.date).slice(0, 5)
+    return activities
   }
 
   const getQuickStats = () => [
@@ -137,8 +126,8 @@ const AdminDashboard = () => {
     },
     {
       title: 'Tellimused',
-      value: orders.length.toString(),
-      subtitle: 'kokku tellimusi',
+      value: orderStats.total.toString(),
+      subtitle: `${orderStats.paid} makstud`,
       icon: '📋',
       link: '/admin/orders',
       color: 'green'

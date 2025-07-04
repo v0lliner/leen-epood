@@ -42,6 +42,11 @@ const AdminLayout = ({ children }) => {
       icon: '❓'
     },
     {
+      name: t('admin.nav.orders'),
+      href: '/admin/orders',
+      icon: '📋'
+    },
+    {
       name: 'Kategooriad',
       href: '/admin/categories',
       icon: '📁'

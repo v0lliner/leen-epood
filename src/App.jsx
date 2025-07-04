@@ -27,6 +27,7 @@ import AdminProducts from './pages/Admin/Products';
 import AdminCategories from './pages/Admin/Categories';
 import AdminTehtudTood from './pages/Admin/TehtudTood';
 import AdminAboutPage from './pages/Admin/AboutPage';
+import AdminOrders from './pages/Admin/Orders';
 import AdminFAQ from './pages/Admin/FAQ';
 import TehtudToodForm from './pages/Admin/TehtudToodForm';
 import ProductForm from './pages/Admin/ProductForm';
@@ -194,6 +195,11 @@ function App() {
                 <Route path="/admin/faq" element={
                   <ProtectedRoute>
                     <AdminFAQ />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/orders" element={
+                  <ProtectedRoute>
+                    <AdminOrders />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/minu-lemmikud" element={

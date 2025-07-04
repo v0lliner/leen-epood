@@ -13,15 +13,50 @@ const CheckoutSuccess = () => {
     // Get transaction ID from URL
     const urlParams = new URLSearchParams(window.location.search);
     const transactionId = urlParams.get('transaction');
-    
-    if (transactionId) {
-      setOrderInfo({
-        transaction_id: transactionId,
-        date: new Date().toLocaleDateString('et-EE')
-      });
-    }
 
-    setLoading(false);
+    if (transactionId) {
+      // Fetch order details from API
+      const fetchOrderDetails = async () => {
+        try {
+          const response = await fetch(`/api/orders/by-transaction/${transactionId}`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.order) {
+              setOrderInfo({
+                transaction_id: transactionId,
+                order_number: data.order.order_number,
+                total_amount: data.order.total_amount,
+                currency: data.order.currency,
+                date: new Date(data.order.created_at).toLocaleDateString('et-EE'),
+                items: data.order.items || []
+              });
+            } else {
+              setOrderInfo({
+                transaction_id: transactionId,
+                date: new Date().toLocaleDateString('et-EE')
+              });
+            }
+          } else {
+            setOrderInfo({
+              transaction_id: transactionId,
+              date: new Date().toLocaleDateString('et-EE')
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching order details:', error);
+          setOrderInfo({
+            transaction_id: transactionId,
+            date: new Date().toLocaleDateString('et-EE')
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchOrderDetails();
+    } else {
+      setLoading(false);
+    }
   }, []);
 
   const scrollToTop = () => {
@@ -49,10 +84,29 @@ const CheckoutSuccess = () => {
                   <div className="order-confirmation">
                     <h3>Tellimuse kinnitamine</h3>
                     <div className="order-details">
-                      <p><strong>Makse ID:</strong> {orderInfo.transaction_id}</p>
+                      {orderInfo.order_number && (
+                        <p><strong>Tellimuse nr:</strong> {orderInfo.order_number}</p>
+                      )}
+                      <p><strong>Makse ID:</strong> {orderInfo.transaction_id || '-'}</p>
+                      {orderInfo.total_amount && (
+                        <p><strong>Summa:</strong> {orderInfo.total_amount} {orderInfo.currency || 'EUR'}</p>
+                      )}
                       <p><strong>Kuupäev:</strong> {orderInfo.date}</p>
                       <p><strong>Staatus:</strong> <span className="status-completed">Makstud</span></p>
                     </div>
+                    
+                    {orderInfo.items && orderInfo.items.length > 0 && (
+                      <div className="order-items">
+                        <h4>Tellitud tooted:</h4>
+                        <ul className="items-list">
+                          {orderInfo.items.map((item, index) => (
+                            <li key={index}>
+                              {item.product_title} - {item.price} € (x{item.quantity})
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="order-info">
@@ -155,6 +209,35 @@ const CheckoutSuccess = () => {
           font-size: 1rem;
         }
         
+        .order-items {
+          margin-top: 24px;
+          padding-top: 16px;
+          border-top: 1px solid #eee;
+        }
+
+        .order-items h4 {
+          font-family: var(--font-heading);
+          color: var(--color-text);
+          margin-bottom: 12px;
+          font-size: 1rem;
+        }
+
+        .items-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .items-list li {
+          padding: 8px 0;
+          border-bottom: 1px solid #f0f0f0;
+          font-size: 0.9rem;
+        }
+
+        .items-list li:last-child {
+          border-bottom: none;
+        }
+
         .status-completed {
           color: #28a745;
           font-weight: 500;
