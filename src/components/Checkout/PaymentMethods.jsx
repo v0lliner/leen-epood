@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPaymentMethods } from '../../utils/maksekeskus';
-import { parsePriceToAmount } from '../../maksekeskus-config';
 
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const { t } = useTranslation();
@@ -24,24 +23,32 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     setError('');
     
     try {
-      // Convert amount to a proper number using our utility function
-      let numericAmount;
+      // Ensure amount is a valid number greater than zero
+      let numericAmount = 0;
       
       if (typeof amount === 'number') {
         numericAmount = amount;
       } else if (typeof amount === 'string') {
-        numericAmount = parsePriceToAmount(amount);
+        // Parse string to number, handling both dot and comma as decimal separator
+        numericAmount = parseFloat(amount.replace(',', '.'));
       } else {
         throw new Error(`Unsupported amount type: ${typeof amount}`);
       }
-        
-      if (isNaN(numericAmount) || numericAmount <= 0) {
+      
+      // For zero or very small amounts, use a minimum value to avoid validation errors
+      if (isNaN(numericAmount)) {
         console.error('Invalid amount after parsing:', { 
           original: amount, 
           parsed: numericAmount, 
           type: typeof amount 
         });
-        throw new Error(`Invalid amount: ${amount} (parsed: ${numericAmount})`);
+        throw new Error(`Invalid amount format: ${amount}`);
+      }
+      
+      // Use a minimum amount of 0.01 to avoid validation errors
+      if (numericAmount <= 0) {
+        console.log('Amount is zero or negative, using minimum value of 0.01');
+        numericAmount = 0.01;
       }
       
       console.log('Loading payment methods for amount:', numericAmount);

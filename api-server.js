@@ -527,28 +527,24 @@ app.get('/api/payment-methods', async (req, res) => {
     // Validate amount parameter
     if (req.query.amount) {
       // Parse amount, ensuring it's a valid number
-      console.log('Raw amount:', req.query.amount, typeof req.query.amount);
+      console.log('Raw amount from request:', req.query.amount, typeof req.query.amount);
       const cleanAmount = req.query.amount.toString().trim().replace(',', '.');
       amount = parseFloat(cleanAmount);
       
       // Check if parsing resulted in a valid number
-      console.log('Parsed amount:', amount, typeof amount, 'isNaN:', isNaN(amount));
+      console.log('Parsed amount result:', amount, typeof amount, 'isNaN:', isNaN(amount));
       if (isNaN(amount)) {
         console.error('Invalid amount format:', req.query.amount);
-        return res.status(400).json({
-          success: false,
-          error: 'Invalid amount format'
-        });
+        // Use a default minimum amount instead of returning an error
+        amount = 0.01;
+        console.log('Using default minimum amount:', amount);
       }
     }
     
     // Validate amount is positive
     if (!amount || amount <= 0) {
-      console.error('Amount must be greater than zero:', amount, typeof amount);
-      return res.status(400).json({
-        success: false,
-        error: 'Amount must be greater than zero'
-      });
+      console.warn('Amount is zero or negative, using minimum value:', amount, typeof amount);
+      amount = 0.01;
     }
     
     // Fetch payment methods

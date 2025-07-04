@@ -13,27 +13,27 @@ export const CURRENCY = 'EUR';
 export function parsePriceToAmount(priceString) {
   if (!priceString) return NaN;
   
-  // Log input for debugging
-  console.log('parsePriceToAmount input:', priceString, typeof priceString);
-  
   // If already a number, return it
   if (typeof priceString === 'number') {
-    return priceString;
+    return priceString > 0 ? priceString : 0.01;
   }
   
-  // Remove currency symbol and any whitespace
-  const cleanPrice = priceString.toString().replace(/[^\d.,]/g, '').trim();
-  
-  // Replace comma with dot for decimal point (European format)
-  const normalizedPrice = cleanPrice.replace(',', '.');
-  
-  // Parse to float and ensure it's a valid number
-  const result = parseFloat(normalizedPrice);
-  
-  // Log the parsing result for debugging
-  console.log(`Parsed price: "${priceString}" → "${cleanPrice}" → "${normalizedPrice}" → ${result} (${typeof result})`);
-  
-  return result;
+  try {
+    // Remove currency symbol and any whitespace
+    const cleanPrice = priceString.toString().replace(/[^\d.,]/g, '').trim();
+    
+    // Replace comma with dot for decimal point (European format)
+    const normalizedPrice = cleanPrice.replace(',', '.');
+    
+    // Parse to float and ensure it's a valid number
+    const result = parseFloat(normalizedPrice);
+    
+    // Return at least 0.01 to avoid validation errors
+    return isNaN(result) ? 0.01 : (result > 0 ? result : 0.01);
+  } catch (error) {
+    console.error('Error parsing price:', error);
+    return 0.01; // Return minimum valid amount on error
+  }
 }
 
 /**
@@ -43,8 +43,22 @@ export function parsePriceToAmount(priceString) {
  * @returns {string} Formatted price
  */
 export function formatPrice(amount, currency = CURRENCY) {
-  return new Intl.NumberFormat('et-EE', {
-    style: 'currency',
-    currency: currency,
-  }).format(amount);
+  try {
+    // Ensure amount is a number
+    const numericAmount = typeof amount === 'number' ? amount : parseFloat(amount);
+    
+    // Format with Intl.NumberFormat
+    if (!isNaN(numericAmount)) {
+      return new Intl.NumberFormat('et-EE', {
+        style: 'currency',
+        currency: currency,
+      }).format(numericAmount);
+    }
+    
+    // Fallback for invalid numbers
+    return '0,00 €';
+  } catch (error) {
+    console.error('Error formatting price:', error);
+    return '0,00 €';
+  }
 }

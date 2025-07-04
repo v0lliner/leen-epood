@@ -6,6 +6,7 @@ import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { createPayment } from '../utils/maksekeskus';
 import { parsePriceToAmount } from '../maksekeskus-config';
+import { formatPrice } from '../maksekeskus-config';
 import PaymentMethods from '../components/Checkout/PaymentMethods';
 
 const Checkout = () => {
@@ -18,6 +19,7 @@ const Checkout = () => {
   const [step, setStep] = useState(1); // 1: Review, 2: Shipping
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [totalPrice, setTotalPrice] = useState('0.00');
+  const [formattedTotalPrice, setFormattedTotalPrice] = useState('0.00');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -83,7 +85,9 @@ const Checkout = () => {
 
   // Update total price whenever cart items change
   useEffect(() => {
-    setTotalPrice(getTotalPrice().toFixed(2));
+    const total = getTotalPrice();
+    setTotalPrice(total.toFixed(2));
+    setFormattedTotalPrice(formatPrice(total));
   }, [items, getTotalPrice]);
 
   const handleNextStep = () => {
@@ -287,7 +291,7 @@ const Checkout = () => {
                       <div className="form-section">
                         <h3>{t('checkout.payment.title')}</h3>
                         <PaymentMethods 
-                          amount={totalPrice}
+                          amount={parseFloat(totalPrice) || 0.01}
                           onSelectMethod={setSelectedPaymentMethod}
                           selectedMethod={selectedPaymentMethod}
                         />
@@ -527,7 +531,7 @@ const Checkout = () => {
                   
                   <div className="summary-total">
                     <span>Kokku</span>
-                    <span>{totalPrice || '0.00'}€</span>
+                    <span>{formattedTotalPrice}</span>
                   </div>
                   
                   {step === 1 && (

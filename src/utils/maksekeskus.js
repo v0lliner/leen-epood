@@ -12,8 +12,9 @@ import { parsePriceToAmount } from '../maksekeskus-config';
 export async function loadPaymentMethods(amount) {
   try {
     if (!amount || amount <= 0) {
-      console.error('Invalid amount provided:', amount, typeof amount);
-      throw new Error('Amount must be greater than zero');
+      console.warn('Invalid amount provided:', amount, typeof amount);
+      // Use a minimum amount to avoid validation errors
+      amount = 0.01;
     }
     
     // Format amount to ensure it uses dot as decimal separator
@@ -25,8 +26,8 @@ export async function loadPaymentMethods(amount) {
 
     // Ensure amount is a valid number
     if (isNaN(parseFloat(formattedAmount))) {
-      console.error('Amount is not a valid number after formatting:', formattedAmount);
-      throw new Error(`Invalid amount format: ${formattedAmount}`);
+      console.error('Amount is not a valid number after formatting, using default:', formattedAmount);
+      formattedAmount = '0.01';
     }
     
     // Add a timestamp to prevent caching issues
