@@ -24,8 +24,8 @@ const Muugitingimused = () => {
                 <h3>1.1. Ettevõtte andmed</h3>
                 <p>
                   <strong>Ettevõtte nimi:</strong> PopLeen OÜ<br />
-                  <strong>Registrikood:</strong> 12345678<br />
-                  <strong>KMKR:</strong> EE123456789<br />
+                  <strong>Registrikood:</strong> 16501388<br />
+                  <strong>KMKR:</strong> EE102458454<br />
                   <strong>Aadress:</strong> Jõeääre, Märjamaa vald, Rapla maakond, 78201<br />
                   <strong>E-post:</strong> leen@leen.ee<br />
                   <strong>Telefon:</strong> +372 5380 1413
