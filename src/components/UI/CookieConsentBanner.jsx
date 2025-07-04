@@ -198,7 +198,7 @@ const CookieConsentBanner = () => {
           bottom: 24px;
           left: 24px;
           right: 24px;
-          max-width: 500px;
+          max-width: 380px;
           margin: 0 auto;
           background-color: white;
           border-radius: 8px;
