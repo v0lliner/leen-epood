@@ -12,7 +12,7 @@ import { parsePriceToAmount } from '../maksekeskus-config';
 export async function loadPaymentMethods(amount) {
   try {
     if (!amount || amount <= 0) {
-      console.warn('Invalid amount provided:', amount, typeof amount);
+      console.warn('Invalid amount provided:', amount);
       // Use a minimum amount to avoid validation errors
       amount = 0.01;
     }
@@ -29,7 +29,9 @@ export async function loadPaymentMethods(amount) {
     
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
-    const url = `/api/payment-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
+    // Use the Supabase Edge Function instead of the Express API
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const url = `${supabaseUrl}/functions/v1/maksekeskus-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
     
     const response = await fetch(url, {
       headers: {
@@ -99,11 +101,12 @@ export async function createPayment(orderData, paymentMethod) {
     console.log('Creating payment with data:', {
       total: requestData.orderData.total,
       items: requestData.orderData.items.length,
-      paymentMethod: requestData.paymentMethod
+      paymentMethod
     });
     
-    // Send request to API
-    const response = await fetch(`/api/create-payment`, {
+    // Use the Supabase Edge Function instead of the Express API
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+    const response = await fetch(`${supabaseUrl}/functions/v1/maksekeskus-payment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -126,10 +129,7 @@ export async function createPayment(orderData, paymentMethod) {
       throw new Error(data.error || 'Failed to create payment');
     }
     
-    console.log('Payment created successfully:', {
-      transaction_id: data.transaction_id,
-      payment_url: data.payment_url ? 'Available' : 'Missing'
-    });
+    console.log('Payment created successfully');
     
     return {
       success: true,

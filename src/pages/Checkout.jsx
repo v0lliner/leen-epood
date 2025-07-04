@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
-import FadeInSection from '../components/UI/FadeInSection'; 
+import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { createPayment } from '../utils/maksekeskus';
 import { parsePriceToAmount } from '../maksekeskus-config';
@@ -102,10 +102,6 @@ const Checkout = () => {
     setIsProcessing(true);
     setError('');
 
-    // Get total price as a properly formatted number
-    const numericTotal = parseFloat(totalPrice);
-    console.log('Checkout total price:', numericTotal);
-
     try {
       // Create payment
       const { success, payment_url, error: paymentError } = await createPayment(
@@ -130,10 +126,7 @@ const Checkout = () => {
       if (payment_url) {
         // Clear cart before redirecting
         await clearCart();
-        
-        // Show processing message
-        setIsProcessing(true);
-        
+                
         // Redirect after a short delay to ensure cart is cleared
         setTimeout(() => {
           window.location.href = payment_url;
