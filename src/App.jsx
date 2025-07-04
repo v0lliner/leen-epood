@@ -15,6 +15,8 @@ import Checkout from './pages/Checkout';
 import CheckoutSuccess from './pages/CheckoutSuccess';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
+import Muugitingimused from './pages/Muugitingimused';
+import Privaatsuspoliitika from './pages/Privaatsuspoliitika';
 import NotFound from './pages/NotFound';
 import AdminLogin from './pages/Admin/Login';
 import AdminDashboard from './pages/Admin/Dashboard';
@@ -119,6 +121,20 @@ function App() {
                   <div className="app">
                     <Navigation />
                     <FAQ />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/muugitingimused" element={
+                  <div className="app">
+                    <Navigation />
+                    <Muugitingimused />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/privaatsuspoliitika" element={
+                  <div className="app">
+                    <Navigation />
+                    <Privaatsuspoliitika />
                     <Footer />
                   </div>
                 } />

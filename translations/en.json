@@ -16,7 +16,9 @@
     "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
     "facebook": "Facebook",
     "instagram": "Instagram",
-    "made_by": "Made by"
+    "made_by": "Made by",
+    "terms": "Terms of Sale",
+    "privacy": "Privacy Policy"
   },
   "hero": {
     "heading": "Leen Väränen",
@@ -264,6 +266,11 @@
       "empty_cart": "Cart is empty",
       "session_failed": "Failed to create checkout session",
       "network_error": "Network connection error"
+    },
+    "terms": {
+      "agree": "I agree to the",
+      "terms_link": "terms of sale",
+      "required": "You must agree to the terms of sale to complete your order"
     }
   },
   "contact": {
@@ -543,6 +550,14 @@
     "404": {
       "title": "Page not found - Leen Väränen",
       "description": "The requested page was not found. Return to the homepage."
+    },
+    "terms": {
+      "title": "Terms of Sale - Leen Väränen",
+      "description": "Leen Väränen e-shop terms of sale, shipping information and return policy."
+    },
+    "privacy": {
+      "title": "Privacy Policy - Leen Väränen",
+      "description": "Leen Väränen e-shop privacy policy and principles of personal data processing."
     }
   }
 }

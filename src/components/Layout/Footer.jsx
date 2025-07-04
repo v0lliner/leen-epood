@@ -29,6 +29,12 @@ const Footer = () => {
           <a href="https://www.instagram.com/leen.tailor/" target="_blank" rel="noopener noreferrer">{t('footer.instagram')}</a>
         </div>
         
+        <div className="legal-links">
+          <Link to="/muugitingimused" onClick={scrollToTop}>{t('footer.terms')}</Link>
+          <span className="separator">·</span>
+          <Link to="/privaatsuspoliitika" onClick={scrollToTop}>{t('footer.privacy')}</Link>
+        </div>
+        
         <div className="credits">
           {t('footer.made_by')} <a href="https://myralum.com/" target="_blank" rel="noopener noreferrer">Myralum</a>
         </div>
@@ -94,6 +100,22 @@ const Footer = () => {
         .separator {
           margin: 0 8px;
           color: #666;
+        }
+        
+        .legal-links {
+          margin-bottom: 16px;
+          font-size: 0.9rem;
+        }
+        
+        .legal-links a {
+          color: #666;
+          text-decoration: none;
+          transition: opacity 0.2s ease;
+        }
+        
+        .legal-links a:hover {
+          opacity: 0.7;
+          text-decoration: underline;
         }
         
         .credits {

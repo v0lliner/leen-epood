@@ -16,7 +16,9 @@
     "company_info": "PopLeen OÜ · +372 5380 1413 · leen@leen.ee",
     "facebook": "Facebook",
     "instagram": "Instagram",
-    "made_by": "Made by"
+    "made_by": "Made by",
+    "terms": "Müügitingimused",
+    "privacy": "Privaatsuspoliitika"
   },
   "hero": {
     "heading": "Leen Väränen",
@@ -264,6 +266,11 @@
       "empty_cart": "Ostukorv on tühi",
       "session_failed": "Maksesessiooni loomine ebaõnnestus",
       "network_error": "Võrguühenduse viga"
+    },
+    "terms": {
+      "agree": "Nõustun",
+      "terms_link": "müügitingimustega",
+      "required": "Müügitingimustega nõustumine on vajalik tellimuse vormistamiseks"
     }
   },
   "contact": {
@@ -543,6 +550,14 @@
     "404": {
       "title": "Lehekülge ei leitud - Leen Väränen",
       "description": "Otsitud lehekülge ei leitud. Minge tagasi avalehele."
+    },
+    "terms": {
+      "title": "Müügitingimused - Leen Väränen",
+      "description": "Leen Väränen e-poe müügitingimused, tarneinfo ja tagastuspoliitika."
+    },
+    "privacy": {
+      "title": "Privaatsuspoliitika - Leen Väränen",
+      "description": "Leen Väränen e-poe privaatsuspoliitika ja isikuandmete töötlemise põhimõtted."
     }
   }
 }

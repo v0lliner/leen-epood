@@ -25,6 +25,8 @@ const Checkout = () => {
     country: 'Estonia',
     notes: ''
   });
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [termsError, setTermsError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -35,6 +37,13 @@ const Checkout = () => {
     
     // Clear error when user types
     if (error) setError('');
+  };
+
+  const handleTermsChange = (e) => {
+    setTermsAgreed(e.target.checked);
+    if (e.target.checked) {
+      setTermsError('');
+    }
   };
 
   const validateForm = () => {
@@ -51,6 +60,12 @@ const Checkout = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setError('Palun sisestage korrektne e-posti aadress');
+      return false;
+    }
+
+    // Check terms agreement
+    if (!termsAgreed) {
+      setTermsError(t('checkout.terms.required'));
       return false;
     }
     
@@ -78,6 +93,11 @@ const Checkout = () => {
   const handleCheckout = async () => {
     if (items.length === 0) {
       setError('Ostukorv on tühi');
+      return;
+    }
+
+    if (!termsAgreed) {
+      setTermsError(t('checkout.terms.required'));
       return;
     }
 
@@ -398,6 +418,29 @@ const Checkout = () => {
                             </div>
                           </div>
                         </div>
+
+                        <div className="form-section">
+                          <div className="form-row">
+                            <div className="form-group terms-checkbox-group">
+                              <label className="terms-checkbox-label">
+                                <input
+                                  type="checkbox"
+                                  checked={termsAgreed}
+                                  onChange={handleTermsChange}
+                                  className="terms-checkbox"
+                                />
+                                <span className="terms-text">
+                                  {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
+                                </span>
+                              </label>
+                              {termsError && (
+                                <div className="terms-error">
+                                  {termsError}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
                       </form>
                       
                       <div className="checkout-actions">
@@ -473,7 +516,7 @@ const Checkout = () => {
                   <div className="checkout-info">
                     <div className="info-item">
                       <div className="info-icon">🔒</div>
-                      <p>Turvaline makse Stripe'i kaudu</p>
+                      <p>Turvaline makse Maksekeskuse kaudu</p>
                     </div>
                     <div className="info-item">
                       <div className="info-icon">🚚</div>
@@ -906,6 +949,45 @@ const Checkout = () => {
           border: 1px solid #fcc;
           margin-bottom: 24px;
           font-size: 0.9rem;
+        }
+
+        .terms-checkbox-group {
+          margin-top: 8px;
+        }
+
+        .terms-checkbox-label {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          cursor: pointer;
+        }
+
+        .terms-checkbox {
+          margin-top: 3px;
+          width: 18px;
+          height: 18px;
+          accent-color: var(--color-ultramarine);
+        }
+
+        .terms-text {
+          font-size: 0.95rem;
+          line-height: 1.4;
+        }
+
+        .terms-link {
+          color: var(--color-ultramarine);
+          text-decoration: underline;
+          transition: opacity 0.2s ease;
+        }
+
+        .terms-link:hover {
+          opacity: 0.8;
+        }
+
+        .terms-error {
+          color: #c33;
+          font-size: 0.85rem;
+          margin-top: 8px;
         }
 
         @media (max-width: 1024px) {
