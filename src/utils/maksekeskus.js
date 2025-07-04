@@ -5,6 +5,36 @@
 import { parsePriceToAmount } from '../maksekeskus-config';
 
 /**
+ * Load available payment methods
+ * @param {number} amount - Order amount
+ * @returns {Promise<Array>} Payment methods
+ */
+export async function loadPaymentMethods(amount) {
+  try {
+    if (!amount || amount <= 0) {
+      throw new Error('Invalid amount');
+    }
+    
+    const response = await fetch(`/api/payment-methods?amount=${amount}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to load payment methods');
+    }
+    
+    return data.methods || [];
+  } catch (error) {
+    console.error('Error loading payment methods:', error);
+    throw error;
+  }
+}
+
+/**
  * Create a payment transaction
  * @param {Object} orderData - Order data
  * @param {string} paymentMethod - Selected payment method
@@ -23,14 +53,39 @@ export async function createPayment(orderData, paymentMethod) {
     // Calculate total
     const total = items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0);
     
-    // For now, we'll simulate a successful payment
-    // In a real implementation, this would call the backend API
+    // Prepare request data
+    const requestData = {
+      orderData: {
+        ...orderData,
+        items,
+        total
+      },
+      paymentMethod
+    };
     
-    // Simulate a successful payment
+    // Send request to API
+    const response = await fetch('/api/create-payment', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(requestData)
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to create payment');
+    }
+    
     return {
       success: true,
-      payment_url: `/makse/korras?transaction=MOCK_${Date.now()}`,
-      transaction_id: `MOCK_${Date.now()}`,
+      payment_url: data.payment_url,
+      transaction_id: data.transaction_id,
       error: null
     };
   } catch (error) {

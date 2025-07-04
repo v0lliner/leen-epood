@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { loadPaymentMethods } from '../../utils/maksekeskus';
 
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const { t } = useTranslation();
@@ -8,60 +9,24 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    loadPaymentMethods();
+    if (amount > 0) {
+      loadPaymentMethodsData();
+    }
   }, [amount]);
 
-  const loadPaymentMethods = async () => {
+  const loadPaymentMethodsData = async () => {
     if (!amount || amount <= 0) return;
     
     setLoading(true);
     setError('');
     
     try {
-      // Simulate payment methods for now
-      const mockMethods = [
-        {
-          method: 'swedbank',
-          name: 'Swedbank',
-          countries: ['EE'],
-          min_amount: 0.01,
-          max_amount: 10000
-        },
-        {
-          method: 'seb',
-          name: 'SEB',
-          countries: ['EE'],
-          min_amount: 0.01,
-          max_amount: 10000
-        },
-        {
-          method: 'luminor',
-          name: 'Luminor',
-          countries: ['EE'],
-          min_amount: 0.01,
-          max_amount: 10000
-        },
-        {
-          method: 'lhv',
-          name: 'LHV',
-          countries: ['EE'],
-          min_amount: 0.01,
-          max_amount: 10000
-        },
-        {
-          method: 'coop',
-          name: 'Coop Pank',
-          countries: ['EE'],
-          min_amount: 0.01,
-          max_amount: 10000
-        }
-      ];
-      
-      setMethods(mockMethods);
-      setLoading(false);
+      const paymentMethods = await loadPaymentMethods(amount);
+      setMethods(paymentMethods);
     } catch (err) {
       console.error('Failed to load payment methods:', err);
       setError(t('checkout.payment.methods_error'));
+    } finally {
       setLoading(false);
     }
   };
@@ -80,7 +45,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       <div className="payment-methods-error">
         <p>{error}</p>
         <button 
-          onClick={loadPaymentMethods}
+          onClick={loadPaymentMethodsData}
           className="retry-button"
         >
           {t('checkout.payment.retry')}
