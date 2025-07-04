@@ -34,7 +34,7 @@ export async function loadPaymentMethods(amount) {
     const response = await fetch(url, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
+        'Pragma': 'no-cache',
       }
     });
     
@@ -108,7 +108,8 @@ export async function createPayment(orderData, paymentMethod) {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
+        'Pragma': 'no-cache',
+        'Expires': '0'
       },
       body: JSON.stringify(requestData)
     });
