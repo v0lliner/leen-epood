@@ -5,7 +5,7 @@ import LanguageToggle from './LanguageToggle';
 import CartSummary from '../Shop/CartSummary';
 import { useCart } from '../../context/CartContext';
 
-const Navigation = () => {
+const Navigation = () => { 
   const { t } = useTranslation();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -43,7 +43,7 @@ const Navigation = () => {
 
   return (
     <>
-      <nav className="nav-container">
+      <nav className={`nav-container ${isMenuOpen ? 'menu-expanded' : ''}`}>
         <div className="nav-wrapper">
           <div className="nav-inner">
             <Link to="/" className="nav-logo" onClick={scrollToTop}>
@@ -149,38 +149,39 @@ const Navigation = () => {
         <style jsx>{`
           .nav-container {
             position: sticky;
-            top: 0;
+            top: 0; 
             background-color: var(--color-background);
             border-bottom: 1px solid #f0f0f0;
             z-index: 100;
-            flex-shrink: 0;
-            width: 100%;
-            will-change: transform;
-            transition: transform 0.3s ease;
-            height: var(--header-height);
+            transition: height 0.3s ease;
+          }
+          
+          .nav-container.menu-expanded {
+            height: auto;
           }
 
           .nav-wrapper {
             position: relative;
             width: 100%;
+            background-color: var(--color-background);
           }
 
           .nav-inner {
             max-width: var(--max-width);
             margin: 0 auto;
-            padding: 24px var(--padding-inline);
+            padding: 16px var(--padding-inline);
             display: grid;
             grid-template-columns: 1fr auto 1fr;
             align-items: center;
             gap: 48px;
+            min-height: var(--header-height);
           }
 
           .nav-logo h3 {
             font-family: var(--font-heading);
             color: var(--color-ultramarine);
             font-weight: 600;
-            margin: 0;
-            font-display: swap;
+            margin: 0; 
           }
 
           .nav-center {
@@ -306,6 +307,7 @@ const Navigation = () => {
           .nav-mobile-menu {
             border-top: 1px solid #f0f0f0;
             padding: 24px var(--padding-inline);
+            background-color: var(--color-background);
             max-width: var(--max-width);
             margin: 0 auto;
           }
@@ -380,9 +382,6 @@ const Navigation = () => {
               display: flex;
             }
 
-            .main-content {
-              margin-left: 0;
-            }
           }
         `}</style>
       </nav>
