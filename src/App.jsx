@@ -41,21 +41,21 @@ function App() {
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Home />
                     <Footer />
                   </div>
                 } />
                 <Route path="/minust" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <About />
                     <Footer />
                   </div>
                 } />
                 <Route path="/minu-lemmikud" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Portfolio />
                     <Footer />
@@ -63,77 +63,77 @@ function App() {
                 } />
                 {/* Keep old routes for backward compatibility */}
                 <Route path="/parimad-palad" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Portfolio />
                     <Footer />
                   </div>
                 } />
                 <Route path="/tehtud-tood" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Portfolio />
                     <Footer />
                   </div>
                 } />
                 <Route path="/portfoolio" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Portfolio />
                     <Footer />
                   </div>
                 } />
                 <Route path="/epood" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Shop />
                     <Footer />
                   </div>
                 } />
                 <Route path="/epood/toode/:slug" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <ProductDetail />
                     <Footer />
                   </div>
                 } />
                 <Route path="/checkout" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Checkout />
                     <Footer />
                   </div>
                 } />
                 <Route path="/checkout/success" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <CheckoutSuccess />
                     <Footer />
                   </div>
                 } />
                 <Route path="/kontakt" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Contact />
                     <Footer />
                   </div>
                 } />
                 <Route path="/kkk" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <FAQ />
                     <Footer />
                   </div>
                 } />
                 <Route path="/muugitingimused" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Muugitingimused />
                     <Footer />
                   </div>
                 } />
                 <Route path="/privaatsuspoliitika" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <Privaatsuspoliitika />
                     <Footer />
@@ -232,7 +232,7 @@ function App() {
 
                 {/* 404 route */}
                 <Route path="*" element={
-                  <div className="app">
+                  <div className="app" style={{ minHeight: '100vh' }}>
                     <Navigation />
                     <NotFound />
                     <Footer />

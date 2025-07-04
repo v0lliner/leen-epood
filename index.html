@@ -22,14 +22,27 @@
     <!-- Preload critical CSS -->
     <link rel="stylesheet" href="/src/styles/globals.css">
     
-    <!-- Non-blocking Google Fonts CSS -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600&family=Urbanist:wght@300;400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600&family=Urbanist:wght@300;400;500;600&display=swap" rel="stylesheet">
-    </noscript>
-    
     <!-- Inline critical CSS -->
     <style>
+      /* Font definitions */
+      @font-face {
+        font-family: 'Roboto Mono';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/robotomono/v22/L0x5DF4xlVMF-BfR8bXMIjhLq3-cXbKD.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      
+      @font-face {
+        font-family: 'Urbanist';
+        font-style: normal;
+        font-weight: 400;
+        font-display: swap;
+        src: url(https://fonts.gstatic.com/s/urbanist/v17/L0x-DF02iFML4hGCyMqrbS10ig.woff2) format('woff2');
+        unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+      }
+      
       :root {
         --color-background: #ffffff;
         --color-text: #111111;
@@ -53,6 +66,22 @@
         .hero-image {
           max-height: calc(50vh - 50px);
         }
+      }
+      
+      /* Critical navigation styles */
+      .nav-container {
+        position: sticky;
+        top: 0;
+        background-color: var(--color-background);
+        border-bottom: 1px solid #f0f0f0;
+        z-index: 100;
+      }
+      
+      .nav-logo h3 {
+        font-family: var(--font-heading);
+        color: var(--color-ultramarine);
+        font-weight: 600;
+        margin: 0;
       }
     </style>
     
