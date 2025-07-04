@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getPaymentMethods } from '../../utils/maksekeskus';
-import { BANK_LOGOS } from '../../maksekeskus-config';
 
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const { t } = useTranslation();
@@ -20,12 +18,50 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     setError('');
     
     try {
-      const paymentMethods = await getPaymentMethods(amount);
-      setMethods(paymentMethods);
+      // Simulate payment methods for now
+      const mockMethods = [
+        {
+          method: 'swedbank',
+          name: 'Swedbank',
+          countries: ['EE'],
+          min_amount: 0.01,
+          max_amount: 10000
+        },
+        {
+          method: 'seb',
+          name: 'SEB',
+          countries: ['EE'],
+          min_amount: 0.01,
+          max_amount: 10000
+        },
+        {
+          method: 'luminor',
+          name: 'Luminor',
+          countries: ['EE'],
+          min_amount: 0.01,
+          max_amount: 10000
+        },
+        {
+          method: 'lhv',
+          name: 'LHV',
+          countries: ['EE'],
+          min_amount: 0.01,
+          max_amount: 10000
+        },
+        {
+          method: 'coop',
+          name: 'Coop Pank',
+          countries: ['EE'],
+          min_amount: 0.01,
+          max_amount: 10000
+        }
+      ];
+      
+      setMethods(mockMethods);
+      setLoading(false);
     } catch (err) {
       console.error('Failed to load payment methods:', err);
       setError(t('checkout.payment.methods_error'));
-    } finally {
       setLoading(false);
     }
   };
@@ -73,15 +109,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
             onClick={() => onSelectMethod(method.method)}
           >
             <div className="payment-method-logo">
-              {BANK_LOGOS[method.method] ? (
-                <img 
-                  src={BANK_LOGOS[method.method]} 
-                  alt={method.name} 
-                  className="bank-logo"
-                />
-              ) : (
-                <div className="bank-name">{method.name}</div>
-              )}
+              <div className="bank-name">{method.name}</div>
             </div>
             <div className="payment-method-info">
               <div className="payment-method-name">{method.name}</div>
