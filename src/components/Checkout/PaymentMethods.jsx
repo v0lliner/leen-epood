@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPaymentMethods } from '../../utils/maksekeskus';
-import { parsePriceToAmount } from '../../maksekeskus-config';
 
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const { t } = useTranslation();
@@ -24,8 +23,17 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     setError('');
     
     try {
-      console.log('Loading payment methods for amount:', amount, typeof amount);
-      const paymentMethods = await loadPaymentMethods(amount);
+      // Ensure amount is a number and properly formatted
+      const numericAmount = typeof amount === 'string' 
+        ? parseFloat(amount.replace(',', '.')) 
+        : parseFloat(amount);
+        
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        throw new Error(`Invalid amount: ${amount}`);
+      }
+      
+      console.log('Loading payment methods for amount:', numericAmount, typeof numericAmount);
+      const paymentMethods = await loadPaymentMethods(numericAmount);
       console.log('Received payment methods:', paymentMethods);
       setMethods(paymentMethods);
     } catch (err) {
@@ -46,7 +54,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
         <div className="loading-spinner"></div>
         <p>{t('checkout.payment.loading_methods')}</p>
         <div className="debug-info">
-          <small>Summa: {amount}€</small>
+          <small>Summa: {typeof amount === 'number' ? amount.toFixed(2) : amount}€</small>
         </div>
       </div>
     );
@@ -57,7 +65,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       <div className="payment-methods-error">
         <p>{error}</p>
         <div className="debug-info">
-          <small>Summa: {amount}€</small>
+          <small>Summa: {typeof amount === 'number' ? amount.toFixed(2) : amount}€</small>
         </div>
         <button 
           onClick={handleRetry}
@@ -72,7 +80,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   if (methods.length === 0) {
     return (
       <div className="payment-methods-empty">
-        <p>{t('checkout.payment.no_methods')} (summa: {amount}€)</p>
+        <p>{t('checkout.payment.no_methods')} (summa: {typeof amount === 'number' ? amount.toFixed(2) : amount}€)</p>
       </div>
     );
   }

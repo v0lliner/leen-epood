@@ -12,17 +12,14 @@ import { parsePriceToAmount } from '../maksekeskus-config';
 export async function loadPaymentMethods(amount) {
   try {
     if (!amount || amount <= 0) {
-      console.error('Invalid amount in loadPaymentMethods:', amount, typeof amount);
-      throw new Error(`Amount must be greater than zero (received: ${amount}, type: ${typeof amount})`);
+      console.error('Invalid amount:', amount, typeof amount);
+      throw new Error('Amount must be greater than zero');
     }
     
     // Format amount to ensure it uses dot as decimal separator
-    let formattedAmount;
-    if (typeof amount === 'string') {
-      formattedAmount = amount.replace(',', '.');
-    } else {
-      formattedAmount = amount.toString();
-    }
+    const formattedAmount = typeof amount === 'number' 
+      ? amount.toFixed(2) 
+      : parseFloat(amount.toString().replace(',', '.')).toFixed(2);
     
     console.log(`Requesting payment methods for amount: ${formattedAmount}€ (original type: ${typeof amount})`);
 
@@ -35,7 +32,7 @@ export async function loadPaymentMethods(amount) {
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
     const url = `/api/payment-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
-    console.log(`Fetching payment methods from: ${url}`);
+    console.log(`Fetching payment methods from URL: ${url}`);
     
     const response = await fetch(url, {
       headers: {
@@ -47,8 +44,8 @@ export async function loadPaymentMethods(amount) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Payment methods API error (${response.status}):`, errorText);
-      throw new Error(`Failed to load payment methods (${response.status}): ${errorText.substring(0, 100)}`);
+      console.error(`Payment methods API error (${response.status}):`, errorText.substring(0, 200));
+      throw new Error(`Failed to load payment methods (${response.status})`);
     }
     
     let data;
@@ -60,7 +57,8 @@ export async function loadPaymentMethods(amount) {
     }
     
     if (!data.success) {
-      throw new Error(data.error || 'Failed to load payment methods');
+      console.error('API returned error:', data.error || 'Unknown error');
+      throw new Error(data.error || 'Payment service unavailable');
     }
     
     if (!data.methods || !Array.isArray(data.methods)) {
@@ -70,7 +68,8 @@ export async function loadPaymentMethods(amount) {
     
     return data.methods || [];
   } catch (error) {
-    console.error('Error loading payment methods:', error.message, error.stack);
+    console.error('Error loading payment methods:', error.message);
+    console.error('Stack trace:', error.stack);
     throw error;
   }
 }

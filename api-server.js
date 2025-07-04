@@ -52,7 +52,7 @@ let paymentMethodsCache = {
 // Helper function to fetch payment methods from Maksekeskus
 async function fetchPaymentMethods() {
   try {
-    console.log('\n=== Fetching payment methods from Maksekeskus ===');
+    console.log('=== Fetching payment methods from Maksekeskus ===');
     console.log('API credentials:', {
       shop_id: SHOP_ID ? 'Present' : 'Missing',
       api_open_key: API_OPEN_KEY ? 'Present' : 'Missing',
@@ -68,48 +68,48 @@ async function fetchPaymentMethods() {
     }
     
     // TEMPORARY: Return mock data for testing
-    console.log('USING MOCK DATA instead of actual API call');
-    return getMockPaymentMethods();
+    // console.log('USING MOCK DATA instead of actual API call');
+    // return getMockPaymentMethods();
 
     // NOTE: Uncomment this code when ready to use the real API
-    // // Fetch payment methods from Maksekeskus
-    // const response = await axios.get(`${API_BASE_URL}/methods`, {
-    //   auth: {
-    //     username: SHOP_ID, // 4e2bed9a-aa24-4b87-801b-56c31c535d36
-    //     password: API_OPEN_KEY // wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM
-    //   }, 
-    //   timeout: 10000, // 10 second timeout
-    //   validateStatus: (status) => true // Accept any status code to handle it manually
-    // });
-    // 
-    // // Check if response is successful
-    // console.log('Maksekeskus API response status:', response.status);
-    // 
-    // if (response.status !== 200) {
-    //   console.error('Maksekeskus API error when fetching payment methods:', {
-    //     status: response.status,
-    //     data: response.data
-    //   });
-    //   
-    //   // Return cached methods if available, otherwise empty array
-    //   return paymentMethodsCache.methods.length > 0 
-    //     ? paymentMethodsCache.methods 
-    //     : [];
-    // }
-    // 
-    // // Extract banklinks
-    // console.log('Maksekeskus API response data:', JSON.stringify(response.data).substring(0, 200) + '...');
-    // 
-    // const banklinks = response.data.banklinks || [];
-    // 
-    // // Update cache
-    // paymentMethodsCache = {
-    //   methods: banklinks,
-    //   timestamp: now
-    // };
-    // 
-    // console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
-    // return banklinks;
+    // Fetch payment methods from Maksekeskus
+    const response = await axios.get(`${API_BASE_URL}/methods`, {
+      auth: {
+        username: SHOP_ID, // 4e2bed9a-aa24-4b87-801b-56c31c535d36
+        password: API_OPEN_KEY // wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM
+      }, 
+      timeout: 10000, // 10 second timeout
+      validateStatus: (status) => true // Accept any status code to handle it manually
+    });
+    
+    // Check if response is successful
+    console.log('Maksekeskus API response status:', response.status);
+    
+    if (response.status !== 200) {
+      console.error('Maksekeskus API error when fetching payment methods:', {
+        status: response.status,
+        data: response.data
+      });
+      
+      // Return cached methods if available, otherwise empty array
+      return paymentMethodsCache.methods.length > 0 
+        ? paymentMethodsCache.methods 
+        : [];
+    }
+    
+    // Extract banklinks
+    console.log('Maksekeskus API response data:', JSON.stringify(response.data).substring(0, 200) + '...');
+    
+    const banklinks = response.data.banklinks || [];
+    
+    // Update cache
+    paymentMethodsCache = {
+      methods: banklinks,
+      timestamp: now
+    };
+    
+    console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
+    return banklinks;
   } catch (error) {
     console.error('Exception when fetching payment methods:', {
       name: error.name,
@@ -525,7 +525,7 @@ async function markProductsAsSold(orderId) {
 // Routes
 app.get('/api/payment-methods', async (req, res) => {
   try {
-    console.log('\n=== Payment methods request received ===');
+    console.log('=== Payment methods request received ===');
     console.log('Payment methods request with query params:', req.query);
     
     // Get amount from query string
@@ -534,15 +534,14 @@ app.get('/api/payment-methods', async (req, res) => {
     // Validate amount parameter
     if (req.query.amount) {
       // Parse amount, ensuring it's a valid number
-      console.log('Raw amount from request:', req.query.amount, 'type:', typeof req.query.amount);
+      console.log('Raw amount from request:', req.query.amount);
       const cleanAmount = req.query.amount.toString().trim().replace(',', '.');
       amount = parseFloat(cleanAmount);
       
       // Check if parsing resulted in a valid number
-      console.log('Parsed amount:', amount, 'from input:', req.query.amount, 'isNaN:', isNaN(amount));
+      console.log('Parsed amount:', amount);
       if (isNaN(amount)) {
         console.error('Invalid amount format:', req.query.amount);
-        console.log('Parsed amount resulted in NaN');
         return res.status(400).json({
           success: false,
           error: 'Invalid amount format'
@@ -552,11 +551,10 @@ app.get('/api/payment-methods', async (req, res) => {
     
     // Validate amount is positive
     if (!amount || amount <= 0) {
-      console.log('Amount validation failed:', amount, typeof amount);
-      console.error('Amount must be greater than zero:', amount, typeof amount);
+      console.error('Amount must be greater than zero:', amount);
       return res.status(400).json({
         success: false,
-        error: `Amount must be greater than zero (received: ${amount}, type: ${typeof amount})`
+        error: 'Amount must be greater than zero'
       });
     }
     
@@ -596,23 +594,17 @@ app.get('/api/payment-methods', async (req, res) => {
     
     // Return payment methods
     console.log('Returning payment methods:', availableMethods.map(m => m.channel || m.name).join(', '));
-    res.status(200).json({
-      debug: {
-        amount: amount,
-        amount_type: typeof amount,
-        total_methods: allMethods.length,
-        filtered_methods: availableMethods.length
-      },
+    return res.status(200).json({
       success: true,
       methods: availableMethods,
       count: availableMethods.length
     });
     
   } catch (error) {
-    console.error('\n=== ERROR in /api/payment-methods endpoint ===');
+    console.error('=== ERROR in /api/payment-methods endpoint ===');
     console.error('Error details:', error.name, error.message, error.stack);
     
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       error: 'Failed to load payment methods. Please try again later.'
     });
@@ -756,7 +748,7 @@ app.get('/health', (req, res) => {
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`\n=== Maksekeskus API Server ===`);
+  console.log(`=== Maksekeskus API Server ===`);
   console.log(`Server running on http://localhost:${PORT} (${new Date().toISOString()})`);
   console.log(`Notification URL: ${SITE_URL}/api/maksekeskus/notification`);
   console.log(`Environment: ${TEST_MODE ? 'TEST' : 'PRODUCTION'}`);
@@ -764,4 +756,8 @@ app.listen(PORT, () => {
   console.log(`Credentials: Shop ID ${SHOP_ID ? 'is present' : 'is MISSING'}`);
   console.log(`Credentials: API keys ${API_SECRET_KEY && API_OPEN_KEY ? 'are present' : 'are MISSING'}`);
   console.log(`=== Server Ready ===\n`);
+  
+  // Set test mode to false to use real API
+  process.env.MAKSEKESKUS_TEST_MODE = 'false';
+  console.log(`Test mode set to: ${process.env.MAKSEKESKUS_TEST_MODE}`);
 });

@@ -83,6 +83,8 @@ const Checkout = () => {
   const handleNextStep = () => {
     if (step === 1) {
       setStep(2);
+      // Reset any previous payment method selection
+      setSelectedPaymentMethod('');
       // Scroll to top when changing steps
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (step === 2) {
@@ -115,9 +117,14 @@ const Checkout = () => {
     try {
       // Create payment
       const { success, payment_url, error: paymentError } = await createPayment(
-        {
+        {  
           ...formData,
-          items
+          items: items.map(item => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            quantity: 1
+          }))
         },
         selectedPaymentMethod
       );
@@ -267,7 +274,7 @@ const Checkout = () => {
                       <div className="form-section">
                         <h3>{t('checkout.payment.title')}</h3>
                         <PaymentMethods 
-                          amount={getTotalPrice()}
+                          amount={getTotalPrice().toFixed(2)}
                           onSelectMethod={setSelectedPaymentMethod}
                           selectedMethod={selectedPaymentMethod}
                         />
