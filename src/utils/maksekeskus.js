@@ -29,7 +29,7 @@ export async function loadPaymentMethods(amount) {
     
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/maksekeskus-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
+    const url = `/api/payment-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
     
     const response = await fetch(url, {
       headers: {
@@ -104,7 +104,7 @@ export async function createPayment(orderData, paymentMethod) {
     });
     
     // Send request to API
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/maksekeskus-payment`, {
+    const response = await fetch(`/api/create-payment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
