@@ -68,48 +68,48 @@ async function fetchPaymentMethods() {
     }
     
     // TEMPORARY: Return mock data for testing
-    // console.log('USING MOCK DATA instead of actual API call');
-    // return getMockPaymentMethods();
+    console.log('USING MOCK DATA instead of actual API call');
+    return getMockPaymentMethods();
 
     // NOTE: Uncomment this code when ready to use the real API
     // Fetch payment methods from Maksekeskus
-    const response = await axios.get(`${API_BASE_URL}/methods`, {
-      auth: {
-        username: SHOP_ID, // 4e2bed9a-aa24-4b87-801b-56c31c535d36
-        password: API_OPEN_KEY // wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM
-      }, 
-      timeout: 10000, // 10 second timeout
-      validateStatus: (status) => true // Accept any status code to handle it manually
-    });
-    
-    // Check if response is successful
-    console.log('Maksekeskus API response status:', response.status);
-    
-    if (response.status !== 200) {
-      console.error('Maksekeskus API error when fetching payment methods:', {
-        status: response.status,
-        data: response.data
-      });
-      
-      // Return cached methods if available, otherwise empty array
-      return paymentMethodsCache.methods.length > 0 
-        ? paymentMethodsCache.methods 
-        : [];
-    }
-    
-    // Extract banklinks
-    console.log('Maksekeskus API response data:', JSON.stringify(response.data).substring(0, 200) + '...');
-    
-    const banklinks = response.data.banklinks || [];
-    
-    // Update cache
-    paymentMethodsCache = {
-      methods: banklinks,
-      timestamp: now
-    };
-    
-    console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
-    return banklinks;
+    // const response = await axios.get(`${API_BASE_URL}/methods`, {
+    //   auth: {
+    //     username: SHOP_ID, // 4e2bed9a-aa24-4b87-801b-56c31c535d36
+    //     password: API_OPEN_KEY // wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM
+    //   }, 
+    //   timeout: 10000, // 10 second timeout
+    //   validateStatus: (status) => true // Accept any status code to handle it manually
+    // });
+    // 
+    // // Check if response is successful
+    // console.log('Maksekeskus API response status:', response.status);
+    // 
+    // if (response.status !== 200) {
+    //   console.error('Maksekeskus API error when fetching payment methods:', {
+    //     status: response.status,
+    //     data: response.data
+    //   });
+    //   
+    //   // Return cached methods if available, otherwise empty array
+    //   return paymentMethodsCache.methods.length > 0 
+    //     ? paymentMethodsCache.methods 
+    //     : [];
+    // }
+    // 
+    // // Extract banklinks
+    // console.log('Maksekeskus API response data:', JSON.stringify(response.data).substring(0, 200) + '...');
+    // 
+    // const banklinks = response.data.banklinks || [];
+    // 
+    // // Update cache
+    // paymentMethodsCache = {
+    //   methods: banklinks,
+    //   timestamp: now
+    // };
+    // 
+    // console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
+    // return banklinks;
   } catch (error) {
     console.error('Exception when fetching payment methods:', {
       name: error.name,
