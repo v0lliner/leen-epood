@@ -381,6 +381,11 @@ const ProductDetail = () => {
                     <ProductCard key={relatedProduct.id} product={relatedProduct} />
                   ))}
                 </div>
+                <div className="view-all-container">
+                  <Link to="/epood" className="link-with-arrow view-all-link" onClick={scrollToTop}>
+                    {t('home.view_all')} <span className="arrow-wrapper">→</span>
+                  </Link>
+                </div>
               </FadeInSection>
             )}
 
@@ -597,6 +602,23 @@ const ProductDetail = () => {
           display: grid;
           grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
           gap: 48px;
+        }
+
+        .view-all-container {
+          text-align: center;
+          margin-top: 48px;
+        }
+        
+        .view-all-link {
+          font-size: 1.125rem;
+          font-family: var(--font-body);
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          transition: opacity 0.2s ease;
+        }
+
+        .view-all-link:hover {
+          opacity: 0.8;
         }
 
         .product-faq-section {
