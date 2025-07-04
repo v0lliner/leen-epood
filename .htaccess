@@ -9,13 +9,14 @@ RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]
 
 # Set Content Security Policy
-Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://epcenpirjkfkgdgxktrm.supabase.co https://fonts.gstatic.com; connect-src 'self' https://epcenpirjkfkgdgxktrm.supabase.co wss://epcenpirjkfkgdgxktrm.supabase.co; frame-src 'self' https://www.google.com; object-src 'none'"
+Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google-analytics.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://epcenpirjkfkgdgxktrm.supabase.co https://fonts.gstatic.com https://images.pexels.com https://*.maksekeskus.ee; connect-src 'self' https://epcenpirjkfkgdgxktrm.supabase.co wss://epcenpirjkfkgdgxktrm.supabase.co https://www.google-analytics.com https://*.maksekeskus.ee; frame-src 'self' https://www.google.com https://*.maksekeskus.ee; object-src 'none'; base-uri 'self'"
 
 # Security headers
 Header set X-Content-Type-Options "nosniff"
 Header set X-Frame-Options "SAMEORIGIN"
 Header set X-XSS-Protection "1; mode=block"
 Header set Referrer-Policy "strict-origin-when-cross-origin"
+Header set Permissions-Policy "camera=(), microphone=(), geolocation=()"
 
 # Enable CORS
 Header set Access-Control-Allow-Origin "*"
@@ -23,13 +24,53 @@ Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
 Header set Access-Control-Allow-Headers "Content-Type, Authorization"
 
 # Cache control for static assets
-<FilesMatch "\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2)$">
+<FilesMatch "\.(css|js)$">
+  Header set Cache-Control "max-age=31536000, public"
+</FilesMatch>
+
+<FilesMatch "\.(jpg|jpeg|png|gif|ico|svg|webp)$">
+  Header set Cache-Control "max-age=31536000, public"
+</FilesMatch>
+
+<FilesMatch "\.(woff|woff2|ttf|otf|eot)$">
   Header set Cache-Control "max-age=31536000, public"
 </FilesMatch>
 
 # No cache for HTML files
-<FilesMatch "\.(html)$">
+<FilesMatch "\.(html|json)$">
   Header set Cache-Control "no-cache, no-store, must-revalidate"
   Header set Pragma "no-cache"
   Header set Expires "0"
+</FilesMatch>
+
+# Compression
+<IfModule mod_deflate.c>
+  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json application/xml
+</IfModule>
+
+# Custom error pages
+ErrorDocument 404 /index.html
+
+# PHP settings (if needed)
+<IfModule mod_php7.c>
+  php_value upload_max_filesize 20M
+  php_value post_max_size 20M
+  php_value memory_limit 256M
+  php_value max_execution_time 300
+  php_value max_input_time 300
+</IfModule>
+
+# Prevent directory listing
+Options -Indexes
+
+# Prevent access to hidden files
+<FilesMatch "^\.">
+  Order allow,deny
+  Deny from all
+</FilesMatch>
+
+# Prevent access to specific files
+<FilesMatch "(package\.json|package-lock\.json|composer\.json|composer\.lock|\.gitignore|README\.md)$">
+  Order allow,deny
+  Deny from all
 </FilesMatch>
