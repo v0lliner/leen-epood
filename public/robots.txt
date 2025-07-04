@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://leen.ee/sitemap.xml
+
+# Disallow admin paths
+Disallow: /admin/
