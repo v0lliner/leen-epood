@@ -175,7 +175,7 @@ const ProductDetail = () => {
   };
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Helper function to get valid dimensions with improved formatting
