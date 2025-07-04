@@ -72,35 +72,33 @@ export const getImageSizeForContext = (context, isMobile = false) => {
   switch (context) {
     case 'hero':
       return isMobile 
-        ? { width: 640, quality: 75 } // More aggressive optimization for mobile
+        ? { width: 800, quality: 85 } 
         : { width: 1200, quality: 85 };
     
     case 'card':
       return isMobile
-        ? { width: 280, quality: 65 } // More aggressive optimization for mobile
+        ? { width: 320, quality: 75 } // Reduced size for mobile
         : { width: 400, quality: 75 };
     
     case 'gallery-main':
       return isMobile 
-        ? { width: 400, quality: 70 } // More aggressive optimization for mobile
+        ? { width: 480, quality: 80 } // Reduced size for mobile
         : { width: 800, quality: 80 };
     
     case 'gallery-thumbnail':
-      return { width: 150, quality: 65 }; // Smaller thumbnails with lower quality
+      return { width: 200, quality: 75 };
     
     case 'portfolio':
       return isMobile 
-        ? { width: 400, quality: 70 } // More aggressive optimization for mobile
+        ? { width: 480, quality: 80 } // Reduced size for mobile
         : { width: 500, quality: 80 };
     
     case 'lightbox':
       return isMobile
-        ? { width: 640, quality: 75 } // More aggressive optimization for mobile
+        ? { width: 800, quality: 85 } // Reduced size for mobile
         : { width: 1200, quality: 85 };
     
     default:
-      return isMobile
-        ? { width: 400, quality: 70 }
-        : { width: 800, quality: 80 };
+      return { width: 800, quality: 80 };
   }
 };

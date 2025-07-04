@@ -16,45 +16,8 @@
     <link rel="preload" href="https://fonts.gstatic.com/s/urbanist/v17/L0x-DF02iFML4hGCyMqrbS10ig.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="preload" href="https://fonts.gstatic.com/s/robotomono/v22/L0x5DF4xlVMF-BfR8bXMIjhLq3-cXbKD.woff2" as="font" type="font/woff2" crossorigin>
     
-    <!-- Preload hero image for faster LCP -->
-    <link rel="preload" href="/leen-premium-epood.svg" as="image">
-    
-    <!-- Preload critical CSS -->
-    <link rel="preload" href="/assets/index-BdqSg2Yo.css" as="style">
-    
-    <!-- Non-blocking Google Fonts CSS -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600&family=Urbanist:wght@300;400;500;600&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-      <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600&family=Urbanist:wght@300;400;500;600&display=swap" rel="stylesheet">
-    </noscript>
-    
-    <!-- Inline critical CSS -->
-    <style>
-      :root {
-        --color-background: #ffffff;
-        --color-text: #111111;
-        --color-ultramarine: #2f3e9c;
-        --font-heading: 'Roboto Mono', monospace;
-        --font-body: 'Urbanist', sans-serif;
-      }
-      body {
-        margin: 0;
-        font-family: var(--font-body);
-        color: var(--color-text);
-        background-color: var(--color-background);
-      }
-      .hero-image {
-        width: 100%;
-        max-width: 800px;
-        height: auto;
-        max-height: calc(60vh - 72px);
-      }
-      @media (max-width: 768px) {
-        .hero-image {
-          max-height: calc(50vh - 50px);
-        }
-      }
-    </style>
+    <!-- Font loading -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@300;400;500;600&family=Urbanist:wght@300;400;500;600&display=swap" rel="stylesheet">
     
     <title>Leen Väränen - Keraamika ja Rõivadisain</title>
     <meta name="description" content="Leen Väränen on keraamik ja rõivadisainer, kelle käsitööloomingus kohtuvad vorm, funktsioon ja mälestus. Vaadake portfooliot ja ostke ainulaadseid tooteid.">
