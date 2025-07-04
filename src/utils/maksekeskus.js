@@ -109,7 +109,7 @@ export async function createPayment(orderData, paymentMethod) {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache'
-      }
+      },
       body: JSON.stringify(requestData)
     });
     
