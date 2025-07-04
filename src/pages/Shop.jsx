@@ -47,7 +47,7 @@ const Shop = () => {
     setSearchParams(newParams);
     
     // Scroll to top of page
-    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Handle filter changes - always reset to page 1 when filters change

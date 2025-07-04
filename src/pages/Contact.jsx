@@ -30,7 +30,6 @@ const Contact = () => {
   // Custom Google Maps styling that matches the website's aesthetic
   const mapStyles = [
     {
-      "featureType": "all",
       "elementType": "geometry",
       "stylers": [
         {
@@ -39,7 +38,6 @@ const Contact = () => {
       ]
     },
     {
-      "featureType": "all",
       "elementType": "labels.icon",
       "stylers": [
         {
@@ -48,113 +46,27 @@ const Contact = () => {
       ]
     },
     {
-      "featureType": "all",
       "elementType": "labels.text.fill",
       "stylers": [
         {
-          "color": "#111111"
-        },
-        {
-          "saturation": 36
-        },
-        {
-          "lightness": 40
+          "color": "#616161"
         }
       ]
     },
     {
-      "featureType": "all",
       "elementType": "labels.text.stroke",
       "stylers": [
         {
-          "visibility": "on"
-        },
-        {
-          "color": "#ffffff"
-        },
-        {
-          "lightness": 16
-        }
-      ]
-    },
-    {
-      "featureType": "administrative",
-      "elementType": "geometry.fill",
-      "stylers": [
-        {
-          "color": "#fefefe"
-        },
-        {
-          "lightness": 20
-        }
-      ]
-    },
-    {
-      "featureType": "administrative",
-      "elementType": "geometry.stroke",
-      "stylers": [
-        {
-          "color": "#fefefe"
-        },
-        {
-          "lightness": 17
-        },
-        {
-          "weight": 1.2
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.country",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#2f3e9c"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.locality",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#2f3e9c"
-        }
-      ]
-    },
-    {
-      "featureType": "administrative.neighborhood",
-      "elementType": "labels.text.fill",
-      "stylers": [
-        {
-          "color": "#111111"
-        }
-      ]
-    },
-    {
-      "featureType": "landscape",
-      "elementType": "geometry",
-      "stylers": [
-        {
           "color": "#f5f5f5"
-        },
-        {
-          "lightness": 20
         }
       ]
     },
     {
-      "featureType": "landscape.natural",
-      "elementType": "geometry.fill",
+      "featureType": "administrative.land_parcel",
+      "elementType": "labels.text.fill",
       "stylers": [
         {
-          "color": "#e4c9c1"
-        },
-        {
-          "saturation": -20
-        },
-        {
-          "lightness": 20
+          "color": "#bdbdbd"
         }
       ]
     },
@@ -163,10 +75,16 @@ const Contact = () => {
       "elementType": "geometry",
       "stylers": [
         {
-          "color": "#f5f5f5"
-        },
+          "color": "#eeeeee"
+        }
+      ]
+    },
+    {
+      "featureType": "poi",
+      "elementType": "labels.text.fill",
+      "stylers": [
         {
-          "lightness": 21
+          "color": "#757575"
         }
       ]
     },
@@ -175,76 +93,79 @@ const Contact = () => {
       "elementType": "geometry",
       "stylers": [
         {
-          "color": "#e4c9c1"
-        },
-        {
-          "saturation": -10
-        },
-        {
-          "lightness": 30
+          "color": "#e5e5e5"
         }
       ]
     },
     {
-      "featureType": "road.highway",
-      "elementType": "geometry.fill",
+      "featureType": "poi.park",
+      "elementType": "labels.text.fill",
       "stylers": [
         {
-          "color": "#ffffff"
-        },
-        {
-          "lightness": 17
+          "color": "#9e9e9e"
         }
       ]
     },
     {
-      "featureType": "road.highway",
-      "elementType": "geometry.stroke",
+      "featureType": "road",
+      "elementType": "geometry",
       "stylers": [
         {
           "color": "#ffffff"
-        },
-        {
-          "lightness": 29
-        },
-        {
-          "weight": 0.2
         }
       ]
     },
     {
       "featureType": "road.arterial",
+      "elementType": "labels.text.fill",
+      "stylers": [
+        {
+          "color": "#757575"
+        }
+      ]
+    },
+    {
+      "featureType": "road.highway",
       "elementType": "geometry",
       "stylers": [
         {
-          "color": "#ffffff"
-        },
+          "color": "#dadada"
+        }
+      ]
+    },
+    {
+      "featureType": "road.highway",
+      "elementType": "labels.text.fill",
+      "stylers": [
         {
-          "lightness": 18
+          "color": "#616161"
         }
       ]
     },
     {
       "featureType": "road.local",
-      "elementType": "geometry",
+      "elementType": "labels.text.fill",
       "stylers": [
         {
-          "color": "#ffffff"
-        },
-        {
-          "lightness": 16
+          "color": "#9e9e9e"
         }
       ]
     },
     {
-      "featureType": "transit",
+      "featureType": "transit.line",
       "elementType": "geometry",
       "stylers": [
         {
-          "color": "#f2f2f2"
-        },
+          "color": "#e5e5e5"
+        }
+      ]
+    },
+    {
+      "featureType": "transit.station",
+      "elementType": "geometry",
+      "stylers": [
         {
-          "lightness": 19
+          "color": "#eeeeee"
         }
       ]
     },
@@ -253,13 +174,7 @@ const Contact = () => {
       "elementType": "geometry",
       "stylers": [
         {
-          "color": "#2f3e9c"
-        },
-        {
-          "saturation": -20
-        },
-        {
-          "lightness": 40
+          "color": "#c9c9c9"
         }
       ]
     },
@@ -271,10 +186,16 @@ const Contact = () => {
           "color": "#2f3e9c"
         },
         {
-          "saturation": -10
-        },
+          "lightness": 75
+        }
+      ]
+    },
+    {
+      "featureType": "water",
+      "elementType": "labels.text.fill",
+      "stylers": [
         {
-          "lightness": 60
+          "color": "#9e9e9e"
         }
       ]
     }
@@ -390,12 +311,13 @@ const Contact = () => {
             <FadeInSection className="map-section">
               <div className="map-container">
                 <iframe
-                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBJNslJaIJX4bXJuwD03zHhCiLmWCzQuZ8&q=Jõeääre,Märjamaa,Rapla+vald,Estonia&zoom=14&maptype=roadmap`}
+                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBJNslJaIJX4bXJuwD03zHhCiLmWCzQuZ8&q=Jõeääre,Märjamaa,Rapla+vald,Estonia&zoom=14&maptype=roadmap&style=${encodeURIComponent(JSON.stringify(mapStyles))}`}
                   width="100%"
                   height="400"
                   style={{ 
                     border: 0,
-                    filter: 'contrast(1.1) saturate(0.8) brightness(1.05)'
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 12px rgba(47, 62, 156, 0.1)'
                   }}
                   allowFullScreen=""
                   loading="lazy"
@@ -542,7 +464,7 @@ const Contact = () => {
         }
 
         .map-container {
-          border-radius: 4px;
+          border-radius: 8px;
           overflow: hidden;
           box-shadow: 0 4px 12px rgba(47, 62, 156, 0.1);
           border: 1px solid rgba(47, 62, 156, 0.1);

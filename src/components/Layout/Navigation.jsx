@@ -13,7 +13,7 @@ const Navigation = () => {
   const { getTotalItems } = useCart();
 
   const scrollToTop = () => {
-    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLinkClick = () => {
@@ -157,6 +157,7 @@ const Navigation = () => {
             width: 100%;
             will-change: transform;
             transition: transform 0.3s ease;
+            height: var(--header-height);
           }
 
           .nav-wrapper {
@@ -360,6 +361,7 @@ const Navigation = () => {
             .nav-inner {
               grid-template-columns: auto 1fr auto;
               gap: 24px;
+              padding: 16px var(--padding-inline);
             }
 
             .nav-center {

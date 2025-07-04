@@ -12,6 +12,7 @@
   --padding-inline: 48px;
   --section-spacing: 96px;
   --section-spacing-large: 160px;
+  --header-height: 72px;
 }
 
 * {
@@ -22,6 +23,7 @@
 
 html {
   scroll-behavior: smooth;
+  scroll-padding-top: var(--header-height);
 }
 
 body {
@@ -104,6 +106,13 @@ img {
 .fade-in.visible {
   opacity: 1;
   transform: translateY(0);
+}
+
+/* App container for fixed header */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* Universal button styles - text only */
@@ -236,13 +245,6 @@ img {
   margin-bottom: 16px;
 }
 
-/* App container for fixed header */
-.app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
 /* Optimizations for slow connections */
 [data-slow-connection="true"] img {
   transition: none !important;
@@ -275,6 +277,7 @@ img {
     --padding-inline: 24px;
     --section-spacing: 64px;
     --section-spacing-large: 96px;
+    --header-height: 60px;
   }
   
   .grid-50-50 {
@@ -300,6 +303,7 @@ img {
 @media (max-width: 480px) {
   :root {
     --padding-inline: 16px;
+    --header-height: 56px;
   }
 
   .tab-button {

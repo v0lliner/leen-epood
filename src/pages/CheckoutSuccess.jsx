@@ -29,7 +29,7 @@ const CheckoutSuccess = () => {
   }, []);
 
   const scrollToTop = () => {
-    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
