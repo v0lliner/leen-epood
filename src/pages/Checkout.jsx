@@ -129,7 +129,8 @@ const Checkout = () => {
     setError('');
 
     // Get total price as a properly formatted number
-    console.log('Checkout total price:', totalPrice);
+    const numericTotal = parseFloat(totalPrice);
+    console.log('Checkout total price:', numericTotal);
 
     try {
       // Create payment
@@ -139,7 +140,7 @@ const Checkout = () => {
           items: items.map(item => ({
             id: item.id,
             title: item.title,
-            price: item.price,
+            price: parsePriceToAmount(item.price),
             quantity: 1
           }))
         },
@@ -155,8 +156,14 @@ const Checkout = () => {
       if (payment_url) {
         // Clear cart before redirecting
         await clearCart();
-        // Redirect to bank payment page
-        window.location.href = payment_url;
+        
+        // Show processing message
+        setIsProcessing(true);
+        
+        // Redirect after a short delay to ensure cart is cleared
+        setTimeout(() => {
+          window.location.href = payment_url;
+        }, 500);
       } else {
         setError('Maksesessiooni loomine ebaõnnestus');
         setIsProcessing(false);

@@ -34,7 +34,7 @@ export async function loadPaymentMethods(amount) {
     const timestamp = Date.now();
     // Ensure we're sending a clean number without any currency symbols
     const cleanAmount = parseFloat(formattedAmount).toFixed(2);
-    const url = `/api/payment-methods?amount=${encodeURIComponent(cleanAmount)}&_=${timestamp}`;
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/maksekeskus-methods?amount=${encodeURIComponent(cleanAmount)}&_=${timestamp}`;
     console.log(`Fetching from: ${url}`);
     
     const response = await fetch(url, {
@@ -105,7 +105,7 @@ export async function createPayment(orderData, paymentMethod) {
     // Prepare request data
     const requestData = {
       orderData: {
-        ...orderData, 
+        ...orderData,
         items,
         total
       },
@@ -121,7 +121,7 @@ export async function createPayment(orderData, paymentMethod) {
     });
     
     // Send request to API
-    const response = await fetch('/api/create-payment', {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/maksekeskus-payment`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
