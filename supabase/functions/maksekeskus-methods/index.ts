@@ -1,5 +1,6 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import axios from 'npm:axios@1.6.7';
+import * as crypto from 'npm:crypto-js@4.2.0';
 
 // CORS headers for preflight requests
 const corsHeaders = {
@@ -11,6 +12,7 @@ const corsHeaders = {
 // Maksekeskus API configuration
 const SHOP_ID = Deno.env.get('MAKSEKESKUS_SHOP_ID')!;
 const API_OPEN_KEY = Deno.env.get('MAKSEKESKUS_API_OPEN_KEY')!;
+const API_SECRET_KEY = Deno.env.get('MAKSEKESKUS_API_SECRET_KEY')!;
 const TEST_MODE = Deno.env.get('MAKSEKESKUS_TEST_MODE') === 'true';
 
 // Maksekeskus API URLs
@@ -89,23 +91,82 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Use mock methods for now to avoid API issues
-    const mockMethods = getMockPaymentMethods();
-    
-    // Filter methods based on amount and country
-    const filteredMethods = filterMethods(mockMethods, parsedAmount);
-    
-    return new Response(
-      JSON.stringify({
-        success: true,
-        methods: filteredMethods,
-        count: filteredMethods.length
-      }),
-      { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+    // Fetch payment methods from Maksekeskus API
+    try {
+      console.log(`Fetching payment methods for amount: ${parsedAmount}`);
+      
+      // Prepare request parameters
+      const params = new URLSearchParams({
+        amount: parsedAmount.toString(),
+        currency: 'EUR',
+        country: 'ee'
+      });
+      
+      // Make request to Maksekeskus API
+      const response = await axios.get(`${API_BASE_URL}/methods?${params.toString()}`, {
+        headers: {
+          'Authorization': `Basic ${btoa(`${SHOP_ID}:${API_OPEN_KEY}`)}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      // Process response
+      if (response.status === 200 && response.data) {
+        // Extract payment methods from response
+        const methods = [];
+        
+        // Process banklinks
+        if (response.data.banklinks && Array.isArray(response.data.banklinks)) {
+          response.data.banklinks.forEach(bank => {
+            methods.push({
+              name: bank.name,
+              display_name: bank.name,
+              channel: bank.channel,
+              type: 'banklink',
+              countries: ['ee'],
+              logo_url: `https://static.maksekeskus.ee/img/channel/lnd/${bank.channel}.png`,
+              min_amount: 0.01,
+              max_amount: 15000
+            });
+          });
+        }
+        
+        // Return payment methods
+        return new Response(
+          JSON.stringify({
+            success: true,
+            methods: methods,
+            count: methods.length
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      } else {
+        throw new Error(`Unexpected response: ${response.status}`);
       }
-    );
+    } catch (apiError) {
+      console.error('Error calling Maksekeskus API:', apiError);
+      
+      // Fall back to mock data on API error
+      const mockMethods = getMockPaymentMethods();
+      const filteredMethods = filterMethods(mockMethods, parsedAmount);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          methods: filteredMethods,
+          count: filteredMethods.length,
+          fromMock: true,
+          error: apiError.message
+        }),
+        { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      );
+    }
   } catch (error) {
     console.error('Error fetching payment methods:', error);
     
@@ -121,11 +182,12 @@ Deno.serve(async (req) => {
     const filteredMethods = filterMethods(mockMethods, parsedAmount > 0 ? parsedAmount : 0.01);
     
     return new Response(
-      JSON.stringify({
-        success: true,
-        methods: filteredMethods,
-        count: filteredMethods.length,
-        fromMock: true
+      JSON.stringify({ 
+        success: true, 
+        methods: filteredMethods, 
+        count: filteredMethods.length, 
+        fromMock: true,
+        error: error.message
       }),
       { 
         status: 200, 
@@ -137,7 +199,7 @@ Deno.serve(async (req) => {
 
 // Helper function to filter methods based on amount and country
 function filterMethods(methods, amount) {
-  return methods.filter(method => {
+  const filtered = methods.filter(method => {
     // Ensure min_amount and max_amount are numbers
     const minAmount = typeof method.min_amount === 'number' ? method.min_amount : 0;
     const maxAmount = typeof method.max_amount === 'number' ? method.max_amount : Number.MAX_SAFE_INTEGER;
@@ -154,6 +216,9 @@ function filterMethods(methods, amount) {
     
     return countryMatch && minAmountOk && maxAmountOk;
   });
+  
+  console.log(`Filtered ${methods.length} methods to ${filtered.length} for amount ${amount}`);
+  return filtered;
 }
 
 // Mock payment methods for testing
