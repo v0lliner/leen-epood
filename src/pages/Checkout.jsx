@@ -5,9 +5,9 @@ import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { createPayment } from '../utils/maksekeskus';
-import { parsePriceToAmount } from '../maksekeskus-config';
-import { formatPrice } from '../maksekeskus-config';
+import { parsePriceToAmount, formatPrice } from '../maksekeskus-config';
 import PaymentMethods from '../components/Checkout/PaymentMethods';
+import PaymentMethodLogos from '../components/Checkout/PaymentMethodLogos';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -492,6 +492,7 @@ const Checkout = () => {
                       <div className="info-icon">🔒</div>
                       <p>Turvaline makse Maksekeskuse kaudu</p>
                     </div>
+                    <PaymentMethodLogos />
                     <div className="info-item">
                       <div className="info-icon">🚚</div>
                       <p>Tarne 2-4 tööpäeva jooksul</p>
