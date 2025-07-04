@@ -22,7 +22,6 @@
 
 html {
   scroll-behavior: smooth;
-  overflow-x: hidden;
 }
 
 body {
@@ -32,9 +31,9 @@ body {
   color: var(--color-text);
   background-color: var(--color-background);
   font-size: 16px;
-  overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -235,6 +234,13 @@ img {
 .value-block h3 {
   color: var(--color-ultramarine);
   margin-bottom: 16px;
+}
+
+/* App container for fixed header */
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
 }
 
 /* Optimizations for slow connections */

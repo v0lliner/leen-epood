@@ -156,6 +156,7 @@ const Navigation = () => {
             flex-shrink: 0;
             width: 100%;
             will-change: transform;
+            transition: transform 0.3s ease;
           }
 
           .nav-wrapper {
@@ -375,6 +376,10 @@ const Navigation = () => {
 
             .nav-mobile-toggle {
               display: flex;
+            }
+
+            .main-content {
+              margin-left: 0;
             }
           }
         `}</style>
