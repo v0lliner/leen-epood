@@ -67,34 +67,29 @@ async function fetchPaymentMethods() {
       return paymentMethodsCache.methods;
     }
     
-    // For now, use mock methods instead of real API call
-    // When ready to use real API, uncomment the axios call below
-    // and comment out the getMockPaymentMethods() call
+    // Use real API call to get payment methods
+    const response = await axios.get(`${API_BASE_URL}/shops/${SHOP_ID}/payment-methods`, {
+      auth: {
+        username: SHOP_ID,
+        password: API_OPEN_KEY
+      }, 
+      timeout: 10000, // 10 second timeout
+      validateStatus: (status) => true // Accept any status code to handle it manually
+    });
     
-    // const response = await axios.get(`${API_BASE_URL}/methods`, {
-    //   auth: {
-    //     username: SHOP_ID,
-    //     password: API_OPEN_KEY
-    //   }, 
-    //   timeout: 10000, // 10 second timeout
-    //   validateStatus: (status) => true // Accept any status code to handle it manually
-    // });
+    if (response.status !== 200) {
+      console.error('Maksekeskus API error when fetching payment methods:', {
+        status: response.status,
+        data: response.data
+      });
+      
+      return paymentMethodsCache.methods.length > 0 
+        ? paymentMethodsCache.methods 
+        : [];
+    }
     
-    // if (response.status !== 200) {
-    //   console.error('Maksekeskus API error when fetching payment methods:', {
-    //     status: response.status,
-    //     data: response.data
-    //   });
-    //   
-    //   return paymentMethodsCache.methods.length > 0 
-    //     ? paymentMethodsCache.methods 
-    //     : [];
-    // }
-    
-    // const banklinks = response.data.banklinks || [];
-    
-    // Use mock methods for now
-    const banklinks = getMockPaymentMethods();
+    // Extract banklinks from response
+    const banklinks = response.data.banklinks || [];
     
     // Update cache
     paymentMethodsCache = {
@@ -663,23 +658,13 @@ app.post('/api/create-payment', async (req, res) => {
       total_amount: order.total_amount
     });
     
-    // For testing, use a mock transaction instead of calling Maksekeskus API
-    // When ready to use real API, uncomment the createTransaction call
-    // const transaction = await createTransaction({
-    //   ...orderData,
-    //   id: order.id,
-    //   ip: req.ip
-    // }, paymentMethod);
-
-    // Mock transaction for testing
-    const transaction = {
-      transaction_id: `test-${Date.now()}`,
-      payment_url: `https://payment.test.maksekeskus.ee/pay/1/link.html?payment=${paymentMethod}&token=test-token-${Date.now()}`,
-      transaction: {
-        id: `test-${Date.now()}`,
-        status: 'PENDING'
-      }
-    };
+    // Create real transaction with Maksekeskus API
+    const transaction = await createTransaction({
+      ...orderData,
+      id: order.id,
+      order_number: order.order_number,
+      ip: req.ip
+    }, paymentMethod);
 
     console.log('Transaction created:', {
       transaction_id: transaction.transaction_id,
