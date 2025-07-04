@@ -35,11 +35,8 @@ const Checkout = () => {
   // Update total price whenever cart items change
   useEffect(() => {
     const total = getTotalPrice();
-    // Ensure total is a valid number
-    const validTotal = isNaN(total) || total <= 0 ? 0.01 : total;
-    setTotalPrice(validTotal.toFixed(2));
+    setTotalPrice(total.toFixed(2));
     setFormattedTotalPrice(formatPrice(total));
-    console.log('Updated total price:', total, '→', validTotal.toFixed(2), '→', formatPrice(total));
   }, [items, getTotalPrice]);
 
   const handleInputChange = (e) => {
@@ -108,12 +105,12 @@ const Checkout = () => {
     try {
       // Create payment
       const { success, payment_url, error: paymentError } = await createPayment(
-        {
+        {  
           ...formData,
           items: items.map(item => ({
             id: item.id,
             title: item.title,
-            price: parsePriceToAmount(item.price), // Parse price to ensure correct format
+            price: parsePriceToAmount(item.price),
             quantity: 1
           }))
         },

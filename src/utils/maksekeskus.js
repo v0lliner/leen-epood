@@ -99,7 +99,7 @@ export async function createPayment(orderData, paymentMethod) {
     
     // Prepare request data
     // Use the Express API endpoint
-    const url = `/api/create-payment`; // Using our Express API endpoint
+    const url = `/api/create-payment`;
     
     const requestData = {
       orderData: {
@@ -112,17 +112,8 @@ export async function createPayment(orderData, paymentMethod) {
     
     console.log('Creating payment with data:', {
       total: requestData.orderData.total.toFixed(2),
-      items: requestData.orderData.items.map(item => ({
-        id: item.id,
-        title: item.title,
-        price: item.price,
-        quantity: item.quantity
-      })),
-      paymentMethod,
-      customer: {
-        name: requestData.orderData.name ? '***' : undefined,
-        email: requestData.orderData.email ? '***@***' : undefined
-      }
+      items: requestData.orderData.items.length,
+      paymentMethod
     });
     
     const response = await fetch(url, {
