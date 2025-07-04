@@ -14,6 +14,8 @@ import Shop from './pages/Shop';
 import ProductDetail from './pages/ProductDetail';
 import Checkout from './pages/Checkout';
 import CheckoutSuccess from './pages/CheckoutSuccess';
+import PaymentCancelled from './pages/PaymentCancelled';
+import PaymentError from './pages/PaymentError';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
 import Muugitingimused from './pages/Muugitingimused';
@@ -109,6 +111,27 @@ function App() {
                   <div className="app">
                     <Navigation />
                     <CheckoutSuccess />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/makse/korras" element={
+                  <div className="app">
+                    <Navigation />
+                    <CheckoutSuccess />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/makse/katkestatud" element={
+                  <div className="app">
+                    <Navigation />
+                    <PaymentCancelled />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/makse/viga" element={
+                  <div className="app">
+                    <Navigation />
+                    <PaymentError />
                     <Footer />
                   </div>
                 } />

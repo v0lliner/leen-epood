@@ -3,29 +3,25 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
-import { getUserOrders } from '../utils/stripe';
 
 const CheckoutSuccess = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-  const [latestOrder, setLatestOrder] = useState(null);
+  const [orderInfo, setOrderInfo] = useState(null);
 
   useEffect(() => {
-    // Fetch the latest order to show confirmation
-    const fetchLatestOrder = async () => {
-      try {
-        const { data, error } = await getUserOrders();
-        if (!error && data && data.length > 0) {
-          setLatestOrder(data[0]); // Most recent order
-        }
-      } catch (err) {
-        console.error('Error fetching order:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Get transaction ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const transactionId = urlParams.get('transaction');
+    
+    if (transactionId) {
+      setOrderInfo({
+        transaction_id: transactionId,
+        date: new Date().toLocaleDateString('et-EE')
+      });
+    }
 
-    fetchLatestOrder();
+    setLoading(false);
   }, []);
 
   const scrollToTop = () => {
@@ -49,13 +45,13 @@ const CheckoutSuccess = () => {
                     <div className="loading-spinner"></div>
                     <p>Laadin tellimuse andmeid...</p>
                   </div>
-                ) : latestOrder ? (
+                ) : orderInfo ? (
                   <div className="order-confirmation">
                     <h3>Tellimuse kinnitamine</h3>
                     <div className="order-details">
-                      <p><strong>Tellimuse ID:</strong> {latestOrder.order_id}</p>
-                      <p><strong>Summa:</strong> {(latestOrder.amount_total / 100).toFixed(2)} {latestOrder.currency.toUpperCase()}</p>
-                      <p><strong>Kuupäev:</strong> {new Date(latestOrder.order_date).toLocaleDateString('et-EE')}</p>
+                      <p><strong>Makse ID:</strong> {orderInfo.transaction_id}</p>
+                      <p><strong>Kuupäev:</strong> {orderInfo.date}</p>
+                      <p><strong>Staatus:</strong> <span className="status-completed">Makstud</span></p>
                     </div>
                   </div>
                 ) : (
@@ -157,6 +153,11 @@ const CheckoutSuccess = () => {
         .order-details p {
           margin-bottom: 8px;
           font-size: 1rem;
+        }
+        
+        .status-completed {
+          color: #28a745;
+          font-weight: 500;
         }
 
         .order-info {

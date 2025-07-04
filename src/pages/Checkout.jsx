@@ -4,8 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
-import { createCheckoutSession } from '../utils/stripe';
-import { parsePriceToAmount, STRIPE_CURRENCY } from '../stripe-config';
+import { createPayment } from '../utils/maksekeskus';
+import { parsePriceToAmount } from '../maksekeskus-config';
+import PaymentMethods from '../components/Checkout/PaymentMethods';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ const Checkout = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [step, setStep] = useState(1); // 1: Review, 2: Shipping
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -69,6 +71,12 @@ const Checkout = () => {
       return false;
     }
     
+    // Check if payment method is selected
+    if (step === 2 && !selectedPaymentMethod) {
+      setError(t('checkout.payment.method_required'));
+      return false;
+    }
+    
     return true;
   };
 
@@ -105,33 +113,26 @@ const Checkout = () => {
     setError('');
 
     try {
-      // Prepare items for checkout
-      const itemsToCheckout = items.map(item => ({
-        name: item.title,
-        description: item.description || '',
-        amount: parsePriceToAmount(item.price), // Convert price string to cents
-        quantity: 1,
-        currency: STRIPE_CURRENCY,
-        image: item.image // Optional image URL
-      }));
+      // Create payment
+      const { success, payment_url, error: paymentError } = await createPayment(
+        {
+          ...formData,
+          items
+        },
+        selectedPaymentMethod
+      );
 
-      const { data, error: checkoutError } = await createCheckoutSession({
-        items: itemsToCheckout,
-        success_url: `${window.location.origin}/checkout/success`,
-        cancel_url: `${window.location.origin}/checkout`,
-      });
-
-      if (checkoutError) {
-        setError(checkoutError);
+      if (!success || paymentError) {
+        setError(paymentError || 'Maksesessiooni loomine ebaõnnestus');
         setIsProcessing(false);
         return;
       }
 
-      if (data?.url) {
+      if (payment_url) {
         // Clear cart before redirecting
         await clearCart();
-        // Redirect to Stripe Checkout
-        window.location.href = data.url;
+        // Redirect to bank payment page
+        window.location.href = payment_url;
       } else {
         setError('Maksesessiooni loomine ebaõnnestus');
         setIsProcessing(false);
@@ -260,6 +261,21 @@ const Checkout = () => {
                             </div>
                           </div>
                         ))}
+                      </div>
+                      
+                      {/* Payment Methods */}
+                      <div className="form-section">
+                        <h3>{t('checkout.payment.title')}</h3>
+                        <PaymentMethods 
+                          amount={getTotalPrice()}
+                          onSelectMethod={setSelectedPaymentMethod}
+                          selectedMethod={selectedPaymentMethod}
+                        />
+                        {error && error === t('checkout.payment.method_required') && (
+                          <div className="payment-method-error">
+                            {error}
+                          </div>
+                        )}
                       </div>
                       
                       <div className="checkout-actions">
@@ -988,6 +1004,16 @@ const Checkout = () => {
           color: #c33;
           font-size: 0.85rem;
           margin-top: 8px;
+        }
+        
+        .payment-method-error {
+          color: #c33;
+          font-size: 0.85rem;
+          margin-top: 8px;
+          padding: 8px 12px;
+          background-color: #fee;
+          border-radius: 4px;
+          border: 1px solid #fcc;
         }
 
         @media (max-width: 1024px) {
