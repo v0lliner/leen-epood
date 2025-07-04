@@ -12,7 +12,7 @@ const PaymentError = () => {
 
   return (
     <>
-      <SEOHead page="payment_error" />
+      <SEOHead page="shop" />
       <main>
         <section className="section-large">
           <div className="container">

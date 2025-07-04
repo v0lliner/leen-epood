@@ -63,7 +63,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
 
   return (
     <div className="payment-methods">
-      <h3>{t('checkout.payment.select_method')}</h3>
+      <h4>{t('checkout.payment.select_method')}</h4>
       
       <div className="payment-methods-list">
         {methods.map((method) => (
@@ -101,12 +101,12 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
           margin-bottom: 32px;
         }
 
-        .payment-methods h3 {
+        .payment-methods h4 {
           font-family: var(--font-heading);
-          font-size: 1.25rem;
+          font-size: 1.125rem;
           font-weight: 500;
           margin-bottom: 16px;
-          color: var(--color-ultramarine);
+          color: var(--color-text);
         }
 
         .payment-methods-list {

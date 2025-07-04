@@ -29,7 +29,7 @@ const PaymentCancelled = () => {
 
   return (
     <>
-      <SEOHead page="payment_cancelled" />
+      <SEOHead page="shop" />
       <main>
         <section className="section-large">
           <div className="container">

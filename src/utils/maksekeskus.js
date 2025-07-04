@@ -1,4 +1,4 @@
-import { MAKSEKESKUS_API, parsePriceToAmount } from '../maksekeskus-config';
+import { MAKSEKESKUS_API, parsePriceToAmount, MAKSEKESKUS_URLS } from '../maksekeskus-config';
 
 /**
  * Fetch available payment methods
@@ -10,8 +10,20 @@ export async function getPaymentMethods(amount) {
     const response = await fetch(`${MAKSEKESKUS_API.PAYMENT_METHODS}?amount=${amount}`);
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to fetch payment methods');
+      const errorText = await response.text();
+      let errorMessage = 'Failed to fetch payment methods';
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // If the response is not JSON, use the text as the error message
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();
@@ -32,8 +44,10 @@ export async function createPayment(orderData, paymentMethod) {
   try {
     // Prepare items with correct price format
     const items = orderData.items.map(item => ({
-      ...item,
-      price: parsePriceToAmount(item.price)
+      id: item.id,
+      title: item.title,
+      price: parsePriceToAmount(item.price),
+      quantity: 1
     }));
     
     // Calculate total
@@ -44,7 +58,10 @@ export async function createPayment(orderData, paymentMethod) {
       orderData: {
         ...orderData,
         items,
-        total
+        total,
+        returnUrl: MAKSEKESKUS_URLS.RETURN_URL,
+        cancelUrl: MAKSEKESKUS_URLS.CANCEL_URL,
+        notificationUrl: MAKSEKESKUS_URLS.NOTIFICATION_URL
       },
       paymentMethod
     };
@@ -58,13 +75,35 @@ export async function createPayment(orderData, paymentMethod) {
     });
     
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create payment');
+      const errorText = await response.text();
+      let errorMessage = 'Failed to create payment';
+      
+      try {
+        const errorData = JSON.parse(errorText);
+        if (errorData.error) {
+          errorMessage = errorData.error;
+        }
+      } catch (e) {
+        // If the response is not JSON, use the text as the error message
+        errorMessage = errorText || errorMessage;
+      }
+      
+      throw new Error(errorMessage);
     }
     
-    return await response.json();
+    const data = await response.json();
+    
+    return {
+      success: data.success,
+      payment_url: data.payment_url,
+      transaction_id: data.transaction_id,
+      error: data.error || null
+    };
   } catch (error) {
     console.error('Error creating payment:', error);
-    throw error;
+    return {
+      success: false,
+      error: error.message
+    };
   }
 }
