@@ -122,7 +122,7 @@ const CookieConsentBanner = () => {
               className="back-button"
               aria-label="Tagasi"
             >
-              ← Tagasi
+              ← {t('cookies.back')}
             </button>
           </div>
           
@@ -244,7 +244,7 @@ const CookieConsentBanner = () => {
           display: flex;
           flex-wrap: wrap;
           gap: 12px;
-          justify-content: flex-end;
+          justify-content: flex-start;
         }
 
         .cookie-btn {
