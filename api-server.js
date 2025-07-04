@@ -32,7 +32,7 @@ const API_BASE_URL = TEST_MODE
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.urlencoded({ extended: true }));
 
 // Add request logging middleware
 app.use((req, res, next) => {
@@ -70,45 +70,46 @@ async function fetchPaymentMethods() {
     // TEMPORARY: Return mock data for testing
     console.log('USING MOCK DATA instead of actual API call');
     return getMockPaymentMethods();
-    
-    // Fetch payment methods from Maksekeskus
-    const response = await axios.get(`${API_BASE_URL}/methods`, {
-      auth: {
-        username: SHOP_ID,
-        password: API_OPEN_KEY
-      }, 
-      timeout: 10000, // 10 second timeout
-      validateStatus: (status) => true // Accept any status code to handle it manually
-    });
-    
-    // Check if response is successful
-    console.log('Maksekeskus API response status:', response.status);
-    
-    if (response.status !== 200) {
-      console.error('Maksekeskus API error when fetching payment methods:', {
-        status: response.status,
-        data: response.data
-      });
-      
-      // Return cached methods if available, otherwise empty array
-      return paymentMethodsCache.methods.length > 0 
-        ? paymentMethodsCache.methods 
-        : [];
-    }
-    
-    // Extract banklinks
-    console.log('Maksekeskus API response data:', JSON.stringify(response.data).substring(0, 200) + '...');
-    
-    const banklinks = response.data.banklinks || [];
-    
-    // Update cache
-    paymentMethodsCache = {
-      methods: banklinks,
-      timestamp: now
-    };
-    
-    console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
-    return banklinks;
+
+    // NOTE: Uncomment this code when ready to use the real API
+    // // Fetch payment methods from Maksekeskus
+    // const response = await axios.get(`${API_BASE_URL}/methods`, {
+    //   auth: {
+    //     username: SHOP_ID, // 4e2bed9a-aa24-4b87-801b-56c31c535d36
+    //     password: API_OPEN_KEY // wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM
+    //   }, 
+    //   timeout: 10000, // 10 second timeout
+    //   validateStatus: (status) => true // Accept any status code to handle it manually
+    // });
+    // 
+    // // Check if response is successful
+    // console.log('Maksekeskus API response status:', response.status);
+    // 
+    // if (response.status !== 200) {
+    //   console.error('Maksekeskus API error when fetching payment methods:', {
+    //     status: response.status,
+    //     data: response.data
+    //   });
+    //   
+    //   // Return cached methods if available, otherwise empty array
+    //   return paymentMethodsCache.methods.length > 0 
+    //     ? paymentMethodsCache.methods 
+    //     : [];
+    // }
+    // 
+    // // Extract banklinks
+    // console.log('Maksekeskus API response data:', JSON.stringify(response.data).substring(0, 200) + '...');
+    // 
+    // const banklinks = response.data.banklinks || [];
+    // 
+    // // Update cache
+    // paymentMethodsCache = {
+    //   methods: banklinks,
+    //   timestamp: now
+    // };
+    // 
+    // console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
+    // return banklinks;
   } catch (error) {
     console.error('Exception when fetching payment methods:', {
       name: error.name,
@@ -225,24 +226,25 @@ async function createTransaction(orderData, paymentMethod) {
       merchant_data: JSON.stringify({
         order_id: orderData.id || 'TEMP',
         customer_email: orderData.email
-      }),
+      }),  
       customer: {
         email: orderData.email,
         name: orderData.name,
         country: 'ee',
         locale: 'et',
         ip: orderData.ip || '127.0.0.1'
-      },
-      return_url: `${SITE_URL}/makse/korras`,
-      cancel_url: `${SITE_URL}/makse/katkestatud`,
-      notification_url: `${SITE_URL}/api/maksekeskus/notification`
+      }, 
+      // Use the exact URLs provided by the client
+      return_url: 'https://leen.ee/makse/korras',
+      cancel_url: 'https://leen.ee/makse/katkestatud',
+      notification_url: 'https://leen.ee/api/maksekeskus/notification'
     };
     
     // Create transaction
     const response = await axios.post(`${API_BASE_URL}/transactions`, transaction, {
       auth: {
-        username: SHOP_ID,
-        password: API_SECRET_KEY
+        username: SHOP_ID, // 4e2bed9a-aa24-4b87-801b-56c31c535d36
+        password: API_SECRET_KEY // WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ
       },
       timeout: 15000, // 15 second timeout for transaction creation
       validateStatus: (status) => true // Accept any status code to handle it manually
