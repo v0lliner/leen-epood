@@ -17,6 +17,7 @@ const Hero = () => {
             <img 
               src="/leen-premium-epood.svg" 
               alt={t('hero.image_alt')}
+              fetchpriority="high"
             />
           </div>
         </FadeInSection>

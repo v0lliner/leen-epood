@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { portfolioItemService } from '../utils/supabase/portfolioItems';
+import { transformImage, getImageSizeForContext } from '../utils/supabase/imageTransform';
 
 const Portfolio = () => {
   const { t } = useTranslation();
@@ -160,6 +161,14 @@ const Portfolio = () => {
     ));
   };
 
+  // Get optimized image URL
+  const getOptimizedImageUrl = (imageUrl) => {
+    return transformImage(
+      imageUrl,
+      getImageSizeForContext('portfolio', isMobile())
+    );
+  };
+
   if (loading) {
     return (
       <>
@@ -233,9 +242,10 @@ const Portfolio = () => {
                     <div className="portfolio-image-container">
                       <div className="portfolio-image">
                         <img 
-                          src={item.image} 
+                          src={getOptimizedImageUrl(item.image)} 
                           alt={item.title}
                           onLoad={handleImageLoad}
+                          loading={index < 2 ? 'eager' : 'lazy'}
                         />
                       </div>
                     </div>

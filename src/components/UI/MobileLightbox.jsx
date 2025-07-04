@@ -1,8 +1,15 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { transformImage, getImageSizeForContext } from '../../utils/supabase/imageTransform';
 
 const MobileLightbox = ({ image, onClose }) => {
   const imageRef = useRef(null);
+  
+  // Optimize image for lightbox
+  const optimizedImageUrl = transformImage(
+    image,
+    getImageSizeForContext('lightbox')
+  );
   
   // Prevent body scrolling when lightbox is open
   useEffect(() => {
@@ -57,7 +64,7 @@ const MobileLightbox = ({ image, onClose }) => {
         onTouchStart={handleTouchStart}
       >
         <div className="image-container" ref={imageRef}>
-          <img src={image} alt="Product full view" onClick={(e) => e.stopPropagation()} />
+          <img src={optimizedImageUrl} alt="Product full view" onClick={(e) => e.stopPropagation()} />
         </div>
         <button className="close-button" onClick={onClose}>×</button>
         <div className="swipe-indicator">

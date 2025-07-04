@@ -8,6 +8,7 @@ import ProductCard from '../components/Shop/ProductCard';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../hooks/useProducts';
 import { productImageService } from '../utils/supabase/productImages';
+import { transformImage, getImageSizeForContext } from '../utils/supabase/imageTransform';
 
 const ProductDetail = () => {
   const { slug } = useParams();

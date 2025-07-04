@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useTranslation } from 'react-i18next';
+import { transformImage, getImageSizeForContext } from '../../utils/supabase/imageTransform';
 
 const ProductCard = ({ product }) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -27,6 +28,12 @@ const ProductCard = ({ product }) => {
   const isProductInCart = isInCart(product.id);
   const canAddToCart = product.available && !isProductInCart;
 
+  // Optimize image loading with transformations
+  const optimizedImageUrl = transformImage(
+    product.image, 
+    getImageSizeForContext('card')
+  );
+
   return (
     <Link 
       to={`/epood/toode/${product.slug}`} 
@@ -36,7 +43,7 @@ const ProductCard = ({ product }) => {
       onClick={scrollToTop}
     >
       <div className="product-image">
-        <img src={product.image} alt={product.title} />
+        <img src={optimizedImageUrl} alt={product.title} loading="lazy" />
         {!product.available && (
           <div className="sold-overlay">{t('shop.product.sold_out')}</div>
         )}
