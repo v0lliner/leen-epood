@@ -153,6 +153,9 @@ const Navigation = () => {
             background-color: var(--color-background);
             border-bottom: 1px solid #f0f0f0;
             z-index: 100;
+            flex-shrink: 0;
+            width: 100%;
+            will-change: transform;
           }
 
           .nav-wrapper {

@@ -23,6 +23,8 @@
 html {
   scroll-behavior: smooth;
   overflow-x: hidden;
+  height: 100%;
+  overflow-y: scroll;
 }
 
 body {
@@ -35,6 +37,8 @@ body {
   overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
+  height: 100%;
+  position: relative;
 }
 
 h1, h2, h3, h4, h5, h6 {
