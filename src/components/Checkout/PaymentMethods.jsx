@@ -12,6 +12,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   useEffect(() => {
     if (amount > 0) {
       loadPaymentMethodsData();
+      console.log('PaymentMethods component initialized with amount:', amount);
     }
   }, [amount, retryCount]);
 
@@ -22,7 +23,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     setError('');
     
     try {
-      console.log('Loading payment methods for amount:', amount);
+      console.log('Loading payment methods for amount:', amount, typeof amount);
       const paymentMethods = await loadPaymentMethods(amount);
       console.log('Received payment methods:', paymentMethods);
       setMethods(paymentMethods);

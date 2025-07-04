@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
-import crypto from 'crypto';
+import * as crypto from 'crypto';
 import dotenv from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 
@@ -37,6 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 // Add request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  console.log('Request query params:', req.query);
   next();
 });
 
@@ -49,7 +50,7 @@ let paymentMethodsCache = {
 // Helper function to fetch payment methods from Maksekeskus
 async function fetchPaymentMethods() {
   try {
-    console.log('Fetching payment methods from Maksekeskus...');
+    console.log('\n=== Fetching payment methods from Maksekeskus ===');
     console.log('API credentials:', {
       shop_id: SHOP_ID ? 'Present' : 'Missing',
       api_open_key: API_OPEN_KEY ? 'Present' : 'Missing',
@@ -65,6 +66,7 @@ async function fetchPaymentMethods() {
     }
     
     // TEMPORARY: Return mock data for testing
+    console.log('USING MOCK DATA instead of actual API call');
     return getMockPaymentMethods();
     
     // Fetch payment methods from Maksekeskus
@@ -480,6 +482,7 @@ async function markProductsAsSold(orderId) {
 // Routes
 app.get('/api/payment-methods', async (req, res) => {
   try {
+    console.log('\n=== Payment methods request received ===');
     // Get amount from query string
     let amount = null;
     console.log('Payment methods request received with query:', req.query);
@@ -487,6 +490,7 @@ app.get('/api/payment-methods', async (req, res) => {
     // Validate amount parameter
     if (req.query.amount) {
       // Parse amount, ensuring it's a valid number
+      console.log('Raw amount from request:', req.query.amount, 'type:', typeof req.query.amount);
       const cleanAmount = req.query.amount.toString().replace(',', '.');
       amount = parseFloat(cleanAmount);
       
@@ -494,6 +498,7 @@ app.get('/api/payment-methods', async (req, res) => {
       console.log('Parsed amount:', amount, 'from input:', req.query.amount);
       if (isNaN(amount)) {
         console.error('Invalid amount format:', req.query.amount);
+        console.log('Parsed amount resulted in NaN');
         return res.status(400).json({
           success: false,
           error: 'Invalid amount format'
@@ -502,7 +507,8 @@ app.get('/api/payment-methods', async (req, res) => {
     }
     
     // Validate amount is positive
-    if (amount <= 0) {
+    if (!amount || amount <= 0) {
+      console.log('Amount validation failed:', amount);
       console.error('Amount must be greater than zero:', amount);
       return res.status(400).json({
         success: false,
@@ -511,7 +517,7 @@ app.get('/api/payment-methods', async (req, res) => {
     }
     
     // Fetch payment methods
-    console.log('Fetching payment methods for amount:', amount);
+    console.log('Fetching payment methods for amount:', amount, '€');
     const allMethods = await fetchPaymentMethods();
     
     // If no methods were fetched, return an error
@@ -523,7 +529,7 @@ app.get('/api/payment-methods', async (req, res) => {
     }
     
     // Filter methods based on amount and country
-    console.log('Filtering payment methods for Estonia and amount:', amount);
+    console.log('Filtering payment methods for Estonia and amount:', amount, '€');
     const availableMethods = allMethods.filter(method => 
       (method.countries && method.countries.includes('ee')) &&
       (!method.min_amount || amount >= method.min_amount) &&
@@ -533,7 +539,7 @@ app.get('/api/payment-methods', async (req, res) => {
     console.log(`Filtered ${allMethods.length} methods to ${availableMethods.length} available methods for amount ${amount}`);
     
     // Return payment methods
-    console.log('Returning payment methods:', availableMethods.map(m => m.name).join(', '));
+    console.log('Returning payment methods:', availableMethods.map(m => m.channel || m.name).join(', '));
     res.status(200).json({
       success: true,
       methods: availableMethods,
@@ -541,7 +547,8 @@ app.get('/api/payment-methods', async (req, res) => {
     });
     
   } catch (error) {
-    console.error('Exception in /api/payment-methods endpoint:', error.name, error.message, error.stack);
+    console.error('\n=== ERROR in /api/payment-methods endpoint ===');
+    console.error('Error details:', error.name, error.message, error.stack);
     
     res.status(500).json({
       success: false,
@@ -688,9 +695,11 @@ app.get('/health', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`\n=== Maksekeskus API Server ===`);
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT} (${new Date().toISOString()})`);
   console.log(`Notification URL: ${SITE_URL}/api/maksekeskus/notification`);
   console.log(`Environment: ${TEST_MODE ? 'TEST' : 'PRODUCTION'}`);
   console.log(`API Base URL: ${API_BASE_URL}`);
+  console.log(`Credentials: Shop ID ${SHOP_ID ? 'is present' : 'is MISSING'}`);
+  console.log(`Credentials: API keys ${API_SECRET_KEY && API_OPEN_KEY ? 'are present' : 'are MISSING'}`);
   console.log(`=== Server Ready ===\n`);
 });

@@ -16,9 +16,14 @@ export async function loadPaymentMethods(amount) {
     }
     
     // Format amount to ensure it uses dot as decimal separator
-    const formattedAmount = amount.toString().replace(',', '.');
+    let formattedAmount = amount;
+    if (typeof amount === 'string') {
+      formattedAmount = amount.replace(',', '.');
+    } else {
+      formattedAmount = amount.toString();
+    }
     
-    console.log(`Requesting payment methods for amount: ${formattedAmount}€`);
+    console.log(`Requesting payment methods for amount: ${formattedAmount}€ (${typeof amount})`);
     
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
@@ -32,7 +37,7 @@ export async function loadPaymentMethods(amount) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Payment methods API error (${response.status}):`, errorText);
+      console.error(`Payment methods API error (${response.status}): ${errorText}`);
       throw new Error(`Failed to load payment methods (${response.status})`);
     }
     
@@ -40,7 +45,7 @@ export async function loadPaymentMethods(amount) {
     try {
       data = await response.json();
     } catch (parseError) {
-      console.error('Failed to parse payment methods response:', parseError);
+      console.error('Failed to parse payment methods response:', parseError.message);
       throw new Error('Invalid response from payment service');
     }
     
@@ -49,13 +54,13 @@ export async function loadPaymentMethods(amount) {
     }
     
     if (!data.methods || !Array.isArray(data.methods)) {
-      console.warn('Payment methods response has invalid format:', data);
+      console.warn('Payment methods response has invalid format:', JSON.stringify(data));
       return [];
     }
     
     return data.methods || [];
   } catch (error) {
-    console.error('Error loading payment methods:', error);
+    console.error('Error loading payment methods:', error.message);
     throw error;
   }
 }
