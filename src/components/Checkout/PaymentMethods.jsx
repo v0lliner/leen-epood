@@ -69,21 +69,29 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       <div className="payment-methods-list">
         {methods.map((method) => (
           <div 
-            key={method.method}
-            className={`payment-method ${selectedMethod === method.method ? 'selected' : ''}`}
-            onClick={() => onSelectMethod(method.method)}
+            key={method.method || method.channel}
+            className={`payment-method ${selectedMethod === (method.method || method.channel) ? 'selected' : ''}`}
+            onClick={() => onSelectMethod(method.method || method.channel)}
           >
             <div className="payment-method-logo">
-              <div className="bank-name">{method.name}</div>
+              {method.logo_url ? (
+                <img 
+                  src={method.logo_url} 
+                  alt={method.name} 
+                  className="bank-logo"
+                />
+              ) : (
+                <div className="bank-name">{method.name}</div>
+              )}
             </div>
             <div className="payment-method-info">
-              <div className="payment-method-name">{method.name}</div>
+              <div className="payment-method-name">{method.display_name || method.name}</div>
               {method.countries && method.countries.length > 0 && (
-                <div className="payment-method-country">{method.countries[0]}</div>
+                <div className="payment-method-country">{method.countries[0].toUpperCase()}</div>
               )}
             </div>
             <div className="payment-method-select">
-              <div className={`select-indicator ${selectedMethod === method.method ? 'active' : ''}`}></div>
+              <div className={`select-indicator ${selectedMethod === (method.method || method.channel) ? 'active' : ''}`}></div>
             </div>
           </div>
         ))}

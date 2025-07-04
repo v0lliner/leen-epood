@@ -10,11 +10,11 @@ The integration uses Maksekeskus.ee payment gateway to process payments via bank
 
 The integration consists of:
 
-1. **Backend (PHP)**
-   - Maksekeskus PHP SDK integration
-   - API endpoints for payment processing
+1. **Backend (Node.js)**
+   - Express.js API server
+   - Direct integration with Maksekeskus REST API
    - Webhook handling for payment notifications
-   - Order management
+   - Order management with Supabase
 
 2. **Frontend (React)**
    - Payment method selection UI
@@ -23,50 +23,52 @@ The integration consists of:
 
 ## Setup Instructions
 
-### 1. PHP SDK Installation
+### 1. Environment Variables
 
-The integration uses the official Maksekeskus PHP SDK. Install via Composer:
+Configure the integration by setting the following environment variables:
 
-```bash
-composer require maksekeskus/maksekeskus-php
+```
+# Maksekeskus API credentials
+MAKSEKESKUS_SHOP_ID=your-shop-id
+MAKSEKESKUS_API_SECRET_KEY=your-secret-key
+MAKSEKESKUS_API_OPEN_KEY=your-open-key
+
+# Supabase service role key (for server-side operations)
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Base URL for the site
+SITE_URL=https://leen.ee
+
+# Test mode (true/false)
+MAKSEKESKUS_TEST_MODE=true
 ```
 
-### 2. Configuration
+### 2. Dependencies
 
-Configure the integration in `server/config.php`:
+Install the required Node.js dependencies:
 
-```php
-// Maksekeskus API credentials
-define('MK_SHOP_ID', 'your-shop-id');
-define('MK_API_SECRET_KEY', 'your-secret-key');
-define('MK_API_OPEN_KEY', 'your-open-key');
-
-// Test mode (set to false for production)
-define('MK_TEST_MODE', false);
-
-// URLs for Maksekeskus integration
-define('MK_RETURN_URL', 'https://leen.ee/makse/korras');
-define('MK_CANCEL_URL', 'https://leen.ee/makse/katkestatud');
-define('MK_NOTIFICATION_URL', 'https://leen.ee/api/maksekeskus/notification');
+```bash
+npm add axios crypto-js dotenv @supabase/supabase-js express cors
 ```
 
 ### 3. Database Setup
 
-Run the SQL schema in `server/database/schema.sql` to create the necessary tables:
+The integration uses the following Supabase tables:
 
 - `orders` - Stores order information
 - `order_items` - Stores order line items
 - `order_payments` - Stores payment information
 
+The necessary SQL migrations are included in the project.
+
 ### 4. Server Configuration
 
 Ensure your server has:
 
-- PHP 7.4 or higher
-- PDO extension enabled
-- cURL extension enabled
-- JSON extension enabled
-- Write permissions for the logs directory
+- Node.js 16 or higher
+- HTTPS enabled for production
+- Proper CORS configuration
+- Accessible webhook endpoint
 
 ## Payment Flow
 
@@ -77,7 +79,7 @@ Ensure your server has:
 3. System fetches available payment methods from Maksekeskus
 4. User selects a bank-link payment method
 5. User clicks "Proceed to payment"
-6. System creates an order in the database
+6. System creates an order in the Supabase database
 7. System creates a transaction in Maksekeskus
 8. User is redirected to the selected bank's payment page
 
@@ -90,7 +92,7 @@ Ensure your server has:
 
 ### 3. Webhook Handling
 
-The webhook endpoint (`/api/maksekeskus/notification.php`):
+The webhook endpoint (`/api/maksekeskus/notification`):
 
 1. Verifies the MAC signature
 2. Updates the order status based on the payment status
@@ -99,7 +101,7 @@ The webhook endpoint (`/api/maksekeskus/notification.php`):
 
 ## Security Considerations
 
-1. **API Keys**: Store API keys securely, never expose them in client-side code
+1. **API Keys**: Store API keys securely in environment variables, never expose them in client-side code
 2. **MAC Verification**: Always verify the MAC signature for notifications
 3. **HTTPS**: Use HTTPS for all API endpoints
 4. **Idempotency**: Handle duplicate notifications gracefully
@@ -109,7 +111,7 @@ The webhook endpoint (`/api/maksekeskus/notification.php`):
 
 ### Test Environment
 
-1. Set `MK_TEST_MODE` to `true` in `config.php`
+1. Set `MAKSEKESKUS_TEST_MODE` to `true`
 2. Use test credentials from Maksekeskus sandbox
 3. Test the full payment flow with different banks
 4. Test cancellation and error scenarios
@@ -137,7 +139,7 @@ To add card payment support:
 To implement refund functionality:
 
 1. Create a new API endpoint for refunds
-2. Use the Maksekeskus SDK's `createRefund` method
+2. Use the Maksekeskus API to create refunds
 3. Update the order status to reflect refunds
 
 ### 3. Payment Links
@@ -145,7 +147,7 @@ To implement refund functionality:
 For payment links (e.g., for invoices):
 
 1. Create a new API endpoint to generate payment links
-2. Use the Maksekeskus SDK to create a transaction
+2. Use the Maksekeskus API to create a transaction
 3. Return the payment URL to the client
 
 ### 4. Recurring Payments
@@ -175,7 +177,7 @@ For subscription-based payments:
 
 ### Logging
 
-All payment-related events are logged to `logs/maksekeskus_YYYY-MM-DD.log`. Check these logs for detailed information about payment processing.
+All payment-related events are logged to the console. In a production environment, consider implementing a more robust logging solution.
 
 ## Contact Information
 
