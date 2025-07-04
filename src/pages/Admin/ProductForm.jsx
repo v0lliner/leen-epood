@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import AdminLayout from '../../components/Admin/AdminLayout'
 import MultiImageUpload from '../../components/Admin/MultiImageUpload'
 import { productService } from '../../utils/supabase/products'
+import { parsePriceToAmount } from '../../maksekeskus-config'
 import { categoryService } from '../../utils/supabase/categories'
 import { productImageService } from '../../utils/supabase/productImages'
 
@@ -178,8 +179,15 @@ const ProductForm = () => {
       setError(t('admin.products.form.title_required'))
       return false
     }
+    // Validate price - must be non-empty and greater than zero
     if (!formData.price.trim()) {
       setError(t('admin.products.form.price_required'))
+      return false
+    }
+    // Parse price to check if it's a valid number greater than zero
+    const priceValue = parsePriceToAmount(formData.price)
+    if (isNaN(priceValue) || priceValue <= 0) {
+      setError('Hind peab olema suurem kui 0')
       return false
     }
     if (images.length === 0) {
@@ -195,7 +203,7 @@ const ProductForm = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    
+
     if (!validateForm()) {
       return
     }
@@ -229,8 +237,11 @@ const ProductForm = () => {
 
       const productData = {
         ...formData,
-        slug: uniqueSlug, // Use the guaranteed unique slug
-        price: formData.price.includes('€') ? formData.price : `${formData.price}€`,
+        slug: uniqueSlug,
+        // Ensure price has € symbol and is properly formatted
+        price: formData.price.includes('€') 
+          ? formData.price 
+          : `${parseFloat(formData.price.replace(',', '.')).toFixed(2)}€`,
         dimensions: processedDimensions,
         // Set primary image for backward compatibility
         image: images.find(img => img.is_primary)?.image_url || images[0]?.image_url || '',
