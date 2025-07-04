@@ -56,8 +56,22 @@ async function fetchPaymentMethods() {
       auth: {
         username: SHOP_ID,
         password: API_OPEN_KEY
-      }
+      },
+      validateStatus: (status) => true
     });
+    
+    // Check if response is successful
+    if (response.status !== 200) {
+      console.error('Maksekeskus API error:', {
+        status: response.status,
+        data: response.data
+      });
+      
+      // Return cached methods if available, otherwise empty array
+      return paymentMethodsCache.methods.length > 0 
+        ? paymentMethodsCache.methods 
+        : [];
+    }
     
     // Extract banklinks
     const banklinks = response.data.banklinks || [];
@@ -71,7 +85,13 @@ async function fetchPaymentMethods() {
     console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
     return banklinks;
   } catch (error) {
-    console.error('Error fetching payment methods:', error.message);
+    console.error('Error fetching payment methods:', {
+      message: error.message,
+      response: error.response ? {
+        status: error.response.status,
+        data: error.response.data
+      } : 'No response'
+    });
     
     // Return cached methods if available, otherwise empty array
     return paymentMethodsCache.methods.length > 0 
@@ -109,8 +129,19 @@ async function createTransaction(orderData, paymentMethod) {
       auth: {
         username: SHOP_ID,
         password: API_SECRET_KEY
-      }
+      },
+      validateStatus: (status) => true
     });
+    
+    // Check if response is successful
+    if (response.status !== 200 && response.status !== 201) {
+      console.error('Maksekeskus transaction creation error:', {
+        status: response.status,
+        data: response.data
+      });
+      
+      throw new Error(`Payment service unavailable (Status: ${response.status}). Please try again later.`);
+    }
     
     // Get payment URL for the selected method
     let paymentUrl = null;
@@ -146,7 +177,13 @@ async function createTransaction(orderData, paymentMethod) {
       payment_url: paymentUrl
     };
   } catch (error) {
-    console.error('Error creating transaction:', error.message);
+    console.error('Error creating transaction:', {
+      message: error.message,
+      response: error.response ? {
+        status: error.response.status,
+        data: error.response.data
+      } : 'No response'
+    });
     throw error;
   }
 }
