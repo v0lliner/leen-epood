@@ -8,6 +8,15 @@ import { createClient } from '@supabase/supabase-js';
 // Load environment variables
 dotenv.config();
 
+// Debug environment variables
+console.log('=== Environment variables check ===');
+console.log('MAKSEKESKUS_SHOP_ID:', SHOP_ID ? 'Present' : 'Missing');
+console.log('MAKSEKESKUS_API_SECRET_KEY:', API_SECRET_KEY ? 'Present' : 'Missing');
+console.log('MAKSEKESKUS_API_OPEN_KEY:', API_OPEN_KEY ? 'Present' : 'Missing');
+console.log('MAKSEKESKUS_TEST_MODE:', TEST_MODE);
+console.log('SITE_URL:', SITE_URL);
+console.log('=== End environment variables check ===');
+
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -81,10 +90,19 @@ async function fetchPaymentMethods() {
     const response = await axios.get(`${API_BASE_URL}/shops/${SHOP_ID}/payment-methods`, {
       auth: {
         username: SHOP_ID,
-        password: API_OPEN_KEY
+        password: API_OPEN_KEY // Using open key for fetching payment methods
       }, 
       timeout: 10000, // 10 second timeout
       validateStatus: (status) => true // Accept any status code to handle it manually
+    });
+    
+    // Log request details for debugging
+    console.log('Payment methods request details:', {
+      url: `${API_BASE_URL}/shops/${SHOP_ID}/payment-methods`,
+      auth: {
+        username: SHOP_ID ? `${SHOP_ID.substring(0, 4)}...` : 'Missing',
+        password: API_OPEN_KEY ? `${API_OPEN_KEY.substring(0, 4)}...` : 'Missing'
+      }
     });
     
     if (response.status !== 200) {
@@ -242,10 +260,27 @@ async function createTransaction(orderData, paymentMethod) {
     const response = await axios.post(`${API_BASE_URL}/transactions`, transaction, {
       auth: {
         username: SHOP_ID,
-        password: API_SECRET_KEY
+        password: API_SECRET_KEY // Using secret key for transaction creation
       },
       timeout: 15000, // 15 second timeout for transaction creation
       validateStatus: (status) => true // Accept any status code to handle it manually
+    });
+    
+    // Log request details for debugging
+    console.log('Transaction request details:', {
+      url: `${API_BASE_URL}/transactions`,
+      auth: {
+        username: SHOP_ID ? `${SHOP_ID.substring(0, 4)}...` : 'Missing',
+        password: API_SECRET_KEY ? 'Present (Secret)' : 'Missing'
+      },
+      data: {
+        ...transaction,
+        customer: {
+          ...transaction.customer,
+          email: transaction.customer.email ? '***@***' : 'Missing',
+          name: transaction.customer.name ? '***' : 'Missing'
+        }
+      }
     });
     
     // Check if response is successful

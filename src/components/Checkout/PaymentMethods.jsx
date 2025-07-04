@@ -43,21 +43,21 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       // For zero or very small amounts, use a minimum value to avoid validation errors
       if (isNaN(numericAmount)) {
         console.error('Invalid amount after parsing:', { 
-          original: amount, 
-          parsed: numericAmount, 
-          type: typeof amount 
+          original: amount,
+          parsed: numericAmount,
+          type: typeof amount
         });
         throw new Error(`Invalid amount format: ${amount}`);
       }
       
       // Use a minimum amount of 0.01 to avoid validation errors
       if (numericAmount <= 0) {
-        console.log('Amount is zero or negative, using minimum value of 0.01');
+        console.warn('Amount is zero or negative, using minimum value of 0.01');
         numericAmount = 0.01;
       }
       
       // Load payment methods from the API
-      const paymentMethods = await loadPaymentMethods(amount);
+      const paymentMethods = await loadPaymentMethods(numericAmount);
       
       setMethods(paymentMethods);
     } catch (err) {

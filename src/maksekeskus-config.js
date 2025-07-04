@@ -13,23 +13,30 @@ export const CURRENCY = 'EUR';
 export function parsePriceToAmount(priceString) {
   if (!priceString) return NaN;
   
-  // If already a number, return it
+  // If already a number, return it (ensuring it's positive)
   if (typeof priceString === 'number') {
-    return priceString > 0 ? priceString : 0.01;
+    const value = priceString > 0 ? priceString : 0.01;
+    console.log(`parsePriceToAmount: number input ${priceString} → ${value}`);
+    return value;
   }
   
   try {
     // Remove currency symbol and any whitespace
     const cleanPrice = priceString.toString().replace(/[^\d.,]/g, '').trim();
+    console.log(`parsePriceToAmount: cleaned price "${priceString}" → "${cleanPrice}"`);
     
     // Replace comma with dot for decimal point (European format)
     const normalizedPrice = cleanPrice.replace(',', '.');
+    console.log(`parsePriceToAmount: normalized price "${cleanPrice}" → "${normalizedPrice}"`);
     
     // Parse to float and ensure it's a valid number
     const result = parseFloat(normalizedPrice);
+    console.log(`parsePriceToAmount: parsed result = ${result}, isNaN = ${isNaN(result)}`);
     
     // Return at least 0.01 to avoid validation errors
-    return isNaN(result) ? 0.01 : (result > 0 ? result : 0.01);
+    const finalResult = isNaN(result) ? 0.01 : (result > 0 ? result : 0.01);
+    console.log(`parsePriceToAmount: final result = ${finalResult}`);
+    return finalResult;
   } catch (error) {
     console.error('Error parsing price:', error);
     return 0.01; // Return minimum valid amount on error
