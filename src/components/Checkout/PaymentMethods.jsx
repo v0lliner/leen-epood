@@ -2,6 +2,11 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPaymentMethods } from '../../utils/maksekeskus';
 
+// Helper function to get logo URL for a payment method
+const getPaymentMethodLogo = (channel) => {
+  return `https://static.maksekeskus.ee/img/channel/lnd/${channel}.png`;
+};
+
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const { t } = useTranslation();
   const [methods, setMethods] = useState([]);
@@ -116,15 +121,16 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
             onClick={() => onSelectMethod(method.channel)}
           >
             <div className="payment-method-logo">
-              {method.logo_url ? (
-                <img 
-                  src={method.logo_url} 
-                  alt={method.name} 
-                  className="bank-logo"
-                />
-              ) : (
-                <div className="bank-name">{method.name}</div>
-              )}
+              <img 
+                src={getPaymentMethodLogo(method.channel)} 
+                alt={method.name} 
+                className="bank-logo"
+                onError={(e) => {
+                  // Fallback to text if image fails to load
+                  e.target.style.display = 'none';
+                  e.target.parentNode.innerHTML = `<div class="bank-name">${method.name}</div>`;
+                }}
+              />
             </div>
             <div className="payment-method-info">
               <div className="payment-method-name">{method.display_name || method.name}</div>
@@ -182,14 +188,14 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
           width: 80px;
           height: 40px;
           display: flex;
-          align-items: center;
-          justify-content: center;
+          align-items: flex-start;
+          justify-content: flex-start;
           margin-right: 16px;
         }
 
         .bank-logo {
-          max-width: 100%;
-          max-height: 100%;
+          height: 40px;
+          width: auto;
           object-fit: contain;
         }
 

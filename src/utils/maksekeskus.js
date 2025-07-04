@@ -29,9 +29,9 @@ export async function loadPaymentMethods(amount) {
     
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
-    // Use the Supabase Edge Function instead of the Express API
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const url = `${supabaseUrl}/functions/v1/maksekeskus-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
+    
+    // First try the Express API endpoint
+    const url = `/api/payment-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
     
     const response = await fetch(url, {
       headers: {
@@ -47,6 +47,15 @@ export async function loadPaymentMethods(amount) {
     }
     
     const data = await response.json();
+
+    // Process the response data to ensure logo URLs are correct
+    if (data.success && data.methods && Array.isArray(data.methods)) {
+      data.methods = data.methods.map(method => ({
+        ...method,
+        // Ensure logo_url is using the standard format
+        logo_url: `https://static.maksekeskus.ee/img/channel/lnd/${method.channel}.png`
+      }));
+    }
     
     if (!data.success) {
       console.error('API error:', data.error || 'Unknown error');
@@ -89,6 +98,9 @@ export async function createPayment(orderData, paymentMethod) {
     }, 0);
     
     // Prepare request data
+    // Use the Express API endpoint
+    const url = `/api/create-payment`;
+    
     const requestData = {
       orderData: {
         ...orderData,
@@ -99,14 +111,12 @@ export async function createPayment(orderData, paymentMethod) {
     };
     
     console.log('Creating payment with data:', {
-      total: requestData.orderData.total,
+      total: requestData.orderData.total.toFixed(2),
       items: requestData.orderData.items.length,
       paymentMethod
     });
     
-    // Use the Supabase Edge Function instead of the Express API
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-    const response = await fetch(`${supabaseUrl}/functions/v1/maksekeskus-payment`, {
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
