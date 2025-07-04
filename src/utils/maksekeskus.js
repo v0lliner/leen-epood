@@ -12,19 +12,37 @@ import { parsePriceToAmount } from '../maksekeskus-config';
 export async function loadPaymentMethods(amount) {
   try {
     if (!amount || amount <= 0) {
-      throw new Error('Invalid amount');
+      throw new Error('Amount must be greater than zero');
     }
     
-    const response = await fetch(`/api/payment-methods?amount=${amount}`);
+    // Format amount to ensure it uses dot as decimal separator
+    const formattedAmount = amount.toString().replace(',', '.');
+    
+    console.log(`Requesting payment methods for amount: ${formattedAmount}`);
+    
+    const response = await fetch(`/api/payment-methods?amount=${formattedAmount}`);
     
     if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Payment methods API error (${response.status}):`, errorText);
+      throw new Error(`Failed to load payment methods (${response.status})`);
     }
     
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.error('Failed to parse payment methods response:', parseError);
+      throw new Error('Invalid response from payment service');
+    }
     
     if (!data.success) {
       throw new Error(data.error || 'Failed to load payment methods');
+    }
+    
+    if (!data.methods || !Array.isArray(data.methods)) {
+      console.warn('Payment methods response has invalid format:', data);
+      return [];
     }
     
     return data.methods || [];
@@ -56,12 +74,24 @@ export async function createPayment(orderData, paymentMethod) {
     // Prepare request data
     const requestData = {
       orderData: {
-        ...orderData,
+        ...orderData, 
         items,
         total
       },
       paymentMethod
     };
+    
+    console.log('Creating payment with data:', {
+      ...requestData,
+      orderData: {
+        ...requestData.orderData,
+        // Don't log sensitive customer data
+        name: '***',
+        email: '***',
+        phone: '***',
+        address: '***'
+      }
+    });
     
     // Send request to API
     const response = await fetch('/api/create-payment', {
@@ -73,14 +103,27 @@ export async function createPayment(orderData, paymentMethod) {
     });
     
     if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
+      const errorText = await response.text();
+      console.error(`Create payment API error (${response.status}):`, errorText);
+      throw new Error(`Failed to create payment (${response.status})`);
     }
     
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      console.error('Failed to parse create payment response:', parseError);
+      throw new Error('Invalid response from payment service');
+    }
     
     if (!data.success) {
       throw new Error(data.error || 'Failed to create payment');
     }
+    
+    console.log('Payment created successfully:', {
+      transaction_id: data.transaction_id,
+      payment_url: data.payment_url ? 'Available' : 'Missing'
+    });
     
     return {
       success: true,

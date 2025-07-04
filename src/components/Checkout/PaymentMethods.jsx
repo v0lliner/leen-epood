@@ -7,12 +7,13 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const [methods, setMethods] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     if (amount > 0) {
       loadPaymentMethodsData();
     }
-  }, [amount]);
+  }, [amount, retryCount]);
 
   const loadPaymentMethodsData = async () => {
     if (!amount || amount <= 0) return;
@@ -21,7 +22,9 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     setError('');
     
     try {
+      console.log('Loading payment methods for amount:', amount);
       const paymentMethods = await loadPaymentMethods(amount);
+      console.log('Received payment methods:', paymentMethods);
       setMethods(paymentMethods);
     } catch (err) {
       console.error('Failed to load payment methods:', err);
@@ -29,6 +32,10 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1);
   };
 
   if (loading) {
@@ -45,7 +52,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       <div className="payment-methods-error">
         <p>{error}</p>
         <button 
-          onClick={loadPaymentMethodsData}
+          onClick={handleRetry}
           className="retry-button"
         >
           {t('checkout.payment.retry')}

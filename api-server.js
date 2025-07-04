@@ -56,13 +56,13 @@ async function fetchPaymentMethods() {
       auth: {
         username: SHOP_ID,
         password: API_OPEN_KEY
-      },
-      validateStatus: (status) => true
+      }, 
+      validateStatus: (status) => true // Accept any status code to handle it manually
     });
     
     // Check if response is successful
     if (response.status !== 200) {
-      console.error('Maksekeskus API error:', {
+      console.error('Maksekeskus API error when fetching payment methods:', {
         status: response.status,
         data: response.data
       });
@@ -85,7 +85,7 @@ async function fetchPaymentMethods() {
     console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
     return banklinks;
   } catch (error) {
-    console.error('Error fetching payment methods:', {
+    console.error('Exception when fetching payment methods:', {
       message: error.message,
       response: error.response ? {
         status: error.response.status,
@@ -130,17 +130,22 @@ async function createTransaction(orderData, paymentMethod) {
         username: SHOP_ID,
         password: API_SECRET_KEY
       },
-      validateStatus: (status) => true
+      validateStatus: (status) => true // Accept any status code to handle it manually
     });
     
     // Check if response is successful
     if (response.status !== 200 && response.status !== 201) {
-      console.error('Maksekeskus transaction creation error:', {
+      console.error('Maksekeskus API error when creating transaction:', {
         status: response.status,
         data: response.data
       });
       
-      throw new Error(`Payment service unavailable (Status: ${response.status}). Please try again later.`);
+      // Provide a more detailed error message if available
+      const errorMessage = response.data && response.data.error 
+        ? response.data.error 
+        : `Payment service unavailable (Status: ${response.status}). Please try again later.`;
+      
+      throw new Error(errorMessage);
     }
     
     // Get payment URL for the selected method
@@ -174,10 +179,11 @@ async function createTransaction(orderData, paymentMethod) {
     
     return {
       transaction_id: response.data.id,
-      payment_url: paymentUrl
+      payment_url: paymentUrl,
+      transaction: response.data
     };
   } catch (error) {
-    console.error('Error creating transaction:', {
+    console.error('Exception when creating transaction:', {
       message: error.message,
       response: error.response ? {
         status: error.response.status,
@@ -371,17 +377,39 @@ async function markProductsAsSold(orderId) {
 app.get('/api/payment-methods', async (req, res) => {
   try {
     // Get amount from query string
-    const amount = parseFloat(req.query.amount) || 0;
+    let amount = 0;
+    
+    // Validate amount parameter
+    if (req.query.amount) {
+      // Parse amount, ensuring it's a valid number
+      amount = parseFloat(req.query.amount.replace(',', '.'));
+      
+      // Check if parsing resulted in a valid number
+      if (isNaN(amount)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Invalid amount format'
+        });
+      }
+    }
     
     if (amount <= 0) {
       return res.status(400).json({
         success: false,
-        error: 'Invalid amount'
+        error: 'Amount must be greater than zero'
       });
     }
     
     // Fetch payment methods
     const allMethods = await fetchPaymentMethods();
+    
+    // If no methods were fetched, return an error
+    if (!allMethods || allMethods.length === 0) {
+      return res.status(503).json({
+        success: false,
+        error: 'Payment service temporarily unavailable'
+      });
+    }
     
     // Filter methods based on amount and country
     const availableMethods = allMethods.filter(method => 
@@ -393,15 +421,16 @@ app.get('/api/payment-methods', async (req, res) => {
     // Return payment methods
     res.status(200).json({
       success: true,
-      methods: availableMethods
+      methods: availableMethods,
+      count: availableMethods.length
     });
     
   } catch (error) {
-    console.error('Error getting payment methods:', error.message);
+    console.error('Exception in /api/payment-methods endpoint:', error.message, error.stack);
     
     res.status(500).json({
       success: false,
-      error: 'Failed to load payment methods'
+      error: 'Failed to load payment methods. Please try again later.'
     });
   }
 });
@@ -409,11 +438,27 @@ app.get('/api/payment-methods', async (req, res) => {
 app.post('/api/create-payment', async (req, res) => {
   try {
     const { orderData, paymentMethod } = req.body;
-    
-    if (!orderData || !paymentMethod) {
+
+    // Validate required fields
+    if (!orderData) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required data'
+        error: 'Order data is required'
+      });
+    }
+    
+    if (!paymentMethod) {
+      return res.status(400).json({
+        success: false,
+        error: 'Payment method is required'
+      });
+    }
+    
+    // Validate order items
+    if (!orderData.items || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Order must contain at least one item'
       });
     }
     
@@ -429,17 +474,20 @@ app.post('/api/create-payment', async (req, res) => {
     
     res.status(200).json({
       success: true,
-      order_id: order.id,
-      transaction_id: transaction.transaction_id,
-      payment_url: transaction.payment_url
+      order_id: order.id || null,
+      transaction_id: transaction.transaction_id || null,
+      payment_url: transaction.payment_url || null
     });
     
   } catch (error) {
-    console.error('Error creating payment:', error.message);
+    console.error('Exception in /api/create-payment endpoint:', error.message, error.stack);
     
-    res.status(500).json({
+    // Determine appropriate status code
+    const statusCode = error.response?.status || 500;
+    
+    res.status(statusCode).json({
       success: false,
-      error: 'Failed to create payment'
+      error: error.message || 'Failed to create payment. Please try again later.'
     });
   }
 });
@@ -447,18 +495,21 @@ app.post('/api/create-payment', async (req, res) => {
 app.post('/api/maksekeskus/notification', async (req, res) => {
   try {
     // Always respond with 200 OK first to acknowledge receipt
-    res.status(200).json({ status: 'ok' });
+    res.status(200).send('OK');
     
     // Get raw request body and MAC
     const payload = req.body.json;
     const mac = req.body.mac;
     
     // Log the notification
-    console.log('Received notification:', payload);
+    console.log('Received Maksekeskus notification:', {
+      payload,
+      mac: mac ? `${mac.substring(0, 10)}...` : 'missing'
+    });
     
     // Verify MAC signature
     if (!verifyMac(payload, mac)) {
-      console.error('Invalid MAC signature');
+      console.error('Invalid MAC signature in notification');
       return;
     }
     
@@ -467,7 +518,7 @@ app.post('/api/maksekeskus/notification', async (req, res) => {
     
     // Extract merchant data
     const merchantData = JSON.parse(data.merchant_data || '{}');
-    const orderId = merchantData.order_id;
+    const orderId = merchantData.order_id || null;
     
     if (!orderId) {
       console.error('Notification missing order_id:', data);
@@ -486,27 +537,36 @@ app.post('/api/maksekeskus/notification', async (req, res) => {
     
     // Update order payment status
     await updateOrderPayment(
-      orderId,
-      data.transaction,
-      status,
-      'banklink', // Generic payment method
-      parseFloat(data.amount)
+      orderId || 'unknown',
+      data.transaction || 'unknown',
+      status || 'PENDING',
+      data.payment_method || 'banklink', // Use payment_method if available, otherwise generic
+      parseFloat(data.amount || '0')
     );
     
     console.log(`Processed notification for order ${orderId}, status: ${status}`);
     
   } catch (error) {
-    console.error('Error processing notification:', error.message);
+    console.error('Exception in notification endpoint:', error.message, error.stack);
     // We've already sent a 200 OK response, so just log the error
   }
 });
 
 // Health check
 app.get('/health', (req, res) => {
-  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    environment: {
+      test_mode: TEST_MODE,
+      api_base: API_BASE_URL
+    }
+  });
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`API server running on http://localhost:${PORT}`);
+  console.log(`Maksekeskus API server running on http://localhost:${PORT}`);
+  console.log(`Environment: ${TEST_MODE ? 'TEST' : 'PRODUCTION'}`);
+  console.log(`API Base URL: ${API_BASE_URL}`);
 });
