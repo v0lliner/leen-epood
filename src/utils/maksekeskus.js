@@ -22,20 +22,14 @@ export async function loadPaymentMethods(amount) {
       ? amount.toFixed(2)
       : parseFloat(amount.toString().replace(',', '.')).toFixed(2);
 
-    console.log(`Requesting payment methods for amount: ${formattedAmount}€ (${typeof formattedAmount})`);
+    console.log(`Requesting payment methods for amount: ${formattedAmount}€`);
 
-    // Ensure amount is a valid number
-    if (isNaN(parseFloat(formattedAmount))) {
-      console.error('Amount is not a valid number after formatting, using default:', formattedAmount);
-      formattedAmount = '0.01';
-    }
+    // Ensure amount is a valid number with 2 decimal places
+    amount = parseFloat(formattedAmount);
     
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
-    // Ensure we're sending a clean number without any currency symbols
-    const cleanAmount = parseFloat(formattedAmount).toFixed(2);
-    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/maksekeskus-methods?amount=${encodeURIComponent(cleanAmount)}&_=${timestamp}`;
-    console.log(`Fetching from: ${url}`);
+    const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/maksekeskus-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
     
     const response = await fetch(url, {
       headers: {
@@ -51,24 +45,15 @@ export async function loadPaymentMethods(amount) {
       throw new Error(`Failed to load payment methods (${response.status})`);
     }
     
-    let data;
-    try {
-      data = await response.json();
-    } catch (parseError) {
-      console.error('Failed to parse response:', parseError.message);
-      throw new Error('Invalid response from payment service');
-    }
+    const data = await response.json();
     
     if (!data.success) {
       console.error('API error:', data.error || 'Unknown error');
-      if (data.debug) {
-        console.log('Debug info:', data.debug);
-      }
       throw new Error(data.error || 'Payment service unavailable');
     }
     
     if (!data.methods || !Array.isArray(data.methods)) {
-      console.warn('Invalid response format:', JSON.stringify(data).substring(0, 100));
+      console.warn('Invalid response format:', data);
       return [];
     }
     
@@ -113,8 +98,6 @@ export async function createPayment(orderData, paymentMethod) {
     };
     
     console.log('Creating payment with data:', {
-      ...requestData,
-      // Only log non-sensitive data
       total: requestData.orderData.total,
       items: requestData.orderData.items.length,
       paymentMethod: requestData.paymentMethod
@@ -134,17 +117,11 @@ export async function createPayment(orderData, paymentMethod) {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Create payment API error (${response.status}):`, errorText.substring(0, 200));
+      console.error(`Create payment API error (${response.status}):`, errorText);
       throw new Error(`Failed to create payment (${response.status})`);
     }
     
-    let data;
-    try {
-      data = await response.json();
-    } catch (parseError) {
-      console.error('Failed to parse create payment response:', parseError);
-      throw new Error('Invalid response from payment service');
-    }
+    const data = await response.json();
     
     if (!data.success) {
       throw new Error(data.error || 'Failed to create payment');

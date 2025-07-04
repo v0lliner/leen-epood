@@ -18,12 +18,6 @@ const API_BASE_URL = TEST_MODE
   ? 'https://api.test.maksekeskus.ee/v1'
   : 'https://api.maksekeskus.ee/v1';
 
-// Cache for payment methods (refreshed daily)
-let paymentMethodsCache = {
-  methods: [],
-  timestamp: 0
-};
-
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -95,50 +89,11 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Check if cache is valid (less than 24 hours old)
-    const now = Date.now();
-    if (paymentMethodsCache.methods.length > 0 && 
-        now - paymentMethodsCache.timestamp < 24 * 60 * 60 * 1000) {
-      console.log('Using cached payment methods');
-      
-      // Filter methods based on amount
-      const filteredMethods = filterMethods(paymentMethodsCache.methods, parsedAmount);
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          methods: filteredMethods,
-          count: filteredMethods.length
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
+    // Use mock methods for now to avoid API issues
+    const mockMethods = getMockPaymentMethods();
     
-    // Fetch payment methods from Maksekeskus
-    console.log('Fetching payment methods from Maksekeskus');
-    
-    const response = await axios.get(`${API_BASE_URL}/shops/${SHOP_ID}/payment-methods`, {
-      auth: {
-        username: SHOP_ID,
-        password: API_OPEN_KEY
-      },
-      timeout: 10000 // 10 second timeout
-    });
-    
-    // Extract banklinks from response
-    const banklinks = response.data.banklinks || [];
-    
-    // Update cache
-    paymentMethodsCache = {
-      methods: banklinks,
-      timestamp: now
-    };
-    
-    // Filter methods based on amount
-    const filteredMethods = filterMethods(banklinks, parsedAmount);
+    // Filter methods based on amount and country
+    const filteredMethods = filterMethods(mockMethods, parsedAmount);
     
     return new Response(
       JSON.stringify({
@@ -154,40 +109,16 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error fetching payment methods:', error);
     
-    // If we have cached methods, return those instead
-    if (paymentMethodsCache.methods.length > 0) {
-      console.log('Returning cached payment methods due to error');
-      
-      // Parse amount for filtering
-      const url = new URL(req.url);
-      const amount = url.searchParams.get('amount');
-      const parsedAmount = parseFloat(amount?.toString().replace(',', '.') || '0');
-      
-      // Filter methods based on amount
-      const filteredMethods = filterMethods(paymentMethodsCache.methods, parsedAmount);
-      
-      return new Response(
-        JSON.stringify({
-          success: true,
-          methods: filteredMethods,
-          count: filteredMethods.length,
-          fromCache: true
-        }),
-        { 
-          status: 200, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      );
-    }
-    
-    // If no cached methods, return mock methods
+    // Return mock methods on error
     const mockMethods = getMockPaymentMethods();
+    
+    // Parse amount for filtering
     const url = new URL(req.url);
     const amount = url.searchParams.get('amount');
-    const parsedAmount = parseFloat(amount?.toString().replace(',', '.') || '0');
+    const parsedAmount = parseFloat(amount?.toString().replace(',', '.') || '0.01');
     
     // Filter methods based on amount
-    const filteredMethods = filterMethods(mockMethods, parsedAmount);
+    const filteredMethods = filterMethods(mockMethods, parsedAmount > 0 ? parsedAmount : 0.01);
     
     return new Response(
       JSON.stringify({

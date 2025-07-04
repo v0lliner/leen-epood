@@ -15,7 +15,6 @@ const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Maksekeskus API credentials
-const SHOP_ID = Deno.env.get('MAKSEKESKUS_SHOP_ID')!;
 const API_SECRET_KEY = Deno.env.get('MAKSEKESKUS_API_SECRET_KEY')!;
 
 Deno.serve(async (req) => {
@@ -44,10 +43,7 @@ Deno.serve(async (req) => {
     const payload = formData.get('json')?.toString() || '';
     const mac = formData.get('mac')?.toString() || '';
 
-    console.log('Received Maksekeskus notification:', {
-      payload: payload.substring(0, 100) + '...',
-      mac: mac ? mac.substring(0, 10) + '...' : 'missing'
-    });
+    console.log('Received Maksekeskus notification');
 
     // Verify MAC signature
     if (!verifyMac(payload, mac)) {
@@ -69,7 +65,7 @@ Deno.serve(async (req) => {
     const orderId = merchantData.order_id || null;
     
     if (!orderId) {
-      console.error('Notification missing order_id:', data);
+      console.error('Notification missing order_id');
       return new Response(
         JSON.stringify({ error: 'Missing order_id' }),
         { 
@@ -80,7 +76,7 @@ Deno.serve(async (req) => {
     }
 
     // Map Maksekeskus status to our status
-    const statusMap: Record<string, string> = {
+    const statusMap = {
       'COMPLETED': 'COMPLETED',
       'CANCELLED': 'CANCELLED',
       'EXPIRED': 'EXPIRED',
@@ -134,16 +130,7 @@ function verifyMac(payload: string, mac: string): boolean {
     const receivedMac = mac ? mac.toUpperCase() : '';
     
     // Compare the calculated MAC with the received MAC
-    const isValid = calculatedMac === receivedMac;
-    
-    if (!isValid) {
-      console.warn('MAC validation failed:', {
-        calculated: calculatedMac.substring(0, 10) + '...',
-        received: receivedMac.substring(0, 10) + '...'
-      });
-    }
-    
-    return isValid;
+    return calculatedMac === receivedMac;
   } catch (error) {
     console.error('Error verifying MAC:', error);
     return false;
@@ -167,7 +154,7 @@ async function updateOrderPayment(
       .maybeSingle();
     
     if (existingPayment) {
-      console.log(`Duplicate webhook received for transaction ${transactionId}, order ${orderId}`);
+      console.log(`Duplicate webhook received for transaction ${transactionId}`);
       
       // Only update if status is changing to a more final state
       if (existingPayment.status === 'COMPLETED' && status !== 'COMPLETED') {
@@ -224,7 +211,6 @@ async function updateOrderPayment(
       await markProductsAsSold(orderId);
     }
     
-    console.log(`Updated payment status for order ${orderId} to ${status}`);
     return true;
   } catch (error) {
     console.error('Error in updateOrderPayment:', error);
@@ -260,8 +246,6 @@ async function markProductsAsSold(orderId: string): Promise<void> {
         // Continue with other products even if one fails
       }
     }
-    
-    console.log(`Marked ${orderItems?.length || 0} products as sold for order ${orderId}`);
   } catch (error) {
     console.error('Error in markProductsAsSold:', error);
     // Don't throw, as this is a non-critical operation

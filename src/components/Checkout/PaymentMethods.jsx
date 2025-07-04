@@ -323,12 +323,6 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
           opacity: 0.9;
         }
 
-        .debug-info {
-          margin-top: 8px;
-          font-size: 0.8rem;
-          color: #666;
-        }
-
         @media (max-width: 768px) {
           .payment-method {
             padding: 12px;
