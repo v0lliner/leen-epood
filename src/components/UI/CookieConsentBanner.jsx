@@ -76,6 +76,10 @@ const CookieConsentBanner = () => {
     }));
   };
 
+  const handleBackToMain = () => {
+    setShowPreferences(false);
+  };
+
   if (!isVisible) {
     return null;
   }
@@ -111,7 +115,16 @@ const CookieConsentBanner = () => {
         </div>
       ) : (
         <div className="cookie-preferences">
-          <h3>{t('cookies.preferences.title')}</h3>
+          <div className="preferences-header">
+            <h3>{t('cookies.preferences.title')}</h3>
+            <button 
+              onClick={handleBackToMain}
+              className="back-button"
+              aria-label="Tagasi"
+            >
+              ← Tagasi
+            </button>
+          </div>
           
           <div className="preferences-list">
             <div className="preference-item">
@@ -270,12 +283,36 @@ const CookieConsentBanner = () => {
           gap: 20px;
         }
 
-        .cookie-preferences h3 {
+        .preferences-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .preferences-header h3 {
           font-family: var(--font-heading);
           font-size: 1.25rem;
           font-weight: 500;
           color: var(--color-ultramarine);
-          margin-bottom: 12px;
+          margin: 0;
+        }
+
+        .back-button {
+          background: none;
+          border: none;
+          color: var(--color-ultramarine);
+          font-size: 0.9rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          padding: 6px 12px;
+          border-radius: 4px;
+          transition: background-color 0.2s ease;
+        }
+
+        .back-button:hover {
+          background-color: rgba(47, 62, 156, 0.1);
         }
 
         .preferences-list {

@@ -244,7 +244,7 @@
       "pay": "Continue to payment",
       "processing": "Processing...",
       "info": {
-        "secure": "Secure payment via Stripe",
+        "secure": "Secure payment via Maksekeskus",
         "shipping": "Delivery within 2-4 business days",
         "personal": "Each order includes a personal note"
       }
@@ -567,6 +567,7 @@
     "decline": "Decline",
     "manage": "Manage preferences",
     "more_info": "More information",
+    "back": "Back",
     "preferences": {
       "title": "Cookie preferences",
       "necessary": {
