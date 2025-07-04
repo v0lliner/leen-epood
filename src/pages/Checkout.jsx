@@ -16,7 +16,6 @@ const Checkout = () => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
-  const [step, setStep] = useState(1); // 1: Review, 2: Shipping
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [totalPrice, setTotalPrice] = useState('0.00');
   const [formattedTotalPrice, setFormattedTotalPrice] = useState('0.00');
@@ -75,7 +74,7 @@ const Checkout = () => {
     }
     
     // Check if payment method is selected
-    if (step === 2 && !selectedPaymentMethod) {
+    if (!selectedPaymentMethod) {
       setError(t('checkout.payment.method_required'));
       return false;
     }
@@ -90,38 +89,13 @@ const Checkout = () => {
     setFormattedTotalPrice(formatPrice(total));
   }, [items, getTotalPrice]);
 
-  const handleNextStep = () => {
-    if (step === 1) {
-      setStep(2);
-      // Reset any previous payment method selection
-      setSelectedPaymentMethod('');
-      // Scroll to top when changing steps
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (step === 2) {
-      if (validateForm()) {
-        handleCheckout();
-      }
-    }
-  };
-
-  const handlePreviousStep = () => {
-    setStep(1);
-    // Scroll to top when changing steps
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const handleCheckout = async () => {
     if (items.length === 0) {
       setError('Ostukorv on tühi');
       return;
     }
-    
-    if (!validateForm()) {
-      return;
-    }
 
-    if (!termsAgreed) {
-      setTermsError(t('checkout.terms.required'));
+    if (!validateForm()) {
       return;
     }
 
@@ -234,64 +208,193 @@ const Checkout = () => {
             <FadeInSection>
               <div className="checkout-header">
                 <h1>{t('checkout.title')}</h1>
-                <div className="checkout-steps">
-                  <div className={`step ${step >= 1 ? 'active' : ''}`}>
-                    <span className="step-number">1</span>
-                    <span className="step-label">Ülevaade</span>
-                  </div>
-                  <div className="step-divider"></div>
-                  <div className={`step ${step >= 2 ? 'active' : ''}`}>
-                    <span className="step-number">2</span>
-                    <span className="step-label">Tarneinfo</span>
-                  </div>
-                  <div className="step-divider"></div>
-                  <div className="step">
-                    <span className="step-number">3</span>
-                    <span className="step-label">Makse</span>
-                  </div>
-                </div>
               </div>
             </FadeInSection>
 
             <div className="checkout-layout">
-              {/* Main Content - Changes based on step */}
+              {/* Main Content */}
               <div className="checkout-main">
                 <FadeInSection>
-                  {step === 1 ? (
-                    <div className="checkout-review">
-                      <h2>Tellimuse ülevaade</h2>
-                      
-                      <div className="order-items">
-                        {items.map((item) => (
-                          <div key={item.id} className="order-item">
-                            <div className="item-image">
-                              {item.image ? (
-                                <img src={item.image} alt={item.title} />
-                              ) : (
-                                <div className="no-image">
-                                  <span>📷</span>
+                  <div className="checkout-form-container">
+                    {error && (
+                      <div className="error-message">
+                        {error}
+                      </div>
+                    )}
+                    
+                    <form className="checkout-form">
+                      {/* Order Items */}
+                      <div className="form-section">
+                        <h3>Tellimuse ülevaade</h3>
+                        <div className="order-items">
+                          {items.map((item) => (
+                            <div key={item.id} className="order-item">
+                              <div className="item-image">
+                                {item.image ? (
+                                  <img src={item.image} alt={item.title} />
+                                ) : (
+                                  <div className="no-image">
+                                    <span>📷</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="item-details">
+                                <h4 className="item-title">{item.title}</h4>
+                                <div className="item-meta">
+                                  {item.category && (
+                                    <span className="item-category">{item.category}</span>
+                                  )}
+                                  {item.dimensions && item.dimensions.height && (
+                                    <span className="item-dimensions">
+                                      {item.dimensions.height}×{item.dimensions.width}×{item.dimensions.depth}cm
+                                    </span>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                            <div className="item-details">
-                              <h3 className="item-title">{item.title}</h3>
-                              <div className="item-meta">
-                                {item.category && (
-                                  <span className="item-category">{item.category}</span>
-                                )}
-                                {item.dimensions && item.dimensions.height && (
-                                  <span className="item-dimensions">
-                                    {item.dimensions.height}×{item.dimensions.width}×{item.dimensions.depth}cm
-                                  </span>
-                                )}
-                              </div>
-                              <div className="item-price-row">
-                                <span className="item-quantity">1 tk</span>
-                                <span className="item-price">{item.price}</span>
+                                <div className="item-price-row">
+                                  <span className="item-quantity">1 tk</span>
+                                  <span className="item-price">{item.price}</span>
+                                </div>
                               </div>
                             </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Contact Information */}
+                      <div className="form-section">
+                        <h3>Kontaktandmed</h3>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="name">Nimi *</label>
+                            <input
+                              type="text"
+                              id="name"
+                              name="name"
+                              value={formData.name}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="Teie täisnimi"
+                            />
                           </div>
-                        ))}
+                        </div>
+                        
+                        <div className="form-row two-columns">
+                          <div className="form-group">
+                            <label htmlFor="email">E-post *</label>
+                            <input
+                              type="email"
+                              id="email"
+                              name="email"
+                              value={formData.email}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="teie@email.ee"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="phone">Telefon *</label>
+                            <input
+                              type="tel"
+                              id="phone"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="+372 5xxx xxxx"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Shipping Address */}
+                      <div className="form-section">
+                        <h3>Tarneaadress</h3>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="address">Aadress *</label>
+                            <input
+                              type="text"
+                              id="address"
+                              name="address"
+                              value={formData.address}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="Tänav, maja, korter"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="form-row two-columns">
+                          <div className="form-group">
+                            <label htmlFor="city">Linn *</label>
+                            <input
+                              type="text"
+                              id="city"
+                              name="city"
+                              value={formData.city}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="Linn või asula"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="postalCode">Postiindeks *</label>
+                            <input
+                              type="text"
+                              id="postalCode"
+                              name="postalCode"
+                              value={formData.postalCode}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="12345"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="country">Riik *</label>
+                            <select
+                              id="country"
+                              name="country"
+                              value={formData.country}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                            >
+                              <option value="Estonia">Eesti</option>
+                              <option value="Finland">Soome</option>
+                              <option value="Latvia">Läti</option>
+                              <option value="Lithuania">Leedu</option>
+                              <option value="Sweden">Rootsi</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Additional Notes */}
+                      <div className="form-section">
+                        <h3>Lisainfo</h3>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="notes">Märkused tellimuse kohta</label>
+                            <textarea
+                              id="notes"
+                              name="notes"
+                              value={formData.notes}
+                              onChange={handleInputChange}
+                              className="form-input"
+                              rows="3"
+                              placeholder="Soovid või märkused tellimuse kohta"
+                            ></textarea>
+                          </div>
+                        </div>
                       </div>
                       
                       {/* Payment Methods */}
@@ -308,205 +411,47 @@ const Checkout = () => {
                           </div>
                         )}
                       </div>
+
+                      {/* Terms Agreement */}
+                      <div className="form-section">
+                        <div className="form-row">
+                          <div className="form-group terms-checkbox-group">
+                            <label className="terms-checkbox-label">
+                              <input
+                                type="checkbox"
+                                checked={termsAgreed}
+                                onChange={handleTermsChange}
+                                className="terms-checkbox"
+                              />
+                              <span className="terms-text">
+                                {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
+                              </span>
+                            </label>
+                            {termsError && (
+                              <div className="terms-error">
+                                {termsError}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                       
-                      <div className="checkout-actions">
+                      {/* Submit Button */}
+                      <div className="form-actions">
                         <Link to="/epood" className="btn btn-secondary">
                           ← Tagasi poodi
                         </Link>
                         <button 
-                          onClick={handleNextStep}
-                          className="btn btn-primary"
-                        >
-                          Jätka tarneinfoga →
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="checkout-shipping">
-                      <h2>Tarneinfo</h2>
-                      
-                      {error && (
-                        <div className="error-message">
-                          {error}
-                        </div>
-                      )}
-                      
-                      <form className="shipping-form">
-                        <div className="form-section">
-                          <h3>Kontaktandmed</h3>
-                          <div className="form-row">
-                            <div className="form-group">
-                              <label htmlFor="name">Nimi *</label>
-                              <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleInputChange}
-                                required
-                                className="form-input"
-                                placeholder="Teie täisnimi"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="form-row two-columns">
-                            <div className="form-group">
-                              <label htmlFor="email">E-post *</label>
-                              <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                required
-                                className="form-input"
-                                placeholder="teie@email.ee"
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label htmlFor="phone">Telefon *</label>
-                              <input
-                                type="tel"
-                                id="phone"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                required
-                                className="form-input"
-                                placeholder="+372 5xxx xxxx"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="form-section">
-                          <h3>Tarneaadress</h3>
-                          <div className="form-row">
-                            <div className="form-group">
-                              <label htmlFor="address">Aadress *</label>
-                              <input
-                                type="text"
-                                id="address"
-                                name="address"
-                                value={formData.address}
-                                onChange={handleInputChange}
-                                required
-                                className="form-input"
-                                placeholder="Tänav, maja, korter"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="form-row two-columns">
-                            <div className="form-group">
-                              <label htmlFor="city">Linn *</label>
-                              <input
-                                type="text"
-                                id="city"
-                                name="city"
-                                value={formData.city}
-                                onChange={handleInputChange}
-                                required
-                                className="form-input"
-                                placeholder="Linn või asula"
-                              />
-                            </div>
-                            <div className="form-group">
-                              <label htmlFor="postalCode">Postiindeks *</label>
-                              <input
-                                type="text"
-                                id="postalCode"
-                                name="postalCode"
-                                value={formData.postalCode}
-                                onChange={handleInputChange}
-                                required
-                                className="form-input"
-                                placeholder="12345"
-                              />
-                            </div>
-                          </div>
-                          
-                          <div className="form-row">
-                            <div className="form-group">
-                              <label htmlFor="country">Riik *</label>
-                              <select
-                                id="country"
-                                name="country"
-                                value={formData.country}
-                                onChange={handleInputChange}
-                                required
-                                className="form-input"
-                              >
-                                <option value="Estonia">Eesti</option>
-                                <option value="Finland">Soome</option>
-                                <option value="Latvia">Läti</option>
-                                <option value="Lithuania">Leedu</option>
-                                <option value="Sweden">Rootsi</option>
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="form-section">
-                          <h3>Lisainfo</h3>
-                          <div className="form-row">
-                            <div className="form-group">
-                              <label htmlFor="notes">Märkused tellimuse kohta</label>
-                              <textarea
-                                id="notes"
-                                name="notes"
-                                value={formData.notes}
-                                onChange={handleInputChange}
-                                className="form-input"
-                                rows="3"
-                                placeholder="Soovid või märkused tellimuse kohta"
-                              ></textarea>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="form-section">
-                          <div className="form-row">
-                            <div className="form-group terms-checkbox-group">
-                              <label className="terms-checkbox-label">
-                                <input
-                                  type="checkbox"
-                                  checked={termsAgreed}
-                                  onChange={handleTermsChange}
-                                  className="terms-checkbox"
-                                />
-                                <span className="terms-text">
-                                  {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
-                                </span>
-                              </label>
-                              {termsError && (
-                                <div className="terms-error">
-                                  {termsError}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </form>
-                      
-                      <div className="checkout-actions">
-                        <button 
-                          onClick={handlePreviousStep}
-                          className="btn btn-secondary"
-                        >
-                          ← Tagasi ülevaatele
-                        </button>
-                        <button 
-                          onClick={handleNextStep}
+                          type="button"
+                          onClick={handleCheckout}
                           disabled={isProcessing}
                           className="btn btn-primary"
                         >
-                          {isProcessing ? 'Töötlemine...' : 'Jätka maksega →'}
+                          {isProcessing ? 'Töötlemine...' : 'Vormista tellimus'}
                         </button>
                       </div>
-                    </div>
-                  )}
+                    </form>
+                  </div>
                 </FadeInSection>
               </div>
 
@@ -528,7 +473,7 @@ const Checkout = () => {
                   
                   <div className="summary-row">
                     <span>Vahesumma</span>
-                    <span>{getTotalPrice().toFixed(2)}€</span>
+                    <span>{formattedTotalPrice}</span>
                   </div>
                   
                   <div className="summary-row">
@@ -541,24 +486,13 @@ const Checkout = () => {
                     <span>{formattedTotalPrice}</span>
                   </div>
                   
-                  {step === 1 && (
-                    <button 
-                      onClick={handleNextStep}
-                      className="summary-checkout-btn"
-                    >
-                      Jätka tarneinfoga →
-                    </button>
-                  )}
-                  
-                  {step === 2 && (
-                    <button 
-                      onClick={handleNextStep}
-                      disabled={isProcessing}
-                      className="summary-checkout-btn"
-                    >
-                      {isProcessing ? 'Töötlemine...' : 'Jätka maksega →'}
-                    </button>
-                  )}
+                  <button 
+                    onClick={handleCheckout}
+                    disabled={isProcessing}
+                    className="summary-checkout-btn"
+                  >
+                    {isProcessing ? 'Töötlemine...' : 'Vormista tellimus'}
+                  </button>
                   
                   <div className="checkout-info">
                     <div className="info-item">
@@ -584,65 +518,11 @@ const Checkout = () => {
       <style jsx>{`
         .checkout-header {
           text-align: center;
-          margin-bottom: 64px;
+          margin-bottom: 48px;
         }
 
         .checkout-header h1 {
-          margin-bottom: 32px;
           color: var(--color-ultramarine);
-        }
-
-        .checkout-steps {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          max-width: 600px;
-          margin: 0 auto;
-        }
-
-        .step {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-          color: #999;
-          transition: color 0.3s ease;
-        }
-
-        .step.active {
-          color: var(--color-ultramarine);
-        }
-
-        .step-number {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: #f0f0f0;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: var(--font-heading);
-          font-weight: 500;
-          font-size: 0.9rem;
-          transition: all 0.3s ease;
-        }
-
-        .step.active .step-number {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .step-label {
-          font-size: 0.9rem;
-          font-weight: 500;
-        }
-
-        .step-divider {
-          flex: 1;
-          height: 2px;
-          background-color: #f0f0f0;
-          margin: 0 16px;
-          max-width: 80px;
         }
 
         .checkout-layout {
@@ -656,23 +536,103 @@ const Checkout = () => {
           min-height: 400px;
         }
 
-        .checkout-review h2,
-        .checkout-shipping h2 {
-          font-family: var(--font-heading);
-          font-size: 1.5rem;
-          font-weight: 500;
+        .checkout-form-container {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          padding: 32px;
+        }
+
+        .error-message {
+          background-color: #fee;
+          color: #c33;
+          padding: 12px 16px;
+          border-radius: 4px;
+          border: 1px solid #fcc;
+          margin-bottom: 24px;
+          font-size: 0.9rem;
+        }
+
+        .form-section {
           margin-bottom: 32px;
+          padding-bottom: 32px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .form-section:last-child {
+          margin-bottom: 0;
+          padding-bottom: 0;
+          border-bottom: none;
+        }
+
+        .form-section h3 {
+          font-family: var(--font-heading);
+          font-size: 1.25rem;
+          font-weight: 500;
+          margin-bottom: 24px;
           color: var(--color-ultramarine);
         }
 
+        .form-row {
+          margin-bottom: 16px;
+        }
+
+        .form-row:last-child {
+          margin-bottom: 0;
+        }
+
+        .form-row.two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .form-group label {
+          font-family: var(--font-heading);
+          font-weight: 500;
+          color: var(--color-text);
+          font-size: 0.9rem;
+        }
+
+        .form-input {
+          padding: 12px 16px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-family: var(--font-body);
+          font-size: 1rem;
+          transition: border-color 0.2s ease;
+          background-color: var(--color-background);
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: var(--color-ultramarine);
+          box-shadow: 0 0 0 3px rgba(47, 62, 156, 0.1);
+        }
+
+        .form-input::placeholder {
+          color: #999;
+        }
+
+        textarea.form-input {
+          resize: vertical;
+          min-height: 80px;
+        }
+
         .order-items {
-          margin-bottom: 32px;
+          margin-bottom: 16px;
         }
 
         .order-item {
           display: flex;
-          gap: 24px;
-          padding: 24px 0;
+          gap: 16px;
+          padding: 16px 0;
           border-bottom: 1px solid #f0f0f0;
         }
 
@@ -681,8 +641,8 @@ const Checkout = () => {
         }
 
         .item-image {
-          width: 100px;
-          height: 100px;
+          width: 80px;
+          height: 80px;
           border-radius: 4px;
           overflow: hidden;
           flex-shrink: 0;
@@ -713,7 +673,7 @@ const Checkout = () => {
 
         .item-title {
           font-family: var(--font-heading);
-          font-size: 1.125rem;
+          font-size: 1rem;
           font-weight: 500;
           margin-bottom: 8px;
           color: var(--color-text);
@@ -758,10 +718,49 @@ const Checkout = () => {
           font-size: 1.125rem;
         }
 
-        .checkout-actions {
+        .terms-checkbox-group {
+          margin-top: 8px;
+        }
+
+        .terms-checkbox-label {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          cursor: pointer;
+        }
+
+        .terms-checkbox {
+          margin-top: 3px;
+          width: 18px;
+          height: 18px;
+          accent-color: var(--color-ultramarine);
+        }
+
+        .terms-text {
+          font-size: 0.95rem;
+          line-height: 1.4;
+        }
+
+        .terms-link {
+          color: var(--color-ultramarine);
+          text-decoration: underline;
+          transition: opacity 0.2s ease;
+        }
+
+        .terms-link:hover {
+          opacity: 0.8;
+        }
+
+        .terms-error {
+          color: #c33;
+          font-size: 0.85rem;
+          margin-top: 8px;
+        }
+
+        .form-actions {
           display: flex;
           justify-content: space-between;
-          margin-top: 48px;
+          margin-top: 32px;
         }
 
         .btn {
@@ -916,126 +915,6 @@ const Checkout = () => {
           color: #666;
           margin: 0;
         }
-
-        /* Shipping Form Styles */
-        .shipping-form {
-          margin-bottom: 32px;
-        }
-
-        .form-section {
-          margin-bottom: 32px;
-        }
-
-        .form-section h3 {
-          font-family: var(--font-heading);
-          font-size: 1.125rem;
-          font-weight: 500;
-          margin-bottom: 16px;
-          color: var(--color-text);
-          padding-bottom: 8px;
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .form-row {
-          margin-bottom: 16px;
-        }
-
-        .form-row:last-child {
-          margin-bottom: 0;
-        }
-
-        .form-row.two-columns {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
-
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-
-        .form-group label {
-          font-family: var(--font-heading);
-          font-weight: 500;
-          color: var(--color-text);
-          font-size: 0.9rem;
-        }
-
-        .form-input {
-          padding: 12px 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-size: 1rem;
-          transition: border-color 0.2s ease;
-          background-color: var(--color-background);
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: var(--color-ultramarine);
-          box-shadow: 0 0 0 3px rgba(47, 62, 156, 0.1);
-        }
-
-        .form-input::placeholder {
-          color: #999;
-        }
-
-        textarea.form-input {
-          resize: vertical;
-          min-height: 80px;
-        }
-
-        .error-message {
-          background-color: #fee;
-          color: #c33;
-          padding: 12px 16px;
-          border-radius: 4px;
-          border: 1px solid #fcc;
-          margin-bottom: 24px;
-          font-size: 0.9rem;
-        }
-
-        .terms-checkbox-group {
-          margin-top: 8px;
-        }
-
-        .terms-checkbox-label {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          cursor: pointer;
-        }
-
-        .terms-checkbox {
-          margin-top: 3px;
-          width: 18px;
-          height: 18px;
-          accent-color: var(--color-ultramarine);
-        }
-
-        .terms-text {
-          font-size: 0.95rem;
-          line-height: 1.4;
-        }
-
-        .terms-link {
-          color: var(--color-ultramarine);
-          text-decoration: underline;
-          transition: opacity 0.2s ease;
-        }
-
-        .terms-link:hover {
-          opacity: 0.8;
-        }
-
-        .terms-error {
-          color: #c33;
-          font-size: 0.85rem;
-          margin-top: 8px;
-        }
         
         .payment-method-error {
           color: #c33;
@@ -1064,36 +943,29 @@ const Checkout = () => {
 
         @media (max-width: 768px) {
           .checkout-header {
-            margin-bottom: 48px;
+            margin-bottom: 32px;
           }
 
-          .checkout-steps {
-            max-width: 100%;
+          .checkout-form-container {
+            padding: 24px;
           }
 
-          .step-label {
-            font-size: 0.8rem;
+          .form-section {
+            margin-bottom: 24px;
+            padding-bottom: 24px;
           }
 
-          .step-divider {
-            margin: 0 8px;
-            max-width: 40px;
+          .form-section h3 {
+            font-size: 1.125rem;
+            margin-bottom: 16px;
           }
 
-          .order-item {
+          .form-row.two-columns {
+            grid-template-columns: 1fr;
             gap: 16px;
           }
 
-          .item-image {
-            width: 80px;
-            height: 80px;
-          }
-
-          .item-title {
-            font-size: 1rem;
-          }
-
-          .checkout-actions {
+          .form-actions {
             flex-direction: column;
             gap: 16px;
           }
@@ -1103,9 +975,18 @@ const Checkout = () => {
             justify-content: center;
           }
 
-          .form-row.two-columns {
-            grid-template-columns: 1fr;
-            gap: 16px;
+          .order-item {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .item-image {
+            width: 100%;
+            height: 160px;
+          }
+
+          .item-price-row {
+            margin-top: 8px;
           }
         }
       `}</style>

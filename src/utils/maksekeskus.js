@@ -108,9 +108,7 @@ export async function createPayment(orderData, paymentMethod) {
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      },
+        'Pragma': 'no-cache'
       body: JSON.stringify(requestData)
     });
     
