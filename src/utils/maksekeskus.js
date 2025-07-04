@@ -12,22 +12,26 @@ import { parsePriceToAmount } from '../maksekeskus-config';
 export async function loadPaymentMethods(amount) {
   try {
     if (!amount || amount <= 0) {
-      throw new Error('Amount must be greater than zero');
+      console.error('Invalid amount in loadPaymentMethods:', amount);
+      throw new Error(`Amount must be greater than zero (received: ${amount})`);
     }
     
     // Format amount to ensure it uses dot as decimal separator
-    let formattedAmount = amount;
+    let formattedAmount;
     if (typeof amount === 'string') {
       formattedAmount = amount.replace(',', '.');
     } else {
       formattedAmount = amount.toString();
     }
     
-    console.log(`Requesting payment methods for amount: ${formattedAmount}€ (${typeof amount})`);
+    console.log(`Requesting payment methods for amount: ${formattedAmount}€ (original type: ${typeof amount})`);
     
     // Add a timestamp to prevent caching issues
     const timestamp = Date.now();
-    const response = await fetch(`/api/payment-methods?amount=${formattedAmount}&_=${timestamp}`, {
+    const url = `/api/payment-methods?amount=${encodeURIComponent(formattedAmount)}&_=${timestamp}`;
+    console.log(`Fetching payment methods from: ${url}`);
+    
+    const response = await fetch(url, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',

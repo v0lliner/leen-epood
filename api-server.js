@@ -128,8 +128,7 @@ async function fetchPaymentMethods() {
 // Mock payment methods for testing
 function getMockPaymentMethods() {
   console.log('Using mock payment methods data');
-  
-  return [
+  const mockMethods = [
     {
       "name": "Swedbank",
       "display_name": "Swedbank",
@@ -171,6 +170,9 @@ function getMockPaymentMethods() {
       "max_amount": 15000
     }
   ];
+  
+  console.log(`Returning ${mockMethods.length} mock payment methods`);
+  return mockMethods;
 }
 
 // Helper function to create a transaction in Maksekeskus
@@ -483,9 +485,10 @@ async function markProductsAsSold(orderId) {
 app.get('/api/payment-methods', async (req, res) => {
   try {
     console.log('\n=== Payment methods request received ===');
+    console.log('Payment methods request received with query:', req.query);
+    
     // Get amount from query string
     let amount = null;
-    console.log('Payment methods request received with query:', req.query);
     
     // Validate amount parameter
     if (req.query.amount) {
@@ -495,7 +498,7 @@ app.get('/api/payment-methods', async (req, res) => {
       amount = parseFloat(cleanAmount);
       
       // Check if parsing resulted in a valid number
-      console.log('Parsed amount:', amount, 'from input:', req.query.amount);
+      console.log('Parsed amount:', amount, 'from input:', req.query.amount, 'isNaN:', isNaN(amount));
       if (isNaN(amount)) {
         console.error('Invalid amount format:', req.query.amount);
         console.log('Parsed amount resulted in NaN');
@@ -530,11 +533,15 @@ app.get('/api/payment-methods', async (req, res) => {
     
     // Filter methods based on amount and country
     console.log('Filtering payment methods for Estonia and amount:', amount, '€');
-    const availableMethods = allMethods.filter(method => 
-      (method.countries && method.countries.includes('ee')) &&
-      (!method.min_amount || amount >= method.min_amount) &&
-      (!method.max_amount || amount <= method.max_amount)
-    );
+    const availableMethods = allMethods.filter(method => {
+      const countryMatch = method.countries && method.countries.includes('ee');
+      const minAmountOk = !method.min_amount || amount >= method.min_amount;
+      const maxAmountOk = !method.max_amount || amount <= method.max_amount;
+      
+      console.log(`Method ${method.name} (${method.channel}): country match: ${countryMatch}, min amount ok: ${minAmountOk}, max amount ok: ${maxAmountOk}`);
+      
+      return countryMatch && minAmountOk && maxAmountOk;
+    });
     
     console.log(`Filtered ${allMethods.length} methods to ${availableMethods.length} available methods for amount ${amount}`);
     

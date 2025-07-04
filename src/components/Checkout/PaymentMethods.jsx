@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPaymentMethods } from '../../utils/maksekeskus';
+import { parsePriceToAmount } from '../../maksekeskus-config';
 
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const { t } = useTranslation();
@@ -10,9 +11,12 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    if (amount > 0) {
+    // Convert amount to number if it's not already
+    const numericAmount = typeof amount === 'number' ? amount : parsePriceToAmount(amount.toString());
+    
+    if (numericAmount > 0) {
       loadPaymentMethodsData();
-      console.log('PaymentMethods component initialized with amount:', amount);
+      console.log('PaymentMethods component initialized with amount:', numericAmount, typeof numericAmount);
     }
   }, [amount, retryCount]);
 
@@ -23,8 +27,10 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     setError('');
     
     try {
-      console.log('Loading payment methods for amount:', amount, typeof amount);
-      const paymentMethods = await loadPaymentMethods(amount);
+      // Convert amount to number if it's not already
+      const numericAmount = typeof amount === 'number' ? amount : parsePriceToAmount(amount.toString());
+      console.log('Loading payment methods for amount:', numericAmount, typeof numericAmount);
+      const paymentMethods = await loadPaymentMethods(numericAmount);
       console.log('Received payment methods:', paymentMethods);
       setMethods(paymentMethods);
     } catch (err) {
