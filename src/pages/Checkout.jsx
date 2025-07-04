@@ -76,7 +76,7 @@ const Checkout = () => {
     if (step === 1) {
       setStep(2);
       // Scroll to top when changing steps
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
     } else if (step === 2) {
       if (validateForm()) {
         handleCheckout();
@@ -87,7 +87,7 @@ const Checkout = () => {
   const handlePreviousStep = () => {
     setStep(1);
     // Scroll to top when changing steps
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleCheckout = async () => {

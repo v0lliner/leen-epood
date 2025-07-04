@@ -7,6 +7,10 @@ const Muugitingimused = () => {
   const { t, i18n } = useTranslation();
   const isEstonian = i18n.language === 'et';
 
+  const scrollToTop = () => {
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   return (
     <>
       <SEOHead page="terms" />
@@ -102,7 +106,7 @@ const Muugitingimused = () => {
 
                   <div className="terms-section">
                     <h2>7. Isikuandmete kaitse</h2>
-                    <p>Müüja töötleb Ostja isikuandmeid vastavalt <Link to="/privaatsuspoliitika" className="terms-link">privaatsuspoliitikale</Link>.</p>
+                    <p>Müüja töötleb Ostja isikuandmeid vastavalt <Link to="/privaatsuspoliitika" className="terms-link" onClick={scrollToTop}>privaatsuspoliitikale</Link>.</p>
                   </div>
 
                   <div className="terms-section">
@@ -196,7 +200,7 @@ const Muugitingimused = () => {
 
                   <div className="terms-section">
                     <h2>7. Personal Data Protection</h2>
-                    <p>The Seller processes the Buyer's personal data in accordance with the <Link to="/privaatsuspoliitika" className="terms-link">Privacy Policy</Link>.</p>
+                    <p>The Seller processes the Buyer's personal data in accordance with the <Link to="/privaatsuspoliitika" className="terms-link" onClick={scrollToTop}>Privacy Policy</Link>.</p>
                   </div>
 
                   <div className="terms-section">

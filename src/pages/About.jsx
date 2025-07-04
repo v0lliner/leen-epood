@@ -9,7 +9,7 @@ const About = () => {
   const { loading, getSection } = useAboutPage();
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   if (loading) {

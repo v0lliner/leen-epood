@@ -23,7 +23,7 @@ const Home = () => {
     .slice(0, 6);
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
