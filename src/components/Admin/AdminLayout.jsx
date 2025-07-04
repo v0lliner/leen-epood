@@ -44,17 +44,14 @@ const AdminLayout = ({ children }) => {
     {
       name: t('admin.nav.orders'),
       href: '/admin/orders',
-      icon: '📋'
-    },
+      icon: '📋',
+      active: location.pathname.startsWith('/admin/orders')
+    }, 
     {
       name: 'Kategooriad',
       href: '/admin/categories',
-      icon: '📁'
-    },
-    {
-      name: t('admin.nav.orders'),
-      href: '/admin/orders',
-      icon: '📋'
+      icon: '💬',
+      active: location.pathname.startsWith('/admin/messages')
     },
     {
       name: t('admin.nav.messages'),
@@ -64,11 +61,18 @@ const AdminLayout = ({ children }) => {
     {
       name: t('admin.nav.settings'),
       href: '/admin/settings',
-      icon: '⚙️'
+      icon: '⚙️',
+      active: location.pathname.startsWith('/admin/settings')
     }
   ]
 
   const isActive = (href) => {
+    // If the item has an explicit active property, use that
+    const item = navigationItems.find(item => item.href === href);
+    if (item && typeof item.active === 'boolean') {
+      return item.active;
+    }
+    
     if (href === '/admin/dashboard') {
       return location.pathname === '/admin/dashboard' || location.pathname === '/admin'
     }
