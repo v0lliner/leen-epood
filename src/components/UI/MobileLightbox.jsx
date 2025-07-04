@@ -89,7 +89,6 @@ const MobileLightbox = ({ image, onClose }) => {
           height: auto;
           object-fit: contain;
           padding: 20px;
-          border-radius: 4px;
         }
 
         .close-button {
