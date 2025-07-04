@@ -1,7 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 
 const MobileLightbox = ({ image, onClose }) => {
+  const imageRef = useRef(null);
+  
   // Prevent body scrolling when lightbox is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -39,14 +41,24 @@ const MobileLightbox = ({ image, onClose }) => {
     document.addEventListener('touchend', handleTouchEnd);
   };
 
+  // Handle click outside the image
+  const handleContentClick = (e) => {
+    // Check if the click was outside the image
+    if (imageRef.current && !imageRef.current.contains(e.target)) {
+      onClose();
+    }
+  };
+
   return createPortal(
     <div className="mobile-lightbox" onClick={onClose}>
       <div 
         className="lightbox-content" 
-        onClick={(e) => e.stopPropagation()}
+        onClick={handleContentClick}
         onTouchStart={handleTouchStart}
       >
-        <img src={image} alt="Product full view" />
+        <div className="image-container" ref={imageRef}>
+          <img src={image} alt="Product full view" onClick={(e) => e.stopPropagation()} />
+        </div>
         <button className="close-button" onClick={onClose}>×</button>
         <div className="swipe-indicator">
           <span>Swipe down to close</span>
@@ -82,6 +94,14 @@ const MobileLightbox = ({ image, onClose }) => {
           position: relative;
         }
 
+        .image-container {
+          max-width: 100%;
+          max-height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+
         .lightbox-content img {
           max-width: 100%;
           max-height: 100%;
@@ -89,6 +109,7 @@ const MobileLightbox = ({ image, onClose }) => {
           height: auto;
           object-fit: contain;
           padding: 20px;
+          border-radius: 4px;
         }
 
         .close-button {
@@ -107,6 +128,7 @@ const MobileLightbox = ({ image, onClose }) => {
           border: none;
           cursor: pointer;
           transition: background-color 0.2s ease;
+          z-index: 10;
         }
 
         .close-button:hover {
