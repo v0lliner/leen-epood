@@ -90,10 +90,10 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     }
   }, [])
 
-  const handleModalBackdropClick = (e) => {
-    // Close modal when clicking on backdrop
-    if (e.target === e.currentTarget) {
-      closeModal()
+  // Open mobile lightbox
+  const openMobileLightbox = () => {
+    if (isMobile()) {
+      setMobileLightboxOpen(true)
     }
   }
 
@@ -138,22 +138,18 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
     setSelectedIndex(index)
   }
 
-  // Open mobile lightbox
-  const openMobileLightbox = () => {
-    if (isMobile()) {
-      setMobileLightboxOpen(true)
-    }
-  }
-
   // **MODAL COMPONENT - ERALDI KOMPONENT PORTALI JAOKS**
   const Modal = () => (
     <div className="modal-portal">
-      <div className="modal-overlay" onClick={handleModalBackdropClick}>
+      <div className="modal-overlay" onClick={closeModal}>
         <div className="modal-container">
           {/* Close button */}
           <button 
             className="modal-close" 
-            onClick={closeModal} 
+            onClick={(e) => {
+              e.stopPropagation();
+              closeModal();
+            }} 
             aria-label="Sulge"
           >
             ×
@@ -164,6 +160,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             <img 
               src={sortedImages[selectedIndex].image_url} 
               alt={`${productTitle} pilt ${selectedIndex + 1}`}
+              onClick={(e) => e.stopPropagation()}
             />
           </div>
 
@@ -172,14 +169,20 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
             <>
               <button 
                 className="modal-nav modal-prev" 
-                onClick={prevImage}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevImage();
+                }}
                 aria-label="Eelmine pilt"
               >
                 ‹
               </button>
               <button 
                 className="modal-nav modal-next" 
-                onClick={nextImage}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextImage();
+                }}
                 aria-label="Järgmine pilt"
               >
                 ›
@@ -547,13 +550,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           flex: 0 0 100%;
           width: 100%;
           height: 100%;
-          cursor: pointer;
         }
 
         .carousel-slide img {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          cursor: pointer;
         }
 
         .carousel-nav {
