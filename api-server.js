@@ -775,7 +775,7 @@ app.get('/api/admin/orders', async (req, res) => {
       console.error('Error fetching orders:', error);
       return res.status(500).json({
         success: false,
-        error: 'Failed to fetch orders'
+        error: `Failed to fetch orders: ${error.message}`
       });
     }
     
@@ -787,7 +787,7 @@ app.get('/api/admin/orders', async (req, res) => {
     console.error('Exception in /api/admin/orders endpoint:', error);
     return res.status(500).json({
       success: false,
-      error: 'Internal server error'
+      error: `Internal server error: ${error.message}`
     });
   }
 });
