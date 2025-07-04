@@ -26,8 +26,8 @@ const SITE_URL = process.env.SITE_URL || 'http://localhost:5173';
 
 // Maksekeskus API URLs
 const API_BASE_URL = TEST_MODE 
-  ? 'https://sandbox-payment.maksekeskus.ee/api/v1'
-  : 'https://payment.maksekeskus.ee/api/v1';
+  ? 'https://api.test.maksekeskus.ee/v1'
+  : 'https://api.maksekeskus.ee/v1';
 
 // Middleware
 app.use(cors());
@@ -67,49 +67,44 @@ async function fetchPaymentMethods() {
       return paymentMethodsCache.methods;
     }
     
-    // TEMPORARY: Return mock data for testing
-    console.log('USING MOCK DATA instead of actual API call');
-    return getMockPaymentMethods();
-
-    // NOTE: Uncomment this code when ready to use the real API
     // Fetch payment methods from Maksekeskus
-    // const response = await axios.get(`${API_BASE_URL}/methods`, {
-    //   auth: {
-    //     username: SHOP_ID, // 4e2bed9a-aa24-4b87-801b-56c31c535d36
-    //     password: API_OPEN_KEY // wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM
-    //   }, 
-    //   timeout: 10000, // 10 second timeout
-    //   validateStatus: (status) => true // Accept any status code to handle it manually
-    // });
-    // 
-    // // Check if response is successful
-    // console.log('Maksekeskus API response status:', response.status);
-    // 
-    // if (response.status !== 200) {
-    //   console.error('Maksekeskus API error when fetching payment methods:', {
-    //     status: response.status,
-    //     data: response.data
-    //   });
-    //   
-    //   // Return cached methods if available, otherwise empty array
-    //   return paymentMethodsCache.methods.length > 0 
-    //     ? paymentMethodsCache.methods 
-    //     : [];
-    // }
-    // 
-    // // Extract banklinks
-    // console.log('Maksekeskus API response data:', JSON.stringify(response.data).substring(0, 200) + '...');
-    // 
-    // const banklinks = response.data.banklinks || [];
-    // 
-    // // Update cache
-    // paymentMethodsCache = {
-    //   methods: banklinks,
-    //   timestamp: now
-    // };
-    // 
-    // console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
-    // return banklinks;
+    const response = await axios.get(`${API_BASE_URL}/methods`, {
+      auth: {
+        username: SHOP_ID,
+        password: API_OPEN_KEY
+      }, 
+      timeout: 10000, // 10 second timeout
+      validateStatus: (status) => true // Accept any status code to handle it manually
+    });
+    
+    // Check if response is successful
+    console.log('Maksekeskus API response status:', response.status);
+    
+    if (response.status !== 200) {
+      console.error('Maksekeskus API error when fetching payment methods:', {
+        status: response.status,
+        data: response.data
+      });
+      
+      // Return cached methods if available, otherwise empty array
+      return paymentMethodsCache.methods.length > 0 
+        ? paymentMethodsCache.methods 
+        : [];
+    }
+    
+    // Extract banklinks
+    console.log('Maksekeskus API response data:', JSON.stringify(response.data).substring(0, 200) + '...');
+    
+    const banklinks = response.data.banklinks || [];
+    
+    // Update cache
+    paymentMethodsCache = {
+      methods: banklinks,
+      timestamp: now
+    };
+    
+    console.log(`Fetched ${banklinks.length} payment methods from Maksekeskus`);
+    return banklinks;
   } catch (error) {
     console.error('Exception when fetching payment methods:', {
       name: error.name,
@@ -222,7 +217,7 @@ async function createTransaction(orderData, paymentMethod) {
     const transaction = {
       amount: orderData.total,
       currency: 'EUR',
-      reference: generateReference(orderData.id || 'TEMP'),
+      reference: generateReference(orderData.order_number || 'TEMP'),
       merchant_data: JSON.stringify({
         order_id: orderData.id || 'TEMP',
         customer_email: orderData.email
@@ -234,17 +229,16 @@ async function createTransaction(orderData, paymentMethod) {
         locale: 'et',
         ip: orderData.ip || '127.0.0.1'
       }, 
-      // Use the exact URLs provided by the client
-      return_url: 'https://leen.ee/makse/korras',
-      cancel_url: 'https://leen.ee/makse/katkestatud',
-      notification_url: 'https://leen.ee/api/maksekeskus/notification'
+      return_url: `${SITE_URL}/makse/korras`,
+      cancel_url: `${SITE_URL}/makse/katkestatud`,
+      notification_url: `${SITE_URL}/api/maksekeskus/notification`
     };
     
     // Create transaction
     const response = await axios.post(`${API_BASE_URL}/transactions`, transaction, {
       auth: {
-        username: SHOP_ID, // 4e2bed9a-aa24-4b87-801b-56c31c535d36
-        password: API_SECRET_KEY // WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ
+        username: SHOP_ID,
+        password: API_SECRET_KEY
       },
       timeout: 15000, // 15 second timeout for transaction creation
       validateStatus: (status) => true // Accept any status code to handle it manually
@@ -756,8 +750,4 @@ app.listen(PORT, () => {
   console.log(`Credentials: Shop ID ${SHOP_ID ? 'is present' : 'is MISSING'}`);
   console.log(`Credentials: API keys ${API_SECRET_KEY && API_OPEN_KEY ? 'are present' : 'are MISSING'}`);
   console.log(`=== Server Ready ===\n`);
-  
-  // Set test mode to false to use real API
-  process.env.MAKSEKESKUS_TEST_MODE = 'false';
-  console.log(`Test mode set to: ${process.env.MAKSEKESKUS_TEST_MODE}`);
 });
