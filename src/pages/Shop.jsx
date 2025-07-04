@@ -79,9 +79,21 @@ const Shop = () => {
     const sorted = [...filtered].sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          return b.id - a.id; // Assuming higher ID means newer
+          // Use ID as a proxy for recency if available, otherwise fallback to comparing objects
+          if (a.id && b.id) {
+            return typeof a.id === 'string' && typeof b.id === 'string' 
+              ? b.id.localeCompare(a.id) 
+              : b.id - a.id;
+          }
+          return 0;
         case 'oldest':
-          return a.id - b.id;
+          // Use ID as a proxy for recency if available, otherwise fallback to comparing objects
+          if (a.id && b.id) {
+            return typeof a.id === 'string' && typeof b.id === 'string' 
+              ? a.id.localeCompare(b.id) 
+              : a.id - b.id;
+          }
+          return 0;
         case 'price-low':
           return parseFloat(a.price.replace('€', '')) - parseFloat(b.price.replace('€', ''));
         case 'price-high':
@@ -143,7 +155,7 @@ const Shop = () => {
   };
 
   const sortOptions = [
-    { value: 'newest', label: t('shop.sort.newest') },
+    { value: 'newest', label: t('shop.sort.newest').replace('Uusimad', 'Uuemad') },
     { value: 'oldest', label: t('shop.sort.oldest') },
     { value: 'price-low', label: t('shop.sort.price_low') },
     { value: 'price-high', label: t('shop.sort.price_high') }
@@ -420,12 +432,7 @@ const Shop = () => {
         }
 
         .bottom-pagination-wrapper {
-          width: 100vw;
-          position: relative;
-          left: 50%;
-          right: 50%;
-          margin-left: -50vw;
-          margin-right: -50vw;
+          width: 100%;
           margin-top: 64px;
           padding-top: 32px;
           border-top: 1px solid #f0f0f0;

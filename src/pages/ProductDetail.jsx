@@ -251,6 +251,27 @@ const ProductDetail = () => {
     return product.subcategory.charAt(0).toUpperCase() + product.subcategory.slice(1);
   };
 
+  // Get category name
+  const getCategoryName = () => {
+    // Try to get from translations first
+    const translationKey = `shop.tabs.${product.category}`;
+    const translatedName = t(translationKey);
+    
+    // If translation exists and is not the same as the key, use it
+    if (translatedName !== translationKey) {
+      return translatedName;
+    }
+    
+    // Otherwise try to get from categories data
+    const category = getCategoryBySlug(product.category);
+    if (category) {
+      return category.name;
+    }
+    
+    // Fallback to capitalized category slug
+    return product.category.charAt(0).toUpperCase() + product.category.slice(1);
+  };
+
   console.log('ProductDetail render - productImages:', productImages);
 
   return (
@@ -262,6 +283,14 @@ const ProductDetail = () => {
             <FadeInSection>
               <div className="breadcrumb">
                 <Link to="/epood" className="breadcrumb-link" onClick={scrollToTop}>{t('shop.title')}</Link>
+                <span className="breadcrumb-separator"> / </span>
+                <Link 
+                  to={`/epood?tab=${product.category}`} 
+                  className="breadcrumb-link" 
+                  onClick={scrollToTop}
+                >
+                  {getCategoryName()}
+                </Link>
                 {product.subcategory && (
                   <>
                     <span className="breadcrumb-separator"> / </span>
