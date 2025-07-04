@@ -48,14 +48,16 @@ const AdminLayout = ({ children }) => {
       active: location.pathname.startsWith('/admin/orders')
     }, 
     {
-      name: 'Kategooriad',
+      name: t('admin.nav.categories'),
       href: '/admin/categories',
-      icon: '💬',
-      active: location.pathname.startsWith('/admin/messages')
+      icon: '📁',
+      active: location.pathname.startsWith('/admin/categories')
     },
     {
       name: t('admin.nav.messages'),
       href: '/admin/messages',
+      icon: '💬',
+      active: location.pathname.startsWith('/admin/messages')
       icon: '💬'
     },
     {
