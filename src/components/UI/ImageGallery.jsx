@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
+import MobileLightbox from './MobileLightbox'
 
 const ImageGallery = ({ images = [], productTitle = '' }) => {
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [touchStart, setTouchStart] = useState(null)
   const [touchEnd, setTouchEnd] = useState(null)
+  const [mobileLightboxOpen, setMobileLightboxOpen] = useState(false)
   const carouselRef = useRef(null)
 
   if (!images || images.length === 0) {
@@ -134,6 +136,13 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
 
   const goToSlide = (index) => {
     setSelectedIndex(index)
+  }
+
+  // Open mobile lightbox
+  const openMobileLightbox = () => {
+    if (isMobile()) {
+      setMobileLightboxOpen(true)
+    }
   }
 
   // **MODAL COMPONENT - ERALDI KOMPONENT PORTALI JAOKS**
@@ -392,7 +401,11 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
               style={{ transform: `translateX(-${selectedIndex * 100}%)` }}
             >
               {sortedImages.map((image, index) => (
-                <div key={image.id} className="carousel-slide">
+                <div 
+                  key={image.id} 
+                  className="carousel-slide"
+                  onClick={openMobileLightbox}
+                >
                   <img 
                     src={image.image_url} 
                     alt={`${productTitle} pilt ${index + 1}`}
@@ -442,6 +455,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
       {isModalOpen && !isMobile() && createPortal(
         <Modal />,
         document.body
+      )}
+
+      {/* Mobile Lightbox */}
+      {mobileLightboxOpen && (
+        <MobileLightbox 
+          image={sortedImages[selectedIndex].image_url}
+          onClose={() => setMobileLightboxOpen(false)}
+        />
       )}
 
       <style jsx>{`
@@ -526,6 +547,7 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           flex: 0 0 100%;
           width: 100%;
           height: 100%;
+          cursor: pointer;
         }
 
         .carousel-slide img {
