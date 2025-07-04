@@ -56,7 +56,7 @@ const AdminLayout = ({ children }) => {
     {
       name: t('admin.nav.messages'),
       href: '/admin/messages',
-      icon: '💬'
+      icon: '💬',
       active: location.pathname.startsWith('/admin/messages')
     },
     {
