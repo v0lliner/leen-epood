@@ -146,7 +146,7 @@ const Portfolio = () => {
   };
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Helper function to format technique text with line breaks
