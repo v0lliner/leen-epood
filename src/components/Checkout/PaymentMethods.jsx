@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { loadPaymentMethods } from '../../utils/maksekeskus';
+import { parsePriceToAmount } from '../../maksekeskus-config';
 
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const { t } = useTranslation();
@@ -12,7 +13,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   useEffect(() => {
     if (amount) {
       loadPaymentMethodsData();
-      console.log('PaymentMethods component initialized with amount:', amount, typeof amount);
+      console.log('PaymentMethods initialized with amount:', amount);
     }
   }, [amount, retryCount]);
 
@@ -23,16 +24,14 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     setError('');
     
     try {
-      // Ensure amount is a number and properly formatted
-      const numericAmount = typeof amount === 'string' 
-        ? parseFloat(amount.replace(',', '.')) 
-        : parseFloat(amount);
+      // Convert amount to a proper number using our utility function
+      const numericAmount = parsePriceToAmount(amount.toString());
         
       if (isNaN(numericAmount) || numericAmount <= 0) {
         throw new Error(`Invalid amount: ${amount}`);
       }
       
-      console.log('Loading payment methods for amount:', numericAmount, typeof numericAmount);
+      console.log('Loading payment methods for amount:', numericAmount);
       const paymentMethods = await loadPaymentMethods(numericAmount);
       console.log('Received payment methods:', paymentMethods);
       setMethods(paymentMethods);
@@ -53,9 +52,6 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       <div className="payment-methods-loading">
         <div className="loading-spinner"></div>
         <p>{t('checkout.payment.loading_methods')}</p>
-        <div className="debug-info">
-          <small>Summa: {typeof amount === 'number' ? amount.toFixed(2) : amount}€</small>
-        </div>
       </div>
     );
   }
@@ -64,9 +60,6 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
     return (
       <div className="payment-methods-error">
         <p>{error}</p>
-        <div className="debug-info">
-          <small>Summa: {typeof amount === 'number' ? amount.toFixed(2) : amount}€</small>
-        </div>
         <button 
           onClick={handleRetry}
           className="retry-button"
@@ -80,7 +73,13 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   if (methods.length === 0) {
     return (
       <div className="payment-methods-empty">
-        <p>{t('checkout.payment.no_methods')} (summa: {typeof amount === 'number' ? amount.toFixed(2) : amount}€)</p>
+        <p>{t('checkout.payment.no_methods')}</p>
+        <button 
+          onClick={handleRetry}
+          className="retry-button"
+        >
+          {t('checkout.payment.retry')}
+        </button>
       </div>
     );
   }

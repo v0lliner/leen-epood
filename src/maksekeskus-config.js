@@ -8,17 +8,29 @@ export const CURRENCY = 'EUR';
 /**
  * Parse price string to amount
  * @param {string} priceString - Price string (e.g. "349€", "10.99€")
- * @returns {number} Price as float
+ * @returns {number} Price as float or NaN if invalid
  */
 export function parsePriceToAmount(priceString) {
+  if (!priceString) return NaN;
+  
+  // If already a number, return it
+  if (typeof priceString === 'number') {
+    return priceString;
+  }
+  
   // Remove currency symbol and any whitespace
   const cleanPrice = priceString.replace(/[^\d.,]/g, '').trim();
   
   // Replace comma with dot for decimal point (European format)
   const normalizedPrice = cleanPrice.replace(',', '.');
   
-  // Parse to float
-  return parseFloat(normalizedPrice);
+  // Parse to float and ensure it's a valid number
+  const result = parseFloat(normalizedPrice);
+  
+  // Log the parsing result for debugging
+  console.log(`Parsed price: "${priceString}" → "${cleanPrice}" → "${normalizedPrice}" → ${result}`);
+  
+  return result;
 }
 
 /**

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
-import FadeInSection from '../components/UI/FadeInSection';
+import FadeInSection from '../components/UI/FadeInSection'; 
 import { useCart } from '../context/CartContext';
 import { createPayment } from '../utils/maksekeskus';
 import { parsePriceToAmount } from '../maksekeskus-config';
@@ -105,6 +105,10 @@ const Checkout = () => {
       setError('Ostukorv on tühi');
       return;
     }
+    
+    if (!validateForm()) {
+      return;
+    }
 
     if (!termsAgreed) {
       setTermsError(t('checkout.terms.required'));
@@ -113,6 +117,10 @@ const Checkout = () => {
 
     setIsProcessing(true);
     setError('');
+
+    // Get total price as a properly formatted number
+    const totalPrice = getTotalPrice().toFixed(2);
+    console.log('Checkout total price:', totalPrice);
 
     try {
       // Create payment
@@ -274,7 +282,7 @@ const Checkout = () => {
                       <div className="form-section">
                         <h3>{t('checkout.payment.title')}</h3>
                         <PaymentMethods 
-                          amount={getTotalPrice().toFixed(2)}
+                          amount={totalPrice}
                           onSelectMethod={setSelectedPaymentMethod}
                           selectedMethod={selectedPaymentMethod}
                         />
@@ -514,7 +522,7 @@ const Checkout = () => {
                   
                   <div className="summary-total">
                     <span>Kokku</span>
-                    <span>{getTotalPrice().toFixed(2)}€</span>
+                    <span>{totalPrice}€</span>
                   </div>
                   
                   {step === 1 && (
