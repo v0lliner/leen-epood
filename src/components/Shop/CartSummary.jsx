@@ -7,7 +7,7 @@ const CartSummary = ({ isOpen, onClose }) => {
   const { items, removeItem, getTotalPrice, getTotalItems } = useCart();
 
   const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.documentElement.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleLinkClick = () => {
