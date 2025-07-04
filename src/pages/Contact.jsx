@@ -311,13 +311,14 @@ const Contact = () => {
             <FadeInSection className="map-section">
               <div className="map-container">
                 <iframe
-                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBJNslJaIJX4bXJuwD03zHhCiLmWCzQuZ8&q=Jõeääre,Märjamaa,Rapla+vald,Estonia&zoom=14&maptype=roadmap&style=${encodeURIComponent(JSON.stringify(mapStyles))}`}
+                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBJNslJaIJX4bXJuwD03zHhCiLmWCzQuZ8&q=Jõeääre,Märjamaa,Rapla+vald,Estonia&zoom=14&maptype=roadmap`}
                   width="100%"
                   height="400"
                   style={{ 
                     border: 0,
-                    borderRadius: '8px',
-                    boxShadow: '0 4px 12px rgba(47, 62, 156, 0.1)'
+                    borderRadius: '8px', 
+                    boxShadow: '0 4px 12px rgba(47, 62, 156, 0.1)',
+                    filter: 'contrast(1.1) saturate(0.8) brightness(1.05)'
                   }}
                   allowFullScreen=""
                   loading="lazy"
