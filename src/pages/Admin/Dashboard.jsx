@@ -6,10 +6,12 @@ import AdminLayout from '../../components/Admin/AdminLayout'
 import { productService } from '../../utils/supabase/products'
 import { portfolioItemService } from '../../utils/supabase/portfolioItems'
 import { faqService } from '../../utils/supabase/faq'
+import { getUserSubscription } from '../../utils/stripe'
 
 const AdminDashboard = () => {
   const { t } = useTranslation()
   const { user } = useAuth()
+  const [subscription, setSubscription] = useState(null)
   const [orderStats, setOrderStats] = useState({
     total: 0,
     pending: 0,
@@ -37,6 +39,16 @@ const AdminDashboard = () => {
     
     try {
       console.log('🔄 Dashboard: Loading data...')
+
+      // Load subscription data
+      try {
+        const subscriptionData = await getUserSubscription()
+        setSubscription(subscriptionData)
+        console.log('💳 Dashboard: Subscription data loaded:', subscriptionData)
+      } catch (subscriptionError) {
+        console.error('Error loading subscription:', subscriptionError)
+        setSubscription(null)
+      }
 
       // Load order statistics
       try {
