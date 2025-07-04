@@ -34,7 +34,7 @@ export async function loadPaymentMethods(amount) {
     const response = await fetch(url, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
+        'Pragma': 'no-cache'
       }
     });
     

@@ -4,9 +4,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection'; 
 import { useCart } from '../context/CartContext';
-import { createPayment } from '../utils/maksekeskus';
-import { parsePriceToAmount } from '../maksekeskus-config';
-import { formatPrice } from '../maksekeskus-config';
+import { createPayment } from '../utils/maksekeskus.js';
+import { parsePriceToAmount, formatPrice } from '../maksekeskus-config.js';
 import PaymentMethods from '../components/Checkout/PaymentMethods';
 
 const Checkout = () => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { loadPaymentMethods } from '../../utils/maksekeskus';
+import { loadPaymentMethods } from '../../utils/maksekeskus.js';
 
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
   const { t } = useTranslation();
@@ -180,6 +180,7 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       <style jsx>{`
         .payment-methods {
           margin-bottom: 32px;
+        }
         }
 
         .payment-methods h4 {
