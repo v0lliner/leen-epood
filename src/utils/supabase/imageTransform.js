@@ -76,11 +76,13 @@ export const getImageSizeForContext = (context, isMobile = false) => {
         : { width: 1200, quality: 85 };
     
     case 'card':
-      return { width: 400, quality: 75 };
+      return isMobile
+        ? { width: 320, quality: 75 } // Reduced size for mobile
+        : { width: 400, quality: 75 };
     
     case 'gallery-main':
       return isMobile 
-        ? { width: 600, quality: 80 } 
+        ? { width: 480, quality: 80 } // Reduced size for mobile
         : { width: 800, quality: 80 };
     
     case 'gallery-thumbnail':
@@ -88,11 +90,13 @@ export const getImageSizeForContext = (context, isMobile = false) => {
     
     case 'portfolio':
       return isMobile 
-        ? { width: 800, quality: 80 } // Higher resolution for mobile to support object-fit: contain
+        ? { width: 480, quality: 80 } // Reduced size for mobile
         : { width: 500, quality: 80 };
     
     case 'lightbox':
-      return { width: 1200, quality: 85 };
+      return isMobile
+        ? { width: 800, quality: 85 } // Reduced size for mobile
+        : { width: 1200, quality: 85 };
     
     default:
       return { width: 800, quality: 80 };

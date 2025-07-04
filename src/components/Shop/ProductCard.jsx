@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext';
 import { useTranslation } from 'react-i18next';
 import { transformImage, getImageSizeForContext } from '../../utils/supabase/imageTransform';
 
-const ProductCard = ({ product }) => {
+const ProductCard = ({ product, priority = false }) => {
   const [isHovered, setIsHovered] = useState(false);
   const { addItem, isInCart } = useCart();
   const { t } = useTranslation();
@@ -31,7 +31,7 @@ const ProductCard = ({ product }) => {
   // Optimize image loading with transformations
   const optimizedImageUrl = transformImage(
     product.image, 
-    getImageSizeForContext('card')
+    getImageSizeForContext('card', window.innerWidth <= 768)
   );
 
   return (
@@ -43,7 +43,11 @@ const ProductCard = ({ product }) => {
       onClick={scrollToTop}
     >
       <div className="product-image">
-        <img src={optimizedImageUrl} alt={product.title} loading="lazy" />
+        <img 
+          src={optimizedImageUrl} 
+          alt={product.title} 
+          loading={priority ? "eager" : "lazy"} 
+        />
         {!product.available && (
           <div className="sold-overlay">{t('shop.product.sold_out')}</div>
         )}

@@ -13,7 +13,13 @@ const Home = () => {
   // Get the 6 most recent available products (using the 'id' field as a proxy for recency)
   const recentProducts = [...products]
     .filter(product => product.available) // Only show available products
-    .sort((a, b) => b.id - a.id)
+    .sort((a, b) => {
+      // Handle different ID types (string or number)
+      if (typeof a.id === 'string' && typeof b.id === 'string') {
+        return b.id.localeCompare(a.id);
+      }
+      return b.id - a.id;
+    })
     .slice(0, 6);
 
   const scrollToTop = () => {
@@ -39,9 +45,9 @@ const Home = () => {
               ) : (
                 <>
                   <div className="recent-products-grid">
-                    {recentProducts.map(product => (
+                    {recentProducts.map((product, index) => (
                       <FadeInSection key={product.id}>
-                        <ProductCard product={product} />
+                        <ProductCard product={product} priority={index < 2} />
                       </FadeInSection>
                     ))}
                   </div>
