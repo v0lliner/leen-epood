@@ -18,7 +18,7 @@ export async function loadPaymentMethods(amount) {
     }
     
     // Format amount to ensure it uses dot as decimal separator
-    const formattedAmount = typeof amount === 'number' 
+    let formattedAmount = typeof amount === 'number' 
       ? amount.toFixed(2)
       : parseFloat(amount.toString().replace(',', '.')).toFixed(2);
 
