@@ -22,6 +22,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -31,6 +32,7 @@ body {
   color: var(--color-text);
   background-color: var(--color-background);
   font-size: 16px;
+  overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
 }
@@ -233,33 +235,6 @@ img {
 .value-block h3 {
   color: var(--color-ultramarine);
   margin-bottom: 16px;
-}
-
-/* Optimizations for slow connections */
-[data-slow-connection="true"] img {
-  transition: none !important;
-  animation: none !important;
-}
-
-[data-slow-connection="true"] .fade-in {
-  transition: none !important;
-  opacity: 1 !important;
-  transform: none !important;
-}
-
-/* Reduce motion for users who prefer it */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  
-  .fade-in {
-    opacity: 1 !important;
-    transform: none !important;
-  }
 }
 
 @media (max-width: 768px) {
