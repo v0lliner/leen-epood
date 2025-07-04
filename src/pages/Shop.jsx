@@ -50,6 +50,16 @@ const Shop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Handle filter changes - always reset to page 1 when filters change
+  const handleFiltersChange = (newFilters) => {
+    setFilters(newFilters);
+    
+    // Reset to page 1 whenever filters change
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', '1');
+    setSearchParams(newParams);
+  };
+
   // Get products for current category (for filter calculations)
   const categoryProducts = useMemo(() => {
     return products.filter(product => product.category === activeTab);
@@ -109,7 +119,18 @@ const Shop = () => {
   // Calculate pagination
   const totalProducts = sortedAndFilteredProducts.length;
   const totalPages = Math.ceil(totalProducts / productsPerPage);
-  const startIndex = (currentPage - 1) * productsPerPage;
+  
+  // Ensure current page is valid
+  const validCurrentPage = Math.min(Math.max(1, currentPage), Math.max(1, totalPages));
+  
+  // If the current page from URL is invalid, update it
+  if (validCurrentPage !== currentPage) {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set('page', validCurrentPage.toString());
+    setSearchParams(newParams);
+  }
+  
+  const startIndex = (validCurrentPage - 1) * productsPerPage;
   const endIndex = startIndex + productsPerPage;
   const currentProducts = sortedAndFilteredProducts.slice(startIndex, endIndex);
 
@@ -125,14 +146,14 @@ const Shop = () => {
       }
     } else {
       // Show smart pagination
-      if (currentPage <= 3) {
+      if (validCurrentPage <= 3) {
         // Show first pages
         for (let i = 1; i <= 4; i++) {
           pages.push(i);
         }
         pages.push('...');
         pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
+      } else if (validCurrentPage >= totalPages - 2) {
         // Show last pages
         pages.push(1);
         pages.push('...');
@@ -143,7 +164,7 @@ const Shop = () => {
         // Show middle pages
         pages.push(1);
         pages.push('...');
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+        for (let i = validCurrentPage - 1; i <= validCurrentPage + 1; i++) {
           pages.push(i);
         }
         pages.push('...');
@@ -188,7 +209,7 @@ const Shop = () => {
             <button
               key={page}
               onClick={() => handlePageChange(page)}
-              className={`pagination-number ${currentPage === page ? 'active' : ''}`}
+              className={`pagination-number ${validCurrentPage === page ? 'active' : ''}`}
             >
               {page}
             </button>
@@ -265,7 +286,7 @@ const Shop = () => {
               <ProductFilters
                 activeCategory={activeTab}
                 filters={filters}
-                onFiltersChange={setFilters}
+                onFiltersChange={handleFiltersChange}
                 isOpen={filtersOpen}
                 onToggle={() => setFiltersOpen(!filtersOpen)}
                 products={categoryProducts}
