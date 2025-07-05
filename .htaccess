@@ -1,16 +1,14 @@
 # Enable Apache rewrite engine
 RewriteEngine On
 
-# Redirect PHP API requests to the server directory
-RewriteRule ^api/(.*)$ server/api/$1 [L]
+# Proxy API requests to Node.js backend
+# This will be handled by mod_proxy in Zone.ee
 
 # Redirect all requests to index.html for SPA routing
 RewriteBase /
 RewriteRule ^index\.html$ - [L]
 # Exclude robots.txt from rewrite rules
 RewriteCond %{REQUEST_URI} !^/robots\.txt$ [NC]
-# Exclude API endpoints from rewrite rules
-RewriteCond %{REQUEST_URI} !^/api/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]

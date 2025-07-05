@@ -1056,7 +1056,7 @@ app.get('/health', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
+app.listen(PORT, '127.0.0.1', () => {
   console.log(`=== Maksekeskus API Server ===`);
   console.log(`Server running on port ${PORT}`);
   console.log(`Notification URL: ${SITE_URL}/api/maksekeskus/notification`);
