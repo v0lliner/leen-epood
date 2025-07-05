@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { loadPaymentMethods } from '../../utils/maksekeskus';
 
 // Helper function to get logo URL for a payment method
-const getPaymentMethodLogo = (channel) => {
-  return `https://static.maksekeskus.ee/img/channel/lnd/${channel}.png`;
+const getPaymentMethodLogo = (method) => {
+  return `https://static.maksekeskus.ee/img/channel/lnd/${method}.png`;
 };
 
 const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
@@ -16,12 +15,12 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
 
   useEffect(() => {
     if (amount) {
-      loadPaymentMethodsData();
+      loadPaymentMethods();
       console.log('PaymentMethods initialized with amount:', amount, typeof amount);
     }
   }, [amount, retryCount]);
 
-  const loadPaymentMethodsData = async () => {
+  const loadPaymentMethods = async () => {
     if (!amount) return;
     
     setLoading(true);
@@ -41,25 +40,32 @@ const PaymentMethods = ({ amount, onSelectMethod, selectedMethod }) => {
       }
       
       // For zero or very small amounts, use a minimum value to avoid validation errors
-      if (isNaN(numericAmount)) {
-        console.error('Invalid amount after parsing:', { 
-          original: amount, 
-          parsed: numericAmount, 
-          type: typeof amount 
-        });
-        throw new Error(`Invalid amount format: ${amount}`);
-      }
-      
-      // Use a minimum amount of 0.01 to avoid validation errors
-      if (numericAmount <= 0) {
-        console.log('Amount is zero or negative, using minimum value of 0.01');
+      if (isNaN(numericAmount) || numericAmount <= 0) {
+        console.log('Amount is invalid, using minimum value of 0.01');
         numericAmount = 0.01;
       }
       
-      // Load payment methods from the API
-      const paymentMethods = await loadPaymentMethods(amount);
+      // Add a timestamp to prevent caching issues
+      const timestamp = Date.now();
       
-      setMethods(paymentMethods);
+      // Fetch payment methods from the API
+      const response = await fetch(`/api/payment-methods?amount=${numericAmount.toFixed(2)}&_=${timestamp}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load payment methods (${response.status})`);
+      }
+      
+      const data = await response.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Payment service unavailable');
+      }
+      
+      if (!data.methods || !Array.isArray(data.methods) || data.methods.length === 0) {
+        throw new Error('No payment methods available');
+      }
+      
+      setMethods(data.methods);
     } catch (err) {
       console.error('Failed to load payment methods:', err);
       setError(t('checkout.payment.methods_error'));

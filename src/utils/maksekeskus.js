@@ -47,15 +47,6 @@ export async function loadPaymentMethods(amount) {
     }
     
     const data = await response.json();
-
-    // Process the response data to ensure logo URLs are correct
-    if (data.success && data.methods && Array.isArray(data.methods)) {
-      data.methods = data.methods.map(method => ({
-        ...method,
-        // Ensure logo_url is using the standard format
-        logo_url: `https://static.maksekeskus.ee/img/channel/lnd/${method.channel}.png`
-      }));
-    }
     
     if (!data.success) {
       console.error('API error:', data.error || 'Unknown error');
