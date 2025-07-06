@@ -17,9 +17,9 @@
 export async function createTransaction(orderData) {
   try {
     const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payment-gateway/create-transaction`;
-    
-    // Get client IP from a service if needed in the future
-    // For now, the Edge Function will handle this from request headers
+
+    // The Edge Function will extract the client IP from request headers
+    // No need to send it from the client side
     
     const response = await fetch(apiUrl, {
       method: 'POST',
@@ -88,7 +88,10 @@ function loadCheckoutScript() {
     script.src = 'https://payment.maksekeskus.ee/checkout/dist/checkout.js';
     script.async = true;
     script.onload = resolve;
-    script.onerror = () => reject(new Error('Failed to load Maksekeskus checkout script'));
+    script.onerror = (e) => {
+      console.error('Failed to load Maksekeskus checkout script:', e);
+      reject(new Error('Failed to load Maksekeskus checkout script'));
+    };
     document.head.appendChild(script);
   });
 }

@@ -104,6 +104,9 @@ serve(async (req) => {
           ip: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1",
           country: "EE",
           locale: "et"
+        },
+        merchant: {
+          notification_url: `${url.origin}/functions/v1/payment-gateway/notification`
         }
       };
 
@@ -127,12 +130,16 @@ serve(async (req) => {
     if (path === "notification" && req.method === "POST") {
       const data = await req.json();
       const receivedMac = req.headers.get("mac");
+      console.log("Received payment notification:", JSON.stringify(data));
+      console.log("Received MAC:", receivedMac);
       
       // Verify the MAC signature
       const macInput = JSON.stringify(data);
       const expectedMac = await createMacHash(macInput);
+      console.log("Expected MAC:", expectedMac);
       
       if (receivedMac !== expectedMac) {
+        console.error("MAC verification failed");
         return new Response("Invalid MAC", { status: 403 });
       }
       
@@ -143,12 +150,17 @@ serve(async (req) => {
       if (transaction && status) {
         const { data: orderData, error } = await supabase
           .from("orders")
-          .update({ status: mapPaymentStatusToOrderStatus(status) })
+          .update({ 
+            status: mapPaymentStatusToOrderStatus(status),
+            updated_at: new Date().toISOString()
+          })
           .eq("order_number", transaction.reference)
           .select();
           
         if (error) {
           console.error("Error updating order:", error);
+        } else {
+          console.log("Order updated successfully:", orderData);
         }
         
         // Add payment record
@@ -159,13 +171,17 @@ serve(async (req) => {
               order_id: orderData?.[0]?.id,
               transaction_id: transaction.id,
               payment_method: transaction.method || "maksekeskus",
-              amount: transaction.amount,
-              currency: transaction.currency,
-              status: status
+              amount: parseFloat(transaction.amount),
+              currency: transaction.currency || "EUR",
+              status: status,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             });
             
           if (paymentError) {
             console.error("Error recording payment:", paymentError);
+          } else {
+            console.log("Payment recorded successfully");
           }
         }
       }

@@ -135,7 +135,7 @@ const Checkout = () => {
       // Calculate total price including delivery
       const totalAmount = deliveryMethod === 'parcel-machine' 
         ? (parseFloat(totalPrice) + 3.99).toFixed(2) 
-        : totalPrice;
+        : parseFloat(totalPrice).toFixed(2);
       
       // Generate order number (you might want to replace this with a more robust solution)
       const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -143,10 +143,10 @@ const Checkout = () => {
       // Create transaction with Maksekeskus
       const transaction = await createTransaction({
         amount: totalAmount,
-        currency: 'EUR',
+        currency: 'EUR', 
         orderId: orderId,
         customerEmail: formData.email,
-        customerName: `${formData.firstName} ${formData.lastName}`
+        customerName: `${formData.firstName} ${formData.lastName}`.trim()
       });
       
       // Initialize checkout with the transaction data
@@ -154,8 +154,8 @@ const Checkout = () => {
         amount: totalAmount,
         currency: 'EUR',
         orderId: orderId,
-        customerEmail: formData.email,
-        customerName: `${formData.firstName} ${formData.lastName}`
+        customerEmail: formData.email.trim(),
+        customerName: `${formData.firstName} ${formData.lastName}`.trim()
       });
       
       // The checkout will redirect the user to the payment provider
@@ -163,7 +163,7 @@ const Checkout = () => {
       
     } catch (err) {
       console.error('Error during checkout:', err);
-      setError('Tellimuse vormistamine ebaõnnestus');
+      setError(`Tellimuse vormistamine ebaõnnestus: ${err.message}`);
       setIsProcessing(false);
     }
   };
