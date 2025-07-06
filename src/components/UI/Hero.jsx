@@ -21,7 +21,7 @@ const Hero = () => {
           <FadeInSection className="hero-image-section">
             <div className="hero-image">
               <img
-                src={introSection.image_url || "https://images.pexels.com/photos/7978720/pexels-photo-7978720.jpeg"}
+                src={introSection.image_url}
                 alt={t('hero.image_alt')}
                 fetchpriority="high"
               />
