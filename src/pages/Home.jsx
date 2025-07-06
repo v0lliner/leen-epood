@@ -154,6 +154,7 @@ const Home = () => {
           display: flex;
           justify-content: center;
           align-items: center;
+          border-radius: 4px;
         }
 
         .hero-image {
