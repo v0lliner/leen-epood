@@ -4,10 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
-import { createPayment } from '../utils/maksekeskus';
-import { parsePriceToAmount, formatPrice } from '../maksekeskus-config';
-import PaymentMethods from '../components/Checkout/PaymentMethods';
-import PaymentMethodLogos from '../components/Checkout/PaymentMethodLogos';
+import { formatPrice } from '../utils/formatPrice';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -16,7 +13,6 @@ const Checkout = () => {
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [totalPrice, setTotalPrice] = useState('0.00');
   const [formattedTotalPrice, setFormattedTotalPrice] = useState('0.00');
   const [formData, setFormData] = useState({
@@ -36,7 +32,7 @@ const Checkout = () => {
   useEffect(() => {
     const total = getTotalPrice();
     setTotalPrice(total.toFixed(2));
-    setFormattedTotalPrice(formatPrice(total));
+    setFormattedTotalPrice(total.toFixed(2) + '€');
   }, [items, getTotalPrice]);
 
   const handleInputChange = (e) => {
@@ -80,12 +76,6 @@ const Checkout = () => {
       return false;
     }
     
-    // Check if payment method is selected
-    if (!selectedPaymentMethod) {
-      setError(t('checkout.payment.method_required'));
-      return false;
-    }
-    
     return true;
   };
 
@@ -103,41 +93,15 @@ const Checkout = () => {
     setError('');
 
     try {
-      // Create payment
-      const { success, payment_url, error: paymentError } = await createPayment(
-        {  
-          ...formData,
-          items: items.map(item => ({
-            id: item.id,
-            title: item.title,
-            price: parsePriceToAmount(item.price),
-            quantity: 1
-          }))
-        },
-        selectedPaymentMethod
-      );
-
-      if (!success || paymentError) {
-        setError(paymentError || 'Maksesessiooni loomine ebaõnnestus');
-        setIsProcessing(false);
-        return;
-      }
-
-      if (payment_url) {
-        // Clear cart before redirecting
-        await clearCart();
-                
-        // Redirect after a short delay to ensure cart is cleared
-        setTimeout(() => {
-          window.location.href = payment_url;
-        }, 500);
-      } else {
-        setError('Maksesessiooni loomine ebaõnnestus');
-        setIsProcessing(false);
-      }
+      // Clear cart
+      await clearCart();
+      
+      // Redirect to success page
+      navigate('/checkout/success');
+      
     } catch (err) {
-      console.error('Checkout error:', err);
-      setError('Maksesessiooni loomine ebaõnnestus');
+      console.error('Error during checkout:', err);
+      setError('Tellimuse vormistamine ebaõnnestus');
       setIsProcessing(false);
     }
   };
@@ -390,21 +354,6 @@ const Checkout = () => {
                         </div>
                       </div>
                       
-                      {/* Payment Methods */}
-                      <div className="form-section">
-                        <h3>{t('checkout.payment.title')}</h3>
-                        <PaymentMethods 
-                          amount={parseFloat(totalPrice) || 0.01}
-                          onSelectMethod={setSelectedPaymentMethod}
-                          selectedMethod={selectedPaymentMethod}
-                        />
-                        {error && error === t('checkout.payment.method_required') && (
-                          <div className="payment-method-error">
-                            {error}
-                          </div>
-                        )}
-                      </div>
-
                       {/* Terms Agreement */}
                       <div className="form-section">
                         <div className="form-row">
@@ -440,7 +389,7 @@ const Checkout = () => {
                           disabled={isProcessing}
                           className="btn btn-primary"
                         >
-                          {isProcessing ? 'Töötlemine...' : 'Vormista tellimus'}
+                          {isProcessing ? 'Töötlemine...' : 'Esita tellimus'}
                         </button>
                       </div>
                     </form>
@@ -484,15 +433,14 @@ const Checkout = () => {
                     disabled={isProcessing}
                     className="summary-checkout-btn"
                   >
-                    {isProcessing ? 'Töötlemine...' : 'Vormista tellimus'}
+                    {isProcessing ? 'Töötlemine...' : 'Esita tellimus'}
                   </button>
                   
                   <div className="checkout-info">
                     <div className="info-item">
-                      <div className="info-icon">🔒</div>
-                      <p>Turvaline makse Maksekeskuse kaudu</p>
+                      <div className="info-icon">📦</div>
+                      <p>Tellimuse kinnitus saadetakse e-postile</p>
                     </div>
-                    <PaymentMethodLogos />
                     <div className="info-item">
                       <div className="info-icon">🚚</div>
                       <p>Tarne 2-4 tööpäeva jooksul</p>

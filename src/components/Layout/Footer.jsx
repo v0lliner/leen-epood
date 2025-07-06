@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import PaymentMethodLogos from '../Checkout/PaymentMethodLogos';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -35,8 +34,6 @@ const Footer = () => {
           <span className="separator">·</span>
           <a href="https://www.instagram.com/leen.tailor/" target="_blank" rel="noopener noreferrer">{t('footer.instagram')}</a>
         </div>
-        
-        <PaymentMethodLogos />
         
         <div className="credits">
           {t('footer.made_by')} <a href="https://myralum.com/" target="_blank" rel="noopener noreferrer">Myralum</a>

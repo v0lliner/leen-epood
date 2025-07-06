@@ -1,9 +1,6 @@
 # Enable Apache rewrite engine
 RewriteEngine On
 
-# Proxy API requests to Node.js backend
-# This will be handled by mod_proxy in Zone.ee
-
 # Redirect all requests to index.html for SPA routing
 RewriteBase /
 RewriteRule ^index\.html$ - [L]
