@@ -23,9 +23,7 @@ const Hero = () => {
               <img 
                 src={introSection.image_url || "/leen-premium-epood.svg"} 
                 alt={t('hero.image_alt')}
-                loading="lazy"
-                onLoad={(e) => e.target.classList.add('loaded')}
-                className="hero-img"
+                fetchpriority="high"
               />
             </div>
           </FadeInSection>
@@ -72,9 +70,6 @@ const Hero = () => {
           max-width: 500px;
           border-radius: 8px;
           overflow: hidden;
-          background-color: #f5f5f5;
-          position: relative;
-          min-height: 400px;
         }
 
         .hero-image img {
@@ -84,12 +79,6 @@ const Hero = () => {
           aspect-ratio: 3/4;
           border-radius: 4px;
           display: block;
-          opacity: 0;
-          transition: opacity 0.3s ease;
-        }
-        
-        .hero-image img.loaded {
-          opacity: 1;
         }
 
         .hero-content {
