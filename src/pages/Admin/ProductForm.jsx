@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next'
 import AdminLayout from '../../components/Admin/AdminLayout'
 import MultiImageUpload from '../../components/Admin/MultiImageUpload'
 import { productService } from '../../utils/supabase/products'
-import { parsePriceToAmount } from '../../maksekeskus-config'
+import { parsePriceToAmount } from '../../utils/formatPrice'
 import { categoryService } from '../../utils/supabase/categories'
 import { productImageService } from '../../utils/supabase/productImages'
 

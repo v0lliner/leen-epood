@@ -24,3 +24,29 @@ export function formatPrice(amount, currency = 'EUR') {
     return '0,00 €';
   }
 }
+
+/**
+ * Parse price string to numeric amount
+ * @param {string} priceString - Price string (e.g., "25.50€", "25,50", "25.50")
+ * @returns {number} Numeric amount
+ */
+export function parsePriceToAmount(priceString) {
+  if (typeof priceString === 'number') {
+    return priceString;
+  }
+  
+  if (!priceString || typeof priceString !== 'string') {
+    return 0;
+  }
+  
+  // Remove currency symbols and whitespace
+  const cleanPrice = priceString.replace(/[€$£¥₹]/g, '').trim();
+  
+  // Replace comma with dot for decimal parsing
+  const normalizedPrice = cleanPrice.replace(',', '.');
+  
+  // Parse as float
+  const amount = parseFloat(normalizedPrice);
+  
+  return isNaN(amount) ? 0 : amount;
+}
