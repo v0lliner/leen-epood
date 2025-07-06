@@ -191,11 +191,10 @@ const Checkout = () => {
     setError('');
 
     try {
-      // If card payment is selected, tokenize card details
+      // For card payments, tokenize card details
       let cardToken = null;
       if (selectedPaymentMethod === 'card') {
         try {
-          setIsProcessing(true);
           cardToken = await tokenizeCardDetails();
           console.log('Card tokenized successfully');
         } catch (tokenError) {
@@ -230,23 +229,46 @@ const Checkout = () => {
         }))
       };
       
+      // Prepare the final request payload
+      const payload = {
+        ...orderData,
+        // Only include token for card payments
+        ...(selectedPaymentMethod === 'card' && cardToken ? { token: cardToken } : {})
+      };
+      
+      console.log('Sending payment request with payload:', payload);
+      
       // Call the PHP endpoint to create a transaction and payment
       const response = await fetch('/php/process-payment.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...orderData,
-          // Only include token for card payments
-          ...(selectedPaymentMethod === 'card' && cardToken ? { token: cardToken } : {})
-        })
+        body: JSON.stringify(payload)
       });
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`HTTP error! Status: ${response.status}, ${errorText}`);
+        // Try to parse error response as JSON
+        let errorData;
+        try {
+          errorData = await response.json();
+          throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+        } catch (jsonError) {
+          // If response is not JSON, get the raw text
+          const errorText = await response.text();
+          console.error('Raw error response:', errorText);
+          throw new Error(`HTTP error! Status: ${response.status}, Response is not valid JSON`);
+        }
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+        console.log('Payment response:', data);
+      } catch (jsonError) {
+        console.error('Error parsing response JSON:', jsonError);
+        const rawResponse = await response.text();
+        console.error('Raw response:', rawResponse);
+        throw new Error('Invalid JSON response from server');
+      }
       
       if (data.error) {
         throw new Error(data.error);
@@ -269,7 +291,7 @@ const Checkout = () => {
       }
     } catch (err) {
       console.error('Error during checkout:', err);
-      setError('Tellimuse vormistamine ebaõnnestus: ' + err.message);
+      setError('Tellimuse vormistamine ebaõnnestus: ' + (err.message || 'Tundmatu viga'));
       setIsProcessing(false);
     }
   };
