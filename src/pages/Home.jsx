@@ -161,6 +161,7 @@ const Home = () => {
           max-width: 500px;
           border-radius: 8px;
           overflow: visible; 
+          border-radius: 4px;
         }
 
         .hero-image img {
