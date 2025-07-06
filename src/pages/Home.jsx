@@ -156,7 +156,7 @@ const Home = () => {
           align-items: center;
         }
 
-        .hero-image {
+        .hero-image 
           width: 90%;
           max-width: 500px;
           border-radius: 8px;
@@ -168,7 +168,7 @@ const Home = () => {
           height: 100%;
           object-fit: cover;
           aspect-ratio: 4/5;
-          border-radius: 8px;
+          border-radius: 4px;
           display: block;
         }
 
