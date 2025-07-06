@@ -66,6 +66,10 @@ try {
     // Log parsed data for debugging
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Parsed data: " . json_encode($data) . "\n", FILE_APPEND);
 
+   // Log country code for debugging
+   $countryCode = strtolower(substr($data['country'] ?? 'Estonia', 0, 2));
+   file_put_contents($logFile, date('Y-m-d H:i:s') . " - Country code: " . $countryCode . "\n", FILE_APPEND);
+
     // Validate required fields for all payment methods
     if (!isset($data['amount']) || !isset($data['reference']) || !isset($data['email']) || !isset($data['paymentMethod'])) {
         http_response_code(400);
@@ -108,7 +112,7 @@ try {
         ],
         'customer' => [
             'email' => $data['email'],
-            'country' => substr($data['country'] ?? 'Estonia', 0, 2),
+            'country' => strtolower(substr($data['country'] ?? 'Estonia', 0, 2)),
             'locale' => 'et'
         ]
     ];
