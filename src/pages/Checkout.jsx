@@ -39,11 +39,6 @@ const Checkout = () => {
     notes: ''
   });
 
-  // Function to scroll to top of page
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   // Update total price whenever cart items change
   useEffect(() => {
     const total = getTotalPrice();
@@ -60,6 +55,11 @@ const Checkout = () => {
     
     // Clear error when user types
     if (error) setError('');
+  };
+  
+  // Function to scroll to top of page
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
   const handleCardInputChange = (e) => {
