@@ -16,12 +16,12 @@ const AdminOrders = () => {
 
   useEffect(() => {
     loadOrders()
-  }, [])
+  }, []) 
 
   const loadOrders = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/admin/orders')
+      const response = await fetch('/php/admin/orders.php')
       
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${await response.text()}`)
@@ -45,9 +45,9 @@ const AdminOrders = () => {
   const loadOrderDetails = async (orderId) => {
     if (!orderId) return
     
-    setDetailsLoading(true)
+    setDetailsLoading(true) 
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}`)
+      const response = await fetch(`/php/admin/orders.php/${orderId}`)
       
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${await response.text()}`)
@@ -80,7 +80,7 @@ const AdminOrders = () => {
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`/api/admin/orders/${orderId}/status`, {
+      const response = await fetch(`/php/admin/orders.php/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json'

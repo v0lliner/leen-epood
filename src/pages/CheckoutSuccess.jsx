@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import { useTranslation } from 'react-i18next'; 
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
@@ -8,30 +8,194 @@ import FadeInSection from '../components/UI/FadeInSection';
 const CheckoutSuccess = () => {
   const { t } = useTranslation();
   const { clearCart } = useCart();
-  const [orderDetails, setOrderDetails] = useState(null);
+  const [orderDetails, setOrderDetails] = useState(null); 
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     // Clear the cart when the success page loads - this ensures cart is only cleared after successful payment
     clearCart();
     
-    // Get order details from localStorage
-    const pendingOrder = localStorage.getItem('pendingOrder');
-    if (pendingOrder) {
+    // Function to load order details
+    const loadOrderDetails = async () => {
+      setLoading(true);
+      setError(null);
+      
       try {
+        // Get order reference from localStorage
+        const pendingOrder = localStorage.getItem('pendingOrder');
+        
+        if (!pendingOrder) {
+          throw new Error('No order information found');
+        }
+        
         const orderData = JSON.parse(pendingOrder);
+        
+        // Set basic order details from localStorage
         setOrderDetails(orderData);
         
         // Clear the pending order after retrieving it
         localStorage.removeItem('pendingOrder');
+        
+        // If we have an order reference, try to fetch the latest order status from the database
+        if (orderData.orderReference) {
+          // This would be a good place to fetch the latest order status from the database
+          // For now, we'll just use the localStorage data
+        }
       } catch (error) {
-        console.error('Error parsing stored order data:', error);
+        console.error('Error loading order details:', error);
+        setError(error.message || 'Failed to load order details');
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [clearCart]);
+    };
+    
+    loadOrderDetails();
+  }, [clearCart]); 
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+  
+  if (loading) {
+    return (
+      <>
+        <SEOHead page="shop" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <div className="loading-container">
+                <div className="loading-spinner"></div>
+                <p>Laadin tellimuse andmeid...</p>
+              </div>
+            </div>
+          </section>
+        </main>
+        <style jsx>{`
+          .loading-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 64px;
+            gap: 16px;
+          }
+
+          .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--color-ultramarine);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </>
+    );
+  }
+  
+  if (error || !orderDetails) {
+    return (
+      <>
+        <SEOHead page="shop" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <FadeInSection>
+                <div className="error-content">
+                  <div className="error-icon">❌</div>
+                  <h1>Tellimuse andmete laadimine ebaõnnestus</h1>
+                  <p>{error || 'Tellimuse andmeid ei leitud'}</p>
+                  
+                  <div className="error-actions">
+                    <Link to="/epood" className="btn btn-primary" onClick={scrollToTop}>
+                      Jätka ostlemist
+                    </Link>
+                    <Link to="/" className="btn btn-secondary" onClick={scrollToTop}>
+                      Tagasi avalehele
+                    </Link>
+                  </div>
+                </div>
+              </FadeInSection>
+            </div>
+          </section>
+        </main>
+        <style jsx>{`
+          .error-content {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+          }
+
+          .error-icon {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            color: #dc3545;
+          }
+
+          .error-content h1 {
+            color: var(--color-text);
+            margin-bottom: 16px;
+          }
+
+          .error-content p {
+            margin-bottom: 32px;
+            color: #666;
+            font-size: 1.125rem;
+          }
+
+          .error-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin: 48px 0;
+            flex-wrap: wrap;
+          }
+
+          .btn {
+            padding: 12px 24px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-family: var(--font-body);
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+            display: inline-block;
+          }
+
+          .btn-primary {
+            background-color: var(--color-ultramarine);
+            color: white;
+          }
+
+          .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+          }
+
+          .btn:hover {
+            opacity: 0.9;
+          }
+
+          @media (max-width: 768px) {
+            .error-actions {
+              flex-direction: column;
+              align-items: center;
+            }
+
+            .btn {
+              width: 200px;
+              text-align: center;
+            }
+          }
+        `}</style>
+      </>
+    );
+  }
 
   return (
     <>
@@ -43,7 +207,7 @@ const CheckoutSuccess = () => {
               <div className="success-content">
                 <div className="success-icon">✅</div>
                 <h1>Aitäh teie ostu eest!</h1>
-                <p>Teie tellimus on edukalt vormistatud.</p>
+                <p>Teie tellimus on edukalt vormistatud ja makse on kinnitatud.</p>
                 
                 <div className="order-info">
                   {orderDetails && (
@@ -60,9 +224,13 @@ const CheckoutSuccess = () => {
                         <span className="detail-label">E-post:</span>
                         <span className="detail-value">{orderDetails.customerEmail}</span>
                       </div>
+                      <div className="order-detail">
+                        <span className="detail-label">Tellimuse aeg:</span>
+                        <span className="detail-value">{new Date(orderDetails.timestamp).toLocaleString('et-EE')}</span>
+                      </div>
                     </>
                   )}
-                  <p className="order-message">Saadame teile peagi tellimuse kinnituse e-kirja.</p>
+                  <p className="order-message">Tellimuse kinnitus on saadetud teie e-posti aadressile.</p>
                 </div>
 
                 <div className="success-actions">
@@ -77,10 +245,16 @@ const CheckoutSuccess = () => {
                 <div className="contact-info">
                   <h4>Küsimused?</h4>
                   <p>Kui teil on küsimusi tellimuse kohta, võtke meiega ühendust:</p>
-                  <p>
-                    <a href="mailto:leen@leen.ee" className="contact-link">leen@leen.ee</a> või 
-                    <a href="tel:+37253801413" className="contact-link">+372 5380 1413</a>
-                  </p>
+                  <div className="contact-links">
+                    <a href="mailto:leen@leen.ee" className="contact-link">
+                      <span className="contact-icon">✉️</span>
+                      leen@leen.ee
+                    </a>
+                    <a href="tel:+37253801413" className="contact-link">
+                      <span className="contact-icon">📞</span>
+                      +372 5380 1413
+                    </a>
+                  </div>
                 </div>
               </div>
             </FadeInSection>
@@ -109,6 +283,15 @@ const CheckoutSuccess = () => {
           margin-bottom: 32px;
           color: #666;
           font-size: 1.125rem;
+        }
+
+        .order-info {
+          background: #f8f9fa;
+          padding: 24px;
+          border-radius: 8px;
+          margin: 32px 0;
+        }
+
         .order-detail {
           display: flex;
           justify-content: space-between;
@@ -129,15 +312,11 @@ const CheckoutSuccess = () => {
         .order-message {
           margin-top: 16px;
           font-weight: 500;
-        }
-
-        }
-
-        .order-info {
-          background: #f8f9fa;
-          padding: 24px;
-          border-radius: 8px;
-          margin: 32px 0;
+          text-align: center;
+          color: #155724;
+          background-color: #d4edda;
+          padding: 8px;
+          border-radius: 4px;
         }
 
         .order-info p {
@@ -196,16 +375,32 @@ const CheckoutSuccess = () => {
           margin-bottom: 8px;
           line-height: 1.6;
         }
+        
+        .contact-links {
+          display: flex;
+          justify-content: center;
+          gap: 24px;
+          margin-top: 16px;
+        }
 
         .contact-link {
           color: var(--color-ultramarine);
           text-decoration: none;
           font-weight: 500;
-          margin: 0 4px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border-radius: 4px;
+          transition: background-color 0.2s ease;
         }
 
         .contact-link:hover {
-          text-decoration: underline;
+          background-color: rgba(47, 62, 156, 0.1);
+        }
+        
+        .contact-icon {
+          font-size: 1.25rem;
         }
 
         @media (max-width: 768px) {
@@ -217,6 +412,12 @@ const CheckoutSuccess = () => {
           .btn {
             width: 200px;
             text-align: center;
+          }
+          
+          .contact-links {
+            flex-direction: column;
+            gap: 12px;
+            align-items: center;
           }
         }
       `}</style>
