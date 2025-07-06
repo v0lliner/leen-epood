@@ -34,19 +34,29 @@ const AdminDashboard = () => {
   const loadDashboardData = async () => {
     setLoading(true)
     setError('')
-    
+
     try {
       console.log('🔄 Dashboard: Loading data...')
 
       // Load order statistics
       try {
-        const orderResponse = await fetch('/api/admin/orders/stats')
+        const orderResponse = await fetch('/php/admin_order_stats.php')
+        console.log('📊 Dashboard: Order stats response status:', orderResponse.status)
+        
         if (orderResponse.ok) {
           const orderData = await orderResponse.json()
+          console.log('📊 Dashboard: Order stats data:', orderData)
+          
           if (orderData.success) {
             setOrderStats(orderData.stats)
             console.log('📊 Dashboard: Order stats loaded:', orderData.stats)
+          } else {
+            console.error('❌ Dashboard: Order stats error:', orderData.error)
           }
+        } else {
+          console.error('❌ Dashboard: Order stats HTTP error:', orderResponse.status)
+          const errorText = await orderResponse.text()
+          console.error('❌ Dashboard: Order stats error details:', errorText)
         }
       } catch (orderError) {
         console.error('Error loading order stats:', orderError)
