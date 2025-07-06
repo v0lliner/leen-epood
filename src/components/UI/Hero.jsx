@@ -19,13 +19,15 @@ const Hero = () => {
       <div className="container">
         <div className="hero-layout">
           <FadeInSection className="hero-image-section">
-            <div className="hero-image">
-              <img
-                src={introSection.image_url}
-                alt={t('hero.image_alt')}
-                fetchpriority="high"
-              />
-            </div>
+            {introSection.image_url && (
+              <div className="hero-image">
+                <img
+                  src={introSection.image_url}
+                  alt={t('hero.image_alt')}
+                  fetchpriority="high"
+                />
+              </div>
+            )}
           </FadeInSection>
           
           <FadeInSection className="hero-content">
