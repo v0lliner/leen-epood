@@ -19,8 +19,15 @@ const Checkout = () => {
   const [termsError, setTermsError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [deliveryMethodError, setDeliveryMethodError] = useState('');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('swedbank');
   const [selectedCountry, setSelectedCountry] = useState('Estonia');
+  const [cardDetails, setCardDetails] = useState({
+    cardNumber: '',
+    expiryMonth: '',
+    expiryYear: '',
+    cvc: '',
+    cardHolder: ''
+  });
   
   const [formData, setFormData] = useState({
     email: '',
@@ -49,6 +56,17 @@ const Checkout = () => {
     // Clear error when user types
     if (error) setError('');
   };
+  
+  const handleCardInputChange = (e) => {
+    const { name, value } = e.target;
+    setCardDetails(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
+    if (error) setError('');
+  };
 
   const handleTermsChange = (e) => {
     setTermsAgreed(e.target.checked);
@@ -63,6 +81,8 @@ const Checkout = () => {
   };
 
   const handlePaymentMethodSelection = (method) => {
+    // Clear any previous errors when changing payment method
+    setError('');
     setSelectedPaymentMethod(method);
   };
 
@@ -75,6 +95,41 @@ const Checkout = () => {
     }));
     // Reset selected payment method when country changes
     setSelectedPaymentMethod('');
+  };
+  
+  // Function to tokenize card details using Maksekeskus SDK
+  const tokenizeCardDetails = async () => {
+    try {
+      // Validate card details
+      if (!cardDetails.cardNumber || !cardDetails.expiryMonth || 
+          !cardDetails.expiryYear || !cardDetails.cvc || !cardDetails.cardHolder) {
+        throw new Error('Palun täitke kõik kaardi andmed');
+      }
+      
+      // Check if Maksekeskus SDK is loaded
+      if (!window.Maksekeskus) {
+        throw new Error('Maksekeskuse SDK ei ole laaditud');
+      }
+      
+      // Initialize Maksekeskus SDK
+      const mk = new window.Maksekeskus({
+        shopId: '4e2bed9a-aa24-4b87-801b-56c31c535d36',
+        testMode: false // Set to false for production
+      });
+      
+      // Tokenize card details
+      const token = await mk.tokenizeCard({
+        cardNumber: cardDetails.cardNumber.replace(/\s/g, ''),
+        expiryMonth: cardDetails.expiryMonth,
+        expiryYear: cardDetails.expiryYear,
+        cvc: cardDetails.cvc,
+        cardHolder: cardDetails.cardHolder
+      });
+      
+      return token;
+    } catch (err) {
+      throw new Error('Kaardi andmete töötlemine ebaõnnestus: ' + err.message);
+    }
   };
 
   const validateForm = () => {
@@ -136,6 +191,20 @@ const Checkout = () => {
     setError('');
 
     try {
+      // If card payment is selected, tokenize card details
+      let cardToken = null;
+      if (selectedPaymentMethod === 'card') {
+        try {
+          setIsProcessing(true);
+          cardToken = await tokenizeCardDetails();
+          console.log('Card tokenized successfully');
+        } catch (tokenError) {
+          setError(tokenError.message);
+          setIsProcessing(false);
+          return;
+        }
+      }
+      
       // Calculate final amount including delivery cost
       const deliveryCost = deliveryMethod === 'parcel-machine' ? 3.99 : 0;
       const finalAmount = (parseFloat(totalPrice) + deliveryCost).toFixed(2);
@@ -165,7 +234,11 @@ const Checkout = () => {
       const response = await fetch('/php/process-payment.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify({
+          ...orderData,
+          // Only include token for card payments
+          ...(selectedPaymentMethod === 'card' && cardToken ? { token: cardToken } : {})
+        })
       });
 
       if (!response.ok) {
@@ -546,6 +619,85 @@ const Checkout = () => {
                             </div>
                           </div>
                         </div>
+                      
+                      {/* Card Payment Fields - Only show when card is selected */}
+                      {selectedPaymentMethod === 'card' && (
+                        <div className="card-payment-section">
+                          <h4>Sisestage kaardi andmed</h4>
+                          <div className="card-fields">
+                            <div className="form-group">
+                              <label htmlFor="cardNumber">Kaardi number</label>
+                              <input
+                                type="text"
+                                id="cardNumber"
+                                name="cardNumber"
+                                value={cardDetails.cardNumber}
+                                onChange={handleCardInputChange}
+                                className="form-input"
+                                placeholder="1234 5678 9012 3456"
+                                maxLength="19"
+                              />
+                            </div>
+                            
+                            <div className="card-expiry-cvc">
+                              <div className="form-group">
+                                <label htmlFor="expiryMonth">Kuu</label>
+                                <input
+                                  type="text"
+                                  id="expiryMonth"
+                                  name="expiryMonth"
+                                  value={cardDetails.expiryMonth}
+                                  onChange={handleCardInputChange}
+                                  className="form-input"
+                                  placeholder="MM"
+                                  maxLength="2"
+                                />
+                              </div>
+                              
+                              <div className="form-group">
+                                <label htmlFor="expiryYear">Aasta</label>
+                                <input
+                                  type="text"
+                                  id="expiryYear"
+                                  name="expiryYear"
+                                  value={cardDetails.expiryYear}
+                                  onChange={handleCardInputChange}
+                                  className="form-input"
+                                  placeholder="YY"
+                                  maxLength="2"
+                                />
+                              </div>
+                              
+                              <div className="form-group">
+                                <label htmlFor="cvc">CVC</label>
+                                <input
+                                  type="text"
+                                  id="cvc"
+                                  name="cvc"
+                                  value={cardDetails.cvc}
+                                  onChange={handleCardInputChange}
+                                  className="form-input"
+                                  placeholder="123"
+                                  maxLength="4"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="form-group">
+                              <label htmlFor="cardHolder">Kaardi omanik</label>
+                              <input
+                                type="text"
+                                id="cardHolder"
+                                name="cardHolder"
+                                value={cardDetails.cardHolder}
+                                onChange={handleCardInputChange}
+                                className="form-input"
+                                placeholder="EESNIMI PEREKONNANIMI"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
                         
                         {/* Terms Agreement */}
                         <div className="terms-agreement">
@@ -1045,6 +1197,33 @@ const Checkout = () => {
           opacity: 1;
         }
 
+        .card-payment-section {
+          margin: 24px 0;
+          padding: 20px;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          background: #fafbfc;
+        }
+
+        .card-payment-section h4 {
+          font-family: var(--font-heading);
+          color: var(--color-ultramarine);
+          margin-bottom: 16px;
+          font-size: 1rem;
+        }
+
+        .card-fields {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .card-expiry-cvc {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 12px;
+        }
+
         .terms-agreement {
           margin: 24px 0;
         }
@@ -1249,6 +1428,15 @@ const Checkout = () => {
 
           .bank-name {
             font-size: 0.7rem;
+          }
+          
+          .card-expiry-cvc {
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+          }
+          
+          .card-expiry-cvc .form-group:last-child {
+            grid-column: span 2;
           }
         }
       `}</style>

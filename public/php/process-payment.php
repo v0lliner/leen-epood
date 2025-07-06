@@ -25,10 +25,22 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Parse the JSON request body
 $data = json_decode($requestData, true);
 
-// Validate required fields
-if (!isset($data['amount']) || !isset($data['reference']) || !isset($data['email'])) {
+// Log parsed data for debugging
+file_put_contents($logFile, date('Y-m-d H:i:s') . " - Parsed data: " . json_encode($data) . "\n", FILE_APPEND);
+
+// Validate required fields for all payment methods
+if (!isset($data['amount']) || !isset($data['reference']) || !isset($data['email']) || !isset($data['paymentMethod'])) {
     http_response_code(400);
     echo json_encode(['error' => 'Missing required fields']);
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: Missing required fields\n", FILE_APPEND);
+    exit();
+}
+
+// Validate token for card payments
+if ($data['paymentMethod'] === 'card' && (!isset($data['token']) || empty($data['token']))) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Missing token for card payment']);
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: Missing token for card payment\n", FILE_APPEND);
     exit();
 }
 
@@ -81,6 +93,7 @@ try {
 
     // Create payment
     $paymentData = [
+        // Use the payment method from the request
         'method' => $data['paymentMethod'] ?? 'swedbank',
         'locale' => 'et',
         'country' => substr($data['country'] ?? 'Estonia', 0, 2),
@@ -89,6 +102,12 @@ try {
         'return_url' => 'https://leen.ee/checkout/success',
         'cancel_url' => 'https://leen.ee/checkout'
     ];
+
+    // Add token if provided (required for card payments)
+    if (isset($data['token']) && !empty($data['token'])) {
+        $paymentData['token'] = $data['token'];
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Token included in payment data\n", FILE_APPEND);
+    }
     
     $payment = $MK->createPayment($transaction->id, $paymentData);
     
@@ -107,4 +126,5 @@ try {
     // Return error response
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Detailed error: " . $e->getMessage() . "\n", FILE_APPEND);
 }
