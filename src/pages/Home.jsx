@@ -157,7 +157,7 @@ const Home = () => {
         }
 
         .hero-image {
-          width: 90%;
+          width: 100%;
           max-width: 500px;
           border-radius: 8px;
           overflow: visible; 
