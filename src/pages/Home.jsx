@@ -154,7 +154,6 @@ const Home = () => {
           display: flex;
           justify-content: center;
           align-items: center;
-          border-radius: 4px;
         }
 
         .hero-image {
@@ -162,7 +161,6 @@ const Home = () => {
           max-width: 500px;
           border-radius: 8px;
           overflow: visible; 
-          border-radius: 4px;
         }
 
         .hero-image img {
