@@ -8,7 +8,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
     url: supabaseUrl ? 'present' : 'missing',
     key: supabaseAnonKey ? 'present' : 'missing'
   })
-  throw new Error('Missing Supabase environment variables')
+  console.warn('Missing Supabase environment variables - some features may not work correctly')
 }
 
 console.log('Supabase client initialized with URL:', supabaseUrl)

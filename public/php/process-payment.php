@@ -107,7 +107,7 @@ try {
         'transaction' => [
             'amount' => $data['amount'],
             'currency' => 'EUR',
-            'reference' => $data['reference'],
+            'reference' => $data['reference'], // This will be used as order_number in the return URL
             'merchant_data' => json_encode([
                 'customer_name' => $data['firstName'] . ' ' . $data['lastName'],
                 'customer_email' => $data['email'],
@@ -124,6 +124,16 @@ try {
             'locale' => 'et'
         ]
     ];
+
+    // If return_url is provided in the request, use it instead of the default
+    if (isset($data['return_url']) && !empty($data['return_url'])) {
+        $transactionData['transaction']['return_url'] = $data['return_url'];
+    }
+
+    // If cancel_url is provided in the request, use it instead of the default
+    if (isset($data['cancel_url']) && !empty($data['cancel_url'])) {
+        $transactionData['transaction']['cancel_url'] = $data['cancel_url'];
+    }
 
     // Add token for card payments if present
     if ($data['paymentMethod'] === 'card' && isset($data['token'])) {

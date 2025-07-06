@@ -271,7 +271,7 @@ function processOrder($transactionData, $paymentData) {
         if ($orderId) {
             $paymentData = [
                 'order_id' => $orderId,
-                'transaction_id' => $paymentData->transaction,
+                'transaction_id' => $paymentData->transaction ?? $transactionId,
                 'payment_method' => $paymentData->method,
                 'amount' => $paymentData->amount,
                 'currency' => $paymentData->currency,
@@ -294,6 +294,21 @@ function processOrder($transactionData, $paymentData) {
         // Send confirmation email if payment is completed
         if ($paymentData->status === 'COMPLETED' && !empty($customerEmail)) {
             $subject = "Teie tellimus #{$orderNumber} on kinnitatud - Leen.ee";
+            
+            // Store the order reference in the merchant_data for later retrieval
+            if ($transaction && isset($transaction->transaction) && isset($transaction->transaction->reference)) {
+                $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
+                $merchantData['order_reference'] = $orderNumber;
+                
+                // Update the transaction with the new merchant_data
+                try {
+                    $MK->addTransactionMeta($transactionId, [
+                        'merchant_data' => json_encode($merchantData)
+                    ]);
+                } catch (Exception $e) {
+                    logMessage("Error updating transaction meta: " . $e->getMessage());
+                }
+            }
             
             // Build a simple HTML email
             $message = "
