@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
@@ -9,9 +8,8 @@ import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
 
 const Checkout = () => {
   const { t, i18n } = useTranslation();
-  const { items, getTotalPrice, clearCart } = useCart();
+  const { items, getTotalPrice } = useCart();
   const navigate = useNavigate();
-  const location = useLocation();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -138,31 +136,32 @@ const Checkout = () => {
     setError('');
 
     try {
-      // Calculate final amount including delivery
-      const finalAmount = (parseFloat(totalPrice) + (deliveryMethod === 'parcel-machine' ? 3.99 : 0)).toFixed(2);
+      // Calculate final amount including delivery cost
+      const deliveryCost = deliveryMethod === 'parcel-machine' ? 3.99 : 0;
+      const finalAmount = (parseFloat(totalPrice) + deliveryCost).toFixed(2);
       
-      // Create order data
+      // Generate a unique order reference
+      const orderReference = generateOrderReference();
+      
+      // Prepare order data to send to PHP backend
       const orderData = {
         amount: finalAmount,
-        reference: generateOrderReference(),
+        reference: orderReference,
         email: formData.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
-        address: formData.address,
-        city: formData.city,
-        postalCode: formData.postalCode,
         country: formData.country,
+        paymentMethod: selectedPaymentMethod,
         items: items.map(item => ({
           id: item.id,
           title: item.title,
           price: parsePriceToAmount(item.price),
           quantity: 1
-        })),
-        paymentMethod: selectedPaymentMethod
+        }))
       };
       
-      // Call the PHP endpoint to create a transaction
+      // Call the PHP endpoint to create a transaction and payment
       const response = await fetch('/php/process-payment.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -180,24 +179,24 @@ const Checkout = () => {
         throw new Error(data.error);
       }
       
-      if (data.paymentUrl) {
+      if (data.transactionId && data.paymentUrl) {
         // Store order info in localStorage before redirecting
         localStorage.setItem('pendingOrder', JSON.stringify({
-          orderReference: orderData.reference,
+          orderReference: orderReference,
           orderAmount: finalAmount,
           orderItems: items,
           customerEmail: formData.email,
           timestamp: Date.now()
         }));
         
-        // Redirect to payment provider
+        // Redirect to payment URL provided by Maksekeskus
         window.location.href = data.paymentUrl;
       } else {
-        throw new Error('Maksekeskuse vastuses puudub makse URL');
+        throw new Error('Maksekeskuse vastuses puudub tehingu ID või makse URL');
       }
     } catch (err) {
       console.error('Error during checkout:', err);
-      setError('Tellimuse vormistamine ebaõnnestus');
+      setError('Tellimuse vormistamine ebaõnnestus: ' + err.message);
       setIsProcessing(false);
     }
   };

@@ -11,7 +11,7 @@ const CheckoutSuccess = () => {
   const [orderDetails, setOrderDetails] = useState(null);
 
   useEffect(() => {
-    // Clear the cart when the success page loads
+    // Clear the cart when the success page loads - this ensures cart is only cleared after successful payment
     clearCart();
     
     // Get order details from localStorage
@@ -24,7 +24,7 @@ const CheckoutSuccess = () => {
         // Clear the pending order after retrieving it
         localStorage.removeItem('pendingOrder');
       } catch (error) {
-        console.error('Error parsing order data:', error);
+        console.error('Error parsing stored order data:', error);
       }
     }
   }, [clearCart]);
