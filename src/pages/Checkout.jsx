@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
-import { formatPrice } from '../utils/formatPrice';
+import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -353,7 +353,7 @@ const Checkout = () => {
                           </div>
                         </div>
                       </div>
-                      
+
                       {/* Terms Agreement */}
                       <div className="form-section">
                         <div className="form-row">
@@ -388,8 +388,9 @@ const Checkout = () => {
                           onClick={handleCheckout}
                           disabled={isProcessing}
                           className="btn btn-primary"
+                          style={{ backgroundColor: 'var(--color-ultramarine)' }}
                         >
-                          {isProcessing ? 'Töötlemine...' : 'Esita tellimus'}
+                          {isProcessing ? 'Töötlemine...' : 'Saada tellimus'}
                         </button>
                       </div>
                     </form>
@@ -431,14 +432,15 @@ const Checkout = () => {
                   <button 
                     onClick={handleCheckout}
                     disabled={isProcessing}
-                    className="summary-checkout-btn"
+                    className="summary-checkout-btn" 
+                    style={{ backgroundColor: 'var(--color-ultramarine)' }}
                   >
-                    {isProcessing ? 'Töötlemine...' : 'Esita tellimus'}
+                    {isProcessing ? 'Töötlemine...' : 'Saada tellimus'}
                   </button>
                   
                   <div className="checkout-info">
                     <div className="info-item">
-                      <div className="info-icon">📦</div>
+                      <div className="info-icon">📧</div>
                       <p>Tellimuse kinnitus saadetakse e-postile</p>
                     </div>
                     <div className="info-item">

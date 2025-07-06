@@ -1,5 +1,4 @@
 import { createContext, useContext, useReducer } from 'react';
-import { productService } from '../utils/supabase/products';
 
 const CartContext = createContext();
 
@@ -39,37 +38,23 @@ export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, { items: [] });
 
   const addItem = async (product) => {
-    // Check if product is already in cart
     const existingItem = state.items.find(item => item.id === product.id);
     if (existingItem) {
       console.log('Product already in cart');
       return;
     }
 
-    // Add to cart first
     dispatch({ type: 'ADD_ITEM', payload: product });
-
-    // NOTE: We no longer automatically mark products as unavailable when added to cart
-    // Products will only be marked as sold when the order is completed
   };
 
   const removeItem = async (productId) => {
-    // Find the product in cart
     const cartItem = state.items.find(item => item.id === productId);
     if (!cartItem) return;
 
-    // Remove from cart
     dispatch({ type: 'REMOVE_ITEM', payload: productId });
-
-    // NOTE: We no longer automatically mark products as available when removed from cart
-    // since they weren't marked as unavailable when added
   };
 
   const clearCart = async () => {
-    // NOTE: We no longer need to update product availability when clearing cart
-    // since products aren't marked as unavailable when added to cart
-    
-    // Clear the cart
     dispatch({ type: 'CLEAR_CART' });
   };
 
