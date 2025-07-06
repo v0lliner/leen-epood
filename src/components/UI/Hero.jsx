@@ -20,8 +20,8 @@ const Hero = () => {
         <div className="hero-layout">
           <FadeInSection className="hero-image-section">
             <div className="hero-image">
-              <img 
-                src={introSection.image_url || "/leen-premium-epood.svg"} 
+              <img
+                src={introSection.image_url || "https://images.pexels.com/photos/7978720/pexels-photo-7978720.jpeg"}
                 alt={t('hero.image_alt')}
                 fetchpriority="high"
               />
@@ -69,14 +69,14 @@ const Hero = () => {
           width: 90%;
           max-width: 500px;
           border-radius: 8px;
-          overflow: hidden;
+          overflow: hidden; 
         }
 
         .hero-image img {
           width: 100%;
           height: auto;
           object-fit: cover;
-          aspect-ratio: 3/4;
+          aspect-ratio: 4/5;
           border-radius: 4px;
           display: block;
         }
