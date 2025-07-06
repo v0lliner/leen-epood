@@ -475,7 +475,7 @@ const Checkout = () => {
                             </div>
                             <div className="delivery-method-content">
                               <h4>Tulen ise järele</h4>
-                              <p>Keldrimäe talu, Kuku küla, Rapla vald</p>
+                              <p>Jõeääre, Märjamaa, Märjamaa vald 78218</p>
                               <p className="delivery-price">Tasuta</p>
                             </div>
                           </div>
@@ -731,7 +731,7 @@ const Checkout = () => {
                               className="terms-checkbox"
                             />
                             <span className="terms-text">
-                              <strong>{t('checkout.terms.agree')}</strong> <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
+                              <strong>{t('checkout.terms.agree')} {t('checkout.terms.terms_link')}</strong>
                             </span>
                           </label>
                           {termsError && (
