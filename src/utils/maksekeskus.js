@@ -18,6 +18,9 @@ export async function createTransaction(orderData) {
   try {
     const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/payment-gateway/create-transaction`;
     
+    // Get client IP from a service if needed in the future
+    // For now, the Edge Function will handle this from request headers
+    
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {

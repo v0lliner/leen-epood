@@ -101,6 +101,7 @@ serve(async (req) => {
         customer: {
           email: customerEmail || "",
           name: customerName || "",
+          ip: req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip") || "127.0.0.1",
           country: "EE",
           locale: "et"
         }
