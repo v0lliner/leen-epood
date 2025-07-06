@@ -249,29 +249,6 @@
         "personal": "Iga tellimuse juurde käib isiklik märge"
       }
     },
-    "delivery": {
-      "title": "Tarneviis",
-      "methods": {
-        "pickup": {
-          "title": "Tulen ise järele",
-          "description": "Keldrimäe talu, Kuku küla, Rapla vald",
-          "price": "Tasuta"
-        },
-        "smartpost": {
-          "title": "Pakiautomaati",
-          "description": "Toode saadetakse valitud pakiautomaati",
-          "price": "3.99€"
-        }
-      }
-      "continue": "Jätka tarneinfoga",
-      "pay": "Jätka maksega",
-      "processing": "Töötlemine...",
-      "info": {
-        "secure": "Turvaline makse Maksekeskuse kaudu",
-        "shipping": "Tarne 2-4 tööpäeva jooksul",
-        "personal": "Iga tellimuse juurde käib isiklik märge"
-      }
-    },
     "form": {
       "name": "Nimi",
       "email": "E-mail",

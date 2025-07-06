@@ -324,9 +324,9 @@ const Checkout = () => {
                               <div className={`radio-indicator ${deliveryMethod === 'self-pickup' ? 'active' : ''}`}></div>
                             </div>
                             <div className="delivery-method-content">
-                              <h4>{t('checkout.delivery.methods.pickup.title')}</h4>
-                              <p>{t('checkout.delivery.methods.pickup.description')}</p>
-                              <p className="delivery-price">{t('checkout.delivery.methods.pickup.price')}</p>
+                              <h4>Tulen ise järele</h4>
+                              <p>Keldrimäe talu, Kuku küla, Rapla vald</p>
+                              <p className="delivery-price">Tasuta</p>
                             </div>
                           </div>
                           
@@ -338,9 +338,9 @@ const Checkout = () => {
                               <div className={`radio-indicator ${deliveryMethod === 'parcel-machine' ? 'active' : ''}`}></div>
                             </div>
                             <div className="delivery-method-content">
-                              <h4>{t('checkout.delivery.methods.smartpost.title')}</h4>
-                              <p>{t('checkout.delivery.methods.smartpost.description')}</p>
-                              <p className="delivery-price">{t('checkout.delivery.methods.smartpost.price')}</p>
+                              <h4>Pakiautomaati</h4>
+                              <p>Toode saadetakse valitud pakiautomaati</p>
+                              <p className="delivery-price">3.99€</p>
                             </div>
                           </div>
                         </div>
@@ -564,15 +564,15 @@ const Checkout = () => {
                   <div className="checkout-info">
                     <div className="info-item">
                       <div className="info-icon">🔒</div>
-                      <p>{t('checkout.summary.info.secure')}</p>
+                      <p>{i18n.language === 'et' ? 'Turvaline tellimuse vormistamine' : 'Secure checkout'}</p>
                     </div>
                     <div className="info-item">
                       <div className="info-icon">🚚</div>
-                      <p>{t('checkout.summary.info.shipping')}</p>
+                      <p>{i18n.language === 'et' ? 'Tarne 2-4 tööpäeva jooksul' : 'Delivery within 2-4 business days'}</p>
                     </div>
                     <div className="info-item">
                       <div className="info-icon">💌</div>
-                      <p>{t('checkout.summary.info.personal')}</p>
+                      <p>{i18n.language === 'et' ? 'Iga tellimuse juurde käib isiklik märge' : 'Each order includes a personal note'}</p>
                     </div>
                   </div>
                 </div>
