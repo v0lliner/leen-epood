@@ -18,22 +18,22 @@ const Hero = () => {
     <section className="hero">
       <div className="container">
         <div className="hero-layout">
-          <FadeInSection className="hero-image-section">
-            <div className="hero-image">
-              <img 
-                src={introSection.image_url || "/leen-premium-epood.svg"} 
-                alt={t('hero.image_alt')}
-                fetchpriority="high"
-              />
-            </div>
-          </FadeInSection>
-          
           <FadeInSection className="hero-content">
             <h1>{t('hero.heading')}</h1>
             <p className="hero-subtext">{t('hero.subtext')}</p>
             <Link to="/epood" className="link-with-arrow hero-cta" onClick={scrollToTop}>
               {t('hero.cta')} <span className="arrow-wrapper">→</span>
             </Link>
+          </FadeInSection>
+          
+          <FadeInSection className="hero-image-section">
+            <div className="hero-image">
+              <img 
+                src={introSection.image_url || "https://images.pexels.com/photos/4992459/pexels-photo-4992459.jpeg"} 
+                alt={t('hero.image_alt')}
+                fetchpriority="high"
+              />
+            </div>
           </FadeInSection>
         </div>
       </div>
@@ -116,7 +116,7 @@ const Hero = () => {
 
         @media (max-width: 768px) {
           .hero-layout {
-            flex-direction: column-reverse;
+            flex-direction: column;
             gap: 32px;
           }
 
