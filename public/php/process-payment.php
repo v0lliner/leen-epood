@@ -113,6 +113,11 @@ try {
         ]
     ];
 
+    // Add token for card payments if present
+    if ($data['paymentMethod'] === 'card' && isset($data['token'])) {
+        $transactionData['transaction']['token'] = $data['token'];
+    }
+
     // Add IP address if available
     if (isset($_SERVER['REMOTE_ADDR'])) {
         $transactionData['customer']['ip'] = $_SERVER['REMOTE_ADDR'];
@@ -124,47 +129,65 @@ try {
     // Log the transaction response
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transaction created: " . json_encode($transaction) . "\n", FILE_APPEND);
 
-    // Prepare payment data - ensure we're using the correct format for Maksekeskus
-    $paymentData = [];
+    // Extract payment URL based on the selected payment method
+    $paymentUrl = null;
+    $paymentMethod = $data['paymentMethod'];
     
-    // Different payment methods might need different parameters
-    if ($data['paymentMethod'] === 'card' && isset($data['token'])) {
-        // Card payment with token
-        $paymentData = [
-            'method' => 'card',
-            'token' => $data['token'],
-            'locale' => 'et',
-            'country' => substr($data['country'] ?? 'Estonia', 0, 2)
-        ];
-    } else {
-        // Bank payment or other methods
-        $paymentData = [
-            'method' => $data['paymentMethod'],
-            'locale' => 'et',
-            'country' => substr($data['country'] ?? 'Estonia', 0, 2)
-        ];
+    // Check if we have banklinks in the response
+    if (isset($transaction->payment_methods->banklinks) && is_array($transaction->payment_methods->banklinks)) {
+        // Look for the selected bank in banklinks
+        foreach ($transaction->payment_methods->banklinks as $banklink) {
+            if ($banklink->name === $paymentMethod) {
+                $paymentUrl = $banklink->url;
+                break;
+            }
+        }
     }
     
-    // Common parameters for all payment methods
-    $paymentData = array_merge($paymentData, [
-        'return_url' => 'https://leen.ee/checkout/success',
-        'cancel_url' => 'https://leen.ee/checkout'
-    ]);
-
-    // Log the payment data for debugging
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Payment data: " . json_encode($paymentData) . "\n", FILE_APPEND);
+    // If not found in banklinks, check cards section
+    if (!$paymentUrl && isset($transaction->payment_methods->cards) && is_array($transaction->payment_methods->cards)) {
+        foreach ($transaction->payment_methods->cards as $card) {
+            if ($card->name === $paymentMethod) {
+                $paymentUrl = $card->url;
+                break;
+            }
+        }
+    }
     
-    // Create payment
-    $payment = $MK->createPayment($transaction->id, $paymentData);
+    // If still not found, check other payment methods
+    if (!$paymentUrl && isset($transaction->payment_methods->other) && is_array($transaction->payment_methods->other)) {
+        foreach ($transaction->payment_methods->other as $other) {
+            if ($other->name === $paymentMethod) {
+                $paymentUrl = $other->url;
+                break;
+            }
+        }
+    }
     
-    // Log the payment response
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Payment created: " . json_encode($payment) . "\n", FILE_APPEND);
+    // Fallback to redirect URL if available
+    if (!$paymentUrl && isset($transaction->payment_methods->other) && is_array($transaction->payment_methods->other)) {
+        foreach ($transaction->payment_methods->other as $other) {
+            if ($other->name === 'redirect') {
+                $paymentUrl = $other->url;
+                break;
+            }
+        }
+    }
+    
+    // Log the extracted payment URL
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Extracted payment URL: " . ($paymentUrl ?? 'Not found') . "\n", FILE_APPEND);
+    
+    // If no payment URL was found, return an error
+    if (!$paymentUrl) {
+        throw new Exception('Payment URL not found for the selected payment method: ' . $paymentMethod);
+    }
 
-    // Return the payment URL
+    // Return the transaction ID and payment URL
     echo json_encode([
         'transactionId' => $transaction->id,
-        'paymentUrl' => $payment->payment_link
+        'paymentUrl' => $paymentUrl
     ]);
+    
 } catch (Exception $e) {
     // Log the error
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: " . $e->getMessage() . "\n", FILE_APPEND);
