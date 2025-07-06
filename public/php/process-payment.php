@@ -69,6 +69,11 @@ try {
    // Log country code for debugging
    $countryCode = strtolower(substr($data['country'] ?? 'Estonia', 0, 2));
    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Country code: " . $countryCode . "\n", FILE_APPEND);
+   
+   // Get locale from request or default to Estonian
+   $locale = isset($data['locale']) && in_array($data['locale'], ['et', 'en', 'lv', 'lt', 'fi', 'ru']) 
+             ? $data['locale'] : 'et';
+   file_put_contents($logFile, date('Y-m-d H:i:s') . " - Using locale: " . $locale . "\n", FILE_APPEND);
 
     // Validate required fields for all payment methods
     if (!isset($data['amount']) || !isset($data['reference']) || !isset($data['email']) || !isset($data['paymentMethod'])) {
@@ -113,7 +118,7 @@ try {
         'customer' => [
             'email' => $data['email'],
             'country' => strtolower(substr($data['country'] ?? 'Estonia', 0, 2)),
-            'locale' => 'et'
+            'locale' => $locale
         ]
     ];
 
