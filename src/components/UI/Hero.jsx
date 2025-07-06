@@ -1,9 +1,14 @@
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import FadeInSection from './FadeInSection';
+import { useAboutPage } from '../../hooks/useAboutPage';
 
 const Hero = () => {
   const { t } = useTranslation();
+  const { getSection } = useAboutPage();
+  
+  // Get the intro section from the About page to use the same image
+  const introSection = getSection('intro');
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -12,29 +17,30 @@ const Hero = () => {
   return (
     <section className="hero">
       <div className="container">
-        <FadeInSection>
-          <div className="hero-image">
-            <img 
-              src="/leen-premium-epood.svg" 
-              alt={t('hero.image_alt')}
-              fetchpriority="high"
-            />
-          </div>
-        </FadeInSection>
-        
-        <FadeInSection className="hero-content">
-          <h1>{t('hero.heading')}</h1>
-          <p className="hero-subtext">{t('hero.subtext')}</p>
-          <Link to="/epood" className="link-with-arrow hero-cta" onClick={scrollToTop}>
-            {t('hero.cta')} <span className="arrow-wrapper">→</span>
-          </Link>
-        </FadeInSection>
+        <div className="hero-layout">
+          <FadeInSection className="hero-image-section">
+            <div className="hero-image">
+              <img 
+                src={introSection.image_url || "/leen-premium-epood.svg"} 
+                alt={t('hero.image_alt')}
+                fetchpriority="high"
+              />
+            </div>
+          </FadeInSection>
+          
+          <FadeInSection className="hero-content">
+            <h1>{t('hero.heading')}</h1>
+            <p className="hero-subtext">{t('hero.subtext')}</p>
+            <Link to="/epood" className="link-with-arrow hero-cta" onClick={scrollToTop}>
+              {t('hero.cta')} <span className="arrow-wrapper">→</span>
+            </Link>
+          </FadeInSection>
+        </div>
       </div>
 
       <style jsx>{`
         .hero {
-          min-height: calc(100vh - 120px);
-          max-height: calc(100vh - 120px);
+          min-height: calc(90vh - 120px);
           display: flex;
           align-items: center;
           padding: 48px 0;
@@ -42,49 +48,62 @@ const Hero = () => {
         }
 
         .hero .container {
-          height: 100%;
+          width: 100%;
+        }
+        
+        .hero-layout {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
+          align-items: center;
+          gap: 64px;
+        }
+        
+        .hero-image-section {
+          flex: 1;
+          display: flex;
           justify-content: center;
           align-items: center;
-          gap: 32px;
         }
 
         .hero-image {
-          width: 100%;
-          max-width: 800px;
-          height: auto;
-          max-height: calc(60vh - 72px);
-          display: flex;
-          justify-content: center;
-          align-items: center;
+          width: 90%;
+          max-width: 500px;
+          border-radius: 8px;
           overflow: hidden;
         }
 
         .hero-image img {
           width: 100%;
           height: auto;
-          max-height: calc(60vh - 72px);
-          object-fit: contain;
+          object-fit: cover;
+          aspect-ratio: 3/4;
           border-radius: 4px;
           display: block;
         }
 
         .hero-content {
-          text-align: center;
-          max-width: 800px;
-          margin: 0 auto;
-          flex-shrink: 0;
+          flex: 1;
+          text-align: left;
+          padding: 0 20px;
+        }
+        
+        .hero-content h1 {
+          font-size: 3rem;
+          margin-bottom: 16px;
+          color: var(--color-ultramarine);
+          line-height: 1.2;
         }
 
         .hero-subtext {
-          font-size: 1.25rem;
-          margin: 24px 0 32px;
-          color: #666;
+          font-size: 1.5rem;
+          margin: 24px 0 40px;
+          color: #333;
+          line-height: 1.4;
+          max-width: 500px;
         }
 
         .hero-cta {
-          font-size: 1.125rem;
+          font-size: 1.25rem;
           font-family: var(--font-body);
           font-weight: 600;
           color: var(--color-ultramarine);
@@ -96,74 +115,43 @@ const Hero = () => {
         }
 
         @media (max-width: 768px) {
-          .hero {
-            min-height: calc(100vh - 100px);
-            max-height: calc(100vh - 100px);
-            padding: 24px 0;
+          .hero-layout {
+            flex-direction: column-reverse;
+            gap: 32px;
           }
 
-          .hero .container {
-            gap: 24px;
+          .hero-image-section {
+            width: 100%;
           }
 
-          .hero-image {
-            max-width: 100%;
-            max-height: calc(50vh - 50px);
+          .hero-content {
+            text-align: center;
+            padding: 0;
+            width: 100%;
           }
 
-          .hero-image img {
-            max-height: calc(50vh - 50px);
+          .hero-content h1 {
+            font-size: 2.5rem;
           }
-
+          
           .hero-subtext {
-            font-size: 1.125rem;
-            margin: 16px 0 24px;
+            font-size: 1.25rem;
+            margin: 16px auto 32px;
+            max-width: 100%;
           }
         }
 
         @media (max-width: 480px) {
-          .hero {
-            min-height: calc(100vh - 80px);
-            max-height: calc(100vh - 80px);
-            padding: 16px 0;
-          }
-
-          .hero .container {
-            gap: 20px;
-          }
-
-          .hero-image {
-            max-height: calc(45vh - 40px);
-          }
-
-          .hero-image img {
-            max-height: calc(45vh - 40px);
+          .hero-content h1 {
+            font-size: 2rem;
           }
 
           .hero-subtext {
-            margin: 12px 0 20px;
+            font-size: 1.1rem;
+            margin: 16px auto 24px;
           }
         }
 
-        @media (max-height: 600px) {
-          .hero {
-            min-height: calc(100vh - 80px);
-            max-height: calc(100vh - 80px);
-          }
-
-          .hero-image {
-            max-height: calc(40vh - 40px);
-          }
-
-          .hero-image img {
-            max-height: calc(40vh - 40px);
-          }
-
-          .hero-subtext {
-            font-size: 1rem;
-            margin: 16px 0 20px;
-          }
-        }
       `}</style>
     </section>
   );
