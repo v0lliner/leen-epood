@@ -396,10 +396,10 @@
       "dashboard": "Töölaud",
       "products": "Tooted",
       "categories": "Kategooriad",
-      "portfolio": "Minu lemmikud",
-      "orders": "Tellimused",
-      "messages": "Sõnumid",
-      "settings": "Seaded"
+      "portfolio": "Minu lemmikud", 
+      "orders": "Tellimused", 
+      "settings": "Seaded",
+      "payment_settings": "Maksete seaded"
     },
     "dashboard": {
       "welcome": "Tere tulemast",

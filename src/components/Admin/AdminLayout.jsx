@@ -54,12 +54,6 @@ const AdminLayout = ({ children }) => {
       active: location.pathname.startsWith('/admin/categories')
     },
     {
-      name: 'Maksete seaded',
-      href: '/admin/settings/payment',
-      icon: '💳',
-      active: location.pathname.startsWith('/admin/settings/payment')
-    },
-    {
       name: t('admin.nav.settings'),
       href: '/admin/settings/payment',
       icon: '⚙️',

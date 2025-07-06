@@ -396,10 +396,10 @@
       "dashboard": "Dashboard",
       "products": "Products",
       "categories": "Categories",
-      "portfolio": "My Favorites",
-      "orders": "Orders",
-      "messages": "Messages",
-      "settings": "Settings"
+      "portfolio": "My Favorites", 
+      "orders": "Orders", 
+      "settings": "Settings",
+      "payment_settings": "Payment Settings"
     },
     "dashboard": {
       "welcome": "Welcome",
