@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
-import { createTransaction, initializeCheckout, getBanksByCountry } from '../utils/maksekeskus';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
@@ -20,7 +19,7 @@ const Checkout = () => {
   const [termsError, setTermsError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [deliveryMethodError, setDeliveryMethodError] = useState('');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+  const [selectedBank, setSelectedBank] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('Estonia');
   
   const [formData, setFormData] = useState({
@@ -63,8 +62,8 @@ const Checkout = () => {
     setDeliveryMethodError('');
   };
 
-  const handlePaymentMethodSelection = (method) => {
-    setSelectedPaymentMethod(method);
+  const handleBankSelection = (bank) => {
+    setSelectedBank(bank);
   };
 
   const handleCountryChange = (e) => {
@@ -75,7 +74,7 @@ const Checkout = () => {
       country: country
     }));
     // Reset selected bank when country changes
-    setSelectedPaymentMethod('');
+    setSelectedBank('');
   };
 
   const validateForm = () => {
@@ -108,7 +107,7 @@ const Checkout = () => {
     }
     
     // Check if bank is selected
-    if (!selectedPaymentMethod) {
+    if (!selectedBank) {
       setError('Palun valige makseviis');
       return false;
     }
@@ -116,9 +115,7 @@ const Checkout = () => {
     return true;
   };
 
-  const handleCheckout = async (e) => {
-    e.preventDefault();
-    
+  const handleCheckout = async () => {
     if (items.length === 0) {
       setError('Ostukorv on tühi');
       return;
@@ -132,44 +129,58 @@ const Checkout = () => {
     setError('');
 
     try {
-      // Calculate total price including delivery
-      const totalAmount = deliveryMethod === 'parcel-machine' 
-        ? (parseFloat(totalPrice) + 3.99).toFixed(2) 
-        : parseFloat(totalPrice).toFixed(2);
+      // Clear cart
+      await clearCart();
       
-      // Generate order number (you might want to replace this with a more robust solution)
-      const orderId = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      
-      // Create transaction with Maksekeskus
-      const transaction = await createTransaction({
-        amount: totalAmount,
-        currency: 'EUR', 
-        orderId: orderId,
-        customerEmail: formData.email,
-        customerName: `${formData.firstName} ${formData.lastName}`.trim()
-      });
-      
-      // Initialize checkout with the transaction data
-      await initializeCheckout(transaction, {
-        amount: totalAmount,
-        currency: 'EUR',
-        orderId: orderId,
-        customerEmail: formData.email.trim(),
-        customerName: `${formData.firstName} ${formData.lastName}`.trim()
-      });
-      
-      // The checkout will redirect the user to the payment provider
-      // We don't need to navigate or clear the cart here as that will happen after successful payment
+      // Redirect to success page
+      navigate('/checkout/success');
       
     } catch (err) {
       console.error('Error during checkout:', err);
-      setError(`Tellimuse vormistamine ebaõnnestus: ${err.message}`);
+      setError('Tellimuse vormistamine ebaõnnestus');
       setIsProcessing(false);
     }
   };
 
-  // Get banks for the selected country
-  const banksForSelectedCountry = getBanksByCountry(selectedCountry);
+  // Banks by country
+  const banksByCountry = {
+    'Estonia': [
+      { id: 'swedbank', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'lhv', name: 'LHV', logo: 'https://static.maksekeskus.ee/img/channel/lnd/lhv.png' },
+      { id: 'luminor', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'coop', name: 'Coop Pank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/coop.png' },
+      { id: 'citadele', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'n26', name: 'N26', logo: 'https://static.maksekeskus.ee/img/channel/lnd/n26.png' },
+      { id: 'revolut', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Latvia': [
+      { id: 'swedbank-lv', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb-lv', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'citadele-lv', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'luminor-lv', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'revolut-lv', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise-lv', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Lithuania': [
+      { id: 'swedbank-lt', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb-lt', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'luminor-lt', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'citadele-lt', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'revolut-lt', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise-lt', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Finland': [
+      { id: 'nordea', name: 'Nordea', logo: 'https://static.maksekeskus.ee/img/channel/lnd/nordea.png' },
+      { id: 'op', name: 'OP', logo: 'https://static.maksekeskus.ee/img/channel/lnd/op.png' },
+      { id: 'danske', name: 'Danske Bank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/danske.png' },
+      { id: 'handelsbanken', name: 'Handelsbanken', logo: 'https://static.maksekeskus.ee/img/channel/lnd/handelsbanken.png' },
+      { id: 'alandsbanken', name: 'Ålandsbanken', logo: 'https://static.maksekeskus.ee/img/channel/lnd/alandsbanken.png' },
+      { id: 'revolut-fi', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise-fi', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ]
+  };
 
   if (items.length === 0) {
     return (
@@ -466,15 +477,15 @@ const Checkout = () => {
                           <div className="bank-selection">
                             <h4>Vali pank</h4>
                             <div className="bank-grid">
-                              {banksForSelectedCountry.map(bank => (
+                              {banksByCountry[selectedCountry].map(bank => (
                                 <div 
                                   key={bank.id}
-                                  className={`bank-option ${selectedPaymentMethod === bank.id ? 'selected' : ''}`}
-                                  onClick={() => handlePaymentMethodSelection(bank.id)}
+                                  className={`bank-option ${selectedBank === bank.id ? 'selected' : ''}`}
+                                  onClick={() => handleBankSelection(bank.id)}
                                 >
                                   <img src={bank.logo} alt={bank.name} className="bank-logo" />
                                   <div className="bank-name">{bank.name}</div>
-                                  <div className={`bank-check ${selectedPaymentMethod === bank.id ? 'visible' : ''}`}>✓</div>
+                                  <div className={`bank-check ${selectedBank === bank.id ? 'visible' : ''}`}>✓</div>
                                 </div>
                               ))}
                             </div>
@@ -507,7 +518,7 @@ const Checkout = () => {
                           disabled={isProcessing}
                           className="checkout-button"
                         >
-                          {isProcessing ? 'Töötlemine...' : 'JÄTKA MAKSEGA'}
+                          {isProcessing ? 'Töötlemine...' : 'VORMISTA OST'}
                         </button>
                       </div>
                     </form>
