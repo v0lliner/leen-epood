@@ -2,14 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import FadeInSection from './FadeInSection';
 import { useAboutPage } from '../../hooks/useAboutPage';
-import { useAboutPage } from '../../hooks/useAboutPage';
 
 const Hero = () => {
   const { t } = useTranslation();
-  const { getSection } = useAboutPage();
-  
-  // Get the intro section from the About page to use the same image
-  const introSection = getSection('intro');
   const { getSection } = useAboutPage();
   
   // Get the intro section from the About page to use the same image
