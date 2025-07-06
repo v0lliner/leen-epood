@@ -160,7 +160,7 @@ const Home = () => {
           width: 90%;
           max-width: 500px;
           border-radius: 8px;
-          overflow: hidden; 
+          overflow: visible; 
         }
 
         .hero-image img {
