@@ -153,7 +153,7 @@ const Home = () => {
           flex: 1;
           display: flex;
           justify-content: center;
-          align-items: center-right;
+          align-items: center;
         }
 
         .hero-image {
