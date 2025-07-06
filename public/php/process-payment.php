@@ -10,10 +10,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-// Require the Maksekeskus SDK
-require __DIR__ . '/maksekeskus/vendor/autoload.php';
-use Maksekeskus\Maksekeskus;
-
 // Log request for debugging
 $logFile = __DIR__ . '/payment_log.txt';
 $requestData = file_get_contents('php://input');
@@ -37,6 +33,10 @@ if (!isset($data['amount']) || !isset($data['reference']) || !isset($data['email
 }
 
 try {
+    // Require the Maksekeskus SDK
+    require __DIR__ . '/maksekeskus/vendor/autoload.php';
+    use Maksekeskus\Maksekeskus;
+
     // Initialize Maksekeskus client
     $shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
     $publicKey = 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
