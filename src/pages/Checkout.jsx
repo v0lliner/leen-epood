@@ -7,7 +7,7 @@ import { useCart } from '../context/CartContext';
 import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
 
 const Checkout = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { items, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   
@@ -15,18 +15,23 @@ const Checkout = () => {
   const [error, setError] = useState('');
   const [totalPrice, setTotalPrice] = useState('0.00');
   const [formattedTotalPrice, setFormattedTotalPrice] = useState('0.00');
+  const [activeStep, setActiveStep] = useState(1);
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [termsError, setTermsError] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState('');
+  const [deliveryMethodError, setDeliveryMethodError] = useState('');
+  const [selectedBank, setSelectedBank] = useState('');
+  const [selectedCountry, setSelectedCountry] = useState('Estonia');
+  
   const [formData, setFormData] = useState({
-    name: '',
     email: '',
+    firstName: '',
+    lastName: '',
     phone: '',
-    address: '',
-    city: '',
-    postalCode: '',
+    companyName: '',
     country: 'Estonia',
     notes: ''
   });
-  const [termsAgreed, setTermsAgreed] = useState(false);
-  const [termsError, setTermsError] = useState('');
 
   // Update total price whenever cart items change
   useEffect(() => {
@@ -53,9 +58,29 @@ const Checkout = () => {
     }
   };
 
+  const handleDeliveryMethodChange = (method) => {
+    setDeliveryMethod(method);
+    setDeliveryMethodError('');
+  };
+
+  const handleBankSelection = (bank) => {
+    setSelectedBank(bank);
+  };
+
+  const handleCountryChange = (e) => {
+    const country = e.target.value;
+    setSelectedCountry(country);
+    setFormData(prev => ({
+      ...prev,
+      country: country
+    }));
+    // Reset selected bank when country changes
+    setSelectedBank('');
+  };
+
   const validateForm = () => {
-    // Required fields for shipping
-    const requiredFields = ['name', 'email', 'phone', 'address', 'city', 'postalCode', 'country'];
+    // Required fields
+    const requiredFields = ['email', 'firstName', 'lastName', 'phone'];
     const missingFields = requiredFields.filter(field => !formData[field].trim());
     
     if (missingFields.length > 0) {
@@ -70,9 +95,21 @@ const Checkout = () => {
       return false;
     }
 
+    // Check delivery method
+    if (!deliveryMethod) {
+      setDeliveryMethodError('Palun valige tarneviis');
+      return false;
+    }
+
     // Check terms agreement
     if (!termsAgreed) {
       setTermsError(t('checkout.terms.required'));
+      return false;
+    }
+    
+    // Check if bank is selected
+    if (!selectedBank) {
+      setError('Palun valige makseviis');
       return false;
     }
     
@@ -104,6 +141,46 @@ const Checkout = () => {
       setError('Tellimuse vormistamine ebaõnnestus');
       setIsProcessing(false);
     }
+  };
+
+  // Banks by country
+  const banksByCountry = {
+    'Estonia': [
+      { id: 'swedbank', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'lhv', name: 'LHV', logo: 'https://static.maksekeskus.ee/img/channel/lnd/lhv.png' },
+      { id: 'luminor', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'coop', name: 'Coop Pank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/coop.png' },
+      { id: 'citadele', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'n26', name: 'N26', logo: 'https://static.maksekeskus.ee/img/channel/lnd/n26.png' },
+      { id: 'revolut', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Latvia': [
+      { id: 'swedbank-lv', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb-lv', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'citadele-lv', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'luminor-lv', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'revolut-lv', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise-lv', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Lithuania': [
+      { id: 'swedbank-lt', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb-lt', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'luminor-lt', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'citadele-lt', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'revolut-lt', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise-lt', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Finland': [
+      { id: 'nordea', name: 'Nordea', logo: 'https://static.maksekeskus.ee/img/channel/lnd/nordea.png' },
+      { id: 'op', name: 'OP', logo: 'https://static.maksekeskus.ee/img/channel/lnd/op.png' },
+      { id: 'danske', name: 'Danske Bank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/danske.png' },
+      { id: 'handelsbanken', name: 'Handelsbanken', logo: 'https://static.maksekeskus.ee/img/channel/lnd/handelsbanken.png' },
+      { id: 'alandsbanken', name: 'Ålandsbanken', logo: 'https://static.maksekeskus.ee/img/channel/lnd/alandsbanken.png' },
+      { id: 'revolut-fi', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise-fi', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ]
   };
 
   if (items.length === 0) {
@@ -165,6 +242,27 @@ const Checkout = () => {
             <FadeInSection>
               <div className="checkout-header">
                 <h1>{t('checkout.title')}</h1>
+                <div className="checkout-steps">
+                  <div className={`checkout-step ${activeStep >= 1 ? 'active' : ''}`}>
+                    <div className="step-number">1</div>
+                    <div className="step-label">Tellimuse kokkuvõte</div>
+                  </div>
+                  <div className="step-divider"></div>
+                  <div className={`checkout-step ${activeStep >= 2 ? 'active' : ''}`}>
+                    <div className="step-number">2</div>
+                    <div className="step-label">Tarneviis</div>
+                  </div>
+                  <div className="step-divider"></div>
+                  <div className={`checkout-step ${activeStep >= 3 ? 'active' : ''}`}>
+                    <div className="step-number">3</div>
+                    <div className="step-label">Andmed</div>
+                  </div>
+                  <div className="step-divider"></div>
+                  <div className={`checkout-step ${activeStep >= 4 ? 'active' : ''}`}>
+                    <div className="step-number">4</div>
+                    <div className="step-label">Vormista tellimus</div>
+                  </div>
+                </div>
               </div>
             </FadeInSection>
 
@@ -180,9 +278,9 @@ const Checkout = () => {
                     )}
                     
                     <form className="checkout-form">
-                      {/* Order Items */}
-                      <div className="form-section">
-                        <h3>Tellimuse ülevaade</h3>
+                      {/* Step 1: Order Summary */}
+                      <div className={`form-section ${activeStep === 1 ? 'active' : 'inactive'}`}>
+                        <h3>1. Tellimuse kokkuvõte</h3>
                         <div className="order-items">
                           {items.map((item) => (
                             <div key={item.id} className="order-item">
@@ -215,28 +313,101 @@ const Checkout = () => {
                             </div>
                           ))}
                         </div>
+                        <div className="step-actions">
+                          <Link to="/epood" className="btn btn-secondary">
+                            ← Tagasi poodi
+                          </Link>
+                          <button 
+                            type="button" 
+                            className="btn btn-primary"
+                            onClick={() => setActiveStep(2)}
+                          >
+                            Jätka →
+                          </button>
+                        </div>
                       </div>
                       
-                      {/* Contact Information */}
-                      <div className="form-section">
-                        <h3>Kontaktandmed</h3>
+                      {/* Step 2: Delivery Method */}
+                      <div className={`form-section ${activeStep === 2 ? 'active' : 'inactive'}`}>
+                        <h3>2. Tarneviis</h3>
+                        
                         <div className="form-row">
                           <div className="form-group">
-                            <label htmlFor="name">Nimi *</label>
-                            <input
-                              type="text"
-                              id="name"
-                              name="name"
-                              value={formData.name}
-                              onChange={handleInputChange}
-                              required
+                            <label htmlFor="country">Riik</label>
+                            <select
+                              id="country"
+                              name="country"
+                              value={formData.country}
+                              onChange={handleCountryChange}
                               className="form-input"
-                              placeholder="Teie täisnimi"
-                            />
+                            >
+                              <option value="Estonia">Eesti (Estonia)</option>
+                              <option value="Latvia">Läti (Latvia)</option>
+                              <option value="Lithuania">Leedu (Lithuania)</option>
+                              <option value="Finland">Soome (Finland)</option>
+                            </select>
                           </div>
                         </div>
                         
-                        <div className="form-row two-columns">
+                        <div className="delivery-methods">
+                          <div 
+                            className={`delivery-method ${deliveryMethod === 'self-pickup' ? 'selected' : ''}`}
+                            onClick={() => handleDeliveryMethodChange('self-pickup')}
+                          >
+                            <div className="delivery-method-radio">
+                              <div className={`radio-indicator ${deliveryMethod === 'self-pickup' ? 'active' : ''}`}></div>
+                            </div>
+                            <div className="delivery-method-content">
+                              <h4>Tulen ise järele</h4>
+                              <p>Keldrimäe talu, Kuku küla, Rapla vald</p>
+                              <p className="delivery-price">Tasuta</p>
+                            </div>
+                          </div>
+                          
+                          <div 
+                            className={`delivery-method ${deliveryMethod === 'parcel-machine' ? 'selected' : ''}`}
+                            onClick={() => handleDeliveryMethodChange('parcel-machine')}
+                          >
+                            <div className="delivery-method-radio">
+                              <div className={`radio-indicator ${deliveryMethod === 'parcel-machine' ? 'active' : ''}`}></div>
+                            </div>
+                            <div className="delivery-method-content">
+                              <h4>Pakiautomaati</h4>
+                              <p>Toode saadetakse valitud pakiautomaati</p>
+                              <p className="delivery-price">3.99€</p>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {deliveryMethodError && (
+                          <div className="field-error">
+                            {deliveryMethodError}
+                          </div>
+                        )}
+                        
+                        <div className="step-actions">
+                          <button 
+                            type="button" 
+                            className="btn btn-secondary"
+                            onClick={() => setActiveStep(1)}
+                          >
+                            ← Tagasi
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn btn-primary"
+                            onClick={() => setActiveStep(3)}
+                          >
+                            Jätka →
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {/* Step 3: Customer Information */}
+                      <div className={`form-section ${activeStep === 3 ? 'active' : 'inactive'}`}>
+                        <h3>3. Andmed</h3>
+                        
+                        <div className="form-row">
                           <div className="form-group">
                             <label htmlFor="email">E-post *</label>
                             <input
@@ -250,6 +421,38 @@ const Checkout = () => {
                               placeholder="teie@email.ee"
                             />
                           </div>
+                        </div>
+                        
+                        <div className="form-row two-columns">
+                          <div className="form-group">
+                            <label htmlFor="firstName">Eesnimi *</label>
+                            <input
+                              type="text"
+                              id="firstName"
+                              name="firstName"
+                              value={formData.firstName}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="Eesnimi"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="lastName">Perekonnanimi *</label>
+                            <input
+                              type="text"
+                              id="lastName"
+                              name="lastName"
+                              value={formData.lastName}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="Perekonnanimi"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="form-row">
                           <div className="form-group">
                             <label htmlFor="phone">Telefon *</label>
                             <input
@@ -264,80 +467,22 @@ const Checkout = () => {
                             />
                           </div>
                         </div>
-                      </div>
-                      
-                      {/* Shipping Address */}
-                      <div className="form-section">
-                        <h3>Tarneaadress</h3>
+                        
                         <div className="form-row">
                           <div className="form-group">
-                            <label htmlFor="address">Aadress *</label>
+                            <label htmlFor="companyName">Firma nimi (pole kohustuslik)</label>
                             <input
                               type="text"
-                              id="address"
-                              name="address"
-                              value={formData.address}
+                              id="companyName"
+                              name="companyName"
+                              value={formData.companyName}
                               onChange={handleInputChange}
-                              required
                               className="form-input"
-                              placeholder="Tänav, maja, korter"
+                              placeholder="Firma nimi"
                             />
                           </div>
                         </div>
                         
-                        <div className="form-row two-columns">
-                          <div className="form-group">
-                            <label htmlFor="city">Linn *</label>
-                            <input
-                              type="text"
-                              id="city"
-                              name="city"
-                              value={formData.city}
-                              onChange={handleInputChange}
-                              required
-                              className="form-input"
-                              placeholder="Linn või asula"
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label htmlFor="postalCode">Postiindeks *</label>
-                            <input
-                              type="text"
-                              id="postalCode"
-                              name="postalCode"
-                              value={formData.postalCode}
-                              onChange={handleInputChange}
-                              required
-                              className="form-input"
-                              placeholder="12345"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor="country">Riik *</label>
-                            <select
-                              id="country"
-                              name="country"
-                              value={formData.country}
-                              onChange={handleInputChange}
-                              required
-                              className="form-input"
-                            >
-                              <option value="Estonia">Eesti</option>
-                              <option value="Finland">Soome</option>
-                              <option value="Latvia">Läti</option>
-                              <option value="Lithuania">Leedu</option>
-                              <option value="Sweden">Rootsi</option>
-                            </select>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Additional Notes */}
-                      <div className="form-section">
-                        <h3>Lisainfo</h3>
                         <div className="form-row">
                           <div className="form-group">
                             <label htmlFor="notes">Märkused tellimuse kohta</label>
@@ -352,46 +497,106 @@ const Checkout = () => {
                             ></textarea>
                           </div>
                         </div>
-                      </div>
-
-                      {/* Terms Agreement */}
-                      <div className="form-section">
-                        <div className="form-row">
-                          <div className="form-group terms-checkbox-group">
-                            <label className="terms-checkbox-label">
-                              <input
-                                type="checkbox"
-                                checked={termsAgreed}
-                                onChange={handleTermsChange}
-                                className="terms-checkbox"
-                              />
-                              <span className="terms-text">
-                                {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
-                              </span>
-                            </label>
-                            {termsError && (
-                              <div className="terms-error">
-                                {termsError}
-                              </div>
-                            )}
-                          </div>
+                        
+                        <div className="step-actions">
+                          <button 
+                            type="button" 
+                            className="btn btn-secondary"
+                            onClick={() => setActiveStep(2)}
+                          >
+                            ← Tagasi
+                          </button>
+                          <button 
+                            type="button" 
+                            className="btn btn-primary"
+                            onClick={() => setActiveStep(4)}
+                          >
+                            Jätka →
+                          </button>
                         </div>
                       </div>
                       
-                      {/* Submit Button */}
-                      <div className="form-actions">
-                        <Link to="/epood" className="btn btn-secondary">
-                          ← Tagasi poodi
-                        </Link>
-                        <button 
-                          type="button"
-                          onClick={handleCheckout}
-                          disabled={isProcessing}
-                          className="btn btn-primary"
-                          style={{ backgroundColor: 'var(--color-ultramarine)' }}
-                        >
-                          {isProcessing ? 'Töötlemine...' : 'Saada tellimus'}
-                        </button>
+                      {/* Step 4: Payment and Confirmation */}
+                      <div className={`form-section ${activeStep === 4 ? 'active' : 'inactive'}`}>
+                        <h3>4. Vormista tellimus</h3>
+                        
+                        <div className="payment-section">
+                          <div className="payment-country-selector">
+                            <h4>Vali panga riik</h4>
+                            <div className="country-buttons">
+                              {['Estonia', 'Latvia', 'Lithuania', 'Finland'].map(country => (
+                                <button
+                                  key={country}
+                                  type="button"
+                                  className={`country-button ${selectedCountry === country ? 'active' : ''}`}
+                                  onClick={() => setSelectedCountry(country)}
+                                >
+                                  {i18n.language === 'et' ? {
+                                    'Estonia': 'Eesti',
+                                    'Latvia': 'Läti',
+                                    'Lithuania': 'Leedu',
+                                    'Finland': 'Soome'
+                                  }[country] : country}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <div className="bank-selection">
+                            <h4>Vali pank</h4>
+                            <div className="bank-grid">
+                              {banksByCountry[selectedCountry].map(bank => (
+                                <div 
+                                  key={bank.id}
+                                  className={`bank-option ${selectedBank === bank.id ? 'selected' : ''}`}
+                                  onClick={() => handleBankSelection(bank.id)}
+                                >
+                                  <img src={bank.logo} alt={bank.name} className="bank-logo" />
+                                  <div className="bank-name">{bank.name}</div>
+                                  <div className={`bank-check ${selectedBank === bank.id ? 'visible' : ''}`}>✓</div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Terms Agreement */}
+                        <div className="terms-agreement">
+                          <label className="terms-checkbox-label">
+                            <input
+                              type="checkbox"
+                              checked={termsAgreed}
+                              onChange={handleTermsChange}
+                              className="terms-checkbox"
+                            />
+                            <span className="terms-text">
+                              {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
+                            </span>
+                          </label>
+                          {termsError && (
+                            <div className="field-error">
+                              {termsError}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="step-actions">
+                          <button 
+                            type="button" 
+                            className="btn btn-secondary"
+                            onClick={() => setActiveStep(3)}
+                          >
+                            ← Tagasi
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={handleCheckout}
+                            disabled={isProcessing}
+                            className="btn btn-primary checkout-button"
+                          >
+                            {isProcessing ? 'Töötlemine...' : 'VORMISTA OST'}
+                          </button>
+                        </div>
                       </div>
                     </form>
                   </div>
@@ -421,35 +626,40 @@ const Checkout = () => {
                   
                   <div className="summary-row">
                     <span>Tarne</span>
-                    <span>0.00€</span>
+                    <span>{deliveryMethod === 'parcel-machine' ? '3.99€' : '0.00€'}</span>
                   </div>
                   
                   <div className="summary-total">
                     <span>Kokku</span>
-                    <span>{formattedTotalPrice}</span>
+                    <span>
+                      {deliveryMethod === 'parcel-machine' 
+                        ? (parseFloat(totalPrice) + 3.99).toFixed(2) + '€' 
+                        : formattedTotalPrice}
+                    </span>
                   </div>
                   
-                  <button 
-                    onClick={handleCheckout}
-                    disabled={isProcessing}
-                    className="summary-checkout-btn" 
-                    style={{ backgroundColor: 'var(--color-ultramarine)' }}
-                  >
-                    {isProcessing ? 'Töötlemine...' : 'Saada tellimus'}
-                  </button>
+                  <div className="checkout-progress">
+                    <div className="progress-bar">
+                      <div 
+                        className="progress-fill" 
+                        style={{ width: `${(activeStep / 4) * 100}%` }}
+                      ></div>
+                    </div>
+                    <div className="progress-text">Samm {activeStep}/4</div>
+                  </div>
                   
                   <div className="checkout-info">
                     <div className="info-item">
-                      <div className="info-icon">📧</div>
-                      <p>Tellimuse kinnitus saadetakse e-postile</p>
+                      <div className="info-icon">📦</div>
+                      <p>{i18n.language === 'et' ? 'Turvaline pakendamine' : 'Secure packaging'}</p>
                     </div>
                     <div className="info-item">
                       <div className="info-icon">🚚</div>
-                      <p>Tarne 2-4 tööpäeva jooksul</p>
+                      <p>{i18n.language === 'et' ? 'Tarne 2-4 tööpäeva jooksul' : 'Delivery within 2-4 business days'}</p>
                     </div>
                     <div className="info-item">
                       <div className="info-icon">💌</div>
-                      <p>Iga tellimuse juurde käib isiklik märge</p>
+                      <p>{i18n.language === 'et' ? 'Iga tellimuse juurde käib isiklik märge' : 'Each order includes a personal note'}</p>
                     </div>
                   </div>
                 </div>
@@ -467,6 +677,61 @@ const Checkout = () => {
 
         .checkout-header h1 {
           color: var(--color-ultramarine);
+          margin-bottom: 32px;
+        }
+
+        .checkout-steps {
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          max-width: 800px;
+          margin: 0 auto;
+        }
+
+        .checkout-step {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          width: 120px;
+        }
+
+        .step-number {
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background-color: #e9ecef;
+          color: #6c757d;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          transition: all 0.3s ease;
+        }
+
+        .checkout-step.active .step-number {
+          background-color: var(--color-ultramarine);
+          color: white;
+        }
+
+        .step-label {
+          font-size: 0.85rem;
+          color: #6c757d;
+          text-align: center;
+          transition: all 0.3s ease;
+        }
+
+        .checkout-step.active .step-label {
+          color: var(--color-ultramarine);
+          font-weight: 500;
+        }
+
+        .step-divider {
+          flex: 1;
+          height: 2px;
+          background-color: #e9ecef;
+          margin: 0 8px;
+          max-width: 60px;
         }
 
         .checkout-layout {
@@ -497,16 +762,18 @@ const Checkout = () => {
           font-size: 0.9rem;
         }
 
-        .form-section {
-          margin-bottom: 32px;
-          padding-bottom: 32px;
-          border-bottom: 1px solid #f0f0f0;
+        .field-error {
+          color: #c33;
+          font-size: 0.85rem;
+          margin-top: 8px;
         }
 
-        .form-section:last-child {
-          margin-bottom: 0;
-          padding-bottom: 0;
-          border-bottom: none;
+        .form-section {
+          display: none;
+        }
+
+        .form-section.active {
+          display: block;
         }
 
         .form-section h3 {
@@ -570,7 +837,7 @@ const Checkout = () => {
         }
 
         .order-items {
-          margin-bottom: 16px;
+          margin-bottom: 24px;
         }
 
         .order-item {
@@ -662,8 +929,207 @@ const Checkout = () => {
           font-size: 1.125rem;
         }
 
-        .terms-checkbox-group {
-          margin-top: 8px;
+        .delivery-methods {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .delivery-method {
+          display: flex;
+          align-items: flex-start;
+          gap: 16px;
+          padding: 16px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .delivery-method:hover {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.05);
+        }
+
+        .delivery-method.selected {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.1);
+        }
+
+        .delivery-method-radio {
+          width: 24px;
+          height: 24px;
+          border: 2px solid #ddd;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+          margin-top: 4px;
+          transition: all 0.2s ease;
+        }
+
+        .delivery-method.selected .delivery-method-radio {
+          border-color: var(--color-ultramarine);
+        }
+
+        .radio-indicator {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          background-color: transparent;
+          transition: all 0.2s ease;
+        }
+
+        .radio-indicator.active {
+          background-color: var(--color-ultramarine);
+        }
+
+        .delivery-method-content {
+          flex: 1;
+        }
+
+        .delivery-method-content h4 {
+          font-family: var(--font-heading);
+          font-size: 1rem;
+          font-weight: 500;
+          margin-bottom: 4px;
+          color: var(--color-text);
+        }
+
+        .delivery-method-content p {
+          font-size: 0.9rem;
+          color: #666;
+          margin: 0;
+          margin-bottom: 4px;
+        }
+
+        .delivery-method-content p:last-child {
+          margin-bottom: 0;
+        }
+
+        .delivery-price {
+          font-weight: 500;
+          color: var(--color-ultramarine) !important;
+        }
+
+        .payment-section {
+          margin-bottom: 24px;
+        }
+
+        .payment-country-selector {
+          margin-bottom: 24px;
+        }
+
+        .payment-country-selector h4 {
+          font-family: var(--font-heading);
+          font-size: 1rem;
+          font-weight: 500;
+          margin-bottom: 16px;
+          color: var(--color-text);
+        }
+
+        .country-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+
+        .country-button {
+          padding: 8px 16px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          background-color: white;
+          color: var(--color-text);
+          font-family: var(--font-body);
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .country-button:hover {
+          border-color: var(--color-ultramarine);
+        }
+
+        .country-button.active {
+          border-color: var(--color-ultramarine);
+          background-color: var(--color-ultramarine);
+          color: white;
+        }
+
+        .bank-selection h4 {
+          font-family: var(--font-heading);
+          font-size: 1rem;
+          font-weight: 500;
+          margin-bottom: 16px;
+          color: var(--color-text);
+        }
+
+        .bank-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+          gap: 16px;
+        }
+
+        .bank-option {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          padding: 16px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .bank-option:hover {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.05);
+        }
+
+        .bank-option.selected {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.1);
+        }
+
+        .bank-logo {
+          height: 32px;
+          width: auto;
+          object-fit: contain;
+        }
+
+        .bank-name {
+          font-size: 0.8rem;
+          color: var(--color-text);
+          text-align: center;
+        }
+
+        .bank-check {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background-color: var(--color-ultramarine);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+          opacity: 0;
+          transition: all 0.2s ease;
+        }
+
+        .bank-check.visible {
+          opacity: 1;
+        }
+
+        .terms-agreement {
+          margin: 24px 0;
         }
 
         .terms-checkbox-label {
@@ -695,13 +1161,7 @@ const Checkout = () => {
           opacity: 0.8;
         }
 
-        .terms-error {
-          color: #c33;
-          font-size: 0.85rem;
-          margin-top: 8px;
-        }
-
-        .form-actions {
+        .step-actions {
           display: flex;
           justify-content: space-between;
           margin-top: 32px;
@@ -743,6 +1203,12 @@ const Checkout = () => {
 
         .btn-secondary:hover {
           background-color: #e0e0e0;
+        }
+
+        .checkout-button {
+          font-weight: 600;
+          padding: 16px 32px;
+          font-size: 1.1rem;
         }
 
         .checkout-summary {
@@ -809,29 +1275,29 @@ const Checkout = () => {
           color: var(--color-text);
         }
 
-        .summary-checkout-btn {
-          width: 100%;
-          padding: 16px;
-          background-color: var(--color-ultramarine);
-          color: white;
-          border: none;
+        .checkout-progress {
+          margin: 24px 0;
+        }
+
+        .progress-bar {
+          height: 8px;
+          background-color: #e9ecef;
           border-radius: 4px;
-          font-family: var(--font-body);
-          font-weight: 500;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          margin-bottom: 24px;
+          overflow: hidden;
+          margin-bottom: 8px;
         }
 
-        .summary-checkout-btn:hover:not(:disabled) {
-          opacity: 0.9;
-          transform: translateY(-1px);
+        .progress-fill {
+          height: 100%;
+          background-color: var(--color-ultramarine);
+          border-radius: 4px;
+          transition: width 0.3s ease;
         }
 
-        .summary-checkout-btn:disabled {
-          opacity: 0.6;
-          cursor: not-allowed;
+        .progress-text {
+          font-size: 0.8rem;
+          color: #666;
+          text-align: right;
         }
 
         .checkout-info {
@@ -859,16 +1325,6 @@ const Checkout = () => {
           color: #666;
           margin: 0;
         }
-        
-        .payment-method-error {
-          color: #c33;
-          font-size: 0.85rem;
-          margin-top: 8px;
-          padding: 8px 12px;
-          background-color: #fee;
-          border-radius: 4px;
-          border: 1px solid #fcc;
-        }
 
         @media (max-width: 1024px) {
           .checkout-layout {
@@ -890,6 +1346,10 @@ const Checkout = () => {
             margin-bottom: 32px;
           }
 
+          .checkout-steps {
+            display: none;
+          }
+
           .checkout-form-container {
             padding: 24px;
           }
@@ -899,7 +1359,7 @@ const Checkout = () => {
             gap: 16px;
           }
 
-          .form-actions {
+          .step-actions {
             flex-direction: column;
             gap: 16px;
           }
@@ -917,6 +1377,23 @@ const Checkout = () => {
           .item-image {
             width: 100%;
             height: 160px;
+          }
+
+          .bank-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
+          }
+
+          .bank-option {
+            padding: 12px;
+          }
+
+          .bank-logo {
+            height: 24px;
+          }
+
+          .bank-name {
+            font-size: 0.7rem;
           }
         }
       `}</style>
