@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
@@ -212,10 +212,10 @@ const Checkout = () => {
       // Calculate final amount including delivery cost
       const deliveryCost = deliveryMethod === 'parcel-machine' ? 3.99 : 0;
       const finalAmount = (parseFloat(totalPrice) + deliveryCost).toFixed(2);
-      
+
       // Generate a unique order reference
       const orderReference = generateOrderReference();
-      
+
       // Prepare order data to send to PHP backend
       const orderData = {
         amount: finalAmount,
@@ -225,6 +225,7 @@ const Checkout = () => {
         lastName: formData.lastName,
         phone: formData.phone,
         country: formData.country,
+        locale: i18n.language, // Add current language
         paymentMethod: selectedPaymentMethod,
         items: items.map(item => ({
           id: item.id,
@@ -240,7 +241,7 @@ const Checkout = () => {
         // Only include token for card payments
         ...(selectedPaymentMethod === 'card' && cardToken ? { token: cardToken } : {})
       };
-      
+
       console.log('Sending payment request with payload:', payload);
       
       // Call the PHP endpoint to create a transaction and payment
@@ -736,7 +737,9 @@ const Checkout = () => {
                               className="terms-checkbox"
                             />
                             <span className="terms-text">
-                              <strong>{t('checkout.terms.agree')} <Link to="/muugitingimused" className="terms-link" onClick={scrollToTop}>{t('checkout.terms.terms_link')}</Link></strong>
+                              <Trans i18nKey="checkout.terms.agree">
+                                <strong>I agree to the <Link to="/muugitingimused" className="terms-link" onClick={scrollToTop}>terms of sale</Link></strong>
+                              </Trans>
                             </span>
                           </label>
                           {termsError && (
