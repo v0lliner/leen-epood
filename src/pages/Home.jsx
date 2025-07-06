@@ -164,9 +164,9 @@ const Home = () => {
         }
 
         .hero-image img {
-          width: auto;
+          width: 100%;
           height: 100%;
-          object-fit: cover;
+          object-fit: contain;
           aspect-ratio: 4/5;
           border-radius: 0px;
           display: block;

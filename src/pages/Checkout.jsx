@@ -731,7 +731,7 @@ const Checkout = () => {
                               className="terms-checkbox"
                             />
                             <span className="terms-text">
-                              <strong>{t('checkout.terms.agree')} {t('checkout.terms.terms_link')}</strong>
+                              <strong>{t('checkout.terms.agree')} <Link to="/muugitingimused" className="terms-link">{t('checkout.terms.terms_link')}</Link></strong>
                             </span>
                           </label>
                           {termsError && (
@@ -1267,6 +1267,16 @@ const Checkout = () => {
         .terms-text {
           font-size: 0.95rem;
           line-height: 1.4;
+        }
+
+        .terms-link {
+          color: var(--color-ultramarine);
+          text-decoration: underline;
+          transition: opacity 0.2s ease;
+        }
+
+        .terms-link:hover {
+          opacity: 0.8;
         }
 
         .terms-link {
