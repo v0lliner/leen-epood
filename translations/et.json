@@ -395,6 +395,7 @@
     "nav": {
       "dashboard": "Töölaud",
       "products": "Tooted",
+      "categories": "Kategooriad",
       "portfolio": "Minu lemmikud",
       "orders": "Tellimused",
       "messages": "Sõnumid",

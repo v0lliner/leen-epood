@@ -395,6 +395,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "products": "Products",
+      "categories": "Categories",
       "portfolio": "My Favorites",
       "orders": "Orders",
       "messages": "Messages",
