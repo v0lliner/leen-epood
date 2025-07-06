@@ -150,19 +150,13 @@ Deno.serve(async (req) => {
       console.error('Error calling Maksekeskus API:', apiError);
       
       // Fall back to mock data on API error
-      const mockMethods = getMockPaymentMethods();
-      const filteredMethods = filterMethods(mockMethods, parsedAmount);
-      
       return new Response(
         JSON.stringify({
-          success: true,
-          methods: filteredMethods,
-          count: filteredMethods.length,
-          fromMock: true,
-          error: apiError.message
+          success: false,
+          error: 'Payment service temporarily unavailable'
         }),
         { 
-          status: 200, 
+          status: 503, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       );
@@ -170,27 +164,13 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error('Error fetching payment methods:', error);
     
-    // Return mock methods on error
-    const mockMethods = getMockPaymentMethods();
-    
-    // Parse amount for filtering
-    const url = new URL(req.url);
-    const amount = url.searchParams.get('amount');
-    const parsedAmount = parseFloat(amount?.toString().replace(',', '.') || '0.01');
-    
-    // Filter methods based on amount
-    const filteredMethods = filterMethods(mockMethods, parsedAmount > 0 ? parsedAmount : 0.01);
-    
     return new Response(
       JSON.stringify({ 
-        success: true, 
-        methods: filteredMethods, 
-        count: filteredMethods.length, 
-        fromMock: true,
+        success: false, 
         error: error.message
       }),
       { 
-        status: 200, 
+        status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     );
@@ -219,60 +199,4 @@ function filterMethods(methods, amount) {
   
   console.log(`Filtered ${methods.length} methods to ${filtered.length} for amount ${amount}`);
   return filtered;
-}
-
-// Mock payment methods for testing
-function getMockPaymentMethods() {
-  return [
-    {
-      "name": "Swedbank",
-      "display_name": "Swedbank",
-      "channel": "swedbank",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/swedbank.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "SEB",
-      "display_name": "SEB",
-      "channel": "seb",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/seb.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "LHV",
-      "display_name": "LHV Pank",
-      "channel": "lhv",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/lhv.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "Coop Pank",
-      "display_name": "Coop Pank",
-      "channel": "coop",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/coop.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "Luminor",
-      "display_name": "Luminor",
-      "channel": "luminor",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/luminor.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    }
-  ];
 }

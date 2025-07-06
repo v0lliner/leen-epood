@@ -127,92 +127,6 @@ async function fetchPaymentMethods() {
   }
 }
 
-// Mock payment methods for testing
-function getMockPaymentMethods() {
-  console.log('Using mock payment methods data');
-  let mockMethods = [
-    {
-      "name": "Swedbank",
-      "display_name": "Swedbank",
-      "channel": "swedbank",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/swedbank.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "SEB",
-      "display_name": "SEB",
-      "channel": "seb",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/seb.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "LHV",
-      "display_name": "LHV Pank",
-      "channel": "lhv",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/lhv.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "Coop Pank",
-      "display_name": "Coop Pank",
-      "channel": "coop",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/coop.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    }
-  ];
-  
-  // Add more mock methods for testing
-  mockMethods = [
-    ...mockMethods,
-    {
-      "name": "Luminor",
-      "display_name": "Luminor",
-      "channel": "luminor",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/luminor.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "Citadele",
-      "display_name": "Citadele",
-      "channel": "citadele",
-      "type": "banklink",
-      "countries": ["ee"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/citadele.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    },
-    {
-      "name": "Swedbank",
-      "display_name": "Swedbank (LV)",
-      "channel": "swedbank_lv",
-      "type": "banklink",
-      "countries": ["lv"],
-      "logo_url": "https://static.maksekeskus.ee/img/channel/swedbank.png",
-      "min_amount": 0.01,
-      "max_amount": 15000
-    }
-  ];
-  
-  // Log the mock methods
-  console.log(`Created ${mockMethods.length} mock payment methods`);
-  console.log(`Returning ${mockMethods.length} mock payment methods`);
-  return mockMethods;
-}
 
 // Helper function to create a transaction in Maksekeskus
 async function createTransaction(orderData, paymentMethod) {
@@ -555,10 +469,12 @@ app.get('/api/payment-methods', async (req, res) => {
     // Try to fetch real payment methods first
     let allMethods = await fetchPaymentMethods();
     
-    // If no methods were fetched, fall back to mock methods
     if (!allMethods || allMethods.length === 0) {
-      console.log('No methods fetched from API, using mock methods');
-      allMethods = getMockPaymentMethods();
+      console.log('No methods fetched from API');
+      return res.status(503).json({
+        success: false,
+        error: 'Payment service temporarily unavailable'
+      });
     }
     
     // If still no methods, return an error
@@ -1061,6 +977,6 @@ app.listen(PORT, '127.0.0.1', () => {
   console.log(`Server running on port ${PORT}`);
   console.log(`Notification URL: ${SITE_URL}/api/maksekeskus/notification`);
   console.log(`Environment: ${TEST_MODE ? 'TEST' : 'PRODUCTION'}`);
-  console.log(`Using mock payment methods: true`);
+  console.log(`Using mock payment methods: false`);
   console.log(`=== Server Ready ===\n`);
 });
