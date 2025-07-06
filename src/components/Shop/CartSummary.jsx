@@ -199,13 +199,15 @@ const CartSummary = ({ isOpen, onClose }) => {
             <div className="cart-total">
               <strong>{t('cart.total')}: {getTotalPrice().toFixed(2)}€</strong>
             </div>
-            <Link 
-              to="/checkout" 
+            <button 
+              onClick={() => {
+                alert('Maksefunktsioon on ajutiselt suletud. Palun võtke ühendust e-posti teel: leen@leen.ee');
+                handleLinkClick();
+              }}
               className="link-with-arrow checkout-button"
-              onClick={handleLinkClick}
             >
               {t('cart.continue')} <span className="arrow-wrapper">→</span>
-            </Link>
+            </button>
 
             {/* FAQ Reference for filled cart */}
             <div className="cart-faq-section">
@@ -381,6 +383,8 @@ const CartSummary = ({ isOpen, onClose }) => {
             font-weight: 600;
             transition: opacity 0.2s ease;
             margin-bottom: 24px;
+            border: none;
+            cursor: pointer;
           }
 
           .checkout-button:hover {
