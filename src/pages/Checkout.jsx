@@ -15,7 +15,6 @@ const Checkout = () => {
   const [error, setError] = useState('');
   const [totalPrice, setTotalPrice] = useState('0.00');
   const [formattedTotalPrice, setFormattedTotalPrice] = useState('0.00');
-  const [activeStep, setActiveStep] = useState(1);
   const [termsAgreed, setTermsAgreed] = useState(false);
   const [termsError, setTermsError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
@@ -242,32 +241,11 @@ const Checkout = () => {
             <FadeInSection>
               <div className="checkout-header">
                 <h1>{t('checkout.title')}</h1>
-                <div className="checkout-steps">
-                  <div className={`checkout-step ${activeStep >= 1 ? 'active' : ''}`}>
-                    <div className="step-number">1</div>
-                    <div className="step-label">Tellimuse kokkuvõte</div>
-                  </div>
-                  <div className="step-divider"></div>
-                  <div className={`checkout-step ${activeStep >= 2 ? 'active' : ''}`}>
-                    <div className="step-number">2</div>
-                    <div className="step-label">Tarneviis</div>
-                  </div>
-                  <div className="step-divider"></div>
-                  <div className={`checkout-step ${activeStep >= 3 ? 'active' : ''}`}>
-                    <div className="step-number">3</div>
-                    <div className="step-label">Andmed</div>
-                  </div>
-                  <div className="step-divider"></div>
-                  <div className={`checkout-step ${activeStep >= 4 ? 'active' : ''}`}>
-                    <div className="step-number">4</div>
-                    <div className="step-label">Vormista tellimus</div>
-                  </div>
-                </div>
               </div>
             </FadeInSection>
 
-            <div className="checkout-layout">
-              {/* Main Content */}
+            <div className="checkout-container">
+              {/* Main Checkout Form */}
               <div className="checkout-main">
                 <FadeInSection>
                   <div className="checkout-form-container">
@@ -278,8 +256,8 @@ const Checkout = () => {
                     )}
                     
                     <form className="checkout-form">
-                      {/* Step 1: Order Summary */}
-                      <div className={`form-section ${activeStep === 1 ? 'active' : 'inactive'}`}>
+                      {/* Order Summary Section */}
+                      <div className="form-section">
                         <h3>1. Tellimuse kokkuvõte</h3>
                         <div className="order-items">
                           {items.map((item) => (
@@ -313,22 +291,10 @@ const Checkout = () => {
                             </div>
                           ))}
                         </div>
-                        <div className="step-actions">
-                          <Link to="/epood" className="btn btn-secondary">
-                            ← Tagasi poodi
-                          </Link>
-                          <button 
-                            type="button" 
-                            className="btn btn-primary"
-                            onClick={() => setActiveStep(2)}
-                          >
-                            Jätka →
-                          </button>
-                        </div>
                       </div>
                       
-                      {/* Step 2: Delivery Method */}
-                      <div className={`form-section ${activeStep === 2 ? 'active' : 'inactive'}`}>
+                      {/* Delivery Method Section */}
+                      <div className="form-section">
                         <h3>2. Tarneviis</h3>
                         
                         <div className="form-row">
@@ -384,27 +350,10 @@ const Checkout = () => {
                             {deliveryMethodError}
                           </div>
                         )}
-                        
-                        <div className="step-actions">
-                          <button 
-                            type="button" 
-                            className="btn btn-secondary"
-                            onClick={() => setActiveStep(1)}
-                          >
-                            ← Tagasi
-                          </button>
-                          <button 
-                            type="button" 
-                            className="btn btn-primary"
-                            onClick={() => setActiveStep(3)}
-                          >
-                            Jätka →
-                          </button>
-                        </div>
                       </div>
                       
-                      {/* Step 3: Customer Information */}
-                      <div className={`form-section ${activeStep === 3 ? 'active' : 'inactive'}`}>
+                      {/* Customer Information Section */}
+                      <div className="form-section">
                         <h3>3. Andmed</h3>
                         
                         <div className="form-row">
@@ -497,27 +446,10 @@ const Checkout = () => {
                             ></textarea>
                           </div>
                         </div>
-                        
-                        <div className="step-actions">
-                          <button 
-                            type="button" 
-                            className="btn btn-secondary"
-                            onClick={() => setActiveStep(2)}
-                          >
-                            ← Tagasi
-                          </button>
-                          <button 
-                            type="button" 
-                            className="btn btn-primary"
-                            onClick={() => setActiveStep(4)}
-                          >
-                            Jätka →
-                          </button>
-                        </div>
                       </div>
                       
-                      {/* Step 4: Payment and Confirmation */}
-                      <div className={`form-section ${activeStep === 4 ? 'active' : 'inactive'}`}>
+                      {/* Payment Section */}
+                      <div className="form-section">
                         <h3>4. Vormista tellimus</h3>
                         
                         <div className="payment-section">
@@ -580,23 +512,14 @@ const Checkout = () => {
                           )}
                         </div>
                         
-                        <div className="step-actions">
-                          <button 
-                            type="button" 
-                            className="btn btn-secondary"
-                            onClick={() => setActiveStep(3)}
-                          >
-                            ← Tagasi
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={handleCheckout}
-                            disabled={isProcessing}
-                            className="btn btn-primary checkout-button"
-                          >
-                            {isProcessing ? 'Töötlemine...' : 'VORMISTA OST'}
-                          </button>
-                        </div>
+                        <button 
+                          type="button"
+                          onClick={handleCheckout}
+                          disabled={isProcessing}
+                          className="checkout-button"
+                        >
+                          {isProcessing ? 'Töötlemine...' : 'VORMISTA OST'}
+                        </button>
                       </div>
                     </form>
                   </div>
@@ -638,20 +561,10 @@ const Checkout = () => {
                     </span>
                   </div>
                   
-                  <div className="checkout-progress">
-                    <div className="progress-bar">
-                      <div 
-                        className="progress-fill" 
-                        style={{ width: `${(activeStep / 4) * 100}%` }}
-                      ></div>
-                    </div>
-                    <div className="progress-text">Samm {activeStep}/4</div>
-                  </div>
-                  
                   <div className="checkout-info">
                     <div className="info-item">
-                      <div className="info-icon">📦</div>
-                      <p>{i18n.language === 'et' ? 'Turvaline pakendamine' : 'Secure packaging'}</p>
+                      <div className="info-icon">🔒</div>
+                      <p>{i18n.language === 'et' ? 'Turvaline tellimuse vormistamine' : 'Secure checkout'}</p>
                     </div>
                     <div className="info-item">
                       <div className="info-icon">🚚</div>
@@ -677,64 +590,9 @@ const Checkout = () => {
 
         .checkout-header h1 {
           color: var(--color-ultramarine);
-          margin-bottom: 32px;
         }
 
-        .checkout-steps {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          max-width: 800px;
-          margin: 0 auto;
-        }
-
-        .checkout-step {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          gap: 8px;
-          width: 120px;
-        }
-
-        .step-number {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: #e9ecef;
-          color: #6c757d;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          transition: all 0.3s ease;
-        }
-
-        .checkout-step.active .step-number {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .step-label {
-          font-size: 0.85rem;
-          color: #6c757d;
-          text-align: center;
-          transition: all 0.3s ease;
-        }
-
-        .checkout-step.active .step-label {
-          color: var(--color-ultramarine);
-          font-weight: 500;
-        }
-
-        .step-divider {
-          flex: 1;
-          height: 2px;
-          background-color: #e9ecef;
-          margin: 0 8px;
-          max-width: 60px;
-        }
-
-        .checkout-layout {
+        .checkout-container {
           display: grid;
           grid-template-columns: 1fr 380px;
           gap: 64px;
@@ -769,11 +627,15 @@ const Checkout = () => {
         }
 
         .form-section {
-          display: none;
+          margin-bottom: 40px;
+          padding-bottom: 40px;
+          border-bottom: 1px solid #f0f0f0;
         }
 
-        .form-section.active {
-          display: block;
+        .form-section:last-child {
+          margin-bottom: 0;
+          padding-bottom: 0;
+          border-bottom: none;
         }
 
         .form-section h3 {
@@ -837,7 +699,7 @@ const Checkout = () => {
         }
 
         .order-items {
-          margin-bottom: 24px;
+          margin-bottom: 16px;
         }
 
         .order-item {
@@ -1161,54 +1023,29 @@ const Checkout = () => {
           opacity: 0.8;
         }
 
-        .step-actions {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 32px;
-        }
-
-        .btn {
-          padding: 12px 24px;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-weight: 500;
-          font-size: 1rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: none;
-          display: inline-flex;
-          align-items: center;
-          text-decoration: none;
-        }
-
-        .btn-primary {
+        .checkout-button {
+          width: 100%;
+          padding: 16px 24px;
           background-color: var(--color-ultramarine);
           color: white;
+          border: none;
+          border-radius: 4px;
+          font-family: var(--font-body);
+          font-weight: 600;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          margin-top: 24px;
         }
 
-        .btn-primary:hover:not(:disabled) {
+        .checkout-button:hover:not(:disabled) {
           opacity: 0.9;
           transform: translateY(-1px);
         }
 
-        .btn-primary:disabled {
+        .checkout-button:disabled {
           opacity: 0.6;
           cursor: not-allowed;
-        }
-
-        .btn-secondary {
-          background-color: #f0f0f0;
-          color: var(--color-text);
-        }
-
-        .btn-secondary:hover {
-          background-color: #e0e0e0;
-        }
-
-        .checkout-button {
-          font-weight: 600;
-          padding: 16px 32px;
-          font-size: 1.1rem;
         }
 
         .checkout-summary {
@@ -1275,33 +1112,10 @@ const Checkout = () => {
           color: var(--color-text);
         }
 
-        .checkout-progress {
-          margin: 24px 0;
-        }
-
-        .progress-bar {
-          height: 8px;
-          background-color: #e9ecef;
-          border-radius: 4px;
-          overflow: hidden;
-          margin-bottom: 8px;
-        }
-
-        .progress-fill {
-          height: 100%;
-          background-color: var(--color-ultramarine);
-          border-radius: 4px;
-          transition: width 0.3s ease;
-        }
-
-        .progress-text {
-          font-size: 0.8rem;
-          color: #666;
-          text-align: right;
-        }
-
         .checkout-info {
           margin-top: 24px;
+          padding-top: 24px;
+          border-top: 1px solid #f0f0f0;
         }
 
         .info-item {
@@ -1327,7 +1141,7 @@ const Checkout = () => {
         }
 
         @media (max-width: 1024px) {
-          .checkout-layout {
+          .checkout-container {
             grid-template-columns: 1fr;
             gap: 48px;
           }
@@ -1346,10 +1160,6 @@ const Checkout = () => {
             margin-bottom: 32px;
           }
 
-          .checkout-steps {
-            display: none;
-          }
-
           .checkout-form-container {
             padding: 24px;
           }
@@ -1357,16 +1167,6 @@ const Checkout = () => {
           .form-row.two-columns {
             grid-template-columns: 1fr;
             gap: 16px;
-          }
-
-          .step-actions {
-            flex-direction: column;
-            gap: 16px;
-          }
-
-          .btn {
-            width: 100%;
-            justify-content: center;
           }
 
           .order-item {
