@@ -2,9 +2,14 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import FadeInSection from './FadeInSection';
 import { useAboutPage } from '../../hooks/useAboutPage';
+import { useAboutPage } from '../../hooks/useAboutPage';
 
 const Hero = () => {
   const { t } = useTranslation();
+  const { getSection } = useAboutPage();
+  
+  // Get the intro section from the About page to use the same image
+  const introSection = getSection('intro');
   const { getSection } = useAboutPage();
   
   // Get the intro section from the About page to use the same image
@@ -19,13 +24,22 @@ const Hero = () => {
       <div className="container">
         <div className="hero-layout">
           <FadeInSection className="hero-image-section">
-            <div className="hero-image">
-              <img
-                src={introSection.image_url}
-                alt={t('hero.image_alt')}
-                fetchpriority="high"
-              />
-            </div>
+            {introSection.image_url ? (
+              <div className="hero-image">
+                <img
+                  src={introSection.image_url}
+                  alt={t('hero.image_alt')}
+                  fetchpriority="high"
+                />
+              </div>
+            ) : (
+              <div className="hero-image-placeholder">
+                <div className="placeholder-content">
+                  <div className="placeholder-icon">🎨</div>
+                  <p>Keraamika ja rõivadisain</p>
+                </div>
+              </div>
+            )}
           </FadeInSection>
           
           <FadeInSection className="hero-content">
@@ -79,6 +93,36 @@ const Hero = () => {
           aspect-ratio: 4/5;
           border-radius: 4px;
           display: block;
+        }
+        
+        .hero-image-placeholder {
+          width: 90%;
+          max-width: 500px;
+          aspect-ratio: 4/5;
+          border-radius: 8px;
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          overflow: hidden;
+        }
+        
+        .placeholder-content {
+          text-align: center;
+          padding: 20px;
+        }
+        
+        .placeholder-icon {
+          font-size: 4rem;
+          margin-bottom: 16px;
+          color: var(--color-ultramarine);
+        }
+        
+        .placeholder-content p {
+          font-family: var(--font-heading);
+          font-size: 1.25rem;
+          color: var(--color-ultramarine);
+          opacity: 0.8;
         }
 
         .hero-content {
