@@ -2,14 +2,9 @@ import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import FadeInSection from './FadeInSection';
 import { useAboutPage } from '../../hooks/useAboutPage';
-import { useAboutPage } from '../../hooks/useAboutPage';
 
 const Hero = () => {
   const { t } = useTranslation();
-  const { getSection } = useAboutPage();
-  
-  // Get the intro section from the About page to use the same image
-  const introSection = getSection('intro');
   const { getSection } = useAboutPage();
   
   // Get the intro section from the About page to use the same image
@@ -22,23 +17,23 @@ const Hero = () => {
   return (
     <section className="hero">
       <div className="container">
-        <div className="hero-layout">          
-          <FadeInSection className="hero-image-section">
-            <div className="hero-image">
-              <img 
-                src={introSection.image_url || "https://images.pexels.com/photos/4992459/pexels-photo-4992459.jpeg"}
-                alt={t('hero.image_alt')}
-                fetchpriority="high"
-              />
-            </div>
-          </FadeInSection>
-          
+        <div className="hero-layout">
           <FadeInSection className="hero-content">
             <h1>{t('hero.heading')}</h1>
             <p className="hero-subtext">{t('hero.subtext')}</p>
             <Link to="/epood" className="link-with-arrow hero-cta" onClick={scrollToTop}>
               {t('hero.cta')} <span className="arrow-wrapper">→</span>
             </Link>
+          </FadeInSection>
+          
+          <FadeInSection className="hero-image-section">
+            <div className="hero-image">
+              <img 
+                src={introSection.image_url || "https://images.pexels.com/photos/4992459/pexels-photo-4992459.jpeg"} 
+                alt={t('hero.image_alt')}
+                fetchpriority="high"
+              />
+            </div>
           </FadeInSection>
         </div>
       </div>
@@ -48,7 +43,7 @@ const Hero = () => {
           min-height: calc(90vh - 120px);
           display: flex;
           align-items: center;
-          padding: 64px 0;
+          padding: 48px 0;
           overflow: hidden;
         }
 
@@ -59,8 +54,7 @@ const Hero = () => {
         .hero-layout {
           display: flex;
           flex-direction: row;
-          justify-content: space-between;
-          align-items: flex-start;
+          align-items: center;
           gap: 64px;
         }
         
@@ -74,7 +68,7 @@ const Hero = () => {
         .hero-image {
           width: 90%;
           max-width: 500px;
-          border-radius: 4px;
+          border-radius: 8px;
           overflow: hidden;
         }
 
@@ -90,7 +84,7 @@ const Hero = () => {
         .hero-content {
           flex: 1;
           text-align: left;
-          padding: 20px 0;
+          padding: 0 20px;
         }
         
         .hero-content h1 {
@@ -123,19 +117,17 @@ const Hero = () => {
         @media (max-width: 768px) {
           .hero-layout {
             flex-direction: column;
-            gap: 40px;
+            gap: 32px;
           }
 
           .hero-image-section {
             width: 100%;
-            order: 1;
           }
 
           .hero-content {
             text-align: center;
             padding: 0;
             width: 100%;
-            order: 2;
           }
 
           .hero-content h1 {
@@ -157,7 +149,6 @@ const Hero = () => {
           .hero-subtext {
             font-size: 1.1rem;
             margin: 16px auto 24px;
-            padding: 0 16px;
           }
         }
 
