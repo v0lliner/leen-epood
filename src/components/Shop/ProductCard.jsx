@@ -19,7 +19,6 @@ const ProductCard = ({ product, priority = false }) => {
     }
 
     addItem(product);
-    alert('Toode lisatud ostukorvi! Maksefunktsioon on ajutiselt suletud. Palun võtke ühendust e-posti teel: leen@leen.ee');
   };
 
   const scrollToTop = () => {
