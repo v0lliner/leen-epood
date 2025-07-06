@@ -1,7 +1,7 @@
 <?php
 // Enable detailed error reporting for debugging
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 1); 
 
 // Require the Maksekeskus SDK at the top
 require __DIR__ . '/maksekeskus/vendor/autoload.php';
@@ -28,7 +28,28 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Log request for debugging
 $logFile = __DIR__ . '/payment_log.txt';
 $requestData = file_get_contents('php://input');
-file_put_contents($logFile, date('Y-m-d H:i:s') . " - Request: " . $requestData . "\n", FILE_APPEND);
+
+// Test if log file is writable
+if (!is_writable($logFile)) {
+    // Try to create the file if it doesn't exist
+    if (!file_exists($logFile)) {
+        touch($logFile);
+        chmod($logFile, 0666);
+    }
+    // Check again after attempting to fix
+    if (!is_writable($logFile)) {
+        echo json_encode(['error' => 'Log file is not writable: ' . $logFile]);
+        exit();
+    }
+}
+
+// Log the request with error handling
+try {
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Request: " . $requestData . "\n", FILE_APPEND);
+} catch (Exception $e) {
+    echo json_encode(['error' => 'Failed to write to log file: ' . $e->getMessage()]);
+    exit();
+}
 
 try {
     // Parse the JSON request body
@@ -103,23 +124,35 @@ try {
     // Log the transaction response
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transaction created: " . json_encode($transaction) . "\n", FILE_APPEND);
 
-    // Prepare payment data
-    $paymentData = [
-        // Use the payment method from the request
-        'method' => $data['paymentMethod'],
-        'locale' => 'et',
-        'country' => substr($data['country'] ?? 'Estonia', 0, 2),
-        'amount' => $data['amount'],
-        'currency' => 'EUR',
+    // Prepare payment data - ensure we're using the correct format for Maksekeskus
+    $paymentData = [];
+    
+    // Different payment methods might need different parameters
+    if ($data['paymentMethod'] === 'card' && isset($data['token'])) {
+        // Card payment with token
+        $paymentData = [
+            'method' => 'card',
+            'token' => $data['token'],
+            'locale' => 'et',
+            'country' => substr($data['country'] ?? 'Estonia', 0, 2)
+        ];
+    } else {
+        // Bank payment or other methods
+        $paymentData = [
+            'method' => $data['paymentMethod'],
+            'locale' => 'et',
+            'country' => substr($data['country'] ?? 'Estonia', 0, 2)
+        ];
+    }
+    
+    // Common parameters for all payment methods
+    $paymentData = array_merge($paymentData, [
         'return_url' => 'https://leen.ee/checkout/success',
         'cancel_url' => 'https://leen.ee/checkout'
-    ];
+    ]);
 
-    // Add token if provided (required for card payments)
-    if (isset($data['token']) && !empty($data['token'])) {
-        $paymentData['token'] = $data['token'];
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Token included in payment data\n", FILE_APPEND);
-    }
+    // Log the payment data for debugging
+    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Payment data: " . json_encode($paymentData) . "\n", FILE_APPEND);
     
     // Create payment
     $payment = $MK->createPayment($transaction->id, $paymentData);
@@ -135,10 +168,13 @@ try {
 } catch (Exception $e) {
     // Log the error
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: " . $e->getMessage() . "\n", FILE_APPEND);
-    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Detailed error: " . $e->getMessage() . "\n", FILE_APPEND);
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Stack trace: " . $e->getTraceAsString() . "\n", FILE_APPEND);
+    // If it's a Maksekeskus exception, try to get more details
+    if (method_exists($e, 'getRawContent')) {
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Raw content: " . $e->getRawContent() . "\n", FILE_APPEND);
+    }
     
     // Return error response
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
+    echo json_encode(['error' => 'Payment processing failed: ' . $e->getMessage()]);
 }
