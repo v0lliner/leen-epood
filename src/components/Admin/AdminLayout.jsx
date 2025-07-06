@@ -37,6 +37,11 @@ const AdminLayout = ({ children }) => {
       icon: '👤'
     },
     {
+      name: 'Avaleht',
+      href: '/admin/homepage',
+      icon: '🏠'
+    },
+    {
       name: 'KKK',
       href: '/admin/faq',
       icon: '❓'

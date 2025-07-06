@@ -27,6 +27,7 @@ import AdminTehtudTood from './pages/Admin/TehtudTood';
 import AdminAboutPage from './pages/Admin/AboutPage';
 import AdminOrders from './pages/Admin/Orders';
 import AdminFAQ from './pages/Admin/FAQ';
+import HomepageContent from './pages/Admin/HomepageContent';
 import TehtudToodForm from './pages/Admin/TehtudToodForm';
 import ProductForm from './pages/Admin/ProductForm';
 import PaymentSettings from './pages/Admin/PaymentSettings';
@@ -187,6 +188,11 @@ function App() {
                 <Route path="/admin/faq" element={
                   <ProtectedRoute>
                     <AdminFAQ />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/homepage" element={
+                  <ProtectedRoute>
+                    <HomepageContent />
                   </ProtectedRoute>
                 } />
                 <Route path="/admin/orders" element={
