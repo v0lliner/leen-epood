@@ -731,7 +731,7 @@ const Checkout = () => {
                               className="terms-checkbox"
                             />
                             <span className="terms-text">
-                              {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
+                              <strong>{t('checkout.terms.agree')}</strong> <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
                             </span>
                           </label>
                           {termsError && (
@@ -1286,7 +1286,7 @@ const Checkout = () => {
           color: white;
           border: none;
           border-radius: 4px;
-          font-family: var(--font-body);
+          font-family: var(--font-heading);
           font-weight: 600;
           font-size: 1.1rem;
           cursor: pointer;

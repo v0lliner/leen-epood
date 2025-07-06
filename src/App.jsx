@@ -29,6 +29,7 @@ import AdminOrders from './pages/Admin/Orders';
 import AdminFAQ from './pages/Admin/FAQ';
 import TehtudToodForm from './pages/Admin/TehtudToodForm';
 import ProductForm from './pages/Admin/ProductForm';
+import PaymentSettings from './pages/Admin/PaymentSettings';
 import './styles/globals.css';
 import './i18n';
 
@@ -248,6 +249,11 @@ function App() {
                 <Route path="/admin/products/:id/edit" element={
                   <ProtectedRoute>
                     <ProductForm />
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/settings/payment" element={
+                  <ProtectedRoute>
+                    <PaymentSettings />
                   </ProtectedRoute>
                 } />
 
