@@ -41,7 +41,10 @@ const PaymentSettings = () => {
       
       if (maskedError) {
         console.error('Error loading masked config:', maskedError)
-        setError('Maksekeskuse konfiguratsiooni laadimine ebaõnnestus')
+        // If no config exists, that's okay - we'll show the form to create one
+        if (maskedError.code !== 'PGRST116') {
+          setError('Maksekeskuse konfiguratsiooni laadimine ebaõnnestus')
+        }
         return
       }
       
@@ -122,6 +125,11 @@ const PaymentSettings = () => {
           setSaving(false)
           return
         }
+        
+        // For new configs, include all required fields
+        updateData.shop_id = formData.shop_id
+        updateData.api_secret_key = formData.api_secret_key
+        updateData.api_open_key = formData.api_open_key
       }
       
       const { data, error } = await maksekeskusConfigService.upsertMaksekeskusConfig(updateData)

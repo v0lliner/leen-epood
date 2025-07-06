@@ -33,7 +33,7 @@ export const maksekeskusConfigService = {
       const { data, error } = await supabase
         .from('admin_payment_config_view')
         .select('*')
-        .single()
+        .maybeSingle()
       
       return { data, error }
     } catch (error) {
@@ -57,16 +57,25 @@ export const maksekeskusConfigService = {
       }
       
       // Then insert or update the new configuration
-      const { data, error } = await supabase
-        .from('maksekeskus_config')
-        .upsert(configData, { 
-          onConflict: 'id',
-          ignoreDuplicates: false 
-        })
-        .select()
-        .single()
+      let result
+      if (configData.id) {
+        // Update existing configuration
+        result = await supabase
+          .from('maksekeskus_config')
+          .update(configData)
+          .eq('id', configData.id)
+          .select()
+          .single()
+      } else {
+        // Insert new configuration
+        result = await supabase
+          .from('maksekeskus_config')
+          .insert(configData)
+          .select()
+          .single()
+      }
       
-      return { data, error }
+      return { data: result.data, error: result.error }
     } catch (error) {
       return { data: null, error: { message: 'Network error occurred' } }
     }
