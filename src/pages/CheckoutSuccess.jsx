@@ -1,11 +1,33 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 
 const CheckoutSuccess = () => {
   const { t } = useTranslation();
+  const { clearCart } = useCart();
+  const [orderDetails, setOrderDetails] = useState(null);
+
+  useEffect(() => {
+    // Clear the cart when the success page loads
+    clearCart();
+    
+    // Get order details from localStorage
+    const pendingOrder = localStorage.getItem('pendingOrder');
+    if (pendingOrder) {
+      try {
+        const orderData = JSON.parse(pendingOrder);
+        setOrderDetails(orderData);
+        
+        // Clear the pending order after retrieving it
+        localStorage.removeItem('pendingOrder');
+      } catch (error) {
+        console.error('Error parsing order data:', error);
+      }
+    }
+  }, [clearCart]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -24,7 +46,23 @@ const CheckoutSuccess = () => {
                 <p>Teie tellimus on edukalt vormistatud.</p>
                 
                 <div className="order-info">
-                  <p>Saadame teile peagi tellimuse kinnituse e-kirja.</p>
+                  {orderDetails && (
+                    <>
+                      <div className="order-detail">
+                        <span className="detail-label">Tellimuse viide:</span>
+                        <span className="detail-value">{orderDetails.orderReference}</span>
+                      </div>
+                      <div className="order-detail">
+                        <span className="detail-label">Summa:</span>
+                        <span className="detail-value">{orderDetails.orderAmount}€</span>
+                      </div>
+                      <div className="order-detail">
+                        <span className="detail-label">E-post:</span>
+                        <span className="detail-value">{orderDetails.customerEmail}</span>
+                      </div>
+                    </>
+                  )}
+                  <p className="order-message">Saadame teile peagi tellimuse kinnituse e-kirja.</p>
                 </div>
 
                 <div className="success-actions">
@@ -71,6 +109,28 @@ const CheckoutSuccess = () => {
           margin-bottom: 32px;
           color: #666;
           font-size: 1.125rem;
+        .order-detail {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-label {
+          font-weight: 500;
+          color: #666;
+        }
+
+        .detail-value {
+          font-family: var(--font-heading);
+          color: var(--color-ultramarine);
+        }
+
+        .order-message {
+          margin-top: 16px;
+          font-weight: 500;
+        }
+
         }
 
         .order-info {

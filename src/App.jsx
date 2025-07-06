@@ -113,6 +113,20 @@ function App() {
                     <Footer />
                   </div>
                 } />
+                <Route path="/makse/korras" element={
+                  <div className="app">
+                    <Navigation />
+                    <CheckoutSuccess />
+                    <Footer />
+                  </div>
+                } />
+                <Route path="/makse/katkestatud" element={
+                  <div className="app">
+                    <Navigation />
+                    <Checkout />
+                    <Footer />
+                  </div>
+                } />
                 <Route path="/kontakt" element={
                   <div className="app">
                     <Navigation />

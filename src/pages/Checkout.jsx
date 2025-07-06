@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
@@ -10,6 +11,7 @@ const Checkout = () => {
   const { t, i18n } = useTranslation();
   const { items, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +21,7 @@ const Checkout = () => {
   const [termsError, setTermsError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [deliveryMethodError, setDeliveryMethodError] = useState('');
-  const [selectedBank, setSelectedBank] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('Estonia');
   
   const [formData, setFormData] = useState({
@@ -62,8 +64,8 @@ const Checkout = () => {
     setDeliveryMethodError('');
   };
 
-  const handleBankSelection = (bank) => {
-    setSelectedBank(bank);
+  const handlePaymentMethodSelection = (method) => {
+    setSelectedPaymentMethod(method);
   };
 
   const handleCountryChange = (e) => {
@@ -73,8 +75,8 @@ const Checkout = () => {
       ...prev,
       country: country
     }));
-    // Reset selected bank when country changes
-    setSelectedBank('');
+    // Reset selected payment method when country changes
+    setSelectedPaymentMethod('');
   };
 
   const validateForm = () => {
@@ -107,12 +109,19 @@ const Checkout = () => {
     }
     
     // Check if bank is selected
-    if (!selectedBank) {
+    if (!selectedPaymentMethod) {
       setError('Palun valige makseviis');
       return false;
     }
     
     return true;
+  };
+
+  // Function to generate a unique order reference
+  const generateOrderReference = () => {
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    return `order-${timestamp}-${randomStr}`;
   };
 
   const handleCheckout = async () => {
@@ -129,12 +138,63 @@ const Checkout = () => {
     setError('');
 
     try {
-      // Clear cart
-      await clearCart();
+      // Calculate final amount including delivery
+      const finalAmount = (parseFloat(totalPrice) + (deliveryMethod === 'parcel-machine' ? 3.99 : 0)).toFixed(2);
       
-      // Redirect to success page
-      navigate('/checkout/success');
+      // Create order data
+      const orderData = {
+        amount: finalAmount,
+        reference: generateOrderReference(),
+        email: formData.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        country: formData.country,
+        items: items.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: parsePriceToAmount(item.price),
+          quantity: 1
+        })),
+        paymentMethod: selectedPaymentMethod
+      };
       
+      // Call the PHP endpoint to create a transaction
+      const response = await fetch('/php/process-payment.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP error! Status: ${response.status}, ${errorText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      if (data.paymentUrl) {
+        // Store order info in localStorage before redirecting
+        localStorage.setItem('pendingOrder', JSON.stringify({
+          orderReference: orderData.reference,
+          orderAmount: finalAmount,
+          orderItems: items,
+          customerEmail: formData.email,
+          timestamp: Date.now()
+        }));
+        
+        // Redirect to payment provider
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error('Maksekeskuse vastuses puudub makse URL');
+      }
     } catch (err) {
       console.error('Error during checkout:', err);
       setError('Tellimuse vormistamine ebaõnnestus');
@@ -142,8 +202,8 @@ const Checkout = () => {
     }
   };
 
-  // Banks by country
-  const banksByCountry = {
+  // Payment methods by country
+  const paymentMethodsByCountry = {
     'Estonia': [
       { id: 'swedbank', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
       { id: 'seb', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
@@ -174,11 +234,7 @@ const Checkout = () => {
     'Finland': [
       { id: 'nordea', name: 'Nordea', logo: 'https://static.maksekeskus.ee/img/channel/lnd/nordea.png' },
       { id: 'op', name: 'OP', logo: 'https://static.maksekeskus.ee/img/channel/lnd/op.png' },
-      { id: 'danske', name: 'Danske Bank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/danske.png' },
-      { id: 'handelsbanken', name: 'Handelsbanken', logo: 'https://static.maksekeskus.ee/img/channel/lnd/handelsbanken.png' },
-      { id: 'alandsbanken', name: 'Ålandsbanken', logo: 'https://static.maksekeskus.ee/img/channel/lnd/alandsbanken.png' },
-      { id: 'revolut-fi', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
-      { id: 'wise-fi', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+      { id: 'danske', name: 'Danske Bank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/danske.png' }
     ]
   };
 
@@ -456,7 +512,7 @@ const Checkout = () => {
                           <div className="payment-country-selector">
                             <h4>Vali panga riik</h4>
                             <div className="country-buttons">
-                              {['Estonia', 'Latvia', 'Lithuania', 'Finland'].map(country => (
+                              {Object.keys(paymentMethodsByCountry).map(country => (
                                 <button
                                   key={country}
                                   type="button"
@@ -477,15 +533,15 @@ const Checkout = () => {
                           <div className="bank-selection">
                             <h4>Vali pank</h4>
                             <div className="bank-grid">
-                              {banksByCountry[selectedCountry].map(bank => (
+                              {paymentMethodsByCountry[selectedCountry].map(method => (
                                 <div 
-                                  key={bank.id}
-                                  className={`bank-option ${selectedBank === bank.id ? 'selected' : ''}`}
-                                  onClick={() => handleBankSelection(bank.id)}
+                                  key={method.id}
+                                  className={`bank-option ${selectedPaymentMethod === method.id ? 'selected' : ''}`}
+                                  onClick={() => handlePaymentMethodSelection(method.id)}
                                 >
-                                  <img src={bank.logo} alt={bank.name} className="bank-logo" />
-                                  <div className="bank-name">{bank.name}</div>
-                                  <div className={`bank-check ${selectedBank === bank.id ? 'visible' : ''}`}>✓</div>
+                                  <img src={method.logo} alt={method.name} className="bank-logo" />
+                                  <div className="bank-name">{method.name}</div>
+                                  <div className={`bank-check ${selectedPaymentMethod === method.id ? 'visible' : ''}`}>✓</div>
                                 </div>
                               ))}
                             </div>
