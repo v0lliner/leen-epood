@@ -12,12 +12,12 @@ const ProductCard = ({ product, priority = false }) => {
   const handleAddToCart = (e) => {
     e.preventDefault();
     e.stopPropagation();
-
+    
     // Don't add if already in cart or not available
     if (isInCart(product.id) || !product.available) {
       return;
     }
-
+    
     addItem(product);
   };
 
