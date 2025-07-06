@@ -249,6 +249,29 @@
         "personal": "Each order includes a personal note"
       }
     },
+    "delivery": {
+      "title": "Delivery Method",
+      "methods": {
+        "pickup": {
+          "title": "Self-pickup",
+          "description": "Keldrimäe farm, Kuku village, Rapla county",
+          "price": "Free"
+        },
+        "smartpost": {
+          "title": "Parcel machine",
+          "description": "Product will be sent to selected parcel machine",
+          "price": "3.99€"
+        }
+      }
+      "continue": "Continue to shipping",
+      "pay": "Continue to payment",
+      "processing": "Processing...",
+      "info": {
+        "secure": "Secure payment via Maksekeskus",
+        "shipping": "Delivery within 2-4 business days",
+        "personal": "Each order includes a personal note"
+      }
+    },
     "form": {
       "name": "Name",
       "email": "Email",
