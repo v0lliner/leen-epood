@@ -3,9 +3,15 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
+import { useLocation } from 'react-router-dom';
 
 const CheckoutSuccess = () => {
   const { t } = useTranslation();
+  const location = useLocation();
+  
+  // Extract order details from location state if available
+  const orderDetails = location.state?.orderDetails || {};
+  const { deliveryMethod, selectedTerminal } = orderDetails;
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -24,7 +30,9 @@ const CheckoutSuccess = () => {
                 <p>Teie tellimus on edukalt vormistatud.</p>
                 
                 <div className="order-info">
-                  <p>Saadame teile peagi tellimuse kinnituse e-kirja.</p>
+                  <p>Saadame teile peagi tellimuse kinnituse e-kirja{deliveryMethod === 'smartpost' && selectedTerminal ? 
+                    ` ja teavitame, kui teie tellimus on jõudnud valitud Smartposti pakiautomaati.` : 
+                    `.`}</p>
                 </div>
 
                 <div className="success-actions">
