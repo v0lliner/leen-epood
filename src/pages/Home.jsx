@@ -159,7 +159,7 @@ const Home = () => {
         .hero-image {
           width: 90%;
           max-width: 500px;
-          border-radius: 4px;
+          border-radius: 8px;
           overflow: visible; 
         }
 
@@ -168,7 +168,7 @@ const Home = () => {
           height: 100%;
           object-fit: cover;
           aspect-ratio: 4/5;
-          border-radius: 4px;
+          border-radius: 8px;
           display: block;
         }
 
