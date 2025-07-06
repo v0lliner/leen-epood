@@ -167,7 +167,7 @@ const Home = () => {
           width: auto;
           height: 100%;
           object-fit: cover;
-          aspect-ratio: 4/5;
+          aspect-ratio: 3/5;
           border-radius: 4px;
           display: block;
         }
