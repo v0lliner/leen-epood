@@ -60,16 +60,10 @@ const AdminLayout = ({ children }) => {
       active: location.pathname.startsWith('/admin/settings/payment')
     },
     {
-      name: t('admin.nav.messages'),
-      href: '/admin/messages',
-      icon: '💬',
-      active: location.pathname.startsWith('/admin/messages')
-    },
-    {
       name: t('admin.nav.settings'),
-      href: '/admin/settings',
+      href: '/admin/settings/payment',
       icon: '⚙️',
-      active: location.pathname.startsWith('/admin/settings')
+      active: location.pathname.startsWith('/admin/settings/')
     }
   ]
 
