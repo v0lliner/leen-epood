@@ -153,10 +153,10 @@ const Home = () => {
           flex: 1;
           display: flex;
           justify-content: center;
-          align-items: center;
+          align-items: right;
         }
 
-        .hero-image 
+        .hero-image {
           width: 90%;
           max-width: 500px;
           border-radius: 8px;
