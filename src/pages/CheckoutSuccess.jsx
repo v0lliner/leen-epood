@@ -2,19 +2,12 @@ import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';
-import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 
 const CheckoutSuccess = () => {
   const { t } = useTranslation();
   const { clearCart } = useCart();
-  const { clearCart } = useCart();
-
-  useEffect(() => {
-    // Clear the cart when the success page is loaded
-    clearCart();
-  }, [clearCart]);
 
   useEffect(() => {
     // Clear the cart when the success page is loaded

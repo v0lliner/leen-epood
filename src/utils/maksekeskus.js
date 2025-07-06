@@ -91,8 +91,25 @@ function loadCheckoutScript() {
 }
 
 /**
+ * Get bank payment methods for display
+ * @returns {Array} Array of bank payment methods with logos
+ */
+export function getBankPaymentMethods() {
+  return [
+    { id: 'swedbank', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+    { id: 'seb', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+    { id: 'lhv', name: 'LHV', logo: 'https://static.maksekeskus.ee/img/channel/lnd/lhv.png' },
+    { id: 'luminor', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+    { id: 'coop', name: 'Coop Pank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/coop.png' },
+    { id: 'citadele', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+    { id: 'revolut', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+    { id: 'wise', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+  ];
+}
+
+/**
  * Get bank payment methods for a specific country
- * @param {string} country - Country name (e.g. 'Estonia', 'Latvia', 'Lithuania', 'Finland')
+ * @param {string} country - Country code (e.g. 'EE', 'LV', 'LT', 'FI')
  * @returns {Array} Array of bank payment methods for the specified country
  */
 export function getBanksByCountry(country) {
