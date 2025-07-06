@@ -39,6 +39,11 @@ const Checkout = () => {
     notes: ''
   });
 
+  // Function to scroll to top of page
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Update total price whenever cart items change
   useEffect(() => {
     const total = getTotalPrice();
