@@ -168,7 +168,7 @@ const Home = () => {
           height: 100%;
           object-fit: cover;
           aspect-ratio: 4/5;
-          border-radius: 4px;
+          border-radius: 0px;
           display: block;
         }
 
