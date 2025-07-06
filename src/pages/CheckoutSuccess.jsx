@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useTranslation } from 'react-i18next'; 
+import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
@@ -9,12 +10,22 @@ const CheckoutSuccess = () => {
   const { t } = useTranslation();
   const { clearCart } = useCart();
   const [orderDetails, setOrderDetails] = useState(null); 
+  const [orderReference, setOrderReference] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const location = useLocation();
 
   useEffect(() => {
     // Clear the cart when the success page loads - this ensures cart is only cleared after successful payment
     clearCart();
+    
+    // Get order reference from URL query parameters
+    const queryParams = new URLSearchParams(location.search);
+    const reference = queryParams.get('reference');
+    
+    if (reference) {
+      setOrderReference(reference);
+    }
     
     // Function to load order details
     const loadOrderDetails = async () => {
@@ -22,25 +33,54 @@ const CheckoutSuccess = () => {
       setError(null);
       
       try {
-        // Get order reference from localStorage
-        const pendingOrder = localStorage.getItem('pendingOrder');
-        
-        if (!pendingOrder) {
-          throw new Error('No order information found');
+        // First try to get order details from URL reference parameter
+        if (reference) {
+          console.log('Fetching order details for reference:', reference);
+          
+          // Fetch order details from the backend using the reference
+          const response = await fetch(`/php/admin/orders.php?order_number=${reference}`);
+          
+          if (!response.ok) {
+            throw new Error(`Failed to fetch order details: ${response.status}`);
+          }
+          
+          const data = await response.json();
+          
+          if (data.success && data.order) {
+            console.log('Order details fetched successfully:', data.order);
+            
+            // Format the order data for display
+            const formattedOrder = {
+              orderReference: data.order.order_number,
+              orderAmount: data.order.total_amount,
+              customerEmail: data.order.customer_email,
+              timestamp: new Date(data.order.created_at).getTime(),
+              orderItems: data.order.items || [],
+              payments: data.order.payments || []
+            };
+            
+            setOrderDetails(formattedOrder);
+            
+            // Clear any pending order from localStorage since we got the data from the server
+            localStorage.removeItem('pendingOrder');
+            return;
+          }
         }
         
-        const orderData = JSON.parse(pendingOrder);
+        // Fallback to localStorage if URL parameter doesn't work
+        const pendingOrder = localStorage.getItem('pendingOrder');
         
-        // Set basic order details from localStorage
-        setOrderDetails(orderData);
-        
-        // Clear the pending order after retrieving it
-        localStorage.removeItem('pendingOrder');
-        
-        // If we have an order reference, try to fetch the latest order status from the database
-        if (orderData.orderReference) {
-          // This would be a good place to fetch the latest order status from the database
-          // For now, we'll just use the localStorage data
+        if (pendingOrder) {
+          console.log('Using order details from localStorage');
+          const orderData = JSON.parse(pendingOrder);
+          
+          // Set basic order details from localStorage
+          setOrderDetails(orderData);
+          
+          // Clear the pending order after retrieving it
+          localStorage.removeItem('pendingOrder');
+        } else {
+          throw new Error('No order information found');
         }
       } catch (error) {
         console.error('Error loading order details:', error);
@@ -212,22 +252,45 @@ const CheckoutSuccess = () => {
                 <div className="order-info">
                   {orderDetails && (
                     <>
-                      <div className="order-detail">
-                        <span className="detail-label">Tellimuse viide:</span>
-                        <span className="detail-value">{orderDetails.orderReference}</span>
-                      </div>
-                      <div className="order-detail">
-                        <span className="detail-label">Summa:</span>
-                        <span className="detail-value">{orderDetails.orderAmount}€</span>
-                      </div>
-                      <div className="order-detail">
-                        <span className="detail-label">E-post:</span>
-                        <span className="detail-value">{orderDetails.customerEmail}</span>
-                      </div>
-                      <div className="order-detail">
-                        <span className="detail-label">Tellimuse aeg:</span>
-                        <span className="detail-value">{new Date(orderDetails.timestamp).toLocaleString('et-EE')}</span>
-                      </div>
+                      {orderDetails.orderReference && (
+                        <div className="order-detail">
+                          <span className="detail-label">Tellimuse number:</span>
+                          <span className="detail-value">{orderDetails.orderReference}</span>
+                        </div>
+                      )}
+                      {orderDetails.orderAmount && (
+                        <div className="order-detail">
+                          <span className="detail-label">Summa:</span>
+                          <span className="detail-value">{orderDetails.orderAmount}€</span>
+                        </div>
+                      )}
+                      {orderDetails.customerEmail && (
+                        <div className="order-detail">
+                          <span className="detail-label">E-post:</span>
+                          <span className="detail-value">{orderDetails.customerEmail}</span>
+                        </div>
+                      )}
+                      {orderDetails.timestamp && (
+                        <div className="order-detail">
+                          <span className="detail-label">Tellimuse aeg:</span>
+                          <span className="detail-value">{new Date(orderDetails.timestamp).toLocaleString('et-EE')}</span>
+                        </div>
+                      )}
+                      
+                      {/* Display order items if available */}
+                      {orderDetails.orderItems && orderDetails.orderItems.length > 0 && (
+                        <div className="order-items">
+                          <h3>Tellitud tooted:</h3>
+                          <div className="items-list">
+                            {orderDetails.orderItems.map((item, index) => (
+                              <div key={index} className="order-item">
+                                <span className="item-title">{item.product_title}</span>
+                                <span className="item-price">{item.price}€</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </>
                   )}
                   <p className="order-message">Tellimuse kinnitus on saadetud teie e-posti aadressile.</p>
@@ -313,8 +376,8 @@ const CheckoutSuccess = () => {
           margin-top: 16px;
           font-weight: 500;
           text-align: center;
-          color: #155724;
-          background-color: #d4edda;
+          color: #2f3e9c;
+          background-color: #f0f4ff;
           padding: 8px;
           border-radius: 4px;
         }
@@ -323,6 +386,41 @@ const CheckoutSuccess = () => {
           color: #666;
           font-size: 1rem;
           margin: 0;
+        }
+
+        .order-items {
+          margin-top: 24px;
+          padding-top: 16px;
+          border-top: 1px solid #f0f0f0;
+        }
+
+        .order-items h3 {
+          font-family: var(--font-heading);
+          font-size: 1.1rem;
+          color: var(--color-ultramarine);
+          margin-bottom: 12px;
+        }
+
+        .items-list {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .order-item {
+          display: flex;
+          justify-content: space-between;
+          padding: 8px 0;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .item-title {
+          font-weight: 500;
+        }
+
+        .item-price {
+          font-family: var(--font-heading);
+          color: var(--color-ultramarine);
         }
 
         .success-actions {

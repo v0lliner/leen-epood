@@ -121,6 +121,48 @@ function getOrderDetails($orderId) {
     return $order;
 }
 
+// Function to get order details by order number
+function getOrderDetailsByOrderNumber($orderNumber) {
+    // Get order basic info
+    $orderResult = supabaseRequest(
+        "/rest/v1/orders?order_number=eq.$orderNumber&select=*",
+        'GET'
+    );
+    
+    if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+        return null;
+    }
+    
+    $order = $orderResult['data'][0];
+    $orderId = $order['id'];
+    
+    // Get order items
+    $itemsResult = supabaseRequest(
+        "/rest/v1/order_items?order_id=eq.$orderId&select=*",
+        'GET'
+    );
+    
+    if ($itemsResult['status'] === 200) {
+        $order['items'] = $itemsResult['data'];
+    } else {
+        $order['items'] = [];
+    }
+    
+    // Get payment info
+    $paymentsResult = supabaseRequest(
+        "/rest/v1/order_payments?order_id=eq.$orderId&select=*",
+        'GET'
+    );
+    
+    if ($paymentsResult['status'] === 200) {
+        $order['payments'] = $paymentsResult['data'];
+    } else {
+        $order['payments'] = [];
+    }
+    
+    return $order;
+}
+
 // Update order status
 function updateOrderStatus($orderId, $newStatus) {
     $updateResult = supabaseRequest(
@@ -137,6 +179,7 @@ try {
     // Parse the URL to get the order ID if present
     $requestUri = $_SERVER['REQUEST_URI'];
     $orderId = null;
+    $orderNumber = null;
     $action = null;
     
     // Extract order ID and action from URL
@@ -145,11 +188,33 @@ try {
         $action = $matches[2] ?? null;
     }
     
+    // Check if order_number is provided in query string
+    if (isset($_GET['order_number'])) {
+        $orderNumber = $_GET['order_number'];
+    }
+    
     // Handle different request types
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // If order ID is provided, get specific order details
         if ($orderId) {
             $order = getOrderDetails($orderId);
+            
+            if ($order) {
+                echo json_encode([
+                    'success' => true,
+                    'order' => $order
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Order not found'
+                ]);
+            }
+        } 
+        // If order number is provided, get order details by order number
+        else if ($orderNumber) {
+            $order = getOrderDetailsByOrderNumber($orderNumber);
             
             if ($order) {
                 echo json_encode([
