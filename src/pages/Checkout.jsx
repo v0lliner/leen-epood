@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
@@ -20,9 +19,6 @@ const Checkout = () => {
   const [termsError, setTermsError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [deliveryMethodError, setDeliveryMethodError] = useState('');
-  const [smartpostMachines, setSmartpostMachines] = useState([]);
-  const [loadingMachines, setLoadingMachines] = useState(false);
-  const [machinesError, setMachinesError] = useState('');
   const [selectedBank, setSelectedBank] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('Estonia');
   
@@ -30,7 +26,6 @@ const Checkout = () => {
     email: '',
     firstName: '',
     lastName: '',
-    selectedMachineId: '',
     phone: '',
     companyName: '',
     country: 'Estonia',
@@ -65,14 +60,6 @@ const Checkout = () => {
   const handleDeliveryMethodChange = (method) => {
     setDeliveryMethod(method);
     setDeliveryMethodError('');
-    
-    // Reset selected machine when changing delivery method
-    if (method !== 'parcel-machine') {
-      setFormData(prev => ({
-        ...prev,
-        selectedMachineId: ''
-      }));
-    }
   };
 
   const handleBankSelection = (bank) => {
@@ -86,65 +73,9 @@ const Checkout = () => {
       ...prev,
       country: country
     }));
-    
     // Reset selected bank when country changes
     setSelectedBank('');
-    
-    // Reset and reload parcel machines if delivery method is parcel-machine
-    if (deliveryMethod === 'parcel-machine') {
-      setFormData(prev => ({
-        ...prev,
-        selectedMachineId: ''
-      }));
-      loadSmartpostMachines(country);
-    }
   };
-
-  // Load Smartpost parcel machines
-  const loadSmartpostMachines = async (country = selectedCountry) => {
-    setLoadingMachines(true);
-    setMachinesError('');
-    
-    try {
-      // Map country to country code for API
-      const countryCode = {
-        'Estonia': 'EE',
-        'Finland': 'FI',
-        'Latvia': 'LV',
-        'Lithuania': 'LT'
-      }[country] || 'EE';
-      
-      // Fetch parcel machines from Smartpost API
-      const response = await axios.get(`https://www.smartpost.ee/api/ext/v1/places`, {
-        params: {
-          ry: countryCode,
-          type: 'apt'
-        }
-      });
-      
-      if (response.data && Array.isArray(response.data)) {
-        // Sort machines by name
-        const sortedMachines = response.data.sort((a, b) => 
-          a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
-        );
-        setSmartpostMachines(sortedMachines);
-      } else {
-        setMachinesError(t('checkout.shipping.smartpost.error_loading'));
-      }
-    } catch (err) {
-      console.error('Error loading Smartpost machines:', err);
-      setMachinesError(t('checkout.shipping.smartpost.error_loading'));
-    } finally {
-      setLoadingMachines(false);
-    }
-  };
-
-  // Load parcel machines when delivery method changes to parcel-machine
-  useEffect(() => {
-    if (deliveryMethod === 'parcel-machine') {
-      loadSmartpostMachines();
-    }
-  }, [deliveryMethod]);
 
   const validateForm = () => {
     // Required fields
@@ -166,12 +97,6 @@ const Checkout = () => {
     // Check delivery method
     if (!deliveryMethod) {
       setDeliveryMethodError('Palun valige tarneviis');
-      return false;
-    }
-
-    // Check if parcel machine is selected when delivery method is parcel-machine
-    if (deliveryMethod === 'parcel-machine' && !formData.selectedMachineId) {
-      setError(t('checkout.shipping.smartpost.select_required'));
       return false;
     }
 
@@ -413,52 +338,11 @@ const Checkout = () => {
                               <div className={`radio-indicator ${deliveryMethod === 'parcel-machine' ? 'active' : ''}`}></div>
                             </div>
                             <div className="delivery-method-content">
-                              <h4>{t('checkout.shipping.smartpost.title')}</h4>
-                              <p>{t('checkout.shipping.smartpost.description')}</p>
+                              <h4>Pakiautomaati</h4>
+                              <p>Toode saadetakse valitud pakiautomaati</p>
                               <p className="delivery-price">3.99€</p>
                             </div>
                           </div>
-                         
-                         {/* Smartpost Parcel Machine Selection */}
-                         {deliveryMethod === 'parcel-machine' && (
-                           <div className="parcel-machine-selection">
-                             <label htmlFor="parcel-machine">{t('checkout.shipping.smartpost.select_label')}</label>
-                             {loadingMachines ? (
-                               <div className="loading-machines">
-                                 <div className="loading-spinner-small"></div>
-                                 <span>{t('checkout.shipping.smartpost.loading')}</span>
-                               </div>
-                             ) : machinesError ? (
-                               <div className="machines-error">
-                                 <p>{machinesError}</p>
-                                 <button 
-                                   type="button" 
-                                   onClick={() => loadSmartpostMachines()}
-                                   className="retry-button"
-                                 >
-                                   {t('checkout.shipping.smartpost.retry')}
-                                 </button>
-                               </div>
-                             ) : (
-                               <select
-                                 id="parcel-machine"
-                                 value={formData.selectedMachineId}
-                                 onChange={(e) => setFormData(prev => ({
-                                   ...prev,
-                                   selectedMachineId: e.target.value
-                                 }))}
-                                 className="form-input"
-                               >
-                                 <option value="">{t('checkout.shipping.smartpost.select_placeholder')}</option>
-                                 {smartpostMachines.map(machine => (
-                                   <option key={machine.place_id} value={machine.place_id}>
-                                     {machine.name}
-                                   </option>
-                                 ))}
-                               </select>
-                             )}
-                           </div>
-                         )}
                         </div>
                         
                         {deliveryMethodError && (
@@ -991,64 +875,6 @@ const Checkout = () => {
           font-weight: 500;
           color: var(--color-ultramarine) !important;
         }
-        
-        .parcel-machine-selection {
-          margin-top: 16px;
-          padding: 16px;
-          background: #f8f9fa;
-          border-radius: 8px;
-          border-left: 3px solid var(--color-ultramarine);
-        }
-        
-        .parcel-machine-selection label {
-          display: block;
-          margin-bottom: 8px;
-          font-family: var(--font-heading);
-          font-weight: 500;
-          color: var(--color-text);
-          font-size: 0.9rem;
-        }
-        
-        .loading-machines {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px 0;
-          color: #666;
-        }
-        
-        .loading-spinner-small {
-          width: 20px;
-          height: 20px;
-          border: 2px solid #f3f3f3;
-          border-top: 2px solid var(--color-ultramarine);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-        
-        .machines-error {
-          padding: 12px 0;
-          color: #c33;
-        }
-        
-        .machines-error p {
-          margin-bottom: 8px;
-          font-size: 0.9rem;
-        }
-        
-        .retry-button {
-          background: none;
-          border: none;
-          color: var(--color-ultramarine);
-          text-decoration: underline;
-          cursor: pointer;
-          padding: 0;
-          font-size: 0.9rem;
-        }
-        
-        .retry-button:hover {
-          opacity: 0.8;
-        }
 
         .payment-section {
           margin-bottom: 24px;
@@ -1341,11 +1167,6 @@ const Checkout = () => {
           .form-row.two-columns {
             grid-template-columns: 1fr;
             gap: 16px;
-          }
-          
-          .parcel-machine-selection {
-            margin-top: 12px;
-            padding: 12px;
           }
 
           .order-item {

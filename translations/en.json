@@ -201,16 +201,6 @@
     },
     "shipping": {
       "title": "Shipping Information",
-      "smartpost": {
-        "title": "Smartpost",
-        "description": "Product will be shipped to selected parcel machine",
-        "select_label": "Select parcel machine",
-        "select_placeholder": "Select parcel machine",
-        "loading": "Loading parcel machines...",
-        "error_loading": "Failed to load parcel machines",
-        "retry": "Try again",
-        "select_required": "Please select a parcel machine"
-      },
       "contact": {
         "title": "Contact Information",
         "name": "Name",

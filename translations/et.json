@@ -201,16 +201,6 @@
     },
     "shipping": {
       "title": "Tarneinfo",
-      "smartpost": {
-        "title": "Smartposti",
-        "description": "Toode saadetakse valitud pakiautomaati",
-        "select_label": "Vali pakiautomaat",
-        "select_placeholder": "Vali pakiautomaat",
-        "loading": "Laadin pakiautomaate...",
-        "error_loading": "Pakiautomaatide laadimine ebaõnnestus",
-        "retry": "Proovi uuesti",
-        "select_required": "Palun valige pakiautomaat"
-      },
       "contact": {
         "title": "Kontaktandmed",
         "name": "Nimi",
