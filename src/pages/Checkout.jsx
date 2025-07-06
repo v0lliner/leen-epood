@@ -19,10 +19,6 @@ const Checkout = () => {
   const [termsError, setTermsError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [deliveryMethodError, setDeliveryMethodError] = useState('');
-  const [smartpostTerminals, setSmartpostTerminals] = useState([]);
-  const [selectedTerminal, setSelectedTerminal] = useState('');
-  const [terminalsLoading, setTerminalsLoading] = useState(false);
-  const [terminalsError, setTerminalsError] = useState('');
   const [selectedBank, setSelectedBank] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('Estonia');
   
@@ -42,41 +38,6 @@ const Checkout = () => {
     setTotalPrice(total.toFixed(2));
     setFormattedTotalPrice(total.toFixed(2) + '€');
   }, [items, getTotalPrice]);
-
-  // Load Smartpost terminals when delivery method is selected
-  useEffect(() => {
-    if (deliveryMethod === 'smartpost') {
-      loadSmartpostTerminals();
-    }
-  }, [deliveryMethod]);
-
-  const loadSmartpostTerminals = async () => {
-    if (smartpostTerminals.length > 0) return; // Don't reload if we already have terminals
-    
-    setTerminalsLoading(true);
-    setTerminalsError('');
-    
-    try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/smartpost-terminals`);
-      
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setSmartpostTerminals(data.terminals || []);
-      } else {
-        setTerminalsError(data.error || 'Failed to load Smartpost terminals');
-      }
-    } catch (err) {
-      console.error('Error loading Smartpost terminals:', err);
-      setTerminalsError('Pakiautomaatide laadimine ebaõnnestus');
-    } finally {
-      setTerminalsLoading(false);
-    }
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -99,10 +60,6 @@ const Checkout = () => {
   const handleDeliveryMethodChange = (method) => {
     setDeliveryMethod(method);
     setDeliveryMethodError('');
-  };
-
-  const handleTerminalChange = (e) => {
-    setSelectedTerminal(e.target.value);
   };
 
   const handleBankSelection = (bank) => {
@@ -140,12 +97,6 @@ const Checkout = () => {
     // Check delivery method
     if (!deliveryMethod) {
       setDeliveryMethodError('Palun valige tarneviis');
-      return false;
-    }
-
-    // Check if terminal is selected when Smartpost is chosen
-    if (deliveryMethod === 'smartpost' && !selectedTerminal) {
-      setError('Palun valige pakiautomaat');
       return false;
     }
 
@@ -380,47 +331,18 @@ const Checkout = () => {
                           </div>
                           
                           <div 
-                            className={`delivery-method ${deliveryMethod === 'smartpost' ? 'selected' : ''}`}
-                            onClick={() => handleDeliveryMethodChange('smartpost')}
+                            className={`delivery-method ${deliveryMethod === 'parcel-machine' ? 'selected' : ''}`}
+                            onClick={() => handleDeliveryMethodChange('parcel-machine')}
                           >
                             <div className="delivery-method-radio">
-                              <div className={`radio-indicator ${deliveryMethod === 'smartpost' ? 'active' : ''}`}></div>
+                              <div className={`radio-indicator ${deliveryMethod === 'parcel-machine' ? 'active' : ''}`}></div>
                             </div>
                             <div className="delivery-method-content">
-                              <h4>Smartposti</h4>
-                              <p>Toode saadetakse valitud Smartposti pakiautomaati</p>
+                              <h4>Pakiautomaati</h4>
+                              <p>Toode saadetakse valitud pakiautomaati</p>
                               <p className="delivery-price">3.99€</p>
                             </div>
                           </div>
-                          
-                          {deliveryMethod === 'smartpost' && (
-                            <div className="terminal-selector">
-                              <label htmlFor="terminal-select">Valige pakiautomaat:</label>
-                              <select 
-                                id="terminal-select" 
-                                value={selectedTerminal}
-                                onChange={handleTerminalChange}
-                                className="form-input"
-                                disabled={terminalsLoading}
-                              >
-                                <option value="">-- Valige pakiautomaat --</option>
-                                {terminalsLoading ? (
-                                  <option value="" disabled>Laadin pakiautomaate...</option>
-                                ) : (
-                                  smartpostTerminals.map(terminal => (
-                                    <option key={terminal.place_id} value={terminal.place_id}>
-                                      {terminal.name} - {terminal.address}, {terminal.city}
-                                    </option>
-                                  ))
-                                )}
-                              </select>
-                              {terminalsError && (
-                                <div className="field-error">
-                                  {terminalsError}
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                         
                         {deliveryMethodError && (
@@ -627,13 +549,13 @@ const Checkout = () => {
                   
                   <div className="summary-row">
                     <span>Tarne</span>
-                    <span>{deliveryMethod === 'smartpost' ? '3.99€' : '0.00€'}</span>
+                    <span>{deliveryMethod === 'parcel-machine' ? '3.99€' : '0.00€'}</span>
                   </div>
                   
                   <div className="summary-total">
                     <span>Kokku</span>
                     <span>
-                      {deliveryMethod === 'smartpost' 
+                      {deliveryMethod === 'parcel-machine' 
                         ? (parseFloat(totalPrice) + 3.99).toFixed(2) + '€' 
                         : formattedTotalPrice}
                     </span>
@@ -952,22 +874,6 @@ const Checkout = () => {
         .delivery-price {
           font-weight: 500;
           color: var(--color-ultramarine) !important;
-        }
-        
-        .terminal-selector {
-          margin-top: 16px;
-          margin-left: 40px;
-          padding: 16px;
-          background: #f8f9fa;
-          border-radius: 8px;
-          border: 1px solid #e9ecef;
-        }
-        
-        .terminal-selector label {
-          display: block;
-          margin-bottom: 8px;
-          font-weight: 500;
-          color: var(--color-text);
         }
 
         .payment-section {
