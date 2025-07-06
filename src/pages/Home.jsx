@@ -157,15 +157,15 @@ const Home = () => {
         }
 
         .hero-image {
-          width: 100%;
+          width: 90%;
           max-width: 500px;
           border-radius: 8px;
           overflow: visible; 
         }
 
         .hero-image img {
-          width: 90%;
-          height: auto;
+          width: 100%;
+          height: 100%;
           object-fit: cover;
           aspect-ratio: 4/5;
           border-radius: 0px;
