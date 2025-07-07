@@ -129,6 +129,9 @@ function registerOmnivaShipment($order) {
     $username = '247723';
     $password = 'Ddg(8?e:$A';
     
+    // IMPORTANT: In production, these credentials should be loaded from environment variables or a secure database
+    // NOT hardcoded in the script. This is just for demonstration purposes.
+    
     // Generate a unique file ID
     $fileId = uniqid('leen_', true);
     
@@ -136,10 +139,15 @@ function registerOmnivaShipment($order) {
     $packageMeasurements = calculatePackageMeasurements($order['items']);
     
     // Prepare receiver address
-    $receiverName = $order['customer_name'];
-    $receiverPhone = $order['customer_phone'];
-    $receiverEmail = $order['customer_email'];
-    $parcelMachineId = $order['omniva_parcel_machine_id'];
+   $receiverName = $order['customer_name'] ?? '';
+   $receiverPhone = $order['customer_phone'] ?? '';
+   $receiverEmail = $order['customer_email'] ?? '';
+   $parcelMachineId = $order['omniva_parcel_machine_id'] ?? '';
+   
+   if (empty($parcelMachineId)) {
+       logMessage("Missing parcel machine ID", $order);
+       return ['success' => false, 'error' => 'Parcel machine ID is required'];
+   }
     
     // Prepare sender address (your business details)
     $senderName = 'Leen Väränen';
@@ -293,6 +301,14 @@ function calculatePackageMeasurements($items) {
     if ($maxLength < 0.1) $maxLength = $defaultMeasurements['length'];
     if ($maxWidth < 0.1) $maxWidth = $defaultMeasurements['width'];
     if ($totalHeight < 0.1) $totalHeight = $defaultMeasurements['height'];
+   
+   // Log the calculated measurements
+   logMessage("Calculated package measurements", [
+       'weight' => $totalWeight,
+       'length' => $maxLength,
+       'width' => $maxWidth,
+       'height' => $totalHeight
+   ]);
     
     // Convert to meters for Omniva API
     return [
