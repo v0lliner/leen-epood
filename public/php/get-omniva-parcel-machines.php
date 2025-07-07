@@ -39,11 +39,7 @@ $cacheExpiry = 6 * 3600; // 6 hours in seconds
 $country = isset($_GET['country']) ? strtolower($_GET['country']) : 'ee';
 $validCountries = ['ee', 'lv', 'lt', 'fi'];
 
-// Log the received country parameter
-logMessage("Received country parameter: " . $country);
-
 if (!in_array($country, $validCountries)) {
-    logMessage("Invalid country code provided: " . $country . ". Defaulting to 'ee'");
     $country = 'ee'; // Default to Estonia if invalid country provided
 }
 
@@ -60,8 +56,7 @@ try {
     if ($useCache) {
         logMessage("Using cached parcel machine data");
         $locationsData = file_get_contents($cacheFile);
-        $locations = json_decode($locationsData, true) ?: [];
-        logMessage("Loaded " . count($locations) . " locations from cache");
+        $locations = json_decode($locationsData, true);
     } else {
         logMessage("Fetching fresh parcel machine data from Omniva API");
         
@@ -90,8 +85,6 @@ try {
         
         if (!$locations || !is_array($locations)) {
             throw new Exception("Invalid response from Omniva API");
-        } else {
-            logMessage("Received " . count($locations) . " locations from Omniva API");
         }
         
         // Cache the response
@@ -102,40 +95,29 @@ try {
     // Filter locations by country and type (parcel machines only)
     $filteredLocations = array_filter($locations, function($location) use ($country) {
         return isset($location['A0_NAME']) && 
-               strtolower($location['A0_NAME']) === strtolower($country) && 
+               strtolower($location['A0_NAME']) === $country && 
                isset($location['TYPE']) && 
                $location['TYPE'] === 'PARCEL_MACHINE';
     });
-    
-    logMessage("Filtered to " . count($filteredLocations) . " parcel machines for country: " . $country);
     
     // Reindex array to get sequential numeric keys
     $filteredLocations = array_values($filteredLocations);
     
     // Format the data for easier consumption by the frontend
     $formattedLocations = array_map(function($location) {
-        // Ensure all required fields exist to avoid undefined index errors
-        $a1Name = isset($location['A1_NAME']) ? $location['A1_NAME'] : '';
-        $a2Name = isset($location['A2_NAME']) ? $location['A2_NAME'] : '';
-        $a3Name = isset($location['A3_NAME']) ? $location['A3_NAME'] : '';
-        $yCoord = isset($location['Y_COORDINATE']) ? $location['Y_COORDINATE'] : '';
-        $xCoord = isset($location['X_COORDINATE']) ? $location['X_COORDINATE'] : '';
-        
         return [
             'id' => $location['ZIP'],
             'name' => $location['NAME'],
-            'address' => $a1Name . ', ' . $a2Name . ', ' . $a3Name,
-            'city' => $a1Name,
-            'county' => $a2Name,
+            'address' => $location['A1_NAME'] . ', ' . $location['A2_NAME'] . ', ' . $location['A3_NAME'],
+            'city' => $location['A1_NAME'],
+            'county' => $location['A2_NAME'],
             'country' => $location['A0_NAME'],
             'coordinates' => [
-                'latitude' => $yCoord,
-                'longitude' => $xCoord
+                'latitude' => $location['Y_COORDINATE'],
+                'longitude' => $location['X_COORDINATE']
             ]
         ];
     }, $filteredLocations);
-    
-    logMessage("Returning " . count($formattedLocations) . " formatted parcel machines");
     
     // Sort by name
     usort($formattedLocations, function($a, $b) {
