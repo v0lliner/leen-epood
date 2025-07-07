@@ -12,6 +12,7 @@ const handleDeliveryMethodChange = (method) => {
   }
 }; // Added closing bracket
 
+// After the handlePaymentMethodSelection function
 const handlePaymentMethodSelection = (method) => {
   // Clear any previous errors when changing payment method
   setError('');
@@ -22,4 +23,8 @@ const handlePaymentMethodSelection = (method) => {
 export default Checkout; // Already present
 ```
 
-The main issue was in the `handleDeliveryMethodChange` function which was missing its closing bracket and was immediately followed by the `handlePaymentMethodSelection` function definition. I've added the necessary closing brackets to properly close both function definitions.
+The main issues were:
+1. Missing closing bracket for the `handleDeliveryMethodChange` function
+2. Missing closing bracket for the `handlePaymentMethodSelection` function
+
+The rest of the code was properly closed with matching brackets.
