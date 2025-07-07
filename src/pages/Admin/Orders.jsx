@@ -89,10 +89,7 @@ const AdminOrders = () => {
       })
       
       if (!response.ok) {
-        if (response.status === 0 || !response.status) {
-          throw new Error('Backend server is not available. Please ensure the PHP server is running on localhost:8000');
-        }
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        throw new Error(`Error ${response.status}: ${await response.text()}`)
       }
       
       const data = await response.json()
@@ -117,11 +114,7 @@ const AdminOrders = () => {
       }
     } catch (err) {
       console.error('Error updating order status:', err)
-      if (err.name === 'TypeError' && err.message.includes('fetch')) {
-        alert('Backend server is not available. Please ensure the PHP server is running on localhost:8000');
-      } else {
-        alert(`Failed to update order status: ${err.message}`);
-      }
+      setError('Tellimuse staatuse uuendamine ebaõnnestus')
     }
   }
 
@@ -199,8 +192,25 @@ const AdminOrders = () => {
         </div>
 
         {error && (
-          <div className="error-message">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Connection Error</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error}</p>
+                  {error.includes('Backend server') && (
+                    <p className="mt-2">
+                      <strong>To fix this:</strong> Run <code className="bg-red-100 px-1 rounded">php -S localhost:8000 -t public</code> in your terminal.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
