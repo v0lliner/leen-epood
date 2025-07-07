@@ -193,32 +193,6 @@ const Checkout = () => {
     }
   };
 
-  // Function to get country code for Omniva API
-  const getCountryCode = (country) => {
-    const countryMap = {
-      'Estonia': 'ee',
-      'Latvia': 'lv',
-      'Lithuania': 'lt',
-      'Finland': 'fi'
-    };
-    
-    return countryMap[country] || 'ee';
-  };
-
-  // Handle parcel machine selection
-  const handleParcelMachineChange = (e) => {
-    const machineId = e.target.value;
-    setSelectedParcelMachine(machineId);
-    
-    // Find the selected machine name
-    if (machineId) {
-      const machine = omnivaParcelMachines.find(m => m.id === machineId);
-      setSelectedParcelMachineName(machine ? machine.name : '');
-    } else {
-      setSelectedParcelMachineName('');
-    }
-  };
-
   const handlePaymentMethodSelection = (method) => {
     // Clear any previous errors when changing payment method
     setError('');
