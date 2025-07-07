@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
@@ -10,21 +10,34 @@ const CheckoutSuccess = () => {
   const { t } = useTranslation();
   const { clearCart } = useCart();
   const [orderDetails, setOrderDetails] = useState(null); 
-  const [orderReference, setOrderReference] = useState(null);
+  const [orderReference, setOrderReference] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Clear the cart when the success page loads - this ensures cart is only cleared after successful payment
     clearCart();
     
-    // Get order reference from URL query parameters
+    // Extract order reference from URL query parameters or path
+    let reference = '';
     const queryParams = new URLSearchParams(location.search);
-    const reference = queryParams.get('reference');
+    reference = queryParams.get('reference') || '';
+    
+    // If no reference in query params, try to extract from path segments
+    if (!reference) {
+      const pathSegments = location.pathname.split('/');
+      if (pathSegments.length > 2 && pathSegments[2]) {
+        reference = pathSegments[2];
+      }
+    }
     
     if (reference) {
       setOrderReference(reference);
+      console.log('Found order reference:', reference);
+    } else {
+      console.log('No order reference found in URL');
     }
     
     // Function to load order details
@@ -35,35 +48,40 @@ const CheckoutSuccess = () => {
       try {
         // First try to get order details from URL reference parameter
         if (reference) {
-          console.log('Fetching order details for reference:', reference);
+          console.log('Fetching order details from server for reference:', reference);
           
           // Fetch order details from the backend using the reference
           const response = await fetch(`/php/admin/orders.php?order_number=${reference}`);
           
           if (!response.ok) {
-            throw new Error(`Failed to fetch order details: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          
-          if (data.success && data.order) {
-            console.log('Order details fetched successfully:', data.order);
+            console.warn(`Failed to fetch order details from server: ${response.status}`);
+            // Don't throw error here, try localStorage fallback instead
+          } else {
+            const data = await response.json();
             
-            // Format the order data for display
-            const formattedOrder = {
-              orderReference: data.order.order_number,
-              orderAmount: data.order.total_amount,
-              customerEmail: data.order.customer_email,
-              timestamp: new Date(data.order.created_at).getTime(),
-              orderItems: data.order.items || [],
-              payments: data.order.payments || []
-            };
-            
-            setOrderDetails(formattedOrder);
-            
-            // Clear any pending order from localStorage since we got the data from the server
-            localStorage.removeItem('pendingOrder');
-            return;
+            if (data.success && data.order) {
+              console.log('Order details fetched successfully from server:', data.order);
+              
+              // Format the order data for display
+              const formattedOrder = {
+                orderReference: data.order.order_number,
+                orderAmount: data.order.total_amount,
+                customerEmail: data.order.customer_email,
+                customerName: data.order.customer_name,
+                customerPhone: data.order.customer_phone,
+                timestamp: new Date(data.order.created_at).getTime(),
+                orderItems: data.order.items || [],
+                payments: data.order.payments || [],
+                status: data.order.status
+              };
+              
+              setOrderDetails(formattedOrder);
+              
+              // Clear any pending order from localStorage since we got the data from the server
+              localStorage.removeItem('pendingOrder');
+              setLoading(false);
+              return;
+            }
           }
         }
         
@@ -76,11 +94,18 @@ const CheckoutSuccess = () => {
           
           // Set basic order details from localStorage
           setOrderDetails(orderData);
+          console.log('Using order details from localStorage:', orderData);
           
           // Clear the pending order after retrieving it
           localStorage.removeItem('pendingOrder');
         } else {
-          throw new Error('No order information found');
+          console.warn('No order information found in localStorage');
+          setError('Tellimuse andmeid ei leitud. Palun kontrollige oma e-posti tellimuse kinnituse saamiseks.');
+          
+          // If no order data is found, redirect to shop after a delay
+          setTimeout(() => {
+            navigate('/epood');
+          }, 5000);
         }
       } catch (error) {
         console.error('Error loading order details:', error);
@@ -91,7 +116,7 @@ const CheckoutSuccess = () => {
     };
     
     loadOrderDetails();
-  }, [clearCart]); 
+  }, [clearCart, location, navigate]); 
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -248,6 +273,11 @@ const CheckoutSuccess = () => {
                 <div className="success-icon">✅</div>
                 <h1>Aitäh teie ostu eest!</h1>
                 <p>Teie tellimus on edukalt vormistatud ja makse on kinnitatud.</p>
+                {orderReference && (
+                  <div className="order-reference">
+                    <span>Tellimuse number: <strong>{orderReference}</strong></span>
+                  </div>
+                )}
                 
                 <div className="order-info">
                   {orderDetails && (
@@ -270,6 +300,18 @@ const CheckoutSuccess = () => {
                           <span className="detail-value">{orderDetails.customerEmail}</span>
                         </div>
                       )}
+                      {orderDetails.customerName && (
+                        <div className="order-detail">
+                          <span className="detail-label">Nimi:</span>
+                          <span className="detail-value">{orderDetails.customerName}</span>
+                        </div>
+                      )}
+                      {orderDetails.customerPhone && (
+                        <div className="order-detail">
+                          <span className="detail-label">Telefon:</span>
+                          <span className="detail-value">{orderDetails.customerPhone}</span>
+                        </div>
+                      )}
                       {orderDetails.timestamp && (
                         <div className="order-detail">
                           <span className="detail-label">Tellimuse aeg:</span>
@@ -281,14 +323,24 @@ const CheckoutSuccess = () => {
                       {orderDetails.orderItems && orderDetails.orderItems.length > 0 && (
                         <div className="order-items">
                           <h3>Tellitud tooted:</h3>
-                          <div className="items-list">
-                            {orderDetails.orderItems.map((item, index) => (
-                              <div key={index} className="order-item">
-                                <span className="item-title">{item.product_title}</span>
-                                <span className="item-price">{item.price}€</span>
-                              </div>
-                            ))}
-                          </div>
+                          <table className="items-table">
+                            <thead>
+                              <tr>
+                                <th>Toode</th>
+                                <th>Kogus</th>
+                                <th>Hind</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orderDetails.orderItems.map((item, index) => (
+                                <tr key={index} className="order-item">
+                                  <td className="item-title">{item.product_title}</td>
+                                  <td className="item-quantity">{item.quantity || 1}</td>
+                                  <td className="item-price">{typeof item.price === 'number' ? `${item.price.toFixed(2)}€` : item.price}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
                         </div>
                       )}
                     </>
@@ -310,11 +362,11 @@ const CheckoutSuccess = () => {
                   <p>Kui teil on küsimusi tellimuse kohta, võtke meiega ühendust:</p>
                   <div className="contact-links">
                     <a href="mailto:leen@leen.ee" className="contact-link">
-                      <span className="contact-icon">✉️</span>
+                      <span className="contact-icon" aria-hidden="true">✉️</span>
                       leen@leen.ee
                     </a>
                     <a href="tel:+37253801413" className="contact-link">
-                      <span className="contact-icon">📞</span>
+                      <span className="contact-icon" aria-hidden="true">📞</span>
                       +372 5380 1413
                     </a>
                   </div>
@@ -340,6 +392,15 @@ const CheckoutSuccess = () => {
         .success-content h1 {
           color: var(--color-ultramarine);
           margin-bottom: 16px;
+        }
+
+        .order-reference {
+          background-color: #f0f4ff;
+          color: var(--color-ultramarine);
+          padding: 12px 16px;
+          border-radius: 8px;
+          margin: 24px 0;
+          font-weight: 500;
         }
 
         .success-content > p {
@@ -379,7 +440,8 @@ const CheckoutSuccess = () => {
           color: #2f3e9c;
           background-color: #f0f4ff;
           padding: 8px;
-          border-radius: 4px;
+          border-radius: 8px;
+          margin-top: 16px;
         }
 
         .order-info p {
@@ -392,6 +454,7 @@ const CheckoutSuccess = () => {
           margin-top: 24px;
           padding-top: 16px;
           border-top: 1px solid #f0f0f0;
+          margin-bottom: 24px;
         }
 
         .order-items h3 {
@@ -401,26 +464,43 @@ const CheckoutSuccess = () => {
           margin-bottom: 12px;
         }
 
-        .items-list {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
+        .items-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 12px;
+          font-size: 0.95rem;
         }
 
-        .order-item {
-          display: flex;
-          justify-content: space-between;
-          padding: 8px 0;
+        .items-table th {
+          text-align: left;
+          padding: 8px;
+          border-bottom: 1px solid #e0e0e0;
+          font-weight: 500;
+          color: #555;
+        }
+
+        .items-table td {
+          padding: 12px 8px;
           border-bottom: 1px solid #f0f0f0;
+        }
+
+        .items-table tr:last-child td {
+          border-bottom: none;
         }
 
         .item-title {
           font-weight: 500;
         }
 
+        .item-quantity {
+          text-align: center;
+          color: #666;
+        }
+
         .item-price {
           font-family: var(--font-heading);
           color: var(--color-ultramarine);
+          text-align: right;
         }
 
         .success-actions {
@@ -459,6 +539,9 @@ const CheckoutSuccess = () => {
           margin-top: 48px;
           padding-top: 32px;
           border-top: 1px solid #f0f0f0;
+          background-color: #fafafa;
+          padding: 32px;
+          border-radius: 8px;
         }
 
         .contact-info h4 {
@@ -478,7 +561,8 @@ const CheckoutSuccess = () => {
           display: flex;
           justify-content: center;
           gap: 24px;
-          margin-top: 16px;
+          margin-top: 24px;
+          flex-wrap: wrap;
         }
 
         .contact-link {
@@ -510,12 +594,18 @@ const CheckoutSuccess = () => {
           .btn {
             width: 200px;
             text-align: center;
+            margin: 0 auto;
           }
           
           .contact-links {
             flex-direction: column;
             gap: 12px;
             align-items: center;
+          }
+          
+          .items-table th:nth-child(2),
+          .items-table td:nth-child(2) {
+            display: none;
           }
         }
       `}</style>

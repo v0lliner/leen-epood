@@ -298,11 +298,11 @@ function processOrder($transactionData, $paymentData) {
             // Store the order reference in the merchant_data for later retrieval
             if ($transaction && isset($transaction->transaction) && isset($transaction->transaction->reference)) {
                 $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
-                $merchantData['order_reference'] = $orderNumber;
+                $merchantData['order_reference'] = $orderReference;
                 
                 // Update the transaction with the new merchant_data
                 try {
-                    $MK->addTransactionMeta($transactionId, [
+                    $MK->addTransactionMeta($transaction->transaction->id, [
                         'merchant_data' => json_encode($merchantData)
                     ]);
                 } catch (Exception $e) {
@@ -329,6 +329,7 @@ function processOrder($transactionData, $paymentData) {
                 <div class='container'>
                     <h1>Täname teid ostu eest!</h1>
                     <p>Teie tellimus #{$orderNumber} on edukalt kinnitatud.</p>
+                    <p><strong>Tellimuse viide:</strong> {$orderReference}</p>
                     
                     <div class='order-details'>
                         <h2>Tellimuse andmed:</h2>
@@ -416,15 +417,22 @@ try {
     $transactionId = $data->transaction ?? null;
     
     if (!$transactionId) {
-        logMessage("No transaction ID in notification");
+        logMessage("No transaction ID in notification", $data);
         http_response_code(400);
         echo json_encode(['error' => 'Missing transaction ID']);
         exit();
     }
     
     // Fetch the full transaction details from Maksekeskus
-    $transaction = $MK->getTransaction($transactionId);
-    logMessage("Transaction details fetched", $transaction);
+    try {
+        $transaction = $MK->getTransaction($transactionId);
+        logMessage("Transaction details fetched", $transaction);
+    } catch (Exception $e) {
+        logMessage("Error fetching transaction details", $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to fetch transaction details']);
+        exit();
+    }
     
     // Process the order in our database
     $success = processOrder($transaction, $data);

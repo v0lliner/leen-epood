@@ -8,10 +8,10 @@ if (!supabaseUrl || !supabaseAnonKey) {
     url: supabaseUrl ? 'present' : 'missing',
     key: supabaseAnonKey ? 'present' : 'missing'
   })
-  console.warn('Missing Supabase environment variables - some features may not work correctly')
+  console.warn('⚠️ Missing Supabase environment variables - some features may not work correctly')
 }
 
-console.log('Supabase client initialized with URL:', supabaseUrl)
+console.log('🔌 Supabase client initialized with URL:', supabaseUrl)
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
