@@ -1,7 +1,7 @@
 // Omniva parcel machines API utility
 // Replaces the PHP implementation with JavaScript
 
-const OMNIVA_API_URL = 'https://www.omniva.ee/locations.json';
+const OMNIVA_API_URL = 'https://www.omniva.ee/locationsfull.json';
 
 /**
  * Fetch Omniva parcel machines from their API
@@ -10,6 +10,7 @@ const OMNIVA_API_URL = 'https://www.omniva.ee/locations.json';
  */
 export async function getOmnivaParcelMachines(country = 'EE') {
   try {
+    console.log(`Fetching from ${OMNIVA_API_URL}...`);
     const response = await fetch(OMNIVA_API_URL);
     
     if (!response.ok) {
@@ -18,31 +19,35 @@ export async function getOmnivaParcelMachines(country = 'EE') {
     
     const data = await response.json();
     
-    // Filter by country and only return parcel machines (type 0)
+    console.log(`Received ${data.length} locations from Omniva API`);
+    
+    // Filter by country and only return parcel machines (TYPE === 0)
     const parcelMachines = data.filter(location => 
-      location.A0_NAME === country && 
-      location.TYPE === 0
+      location.A0_NAME?.toUpperCase() === country.toUpperCase() && 
+      (location.TYPE === 0 || location.TYPE === '0')
     );
+    
+    console.log(`Filtered to ${parcelMachines.length} parcel machines for ${country}`);
     
     // Transform to a more usable format
     return parcelMachines.map(machine => ({
       id: machine.ZIP,
       name: machine.NAME,
-      address: machine.A1_NAME,
-      city: machine.A2_NAME,
-      county: machine.A3_NAME,
+      address: `${machine.A1_NAME || ''}, ${machine.A2_NAME || ''}`,
+      city: machine.A1_NAME || '',
+      county: machine.A2_NAME || '',
       coordinates: {
-        lat: parseFloat(machine.Y_COORDINATE),
-        lng: parseFloat(machine.X_COORDINATE)
+        lat: parseFloat(machine.Y_COORDINATE || 0),
+        lng: parseFloat(machine.X_COORDINATE || 0)
       },
-      openingHours: machine.SERVICE_HOURS,
-      comment: machine.COMMENT_EST || machine.COMMENT_ENG,
-      disabled: machine.DISABLED === '1'
-    })).filter(machine => !machine.disabled);
+      openingHours: machine.SERVICE_HOURS || '',
+      comment: machine.COMMENT_EST || machine.COMMENT_ENG || '',
+      disabled: machine.DISABLED === '1' || machine.DISABLED === 1
+    })).filter(machine => !machine.disabled && machine.id);
     
   } catch (error) {
     console.error('Error fetching Omniva parcel machines:', error);
-    throw new Error('Failed to fetch parcel machine locations');
+    throw new Error(`Failed to fetch parcel machine locations: ${error.message}`);
   }
 }
 

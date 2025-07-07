@@ -20,7 +20,9 @@ export function useOmniva(country = 'EE') {
         setLoading(true);
         setError(null);
         
+        console.log(`Fetching Omniva parcel machines from ${country}...`);
         const machines = await getOmnivaParcelMachines(country);
+        console.log(`Received ${machines.length} parcel machines`);
         setParcelMachines(machines);
         setFilteredMachines(machines);
         
@@ -30,6 +32,8 @@ export function useOmniva(country = 'EE') {
       } catch (err) {
         setError(err.message);
         console.error('Failed to fetch Omniva parcel machines:', err);
+        setParcelMachines([]);
+        setFilteredMachines([]);
       } finally {
         setLoading(false);
       }
