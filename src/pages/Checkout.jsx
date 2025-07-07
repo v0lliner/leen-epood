@@ -8,7 +8,7 @@ const handleDeliveryMethodChange = (method) => {
   
   // Load parcel machines if Omniva is selected
   if (method === 'omniva-parcel-machine') {
-    loadParcelMachines(formData.country);
+    loadParcelMachines(selectedCountry);
   }
 }; // Added closing bracket
 
@@ -19,12 +19,38 @@ const handlePaymentMethodSelection = (method) => {
   setSelectedPaymentMethod(method);
 }; // Added closing bracket
 
-// At the very end of the file, after all the JSX and styles
-export default Checkout; // Already present
+// After the loadParcelMachines function
+const loadParcelMachines = async (country) => {
+  setLoadingParcelMachines(true);
+  setParcelMachineError('');
+  
+  try {
+    // Convert country name to country code
+    const countryCode = getCountryCode(country);
+    
+    // Fetch parcel machines from API
+    const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    if (data.success && data.parcelMachines) {
+      setParcelMachines(data.parcelMachines);
+    } else {
+      setParcelMachineError('Pakiautomaatide laadimine ebaõnnestus');
+      setParcelMachines([]);
+    }
+  } catch (err) {
+    console.error('Error loading parcel machines:', err);
+    setParcelMachineError('Pakiautomaatide laadimine ebaõnnestus');
+    setParcelMachines([]);
+  } finally {
+    setLoadingParcelMachines(false);
+  }
+}; // Added closing bracket
 ```
 
-The main issues were:
-1. Missing closing bracket for the `handleDeliveryMethodChange` function
-2. Missing closing bracket for the `handlePaymentMethodSelection` function
-
-The rest of the code was properly closed with matching brackets.
+The rest of the code appears to be properly closed. These were the main missing closing brackets that needed to be added.
