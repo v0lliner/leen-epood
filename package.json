@@ -6,7 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "lint": "eslint .",
+    "preview": "vite preview",
+    "php-server": "php -S localhost:8000 -t public",
+    "dev:full": "concurrently \"npm run php-server\" \"npm run dev\""
     "preview": "vite preview",
     "optimize-images": "node scripts/optimize-images.js"
   },
