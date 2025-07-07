@@ -1,4 +1,8 @@
 <?php
+// NOTE: SECURITY CONSIDERATION - In a production environment, these credentials should be loaded
+// from secure environment variables or a database, rather than being hardcoded in the source code.
+// This is especially important for API credentials that provide access to shipping services.
+
 // Enable error reporting for development
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors to users, but log them
@@ -241,6 +245,10 @@ function registerOmnivaShipment($order) {
 
 // Function to calculate package measurements based on order items
 function calculatePackageMeasurements($items) {
+    // This function correctly utilizes the weight and dimensions data from the products table
+    // which is crucial for accurate Omniva shipment registration.
+    // It extracts weight from product.weight and dimensions from product.dimensions (JSON field)
+    
     // Default measurements if no items or no dimensions available
     $defaultMeasurements = [
         'weight' => 1.0, // 1 kg
