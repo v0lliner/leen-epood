@@ -1,0 +1,16 @@
+@@ .. @@
+ # Enable Apache rewrite engine
+ RewriteEngine On
+ 
++# Set environment variables for Omniva and Supabase
++# Note: These should be set in zone.ee control panel for production
++# SetEnv OMNIVA_CUSTOMER_CODE "247723"
++# SetEnv OMNIVA_USERNAME "247723"
++# SetEnv OMNIVA_PASSWORD "Ddg(8?e:$A"
++# SetEnv SUPABASE_SERVICE_KEY "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.VQgOh4VmI0hmyXawVt0-uOmMFgHXkqhkMFQxBLjjQME"
++
+ # Allow direct access to PHP files in the php directory
+ RewriteRule ^php/(.*)$ php/$1 [L]
+ 
+@@ .. @@
+ Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google-analytics.com https://www.googletagmanager.com https://maps.googleapis.com https://payment.maksekeskus.ee; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://epcenpirjkfkgdgxktrm.supabase.co https://fonts.gstatic.com https://images.pexels.com https://*.maksekeskus.ee https://maps.googleapis.com https://maps.gstatic.com https://static.maksekeskus.ee; connect-src 'self' https://epcenpirjkfkgdgxktrm.supabase.co wss://epcenpirjkfkgdgxktrm.supabase.co https://www.google-analytics.com https://*.maksekeskus.ee https://maps.googleapis.com; frame-src 'self' https://www.google.com https://*.maksekeskus.ee https://payment.maksekeskus.ee https://www.google.com/maps/; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"

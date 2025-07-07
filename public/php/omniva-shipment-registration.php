@@ -1,11 +1,14 @@
 <?php
+// Set error reporting but don't display errors to users
 // NOTE: SECURITY CONSIDERATION - In a production environment, these credentials should be loaded
 // from secure environment variables or a database, rather than being hardcoded in the source code.
 // This is especially important for API credentials that provide access to shipping services.
 
 // Enable error reporting for development
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors to users, but log them
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/omniva_error.log');
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -21,6 +24,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Log file for debugging
 $logFile = __DIR__ . '/omniva_shipment_log.txt';
+
+// Create log file if it doesn't exist with proper permissions
+if (!file_exists($logFile)) {
+    touch($logFile);
+    chmod($logFile, 0666); // Make writable by the web server
+}
 
 // Function to log messages
 function logMessage($message, $data = null) {
@@ -38,7 +47,10 @@ function logMessage($message, $data = null) {
 // Function to connect to Supabase via REST API
 function supabaseRequest($endpoint, $method = 'GET', $data = null) {
     $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
-    $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.VQgOh4VmI0hmyXawVt0-uOmMFgHXkqhkMFQxBLjjQME';
+    
+    // Load API key from environment variable if available, otherwise use hardcoded key
+    // For zone.ee, you can set this in .htaccess or php.ini
+    $supabaseKey = getenv('SUPABASE_SERVICE_KEY') ?: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.VQgOh4VmI0hmyXawVt0-uOmMFgHXkqhkMFQxBLjjQME';
     
     $url = $supabaseUrl . $endpoint;
     
@@ -129,9 +141,10 @@ function updateOrderWithOmnivaDetails($orderId, $barcode, $status) {
 // Function to register shipment with Omniva
 function registerOmnivaShipment($order) {
     // Omniva API credentials
-    $customerCode = '247723';
-    $username = '247723';
-    $password = 'Ddg(8?e:$A';
+    // Load from environment variables if available, otherwise use hardcoded values
+    $customerCode = getenv('OMNIVA_CUSTOMER_CODE') ?: '247723';
+    $username = getenv('OMNIVA_USERNAME') ?: '247723';
+    $password = getenv('OMNIVA_PASSWORD') ?: 'Ddg(8?e:$A';
     
     // Generate a unique file ID
     $fileId = uniqid('leen_', true);
@@ -207,6 +220,10 @@ function registerOmnivaShipment($order) {
     // Make the API request to Omniva
     $ch = curl_init('https://omx.omniva.eu/api/v01/omx/shipments/business-to-client');
     
+    // Set a reasonable timeout
+    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+    
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
@@ -220,6 +237,13 @@ function registerOmnivaShipment($order) {
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $error = curl_error($ch);
+    
+    // Log the request details for debugging
+    logMessage("Omniva API request", [
+        'url' => 'https://omx.omniva.eu/api/v01/omx/shipments/business-to-client',
+        'httpCode' => $httpCode,
+        'error' => $error ? $error : 'none'
+    ]);
     
     curl_close($ch);
     

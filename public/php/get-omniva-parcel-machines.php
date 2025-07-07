@@ -33,7 +33,7 @@ function logMessage($message, $data = null) {
 
 // Cache settings
 $cacheFile = __DIR__ . '/omniva_locations_cache.json';
-$cacheExpiry = 6 * 3600; // 6 hours in seconds
+$cacheExpiry = 24 * 3600; // 24 hours in seconds - increased for zone.ee
 
 // Get country from query parameter, default to 'ee' (Estonia)
 $country = isset($_GET['country']) ? strtolower($_GET['country']) : 'ee';
@@ -57,6 +57,12 @@ try {
         logMessage("Using cached parcel machine data");
         $locationsData = file_get_contents($cacheFile);
         $locations = json_decode($locationsData, true);
+        
+        // Check if the cache is valid JSON
+        if ($locations === null && json_last_error() !== JSON_ERROR_NONE) {
+            logMessage("Cache file contains invalid JSON, fetching fresh data");
+            $useCache = false;
+        }
     } else {
         logMessage("Fetching fresh parcel machine data from Omniva API");
         
@@ -89,7 +95,13 @@ try {
         
         // Cache the response
         file_put_contents($cacheFile, $response);
-        logMessage("Cached fresh parcel machine data");
+        
+        // Verify the cache was written successfully
+        if (file_exists($cacheFile)) {
+            logMessage("Cached fresh parcel machine data");
+        } else {
+            logMessage("Failed to write cache file");
+        }
     }
     
     // Filter locations by country and type (parcel machines only)
