@@ -508,6 +508,7 @@
         "dimensions": "Dimensions (cm)",
         "height": "Height",
         "width": "Width",
+        "weight": "Weight",
         "depth": "Depth",
         "available": "Product is available",
         "loading_categories": "Loading categories...",

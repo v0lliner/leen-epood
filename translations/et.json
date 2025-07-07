@@ -508,6 +508,7 @@
         "dimensions": "Mõõdud (cm)",
         "height": "Kõrgus",
         "width": "Laius",
+        "weight": "Kaal",
         "depth": "Sügavus",
         "available": "Toode on saadaval",
         "loading_categories": "Kategooriate laadimine...",
