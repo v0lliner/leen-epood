@@ -19,12 +19,13 @@ const Checkout = () => {
   const [termsError, setTermsError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [deliveryMethodError, setDeliveryMethodError] = useState('');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('swedbank');
-  const [selectedCountry, setSelectedCountry] = useState('Estonia');
   const [omnivaParcelMachines, setOmnivaParcelMachines] = useState([]);
   const [selectedParcelMachine, setSelectedParcelMachine] = useState('');
+  const [selectedParcelMachineName, setSelectedParcelMachineName] = useState('');
   const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
   const [parcelMachineError, setParcelMachineError] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('swedbank');
+  const [selectedCountry, setSelectedCountry] = useState('Estonia');
   const [cardDetails, setCardDetails] = useState({
     cardNumber: '',
     expiryMonth: '',
@@ -155,6 +156,69 @@ const Checkout = () => {
     }
   };
 
+  // Load Omniva parcel machines when delivery method is selected
+  useEffect(() => {
+    if (deliveryMethod === 'omniva-parcel-machine') {
+      loadOmnivaParcelMachines();
+    }
+  }, [deliveryMethod, selectedCountry]);
+
+  // Function to load Omniva parcel machines
+  const loadOmnivaParcelMachines = async () => {
+    setLoadingParcelMachines(true);
+    setParcelMachineError('');
+    
+    try {
+      // Get country code for API
+      const countryCode = getCountryCode(selectedCountry);
+      
+      const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
+      
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${await response.text()}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setOmnivaParcelMachines(data.parcelMachines || []);
+      } else {
+        setParcelMachineError(data.error || 'Failed to load parcel machines');
+      }
+    } catch (err) {
+      console.error('Error loading parcel machines:', err);
+      setParcelMachineError('Pakiautomaatide laadimine ebaõnnestus');
+    } finally {
+      setLoadingParcelMachines(false);
+    }
+  };
+
+  // Function to get country code for Omniva API
+  const getCountryCode = (country) => {
+    const countryMap = {
+      'Estonia': 'ee',
+      'Latvia': 'lv',
+      'Lithuania': 'lt',
+      'Finland': 'fi'
+    };
+    
+    return countryMap[country] || 'ee';
+  };
+
+  // Handle parcel machine selection
+  const handleParcelMachineChange = (e) => {
+    const machineId = e.target.value;
+    setSelectedParcelMachine(machineId);
+    
+    // Find the selected machine name
+    if (machineId) {
+      const machine = omnivaParcelMachines.find(m => m.id === machineId);
+      setSelectedParcelMachineName(machine ? machine.name : '');
+    } else {
+      setSelectedParcelMachineName('');
+    }
+  };
+
   const handlePaymentMethodSelection = (method) => {
     // Clear any previous errors when changing payment method
     setError('');
@@ -232,7 +296,7 @@ const Checkout = () => {
     
     // Check if parcel machine is selected when Omniva delivery is chosen
     if (deliveryMethod === 'omniva-parcel-machine' && !selectedParcelMachine) {
-      setDeliveryMethodError('Palun valige pakiautomaat');
+      setParcelMachineError('Palun valige pakiautomaat');
       return false;
     }
 
@@ -286,8 +350,12 @@ const Checkout = () => {
       }
       
       // Calculate final amount including delivery cost
-      const deliveryCost = (deliveryMethod === 'parcel-machine' || deliveryMethod === 'omniva-parcel-machine') ? 3.99 : 0;
+      const deliveryCost = deliveryMethod === 'parcel-machine' ? 3.99 : 0;
       const finalAmount = (parseFloat(totalPrice) + deliveryCost).toFixed(2);
+      
+      // For Omniva delivery, use the same delivery cost
+      const omnivaDeliveryCost = deliveryMethod === 'omniva-parcel-machine' ? 3.99 : 0;
+      const finalAmountWithOmniva = (parseFloat(totalPrice) + omnivaDeliveryCost).toFixed(2);
       
       // Generate a unique order reference
       const orderReference = generateOrderReference();
@@ -315,8 +383,8 @@ const Checkout = () => {
         country: formData.country,
         paymentMethod: selectedPaymentMethod,
         deliveryMethod: deliveryMethod,
-        omnivaParcelMachineId: omnivaParcelMachineId,
-        omnivaParcelMachineName: omnivaParcelMachineName,
+        omnivaParcelMachineId: deliveryMethod === 'omniva-parcel-machine' ? selectedParcelMachine : null,
+        omnivaParcelMachineName: deliveryMethod === 'omniva-parcel-machine' ? selectedParcelMachineName : null,
         items: items.map(item => ({
           id: item.id,
           title: item.title,
@@ -572,7 +640,7 @@ const Checkout = () => {
                             <div className="delivery-method-content">
                               <h4>Tulen ise järele</h4>
                               <p>Jõeääre, Märjamaa, Märjamaa vald 78218</p>
-                              <p className="delivery-price">Tasuta</p>
+                              <p className="delivery-price">Tasuta (0.00€)</p>
                             </div>
                           </div>
                           
@@ -584,7 +652,7 @@ const Checkout = () => {
                               <div className={`radio-indicator ${deliveryMethod === 'omniva-parcel-machine' ? 'active' : ''}`}></div>
                             </div>
                             <div className="delivery-method-content">
-                              <h4>Omniva pakiautomaat</h4>
+                              <h4>Omniva pakiautomaati</h4>
                               <p>Toode saadetakse valitud Omniva pakiautomaati</p>
                               <p className="delivery-price">3.99€</p>
                             </div>
@@ -600,28 +668,33 @@ const Checkout = () => {
                                   <span>Laadin pakiautomaate...</span>
                                 </div>
                               ) : (
-                                <>
-                                  <select
-                                    id="parcel-machine"
-                                    value={selectedParcelMachine}
-                                    onChange={handleParcelMachineChange}
-                                    className="form-input"
-                                    disabled={loadingParcelMachines}
-                                  >
-                                    <option value="">-- Valige pakiautomaat --</option>
-                                    {omnivaParcelMachines.map(machine => (
-                                      <option key={machine.id} value={machine.id}>
-                                        {machine.name} ({machine.address})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  
-                                  {parcelMachineError && (
-                                    <div className="field-error">
-                                      {parcelMachineError}
-                                    </div>
-                                  )}
-                                </>
+                                <select
+                                  id="parcel-machine"
+                                  value={selectedParcelMachine}
+                                  onChange={handleParcelMachineChange}
+                                  className="form-input"
+                                  disabled={loadingParcelMachines}
+                                >
+                                  <option value="">-- Valige pakiautomaat --</option>
+                                  {omnivaParcelMachines.map(machine => (
+                                    <option key={machine.id} value={machine.id}>
+                                      {machine.name} - {machine.address}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                              
+                              {parcelMachineError && (
+                                <div className="field-error">
+                                  {parcelMachineError}
+                                </div>
+                              )}
+                              
+                              {selectedParcelMachineName && (
+                                <div className="selected-machine-info">
+                                  <span className="machine-icon">📍</span>
+                                  <span className="machine-name">{selectedParcelMachineName}</span>
+                                </div>
                               )}
                             </div>
                           )}
@@ -910,13 +983,13 @@ const Checkout = () => {
                   
                   <div className="summary-row">
                     <span>Tarne</span>
-                    <span>{deliveryMethod === 'parcel-machine' ? '3.99€' : '0.00€'}</span>
+                    <span>{(deliveryMethod === 'parcel-machine' || deliveryMethod === 'omniva-parcel-machine') ? '3.99€' : '0.00€'}</span>
                   </div>
                   
                   <div className="summary-total">
                     <span>Kokku</span>
                     <span>
-                      {deliveryMethod === 'parcel-machine' 
+                      {(deliveryMethod === 'parcel-machine' || deliveryMethod === 'omniva-parcel-machine')
                         ? (parseFloat(totalPrice) + 3.99).toFixed(2) + '€' 
                         : formattedTotalPrice}
                     </span>
@@ -1178,6 +1251,57 @@ const Checkout = () => {
         .delivery-method.selected {
           border-color: var(--color-ultramarine);
           background-color: rgba(47, 62, 156, 0.1);
+        }
+
+        .parcel-machine-selection {
+          margin-top: 16px;
+          padding: 16px;
+          background: #f8f9fa;
+          border-radius: 8px;
+          border-left: 3px solid var(--color-ultramarine);
+        }
+
+        .parcel-machine-selection label {
+          display: block;
+          margin-bottom: 8px;
+          font-weight: 500;
+        }
+
+        .loading-indicator {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          margin: 8px 0;
+          color: #666;
+          font-size: 0.9rem;
+        }
+
+        .loading-spinner-small {
+          width: 16px;
+          height: 16px;
+          border: 2px solid #f3f3f3;
+          border-top: 2px solid var(--color-ultramarine);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+
+        .selected-machine-info {
+          margin-top: 12px;
+          padding: 8px 12px;
+          background: rgba(47, 62, 156, 0.1);
+          border-radius: 4px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+
+        .machine-icon {
+          font-size: 1.25rem;
+        }
+
+        .machine-name {
+          font-weight: 500;
+          color: var(--color-ultramarine);
         }
 
         .delivery-method-radio {
