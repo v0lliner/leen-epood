@@ -280,7 +280,6 @@ const Contact = () => {
                         value={formData.phone}
                         onChange={handleInputChange}
                         className="form-input"
-                        placeholder="+372 5xxx xxxx"
                       />
                     </div>
                     
