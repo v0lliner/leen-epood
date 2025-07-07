@@ -325,83 +325,12 @@ const Contact = () => {
                       <span className="contact-label">{t('contact.info.email_label')}</span>
                       <a href="mailto:leen@leen.ee" className="btn btn-underline contact-value">
                         {t('contact.info.email')}
-                {success ? (
-                  <div className="success-message">
-                    <div className="success-icon">✓</div>
-                    <h4>{t('contact.form.success_message')}</h4>
-                    <p>Teid suunatakse peagi avalehele...</p>
+                      </a>
+                    </div>
                   </div>
-                ) : (
-                  <form onSubmit={handleSubmit} className="contact-form">
-                    {error && <div className="error-message">{error}</div>}
-                    
-                    <div className="form-group">
-                      <label htmlFor="name">{t('contact.form.name')}</label>
-                      <input
-                        type="text"
-                        id="name"
-                        name="name"
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        required
-                        className="form-input"
-                        disabled={loading}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="email">{t('contact.form.email')}</label>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        required
-                        className="form-input"
-                        disabled={loading}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="phone">Telefon (valikuline)</label>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleInputChange}
-                        className="form-input"
-                        disabled={loading}
-                      />
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="message">{t('contact.form.message')}</label>
-                      <textarea
-                        id="message"
-                        name="message"
-                        rows="6"
-                        value={formData.message}
-                        onChange={handleInputChange}
-                        required
-                        className="form-input"
-                        disabled={loading}
-                      ></textarea>
-                    </div>
-                    
-                    <button 
-                      type="submit" 
-                      className="link-with-arrow contact-submit-btn"
-                      disabled={loading}
-                    >
-                      {loading ? 'Saadan...' : t('contact.form.send')} 
-                      {!loading && <span className="arrow-wrapper">→</span>}
-                    </button>
-                  </form>
-                )}
-              </div>
-            </FadeInSection>
+                </div>
+              </FadeInSection>
+            </div>
           </div>
         </section>
       </main>
