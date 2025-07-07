@@ -303,6 +303,7 @@
       "title": "Saatke sõnum",
       "name": "Nimi",
       "email": "E-post",
+      "phone": "Telefon (valikuline)",
       "message": "Sõnum",
       "send": "Saada",
       "success_message": "Sõnum saadetud! Leen vastab teile esimesel võimalusel."

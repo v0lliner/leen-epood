@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import SEOHead from '../components/Layout/SEOHead';
+import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 
 const Contact = () => {
@@ -8,8 +9,12 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     message: ''
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -19,12 +24,37 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Vormi saatmine:', formData);
-    // Here would be form submission logic
-    alert(t('contact.form.success_message'));
-    setFormData({ name: '', email: '', message: '' });
+    
+    // Reset states
+    setSubmitError('');
+    setSubmitSuccess(false);
+    setIsSubmitting(true);
+    
+    try {
+      const response = await fetch('/php/mailer.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok && data.success) {
+        setSubmitSuccess(true);
+        setFormData({ name: '', email: '', phone: '', message: '' });
+      } else {
+        setSubmitError(data.message || 'Sõnumi saatmine ebaõnnestus. Palun proovige hiljem uuesti.');
+      }
+    } catch (error) {
+      console.error('Form submission error:', error);
+      setSubmitError('Võrguühenduse viga. Palun proovige hiljem uuesti.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Custom Google Maps styling that matches the website's aesthetic
@@ -243,6 +273,19 @@ const Contact = () => {
                     </div>
                     
                     <div className="form-group">
+                      <label htmlFor="phone">{t('contact.form.phone')}</label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className="form-input"
+                        placeholder="+372 5xxx xxxx"
+                      />
+                    </div>
+                    
+                    <div className="form-group">
                       <label htmlFor="message">{t('contact.form.message')}</label>
                       <textarea
                         id="message"
@@ -253,10 +296,26 @@ const Contact = () => {
                         required
                         className="form-input"
                       ></textarea>
+                      
+                      {submitError && (
+                        <div className="form-error">
+                          {submitError}
+                        </div>
+                      )}
+                      
+                      {submitSuccess && (
+                        <div className="form-success">
+                          {t('contact.form.success_message')}
+                        </div>
+                      )}
                     </div>
                     
-                    <button type="submit" className="link-with-arrow contact-submit-btn">
-                      {t('contact.form.send')} <span className="arrow-wrapper">→</span>
+                    <button 
+                      type="submit" 
+                      className="link-with-arrow contact-submit-btn"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'Saadan...' : t('contact.form.send')} <span className="arrow-wrapper">→</span>
                     </button>
                   </form>
                 </div>
@@ -374,6 +433,8 @@ const Contact = () => {
           font-size: 1rem;
           transition: border-color 0.2s ease;
           background-color: var(--color-background);
+          width: 100%;
+          box-sizing: border-box;
         }
 
         .form-input:focus {
@@ -401,6 +462,26 @@ const Contact = () => {
 
         .contact-submit-btn:hover {
           opacity: 0.8;
+        }
+
+        .form-error {
+          background-color: #fee;
+          color: #c33;
+          padding: 12px 16px;
+          border-radius: 4px;
+          border: 1px solid #fcc;
+          margin-top: 16px;
+          font-size: 0.9rem;
+        }
+
+        .form-success {
+          background-color: #efe;
+          color: #363;
+          padding: 12px 16px;
+          border-radius: 4px;
+          border: 1px solid #cfc;
+          margin-top: 16px;
+          font-size: 0.9rem;
         }
 
         .contact-info h3 {
@@ -490,6 +571,10 @@ const Contact = () => {
 
           .contact-details {
             gap: 20px;
+          }
+
+          .form-input {
+            padding: 10px 14px;
           }
 
           .map-section {

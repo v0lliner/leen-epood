@@ -303,6 +303,7 @@
       "title": "Send a message",
       "name": "Name",
       "email": "Email",
+      "phone": "Phone (optional)",
       "message": "Message",
       "send": "Send",
       "success_message": "Message sent! Leen will respond to you as soon as possible."
