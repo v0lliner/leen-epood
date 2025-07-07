@@ -5,8 +5,6 @@ import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
-import { getApiUrl } from '../utils/api';
-import { getOmnivaParcelMachines } from '../utils/omnivaApi';
 
 const Checkout = () => {
   const { t, i18n } = useTranslation();
@@ -144,7 +142,13 @@ const Checkout = () => {
       
       const countryCode = countryMap[country] || 'ee';
       
-      const data = await getOmnivaParcelMachines(countryCode);
+      const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+      
+      const data = await response.json();
       
       if (data.success && data.parcelMachines) {
         setParcelMachines(data.parcelMachines);
@@ -322,7 +326,7 @@ const Checkout = () => {
       console.log('Sending payment request with payload:', payload);
       
       // Call the PHP endpoint to create a transaction and payment
-      const response = await fetch(getApiUrl('/php/process-payment.php'), {
+      const response = await fetch('/php/process-payment.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

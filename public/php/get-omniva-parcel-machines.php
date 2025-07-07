@@ -2,10 +2,6 @@
 // Enable error reporting for development
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors to users, but log them
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/omniva_error.log');
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/omniva_error.log');
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -21,18 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 // Log file for debugging
 $logFile = __DIR__ . '/omniva_parcel_machines_log.txt';
-
-// Create log file if it doesn't exist with proper permissions
-if (!file_exists($logFile)) {
-    touch($logFile);
-    chmod($logFile, 0666); // Make writable by the web server
-}
-
-// Create log file if it doesn't exist with proper permissions
-if (!file_exists($logFile)) {
-    touch($logFile);
-    chmod($logFile, 0666); // Make writable by the web server
-}
 
 // Function to log messages
 function logMessage($message, $data = null) {
@@ -77,10 +61,10 @@ try {
         logMessage("Fetching fresh parcel machine data from Omniva API");
         
         // Fetch data from Omniva API
-        $apiUrl = 'https://www.omniva.ee/locationsfull.json';
+        $apiUrl = 'https://www.omniva.ee/locations.json';
         $ch = curl_init($apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 30); // 30 seconds timeout
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10 seconds timeout
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         
         $response = curl_exec($ch);
@@ -105,8 +89,6 @@ try {
         
         // Cache the response
         file_put_contents($cacheFile, $response);
-        chmod($cacheFile, 0666); // Make writable by the web server
-        chmod($cacheFile, 0666); // Make writable by the web server
         logMessage("Cached fresh parcel machine data");
     }
     
@@ -115,7 +97,7 @@ try {
         return isset($location['A0_NAME']) && 
                strtolower($location['A0_NAME']) === $country && 
                isset($location['TYPE']) && 
-               ($location['TYPE'] === 0 || $location['TYPE'] === '0');
+               $location['TYPE'] === 'PARCEL_MACHINE';
     });
     
     // Reindex array to get sequential numeric keys
