@@ -6,6 +6,7 @@ import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
 import { getApiUrl } from '../utils/api';
+import { getOmnivaParcelMachines } from '../utils/omnivaApi';
 
 const Checkout = () => {
   const { t, i18n } = useTranslation();
@@ -143,7 +144,7 @@ const Checkout = () => {
       
       const countryCode = countryMap[country] || 'ee';
       
-      const data = await fetchOmnivaParcelMachines(countryCode);
+      const data = await getOmnivaParcelMachines(countryCode);
       
       if (data.success && data.parcelMachines) {
         setParcelMachines(data.parcelMachines);
