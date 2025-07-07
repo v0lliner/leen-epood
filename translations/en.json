@@ -245,7 +245,7 @@
       "courier": {
         "title": "DPD Courier",
         "description": "Delivery in 1-2 business days",
-        "price": "5.99€"
+        "price": "5.99€",
         "address": "Address",
         "address_placeholder": "Street, house, apartment",
         "city": "City",
