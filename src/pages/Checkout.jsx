@@ -19,10 +19,6 @@ const Checkout = () => {
   const [termsError, setTermsError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('');
   const [deliveryMethodError, setDeliveryMethodError] = useState('');
-  const [parcelMachines, setParcelMachines] = useState([]);
-  const [selectedParcelMachine, setSelectedParcelMachine] = useState('');
-  const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
-  const [parcelMachineError, setParcelMachineError] = useState('');
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('swedbank');
   const [selectedCountry, setSelectedCountry] = useState('Estonia');
   const [parcelMachines, setParcelMachines] = useState([]);
@@ -148,11 +144,6 @@ const Checkout = () => {
       ...prev,
       [name]: value
     }));
-
-    // If country changes, reset selected parcel machine
-    if (name === 'country') {
-      setSelectedParcelMachine('');
-    }
     
     // Clear error when user types
     if (error) setError('');
@@ -184,64 +175,6 @@ const Checkout = () => {
   const handleDeliveryMethodChange = (method) => {
     setDeliveryMethod(method);
     setDeliveryMethodError('');
-    
-    // Load parcel machines when parcel-machine delivery method is selected
-    if (method === 'parcel-machine') {
-      loadParcelMachines();
-    }
-  };
-
-  // Function to load parcel machines based on selected country
-  const loadParcelMachines = async () => {
-    try {
-      setLoadingParcelMachines(true);
-      setParcelMachineError('');
-      
-      // Map country names to country codes
-      const countryCodeMap = {
-        'Estonia': 'ee',
-        'Latvia': 'lv',
-        'Lithuania': 'lt',
-        'Finland': 'fi'
-      };
-      
-      const countryCode = countryCodeMap[formData.country] || 'ee';
-      
-      const response = await fetch(`/php/get-parcel-machines.php?country=${countryCode}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success && data.destinations) {
-        // Organize parcel machines by carrier
-        const organizedMachines = {};
-        
-        data.destinations.forEach(destination => {
-          if (!organizedMachines[destination.carrier]) {
-            organizedMachines[destination.carrier] = [];
-          }
-          
-          organizedMachines[destination.carrier].push(destination);
-        });
-        
-        setParcelMachines(organizedMachines);
-      } else {
-        throw new Error(data.error || 'Failed to load parcel machines');
-      }
-    } catch (err) {
-      console.error('Error loading parcel machines:', err);
-      setParcelMachineError('Pakiautomaatide laadimine ebaõnnestus');
-    } finally {
-      setLoadingParcelMachines(false);
-    }
-  };
-
-  // Function to handle parcel machine selection
-  const handleParcelMachineChange = (e) => {
-    setSelectedParcelMachine(e.target.value);
   };
 
   const handlePaymentMethodSelection = (method) => {
@@ -318,12 +251,6 @@ const Checkout = () => {
       setDeliveryMethodError('Palun valige tarneviis');
       return false;
     }
-    
-    // Check if parcel machine is selected when delivery method is parcel-machine
-    if (deliveryMethod === 'parcel-machine' && !selectedParcelMachine) {
-      setParcelMachineError('Palun valige pakiautomaat');
-      return false;
-    }
 
     // Check terms agreement
     if (!termsAgreed) {
@@ -384,33 +311,6 @@ const Checkout = () => {
       const deliveryCost = deliveryMethod === 'parcel-machine' ? 3.99 : 0;
       const finalAmount = (parseFloat(totalPrice) + deliveryCost).toFixed(2);
 
-      // Get selected parcel machine details if applicable
-      let shippingAddress = '';
-      let shippingCity = '';
-      let shippingPostalCode = '';
-      
-      if (deliveryMethod === 'parcel-machine' && selectedParcelMachine) {
-        // Find the selected parcel machine from all carriers
-        let selectedMachine = null;
-        
-        Object.values(parcelMachines).forEach(carrierMachines => {
-          const found = carrierMachines.find(machine => machine.id === selectedParcelMachine);
-          if (found) {
-            selectedMachine = found;
-          }
-        });
-        
-        if (selectedMachine) {
-          shippingAddress = `${selectedMachine.name} (${selectedMachine.carrier})`;
-          shippingCity = selectedMachine.city || '';
-          shippingPostalCode = selectedMachine.zip || '';
-        }
-      } else if (deliveryMethod === 'self-pickup') {
-        shippingAddress = 'Tulen ise järele';
-        shippingCity = 'Märjamaa';
-        shippingPostalCode = '78218';
-      }
-
       // Prepare shipping details based on delivery method
       let shippingDetails = {};
       if (deliveryMethod === 'parcel-machine' && selectedParcelMachine) {
@@ -435,13 +335,7 @@ const Checkout = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
-        shippingAddress: shippingAddress,
-        shippingCity: shippingCity,
-        shippingPostalCode: shippingPostalCode,
-        country: formData.country,
-        paymentMethod: selectedPaymentMethod,
-        deliveryMethod: deliveryMethod,
-        parcelMachineId: selectedParcelMachine,
+        country: selectedCountry,
         shippingAddress: formData.shippingAddress || '',
         shippingCity: formData.shippingCity || '',
         shippingPostalCode: formData.shippingPostalCode || '',
@@ -464,8 +358,6 @@ const Checkout = () => {
       // Prepare the final request payload
       const payload = {
         ...orderData,
-        // Add return URL with order reference for success page
-        return_url: `https://leen.ee/checkout/success?reference=${orderReference}`,
         // Only include token for card payments
         ...(selectedPaymentMethod === 'card' && cardToken ? { token: cardToken } : {})
       };
@@ -713,10 +605,15 @@ const Checkout = () => {
                               <p className="delivery-price">Tasuta</p>
                             </div>
                           </div>
-
+                          
                           <div 
-                            className={`delivery-method ${deliveryMethod === 'parcel-machine' ? 'selected' : ''}`}
-                            onClick={() => handleDeliveryMethodChange('parcel-machine')}
+                            className={`delivery-method ${deliveryMethod === 'parcel-machine' ? 'selected' : ''} ${deliveryMethod === 'parcel-machine' && !selectedParcelMachine ? 'needs-selection' : ''}`}
+                            onClick={() => {
+                              handleDeliveryMethodChange('parcel-machine');
+                              if (parcelMachines.length === 0) {
+                                loadParcelMachines();
+                              }
+                            }}
                           >
                             <div className="delivery-method-radio">
                               <div className={`radio-indicator ${deliveryMethod === 'parcel-machine' ? 'active' : ''}`}></div>
@@ -725,45 +622,6 @@ const Checkout = () => {
                               <h4>Pakiautomaati</h4>
                               <p>Toode saadetakse valitud pakiautomaati</p>
                               <p className="delivery-price">3.99€</p>
-                              
-                              {/* Parcel machine dropdown - only show when this delivery method is selected */}
-                              {deliveryMethod === 'parcel-machine' && (
-                                <div className="parcel-machine-selector">
-                                  {loadingParcelMachines ? (
-                                    <div className="loading-parcel-machines">
-                                      <div className="loading-spinner-small"></div>
-                                      <span>Laadin pakiautomaate...</span>
-                                    </div>
-                                  ) : (
-                                    <div className="parcel-machine-dropdown">
-                                      <select
-                                        value={selectedParcelMachine}
-                                        onChange={handleParcelMachineChange}
-                                        className="form-input"
-                                      >
-                                        <option value="">Vali pakiautomaat</option>
-                                        {Object.entries(parcelMachines).map(([carrier, machines]) => (
-                                          <optgroup key={carrier} label={carrier === 'omniva' ? 'Omniva' : 
-                                                           carrier === 'smartpost' ? 'Smartpost' : 
-                                                           carrier === 'dpd' ? 'DPD' : carrier}>
-                                            {machines.map(machine => (
-                                              <option key={machine.id} value={machine.id}>
-                                                {machine.name} - {machine.city}
-                                              </option>
-                                            ))}
-                                          </optgroup>
-                                        ))}
-                                      </select>
-                                      
-                                      {parcelMachineError && (
-                                        <div className="field-error">
-                                          {parcelMachineError}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
                             </div>
                           </div>
 
@@ -1427,29 +1285,6 @@ const Checkout = () => {
           color: var(--color-ultramarine) !important;
         }
 
-        .parcel-machine-selector {
-          margin-top: 16px;
-          padding-top: 16px;
-          border-top: 1px dashed #ddd;
-        }
-
-        .loading-parcel-machines {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          font-size: 0.9rem;
-          color: #666;
-        }
-
-        .loading-spinner-small {
-          width: 16px;
-          height: 16px;
-          border: 2px solid #f3f3f3;
-          border-top: 2px solid var(--color-ultramarine);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
         .parcel-machine-selection {
           margin-top: 16px;
           margin-left: 40px;
@@ -1524,8 +1359,6 @@ const Checkout = () => {
 
         .payment-country-selector {
           margin-bottom: 24px;
-          position: relative;
-          z-index: 2;
         }
 
         .payment-country-selector h4 {
@@ -1538,11 +1371,8 @@ const Checkout = () => {
 
         .country-buttons {
           display: flex;
-          flex-wrap: nowrap;
-          overflow-x: auto;
+          flex-wrap: wrap;
           gap: 12px;
-          padding-bottom: 8px;
-          max-width: 100%;
         }
 
         .country-button {
@@ -1555,8 +1385,6 @@ const Checkout = () => {
           font-size: 0.9rem;
           cursor: pointer;
           transition: all 0.2s ease;
-          white-space: nowrap;
-          flex-shrink: 0;
         }
 
         .country-button:hover {
@@ -1572,8 +1400,6 @@ const Checkout = () => {
         .bank-selection h4 {
           font-family: var(--font-heading);
           font-size: 1rem;
-          position: relative;
-          z-index: 1;
           font-weight: 500;
           margin-bottom: 16px;
           color: var(--color-text);
@@ -1583,8 +1409,6 @@ const Checkout = () => {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
           gap: 16px;
-          position: relative;
-          z-index: 1;
         }
 
         .bank-option {
@@ -1911,16 +1735,6 @@ const Checkout = () => {
           .parcel-machine-selection {
             margin-left: 0;
             margin-top: 16px;
-          }
-
-          .country-buttons {
-            justify-content: center;
-            padding: 16px 0;
-            flex-wrap: wrap;
-          }
-
-          .sort-dropdown {
-            margin-bottom: 16px;
           }
         }
       `}</style>
