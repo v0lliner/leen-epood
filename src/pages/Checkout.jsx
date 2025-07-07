@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
-import { useCart } from '../context/CartContext';
 import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
 
 const Checkout = () => {
@@ -34,6 +34,8 @@ const Checkout = () => {
   const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
   const [selectedParcelMachine, setSelectedParcelMachine] = useState('');
   const [parcelMachineError, setParcelMachineError] = useState('');
+  const [omnivaParcelMachines, setOmnivaParcelMachines] = useState([]);
+  const [selectedOmnivaParcelMachine, setSelectedOmnivaParcelMachine] = useState(null);
   
   const [formData, setFormData] = useState({
     email: '',
@@ -45,12 +47,87 @@ const Checkout = () => {
     notes: ''
   });
 
+  // Define country code mapping
+  const countryCodeMap = {
+    'Estonia': 'ee',
+    'Latvia': 'lv',
+    'Lithuania': 'lt',
+    'Finland': 'fi'
+  };
+
   // Update total price whenever cart items change
   useEffect(() => {
     const total = getTotalPrice();
     setTotalPrice(total.toFixed(2));
     setFormattedTotalPrice(total.toFixed(2) + '€');
   }, [items, getTotalPrice]);
+
+  useEffect(() => {
+    // If cart is empty, redirect to shop
+    if (items.length === 0) {
+      navigate('/epood');
+    }
+  }, [items, navigate]);
+
+  // Fetch Omniva parcel machines when delivery method is set to 'omniva-parcel-machine'
+  useEffect(() => {
+    if (deliveryMethod === 'omniva-parcel-machine') {
+      const fetchParcelMachines = async () => {
+        setLoadingParcelMachines(true);
+        setParcelMachineError('');
+        setOmnivaParcelMachines([]);
+        setSelectedOmnivaParcelMachine(null);
+        
+        try {
+          // Get country code from the mapping
+          const countryCode = countryCodeMap[selectedCountry] || 'ee';
+          console.log('Fetching Omniva parcel machines for country:', selectedCountry, 'code:', countryCode);
+          
+          const url = `/php/get-omniva-parcel-machines.php?country=${countryCode}`;
+          console.log('Fetch URL:', url);
+          
+          const response = await fetch(url);
+          console.log('Omniva API response status:', response.status);
+          
+          // Log the raw response text for debugging
+          const responseText = await response.text();
+          console.log('Omniva API response text:', responseText);
+          
+          // Parse the response text back to JSON
+          let data;
+          try {
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('Error parsing JSON response:', parseError);
+            throw new Error('Invalid response format');
+          }
+          
+          console.log('Parsed Omniva API response:', data);
+          
+          if (data.success && Array.isArray(data.parcelMachines)) {
+            console.log('Successfully fetched', data.parcelMachines.length, 'parcel machines');
+            setOmnivaParcelMachines(data.parcelMachines);
+            
+            // If there are parcel machines, select the first one by default
+            if (data.parcelMachines.length > 0) {
+              setSelectedOmnivaParcelMachine(data.parcelMachines[0]);
+              console.log('Selected first parcel machine by default:', data.parcelMachines[0]);
+            }
+          } else {
+            console.error('Invalid response format or no parcel machines returned:', data);
+            setParcelMachineError(t('checkout.shipping.omniva.no_machines'));
+          }
+        } catch (error) {
+          console.error('Error fetching Omniva parcel machines:', error);
+          setParcelMachineError(t('checkout.shipping.omniva.fetch_error'));
+        } finally {
+          setLoadingParcelMachines(false);
+        }
+      };
+      
+      fetchParcelMachines();
+    }
+  }, [deliveryMethod, selectedCountry, t]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -97,6 +174,10 @@ const Checkout = () => {
   };
 
   const handleParcelMachineChange = (e) => {
+    const machineId = e.target.value;
+    const machine = omnivaParcelMachines.find(m => m.id === machineId);
+    console.log('Selected parcel machine:', machine);
+    setSelectedOmnivaParcelMachine(machine || null);
     setSelectedParcelMachine(e.target.value);
     if (e.target.value) {
       setParcelMachineError('');
@@ -227,6 +308,12 @@ const Checkout = () => {
       return false;
     }
 
+    // Validate Omniva parcel machine selection if that delivery method is chosen
+    if (deliveryMethod === 'omniva-parcel-machine' && !selectedOmnivaParcelMachine) {
+      setError(t('checkout.shipping.omniva.required'));
+      return false;
+    }
+
     // Check terms agreement
     if (!termsAgreed) {
       setTermsError(t('checkout.terms.required'));
@@ -295,6 +382,39 @@ const Checkout = () => {
         }
       }
       
+      // Prepare merchant data with appropriate delivery information
+      const merchantData = {
+        customer_name: `${formData.firstName} ${formData.lastName}`,
+        customer_email: formData.email,
+        customer_phone: formData.phone,
+        items: items.map(item => ({
+          id: item.id,
+          title: item.title,
+          price: parseFloat(item.price.replace('€', '')),
+          quantity: 1
+        })),
+        deliveryMethod: deliveryMethod,
+        notes: formData.notes
+      };
+
+      // Add appropriate shipping address based on delivery method
+      if (deliveryMethod === 'courier') {
+        merchantData.shipping_address = formData.address;
+        merchantData.shipping_city = formData.city;
+        merchantData.shipping_postal_code = formData.postalCode;
+        merchantData.shipping_country = selectedCountry;
+      } else if (deliveryMethod === 'omniva-parcel-machine' && selectedOmnivaParcelMachine) {
+        // Add Omniva parcel machine details
+        merchantData.omnivaParcelMachineId = selectedOmnivaParcelMachine.id;
+        merchantData.omnivaParcelMachineName = selectedOmnivaParcelMachine.name;
+        merchantData.shipping_address = selectedOmnivaParcelMachine.address;
+        merchantData.shipping_city = selectedOmnivaParcelMachine.city;
+        merchantData.shipping_postal_code = ''; // Omniva doesn't provide postal codes
+        merchantData.shipping_country = selectedCountry;
+      }
+
+      console.log('Merchant data for payment processing:', merchantData);
+      
       // Prepare order data to send to PHP backend
       const orderData = {
         amount: finalAmount,
@@ -303,7 +423,8 @@ const Checkout = () => {
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
-        country: formData.country,
+        country: selectedCountry, // Full country name
+        countryCode: countryCodeMap[selectedCountry] || 'ee', // ISO country code
         paymentMethod: selectedPaymentMethod,
         deliveryMethod: deliveryMethod,
         omnivaParcelMachineId: omnivaParcelMachineId,
@@ -313,7 +434,11 @@ const Checkout = () => {
           title: item.title,
           price: parsePriceToAmount(item.price),
           quantity: 1
-        }))
+        })),
+        // Include all merchant data
+        ...merchantData,
+        return_url: `${window.location.origin}/checkout/success`,
+        cancel_url: `${window.location.origin}/checkout`
       };
       
       // Prepare the final request payload
@@ -557,38 +682,153 @@ const Checkout = () => {
                         </div>
                         
                         <div className="delivery-methods">
-                          <div 
-                            className={`delivery-method ${deliveryMethod === 'self-pickup' ? 'selected' : ''}`}
-                            onClick={() => handleDeliveryMethodChange('self-pickup')}
+                          <button
+                            type="button"
+                            className={`delivery-method ${deliveryMethod === 'courier' ? 'active' : ''}`}
+                            onClick={() => handleDeliveryMethodChange('courier')}
                           >
-                            <div className="delivery-method-radio">
-                              <div className={`radio-indicator ${deliveryMethod === 'self-pickup' ? 'active' : ''}`}></div>
-                            </div>
-                            <div className="delivery-method-content">
-                              <h4>Tulen ise järele</h4>
-                              <p>Jõeääre, Märjamaa, Märjamaa vald 78218</p>
-                              <p className="delivery-price">Tasuta</p>
-                            </div>
-                          </div>
-                          
-                          <div 
-                            className={`delivery-method ${deliveryMethod === 'omniva-parcel-machine' ? 'selected' : ''}`}
+                            <img src="/icons/pickup.svg" alt="" className="delivery-icon" />
+                            {t('checkout.shipping.courier.title')}
+                          </button>
+                          <button
+                            type="button"
+                            className={`delivery-method ${deliveryMethod === 'omniva-parcel-machine' ? 'active' : ''}`}
                             onClick={() => handleDeliveryMethodChange('omniva-parcel-machine')}
                           >
-                            <div className="delivery-method-radio">
-                              <div className={`radio-indicator ${deliveryMethod === 'omniva-parcel-machine' ? 'active' : ''}`}></div>
-                            </div>
-                            <div className="delivery-method-content">
-                              <h4>Omniva pakiautomaati</h4>
-                              <p>Toode saadetakse valitud pakiautomaati</p>
-                              <p className="delivery-price">3.99€</p>
-                            </div>
-                          </div>
+                            <img src="/icons/omniva-parcel-machine.svg" alt="" className="delivery-icon" />
+                            {t('checkout.shipping.omniva.title')}
+                          </button>
+                          <button
+                            type="button"
+                            className={`delivery-method ${deliveryMethod === 'pickup' ? 'active' : ''}`}
+                            onClick={() => handleDeliveryMethodChange('pickup')}
+                          >
+                            <img src="/icons/pickup.svg" alt="" className="delivery-icon" />
+                            {t('checkout.pickup')}
+                          </button>
                         </div>
                         
                         {deliveryMethodError && (
                           <div className="field-error">
                             {deliveryMethodError}
+                          </div>
+                        )}
+
+                        {/* Courier address form */}
+                        {deliveryMethod === 'courier' && (
+                          <div className="address-form">
+                            <div className="form-group">
+                              <label htmlFor="address">{t('checkout.shipping.courier.address')}</label>
+                              <input
+                                type="text"
+                                id="address"
+                                name="address"
+                                value={formData.address}
+                                onChange={handleInputChange}
+                                placeholder={t('checkout.shipping.courier.address_placeholder')}
+                                className="form-input"
+                                required={deliveryMethod === 'courier'}
+                              />
+                            </div>
+                            <div className="form-row">
+                              <div className="form-group">
+                                <label htmlFor="city">{t('checkout.shipping.courier.city')}</label>
+                                <input
+                                  type="text"
+                                  id="city"
+                                  name="city"
+                                  value={formData.city}
+                                  onChange={handleInputChange}
+                                  placeholder={t('checkout.shipping.courier.city_placeholder')}
+                                  className="form-input"
+                                  required={deliveryMethod === 'courier'}
+                                />
+                              </div>
+                              <div className="form-group">
+                                <label htmlFor="postalCode">{t('checkout.shipping.courier.postal_code')}</label>
+                                <input
+                                  type="text"
+                                  id="postalCode"
+                                  name="postalCode"
+                                  value={formData.postalCode}
+                                  onChange={handleInputChange}
+                                  placeholder={t('checkout.shipping.courier.postal_code_placeholder')}
+                                  className="form-input"
+                                  required={deliveryMethod === 'courier'}
+                                />
+                              </div>
+                            </div>
+                            <div className="form-group">
+                              <label htmlFor="country">{t('checkout.shipping.courier.country')}</label>
+                              <select
+                                id="country"
+                                name="country"
+                                value={selectedCountry}
+                                onChange={(e) => setSelectedCountry(e.target.value)}
+                                className="form-input"
+                                required
+                              >
+                                <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
+                                <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
+                                <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
+                                <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
+                              </select>
+                            </div>
+                          </div>
+                        )}
+
+                        {deliveryMethod === 'omniva-parcel-machine' && (
+                          <div className="parcel-machine-form">
+                            <div className="form-group">
+                              <label htmlFor="country">{t('checkout.shipping.courier.country')}</label>
+                              <select
+                                id="country"
+                                name="country"
+                                value={selectedCountry}
+                                onChange={(e) => setSelectedCountry(e.target.value)}
+                                className="form-input"
+                                required
+                              >
+                                <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
+                                <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
+                                <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
+                                <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
+                              </select>
+                            </div>
+                            
+                            <div className="form-group">
+                              <label htmlFor="parcelMachine">{t('checkout.shipping.omniva.select_machine')}</label>
+                              {loadingParcelMachines ? (
+                                <div className="loading-parcel-machines">
+                                  <div className="loading-spinner-small"></div>
+                                  <span>{t('checkout.shipping.omniva.loading')}</span>
+                                </div>
+                              ) : parcelMachineError ? (
+                                <div className="parcel-machine-error">
+                                  {parcelMachineError}
+                                </div>
+                              ) : omnivaParcelMachines.length > 0 ? (
+                                <select
+                                  id="parcelMachine"
+                                  name="parcelMachine"
+                                  value={selectedOmnivaParcelMachine?.id || ''}
+                                  onChange={handleParcelMachineChange}
+                                  className="form-input"
+                                  required={deliveryMethod === 'omniva-parcel-machine'}
+                                >
+                                  <option value="">{t('checkout.shipping.omniva.select_placeholder')}</option>
+                                  {omnivaParcelMachines.map(machine => (
+                                    <option key={machine.id} value={machine.id}>
+                                      {machine.name} - {machine.address}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <div className="no-parcel-machines">
+                                  {t('checkout.shipping.omniva.no_machines')}
+                                </div>
+                              )}
+                            </div>
                           </div>
                         )}
                         
@@ -625,6 +865,13 @@ const Checkout = () => {
                                 </>
                               )}
                             </div>
+                          </div>
+                        )}
+                        
+                        {deliveryMethod === 'pickup' && (
+                          <div className="pickup-info">
+                            <p>Jõeääre, Märjamaa, Märjamaa vald 78218</p>
+                            <p>Palun võtke ühendust enne tulekut: +372 5xxx xxxx</p>
                           </div>
                         )}
                       </div>
@@ -885,50 +1132,81 @@ const Checkout = () => {
               {/* Sidebar - Order Summary */}
               <FadeInSection className="checkout-sidebar">
                 <div className="checkout-summary">
-                  <h3>Tellimuse kokkuvõte</h3>
-                  
-                  <div className="summary-items">
-                    {items.map((item) => (
-                      <div key={item.id} className="summary-item">
-                        <span className="summary-item-name">{item.title}</span>
-                        <span className="summary-item-price">{item.price}</span>
+                  <div className="summary-card">
+                    <div className="summary-header">
+                      <h3>{t('checkout.summary.title')}</h3>
+                    </div>
+                    
+                    <div className="summary-content">
+                      <div className="summary-items">
+                        {items.map((item) => (
+                          <div key={item.id} className="summary-item">
+                            <div className="item-info">
+                              <h4>{item.title}</h4>
+                              <p className="item-price">{item.price}</p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  
-                  <div className="summary-divider"></div>
-                  
-                  <div className="summary-row">
-                    <span>Vahesumma</span>
-                    <span>{formattedTotalPrice}</span>
-                  </div>
-                  
-                  <div className="summary-row">
-                    <span>Tarne</span>
-                    <span>{deliveryMethod === 'omniva-parcel-machine' ? '3.99€' : '0.00€'}</span>
-                  </div>
-                  
-                  <div className="summary-total">
-                    <span>Kokku</span>
-                    <span>
-                      {deliveryMethod === 'omniva-parcel-machine' 
-                        ? (parseFloat(totalPrice) + 3.99).toFixed(2) + '€' 
-                        : formattedTotalPrice}
-                    </span>
-                  </div>
-                  
-                  <div className="checkout-info">
-                    <div className="info-item">
-                      <div className="info-icon">🔒</div>
-                      <p>{i18n.language === 'et' ? 'Turvaline tellimuse vormistamine' : 'Secure checkout'}</p>
-                    </div>
-                    <div className="info-item">
-                      <div className="info-icon">🚚</div>
-                      <p>{i18n.language === 'et' ? 'Tarne 2-4 tööpäeva jooksul' : 'Delivery within 2-4 business days'}</p>
-                    </div>
-                    <div className="info-item">
-                      <div className="info-icon">💌</div>
-                      <p>{i18n.language === 'et' ? 'Iga tellimuse juurde käib isiklik märge' : 'Each order includes a personal note'}</p>
+                      
+                      <div className="summary-totals">
+                        <div className="summary-row">
+                          <span>{t('checkout.summary.subtotal')}</span>
+                          <span>{getTotalPrice().toFixed(2)}€</span>
+                        </div>
+                        <div className="summary-row">
+                          <span>{t('checkout.summary.shipping')}</span>
+                          <span>
+                            {deliveryMethod === 'pickup' 
+                              ? '0.00€' 
+                              : deliveryMethod === 'courier' 
+                                ? t('checkout.shipping.courier.price')
+                                : t('checkout.shipping.omniva.price')}
+                          </span>
+                        </div>
+                        <div className="summary-row total">
+                          <span>{t('checkout.summary.total')}</span>
+                          <span>
+                            {(getTotalPrice() + (deliveryMethod === 'pickup' 
+                              ? 0 
+                              : deliveryMethod === 'courier' 
+                                ? parseFloat(t('checkout.shipping.courier.price').replace('€', '')) 
+                                : parseFloat(t('checkout.shipping.omniva.price').replace('€', ''))
+                              )).toFixed(2)}€
+                          </span>
+                        </div>
+                      </div>
+                      
+                      <div className="terms-checkbox">
+                        <label className="checkbox-label">
+                          <input type="checkbox" checked={termsAgreed} onChange={(e) => setTermsAgreed(e.target.checked)} />
+                          <span>{t('checkout.terms.agree')} <a href="/muugitingimused" target="_blank" rel="noopener noreferrer">{t('checkout.terms.terms_link')}</a></span>
+                        </label>
+                        {termsError && <div className="form-error">{termsError}</div>}
+                      </div>
+                      
+                      <button 
+                        type="submit" 
+                        className="checkout-button"
+                        disabled={isProcessing}
+                      >
+                        {isProcessing ? t('checkout.summary.processing') : t('checkout.summary.pay')}
+                      </button>
+                      
+                      <div className="checkout-info">
+                        <div className="info-item">
+                          <span className="info-icon">🔒</span>
+                          <span>{t('checkout.summary.info.secure')}</span>
+                        </div>
+                        <div className="info-item">
+                          <span className="info-icon">🚚</span>
+                          <span>{t('checkout.summary.info.shipping')}</span>
+                        </div>
+                        <div className="info-item">
+                          <span className="info-icon">✉️</span>
+                          <span>{t('checkout.summary.info.personal')}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1149,87 +1427,46 @@ const Checkout = () => {
 
         .delivery-methods {
           display: flex;
-          flex-direction: column;
           gap: 16px;
           margin-bottom: 24px;
         }
 
         .delivery-method {
-          display: flex;
-          align-items: flex-start;
-          gap: 16px;
+          flex: 1;
           padding: 16px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          background: none;
           border: 1px solid #ddd;
-          border-radius: 8px;
+          border-radius: 4px;
           cursor: pointer;
           transition: all 0.2s ease;
+          font-family: var(--font-body);
+          font-size: 0.9rem;
+          color: var(--color-text);
         }
 
         .delivery-method:hover {
           border-color: var(--color-ultramarine);
-          background-color: rgba(47, 62, 156, 0.05);
         }
 
-        .delivery-method.selected {
-          border-color: var(--color-ultramarine);
+        .delivery-method.active {
           background-color: rgba(47, 62, 156, 0.1);
-        }
-
-        .delivery-method-radio {
-          width: 24px;
-          height: 24px;
-          border: 2px solid #ddd;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          margin-top: 4px;
-          transition: all 0.2s ease;
-        }
-
-        .delivery-method.selected .delivery-method-radio {
           border-color: var(--color-ultramarine);
         }
-
-        .radio-indicator {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background-color: transparent;
-          transition: all 0.2s ease;
+        
+        .delivery-icon {
+          width: 20px;
+          height: 20px;
+          flex-shrink: 0;
         }
 
-        .radio-indicator.active {
-          background-color: var(--color-ultramarine);
-        }
-
-        .delivery-method-content {
-          flex: 1;
-        }
-
-        .delivery-method-content h4 {
-          font-family: var(--font-heading);
-          font-size: 1rem;
-          font-weight: 500;
-          margin-bottom: 4px;
-          color: var(--color-text);
-        }
-
-        .delivery-method-content p {
-          font-size: 0.9rem;
-          color: #666;
-          margin: 0;
-          margin-bottom: 4px;
-        }
-
-        .delivery-method-content p:last-child {
-          margin-bottom: 0;
-        }
-
-        .delivery-price {
-          font-weight: 500;
-          color: var(--color-ultramarine) !important;
+        .address-form,
+        .pickup-info,
+        .parcel-machine-form {
+          margin-top: 24px;
         }
         
         .parcel-machine-section {
@@ -1258,6 +1495,38 @@ const Checkout = () => {
           border-top: 2px solid var(--color-ultramarine);
           border-radius: 50%;
           animation: spin 1s linear infinite;
+        }
+
+        .parcel-machine-error,
+        .no-parcel-machines {
+          padding: 12px;
+          background: #fff5f5;
+          border: 1px solid #fed7d7;
+          border-radius: 4px;
+          color: #c53030;
+          margin-top: 8px;
+        }
+
+        .no-parcel-machines {
+          background: #f8f9fa;
+          border: 1px solid #e2e8f0;
+          color: #666;
+        }
+
+        .pickup-info {
+          padding: 16px;
+          background: #f8f9fa;
+          border-radius: 4px;
+          border: 1px solid #e2e8f0;
+        }
+
+        .pickup-info p {
+          margin: 0 0 8px 0;
+          color: #666;
+        }
+
+        .pickup-info p:last-child {
+          margin-bottom: 0;
         }
 
         .payment-section {
@@ -1598,6 +1867,26 @@ const Checkout = () => {
           .item-image {
             width: 100%;
             height: 160px;
+          }
+
+          .delivery-methods {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .delivery-method {
+            padding: 12px;
+            font-size: 0.9rem;
+          }
+          
+          .delivery-icon {
+            width: 16px;
+            height: 16px;
+          }
+
+          .form-row {
+            flex-direction: column;
+            gap: 16px;
           }
 
           .bank-grid {
