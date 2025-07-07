@@ -12,13 +12,8 @@ header('Access-Control-Allow-Headers: Content-Type');
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
-    logMessage("Received OPTIONS preflight request");
     exit();
 }
-
-// Log the request method and query parameters
-logMessage("Received request method: " . $_SERVER['REQUEST_METHOD']);
-logMessage("Query parameters: " . json_encode($_GET));
 
 // Log file for debugging
 $logFile = __DIR__ . '/omniva_parcel_machines_log.txt';
@@ -43,10 +38,8 @@ $cacheExpiry = 6 * 3600; // 6 hours in seconds
 // Get country from query parameter, default to 'ee' (Estonia)
 $country = isset($_GET['country']) ? strtolower($_GET['country']) : 'ee';
 $validCountries = ['ee', 'lv', 'lt', 'fi'];
-logMessage("Country parameter: " . $country);
 
 if (!in_array($country, $validCountries)) {
-    logMessage("Invalid country provided: " . $country . ", defaulting to 'ee'");
     $country = 'ee'; // Default to Estonia if invalid country provided
 }
 
@@ -54,16 +47,10 @@ try {
     // Check if we have a valid cache file
     $useCache = false;
     if (file_exists($cacheFile)) {
-        logMessage("Cache file exists, checking if it's still valid");
         $cacheTime = filemtime($cacheFile);
         if (time() - $cacheTime < $cacheExpiry) {
             $useCache = true;
-            logMessage("Cache is still valid, will use cached data");
-        } else {
-            logMessage("Cache is expired, will fetch fresh data");
         }
-    } else {
-        logMessage("No cache file exists, will fetch fresh data");
     }
     
     if ($useCache) {
@@ -76,7 +63,6 @@ try {
         // Fetch data from Omniva API
         $apiUrl = 'https://www.omniva.ee/locations.json';
         $ch = curl_init($apiUrl);
-        logMessage("Fetching data from Omniva API: " . $apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10 seconds timeout
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
@@ -84,10 +70,6 @@ try {
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $error = curl_error($ch);
-        logMessage("Omniva API response HTTP code: " . $httpCode);
-        if ($error) {
-            logMessage("Curl error: " . $error);
-        }
         
         curl_close($ch);
         
@@ -100,7 +82,6 @@ try {
         }
         
         $locations = json_decode($response, true);
-        logMessage("Parsed locations count: " . (is_array($locations) ? count($locations) : 'not an array'));
         
         if (!$locations || !is_array($locations)) {
             throw new Exception("Invalid response from Omniva API");
@@ -114,11 +95,10 @@ try {
     // Filter locations by country and type (parcel machines only)
     $filteredLocations = array_filter($locations, function($location) use ($country) {
         return isset($location['A0_NAME']) && 
-               strtolower($location['A0_NAME']) === $country && // Country code matching
+               strtolower($location['A0_NAME']) === $country && 
                isset($location['TYPE']) && 
                $location['TYPE'] === 'PARCEL_MACHINE';
     });
-    logMessage("Filtered locations count for country '" . $country . "': " . count($filteredLocations));
     
     // Reindex array to get sequential numeric keys
     $filteredLocations = array_values($filteredLocations);
@@ -138,7 +118,6 @@ try {
             ]
         ];
     }, $filteredLocations);
-    logMessage("Formatted locations count: " . count($formattedLocations));
     
     // Sort by name
     usort($formattedLocations, function($a, $b) {
@@ -148,7 +127,7 @@ try {
     logMessage("Returning " . count($formattedLocations) . " parcel machines for country: $country");
     
     echo json_encode([
-        'success' => true, 
+        'success' => true,
         'country' => $country,
         'parcelMachines' => $formattedLocations
     ]);
