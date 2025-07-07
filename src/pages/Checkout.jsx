@@ -145,6 +145,7 @@ const Checkout = () => {
     const selectedMachine = omnivaParcelMachines.find(machine => machine.id === machineId);
     if (selectedMachine) {
       console.log('Selected parcel machine:', selectedMachine);
+      setSelectedParcelMachineName(`${selectedMachine.name} (${selectedMachine.address})`);
     }
   };
 
@@ -214,20 +215,6 @@ const Checkout = () => {
     
     // Load parcel machines if Omniva is selected
     if (method === 'omniva-parcel-machine') {
-      loadParcelMachines(formData.country);
-    } else {
-      // Reset parcel machine selection if another delivery method is chosen
-      setSelectedParcelMachine('');
-    }
-  };
-
-  const handleParcelMachineChange = (e) => {
-    setSelectedParcelMachine(e.target.value);
-    if (e.target.value) {
-      setParcelMachineError('');
-    }
-  };
-
   const handlePaymentMethodSelection = (method) => {
     // Clear any previous errors when changing payment method
     setError('');
@@ -267,43 +254,6 @@ const Checkout = () => {
     }
   };
 
-  // Load Omniva parcel machines when delivery method is selected
-  useEffect(() => {
-    if (deliveryMethod === 'omniva-parcel-machine') {
-      loadOmnivaParcelMachines();
-    }
-  }, [deliveryMethod, selectedCountry]);
-
-  // Function to load Omniva parcel machines
-  const loadOmnivaParcelMachines = async () => {
-    setLoadingParcelMachines(true);
-    setParcelMachineError('');
-    
-    try {
-      // Get country code for API
-      const countryCode = getCountryCode(selectedCountry);
-      
-      const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
-      
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setOmnivaParcelMachines(data.parcelMachines || []);
-      } else {
-        setParcelMachineError(data.error || 'Failed to load parcel machines');
-      }
-    } catch (err) {
-      console.error('Error loading parcel machines:', err);
-      setParcelMachineError('Pakiautomaatide laadimine ebaõnnestus');
-    } finally {
-      setLoadingParcelMachines(false);
-    }
-  };
-  
   // Function to tokenize card details using Maksekeskus SDK
   const tokenizeCardDetails = async () => {
     try {
@@ -440,43 +390,15 @@ const Checkout = () => {
       let omnivaParcelMachineName = null;
       
       if (deliveryMethod === 'omniva-parcel-machine' && selectedParcelMachine) {
-        const selectedMachine = parcelMachines.find(pm => pm.id === selectedParcelMachine);
-        if (selectedMachine) {
-          omnivaParcelMachineId = selectedMachine.id;
-          omnivaParcelMachineName = `${selectedMachine.name} (${selectedMachine.address})`;
-        }
-      }
-
-      // Get selected parcel machine details if applicable
-      let parcelMachineId = null;
-      let parcelMachineName = null;
-      
-      if (deliveryMethod === 'parcel-machine' && selectedParcelMachine) {
-        const selectedMachine = parcelMachines.find(pm => pm.id === selectedParcelMachine);
-        if (selectedMachine) {
-          parcelMachineId = selectedMachine.id;
-          parcelMachineName = `${selectedMachine.name} (${selectedMachine.address})`;
-        }
-      }
-      
-      // For Omniva delivery, use the same delivery cost
-      const omnivaDeliveryCost = deliveryMethod === 'omniva-parcel-machine' ? 3.99 : 0;
-      const finalAmountWithOmniva = (parseFloat(totalPrice) + omnivaDeliveryCost).toFixed(2);
-      
-      // Generate a unique order reference
-      const orderReference = generateOrderReference();
-
-      // Get selected parcel machine details if Omniva is chosen
-      let omnivaParcelMachineId = null;
-      let omnivaParcelMachineName = null;
-      
-      if (deliveryMethod === 'omniva-parcel-machine' && selectedParcelMachine) {
         omnivaParcelMachineId = selectedParcelMachine;
         const selectedMachine = omnivaParcelMachines.find(machine => machine.id === selectedParcelMachine);
         if (selectedMachine) {
           omnivaParcelMachineName = `${selectedMachine.name} (${selectedMachine.address})`;
         }
       }
+      
+      // Generate a unique order reference
+      const orderReference = generateOrderReference();
       
       // Prepare order data to send to PHP backend
       const orderData = {
@@ -491,12 +413,6 @@ const Checkout = () => {
         omnivaParcelMachineName: omnivaParcelMachineName,
         country: formData.country,
         paymentMethod: selectedPaymentMethod,
-        deliveryMethod: deliveryMethod,
-        omnivaParcelMachineId: parcelMachineId,
-        omnivaParcelMachineName: parcelMachineName,
-        deliveryMethod: deliveryMethod,
-        omnivaParcelMachineId: deliveryMethod === 'omniva-parcel-machine' ? selectedParcelMachine : null,
-        omnivaParcelMachineName: deliveryMethod === 'omniva-parcel-machine' ? selectedParcelMachineName : null,
         items: items.map(item => ({
           id: item.id,
           title: item.title,
@@ -812,56 +728,8 @@ const Checkout = () => {
                           )}
                           
                           {deliveryMethod === 'omniva-parcel-machine' && (
-                            <div className="parcel-machine-selector">
-                              <label htmlFor="parcel-machine">Valige pakiautomaat</label>
-                              {loadingParcelMachines ? (
-                                <div className="loading-parcel-machines">
-                                  <div className="spinner-small"></div>
-                                  <span>Laadin pakiautomaate...</span>
-                                </div>
-                              ) : (
-                                <>
-                                  <select
-                                    id="parcel-machine"
-                                    value={selectedParcelMachine}
-                                    onChange={handleParcelMachineChange}
-                                    className={`form-input ${parcelMachineError ? 'input-error' : ''}`}
-                                    disabled={parcelMachines.length === 0}
-                                  >
-                                    <option value="">Valige pakiautomaat</option>
-                                    {parcelMachines.map(machine => (
-                                      <option key={machine.id} value={machine.id}>
-                                        {machine.name} ({machine.address})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  {parcelMachineError && (
-                                    <div className="field-error">
-                                      {parcelMachineError}
-                                    </div>
-                                  )}
-                                  {parcelMachines.length === 0 && !loadingParcelMachines && !parcelMachineError && (
-                                    <div className="info-message">
-                                      Valitud riigis pole pakiautomaate saadaval.
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                        
-                        {deliveryMethodError && (
-                          <div className="field-error">
-                            {deliveryMethodError}
-                          </div>
-                        )}
-
-                        {/* Parcel Machine Selection */}
-                        {deliveryMethod === 'omniva-parcel-machine' && (
-                          <div className="parcel-machine-selection">
-                            <div className="form-group">
-                              <label htmlFor="parcel-machine">Valige pakiautomaat</label>
+                            <div className="parcel-machine-selection">
+                              <label htmlFor="parcel-machine">Valige pakiautomaat:</label>
                               {loadingParcelMachines ? (
                                 <div className="loading-indicator">
                                   <div className="loading-spinner-small"></div>
@@ -876,19 +744,33 @@ const Checkout = () => {
                                   disabled={loadingParcelMachines}
                                 >
                                   <option value="">-- Valige pakiautomaat --</option>
-                                  {parcelMachines.map(machine => (
+                                  {omnivaParcelMachines.map(machine => (
                                     <option key={machine.id} value={machine.id}>
-                                      {machine.name} ({machine.address})
+                                      {machine.name} - {machine.address}
                                     </option>
                                   ))}
                                 </select>
                               )}
+                              
                               {parcelMachineError && (
                                 <div className="field-error">
                                   {parcelMachineError}
                                 </div>
                               )}
+                              
+                              {selectedParcelMachineName && (
+                                <div className="selected-machine-info">
+                                  <span className="machine-icon">📍</span>
+                                  <span className="machine-name">{selectedParcelMachineName}</span>
+                                </div>
+                              )}
                             </div>
+                          )}
+                        </div>
+                        
+                        {deliveryMethodError && (
+                          <div className="field-error">
+                            {deliveryMethodError}
                           </div>
                         )}
                       </div>
