@@ -35,11 +35,11 @@ $cacheFile = __DIR__ . '/omniva_locations_cache.json';
 try {
     logMessage("Starting Omniva locations update");
     
-    // Fetch data from Omniva API
-    $apiUrl = 'https://www.omniva.ee/locations.json';
+    // Fetch data from Omniva API - using locationsfull.json for more detailed data
+    $apiUrl = 'https://www.omniva.ee/locationsfull.json';
     $ch = curl_init($apiUrl);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 60); // 60 seconds timeout for large file
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
     
     $response = curl_exec($ch);
@@ -62,11 +62,26 @@ try {
         throw new Exception("Invalid response from Omniva API");
     }
     
+    // Count parcel machines by country
+    $countryStats = [];
+    foreach ($locations as $location) {
+        if (isset($location['TYPE']) && $location['TYPE'] === 0 && isset($location['A0_NAME'])) {
+            $country = strtoupper($location['A0_NAME']);
+            if (!isset($countryStats[$country])) {
+                $countryStats[$country] = 0;
+            }
+            $countryStats[$country]++;
+        }
+    }
+    
     // Cache the response
     if (file_put_contents($cacheFile, $response)) {
-        logMessage("Successfully updated Omniva locations cache", "Saved " . count($locations) . " locations");
+        logMessage("Successfully updated Omniva locations cache", [
+            "Total locations" => count($locations),
+            "Parcel machines by country" => $countryStats
+        ]);
         
-        // Set proper permissions
+        // Set proper permissions for zone.ee
         chmod($cacheFile, 0666);
     } else {
         throw new Exception("Failed to write cache file");

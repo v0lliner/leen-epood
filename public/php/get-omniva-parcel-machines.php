@@ -2,6 +2,8 @@
 // Enable error reporting for development
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors to users, but log them
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/omniva_error.log');
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -66,11 +68,11 @@ try {
     } else {
         logMessage("Fetching fresh parcel machine data from Omniva API");
         
-        // Fetch data from Omniva API
-        $apiUrl = 'https://www.omniva.ee/locations.json';
+        // Fetch data from Omniva API - using locationsfull.json for more detailed data
+        $apiUrl = 'https://www.omniva.ee/locationsfull.json';
         $ch = curl_init($apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10 seconds timeout
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30); // 30 seconds timeout
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         
         $response = curl_exec($ch);
@@ -94,22 +96,23 @@ try {
         }
         
         // Cache the response
-        file_put_contents($cacheFile, $response);
-        
-        // Verify the cache was written successfully
-        if (file_exists($cacheFile)) {
-            logMessage("Cached fresh parcel machine data");
+        if (file_put_contents($cacheFile, $response)) {
+            logMessage("Cached fresh parcel machine data", "Saved " . count($locations) . " locations");
+            
+            // Set proper permissions for zone.ee
+            chmod($cacheFile, 0666);
         } else {
             logMessage("Failed to write cache file");
         }
     }
     
     // Filter locations by country and type (parcel machines only)
+    // In locationsfull.json, TYPE=0 is for parcel machines
     $filteredLocations = array_filter($locations, function($location) use ($country) {
         return isset($location['A0_NAME']) && 
                strtolower($location['A0_NAME']) === $country && 
                isset($location['TYPE']) && 
-               $location['TYPE'] === 'PARCEL_MACHINE';
+               $location['TYPE'] === 0; // TYPE 0 = PARCEL_MACHINE
     });
     
     // Reindex array to get sequential numeric keys
@@ -127,7 +130,8 @@ try {
             'coordinates' => [
                 'latitude' => $location['Y_COORDINATE'],
                 'longitude' => $location['X_COORDINATE']
-            ]
+            ],
+            'serviceHours' => $location['SERVICE_HOURS'] ?? null
         ];
     }, $filteredLocations);
     

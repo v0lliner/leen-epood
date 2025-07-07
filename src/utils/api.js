@@ -25,10 +25,10 @@ export const getApiUrl = (endpoint) => {
 
 /**
  * Fetches Omniva parcel machines
- * @param {string} country - Country code (e.g., 'EE', 'LV', 'LT')
+ * @param {string} country - Country code (e.g., 'ee', 'lv', 'lt')
  * @returns {Promise} Promise that resolves to the parcel machines data
  */
-export const fetchOmnivaParcelMachines = async (country = 'EE') => {
+export const fetchOmnivaParcelMachines = async (country = 'ee') => {
   try {
     const response = await fetch(getApiUrl(`/php/get-omniva-parcel-machines.php?country=${country}`));
     
