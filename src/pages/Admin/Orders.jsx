@@ -19,28 +19,37 @@ const AdminOrders = () => {
   }, []) 
 
   const loadOrders = async () => {
-    setLoading(true)
+    setLoading(true);
+    setError(null);
+    
     try {
-      const response = await fetch('/php/admin/orders.php')
+      const response = await fetch('/php/admin/orders.php');
       
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`)
+        if (response.status === 0 || !response.status) {
+          throw new Error('Backend server is not available. Please ensure the PHP server is running on localhost:8000');
+        }
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json()
+      const data = await response.json();
       
-      if (data.success) {
-        setOrders(data.orders || [])
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to load orders');
+      }
+      
+      setOrders(data.orders);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      if (error.name === 'TypeError' && error.message.includes('fetch')) {
+        setError('Backend server is not available. Please ensure the PHP server is running on localhost:8000');
       } else {
-        setError(data.error || 'Failed to load orders')
+        setError(error.message);
       }
-    } catch (err) {
-      console.error('Error loading orders:', err)
-      setError('Tellimuste laadimine ebaõnnestus')
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const loadOrderDetails = async (orderId) => {
     if (!orderId) return
