@@ -1,6 +1,7 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
-import { CartProvider } from './context/CartContext';
+import { lazy, Suspense } from 'react';
+import { CartProvider } from './context/CartContext'; 
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navigation from './components/Layout/Navigation';
@@ -8,29 +9,33 @@ import Footer from './components/Layout/Footer';
 import ProtectedRoute from './components/Admin/ProtectedRoute';
 import CookieConsentBanner from './components/UI/CookieConsentBanner';
 import Home from './pages/Home';
-import About from './pages/About';
-import Portfolio from './pages/Portfolio';
-import Shop from './pages/Shop';
-import ProductDetail from './pages/ProductDetail';
-import Checkout from './pages/Checkout';
-import CheckoutSuccess from './pages/CheckoutSuccess';
-import Contact from './pages/Contact';
-import FAQ from './pages/FAQ';
-import Muugitingimused from './pages/Muugitingimused';
-import Privaatsuspoliitika from './pages/Privaatsuspoliitika';
-import NotFound from './pages/NotFound';
-import AdminLogin from './pages/Admin/Login';
-import AdminDashboard from './pages/Admin/Dashboard';
-import AdminProducts from './pages/Admin/Products';
-import AdminCategories from './pages/Admin/Categories';
-import AdminTehtudTood from './pages/Admin/TehtudTood';
-import AdminAboutPage from './pages/Admin/AboutPage';
-import AdminOrders from './pages/Admin/Orders';
-import AdminFAQ from './pages/Admin/FAQ';
-import HomepageContent from './pages/Admin/HomepageContent';
-import TehtudToodForm from './pages/Admin/TehtudToodForm';
-import ProductForm from './pages/Admin/ProductForm';
-import PaymentSettings from './pages/Admin/PaymentSettings';
+
+// Lazy load pages
+const About = lazy(() => import('./pages/About'));
+const Portfolio = lazy(() => import('./pages/Portfolio'));
+const Shop = lazy(() => import('./pages/Shop'));
+const ProductDetail = lazy(() => import('./pages/ProductDetail'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const CheckoutSuccess = lazy(() => import('./pages/CheckoutSuccess'));
+const Contact = lazy(() => import('./pages/Contact'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const Muugitingimused = lazy(() => import('./pages/Muugitingimused'));
+const Privaatsuspoliitika = lazy(() => import('./pages/Privaatsuspoliitika'));
+const NotFound = lazy(() => import('./pages/NotFound'));
+
+// Lazy load admin pages
+const AdminLogin = lazy(() => import('./pages/Admin/Login'));
+const AdminDashboard = lazy(() => import('./pages/Admin/Dashboard'));
+const AdminProducts = lazy(() => import('./pages/Admin/Products'));
+const AdminCategories = lazy(() => import('./pages/Admin/Categories'));
+const AdminTehtudTood = lazy(() => import('./pages/Admin/TehtudTood'));
+const AdminAboutPage = lazy(() => import('./pages/Admin/AboutPage'));
+const AdminOrders = lazy(() => import('./pages/Admin/Orders'));
+const AdminFAQ = lazy(() => import('./pages/Admin/FAQ'));
+const HomepageContent = lazy(() => import('./pages/Admin/HomepageContent'));
+const TehtudToodForm = lazy(() => import('./pages/Admin/TehtudToodForm'));
+const ProductForm = lazy(() => import('./pages/Admin/ProductForm'));
+const PaymentSettings = lazy(() => import('./pages/Admin/PaymentSettings'));
 import './styles/globals.css';
 import './i18n';
 
@@ -42,121 +47,127 @@ function App() {
           <CartProvider>
             <Router>
               <CookieConsentBanner />
-              <Routes>
-                {/* Public routes */}
-                <Route path="/" element={
-                  <div className="app">
-                    <Navigation />
-                    <Home />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/minust" element={
-                  <div className="app">
-                    <Navigation />
-                    <About />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/minu-lemmikud" element={
-                  <div className="app">
-                    <Navigation />
-                    <Portfolio />
-                    <Footer />
-                  </div>
-                } />
-                {/* Keep old routes for backward compatibility */}
-                <Route path="/parimad-palad" element={
-                  <div className="app">
-                    <Navigation />
-                    <Portfolio />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/tehtud-tood" element={
-                  <div className="app">
-                    <Navigation />
-                    <Portfolio />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/portfoolio" element={
-                  <div className="app">
-                    <Navigation />
-                    <Portfolio />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/epood" element={
-                  <div className="app">
-                    <Navigation />
-                    <Shop />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/epood/toode/:slug" element={
-                  <div className="app">
-                    <Navigation />
-                    <ProductDetail />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/checkout" element={
-                  <div className="app">
-                    <Navigation />
-                    <Checkout />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/checkout/success" element={
-                  <div className="app">
-                    <Navigation />
-                    <CheckoutSuccess />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/makse/korras" element={
-                  <div className="app">
-                    <Navigation />
-                    <CheckoutSuccess />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/makse/katkestatud" element={
-                  <div className="app">
-                    <Navigation />
-                    <Checkout />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/kontakt" element={
-                  <div className="app">
-                    <Navigation />
-                    <Contact />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/kkk" element={
-                  <div className="app">
-                    <Navigation />
-                    <FAQ />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/muugitingimused" element={
-                  <div className="app">
-                    <Navigation />
-                    <Muugitingimused />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/privaatsuspoliitika" element={
-                  <div className="app">
-                    <Navigation />
-                    <Privaatsuspoliitika />
-                    <Footer />
-                  </div>
-                } />
+              <Suspense fallback={
+                <div className="loading-full-page">
+                  <div className="loading-spinner"></div>
+                  <p>Laadin...</p>
+                </div>
+              }>
+                <Routes>
+                  {/* Public routes */}
+                  <Route path="/" element={
+                    <div className="app">
+                      <Navigation />
+                      <Home />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/minust" element={
+                    <div className="app">
+                      <Navigation />
+                      <About />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/minu-lemmikud" element={
+                    <div className="app">
+                      <Navigation />
+                      <Portfolio />
+                      <Footer />
+                    </div>
+                  } />
+                  {/* Keep old routes for backward compatibility */}
+                  <Route path="/parimad-palad" element={
+                    <div className="app">
+                      <Navigation />
+                      <Portfolio />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/tehtud-tood" element={
+                    <div className="app">
+                      <Navigation />
+                      <Portfolio />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/portfoolio" element={
+                    <div className="app">
+                      <Navigation />
+                      <Portfolio />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/epood" element={
+                    <div className="app">
+                      <Navigation />
+                      <Shop />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/epood/toode/:slug" element={
+                    <div className="app">
+                      <Navigation />
+                      <ProductDetail />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/checkout" element={
+                    <div className="app">
+                      <Navigation />
+                      <Checkout />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/checkout/success" element={
+                    <div className="app">
+                      <Navigation />
+                      <CheckoutSuccess />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/makse/korras" element={
+                    <div className="app">
+                      <Navigation />
+                      <CheckoutSuccess />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/makse/katkestatud" element={
+                    <div className="app">
+                      <Navigation />
+                      <Checkout />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/kontakt" element={
+                    <div className="app">
+                      <Navigation />
+                      <Contact />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/kkk" element={
+                    <div className="app">
+                      <Navigation />
+                      <FAQ />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/muugitingimused" element={
+                    <div className="app">
+                      <Navigation />
+                      <Muugitingimused />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/privaatsuspoliitika" element={
+                    <div className="app">
+                      <Navigation />
+                      <Privaatsuspoliitika />
+                      <Footer />
+                    </div>
+                  } />
 
                 {/* Admin routes */}
                 <Route path="/admin/login" element={<AdminLogin />} />
@@ -272,6 +283,7 @@ function App() {
                   </div>
                 } />
               </Routes>
+              </Suspense>
             </Router>
           </CartProvider>
         </AuthProvider>

@@ -272,6 +272,27 @@ img {
   }
 }
 
+/* Loading page for lazy-loaded components */
+.loading-full-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  gap: 16px;
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
+
+.loading-full-page .loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid var(--color-ultramarine);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
 @media (max-width: 768px) {
   :root {
     --padding-inline: 24px;

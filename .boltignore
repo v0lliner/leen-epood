@@ -1,62 +1,40 @@
-# Dependencies
+# Node.js dependencies and build artifacts
 node_modules/
-
-# Build output
 dist/
-
-# Environment variables
-.env
-.env.*
-
-# Development files
-debug-image-issues.md
-eslint.config.js
 package-lock.json
-README.md
-vite.config.js
+.env
 
-# Documentation
-docs/
+# Git related files (if .git directory exists)
+.git/
 
-# Database migrations and configuration
-supabase/migrations/
-
-# Logs
+# Log files
 *.log
 public/php/*.log
 public/php/*_log.txt
-public/php/admin/*_log.txt
 
-# Cache files
-.cache/
-.vite/
+# Documentation and markdown files
+*.md
+docs/
+debug-image-issues.md
 
-# Editor directories and files
-.idea/
-.vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# PHP Composer and vendor files (exclude non-essential parts)
+public/php/maksekeskus/vendor/nategood/httpful/.github/
+public/php/maksekeskus/vendor/nategood/httpful/examples/
+public/php/maksekeskus/vendor/nategood/httpful/tests/
+public/php/maksekeskus/vendor/nategood/httpful/build
+public/php/maksekeskus/vendor/nategood/httpful/.travis.yml
+public/php/maksekeskus/vendor/nategood/httpful/README.md
+public/php/maksekeskus/vendor/nategood/httpful/LICENSE.txt
+public/php/maksekeskus/vendor/nategood/httpful/composer.json
+public/php/maksekeskus/vendor/nategood/httpful/tests/test_image.jpg
+public/php/maksekeskus/vendor/composer/installed.json
+public/php/maksekeskus/vendor/composer/installed.php
+public/php/maksekeskus/vendor/composer/LICENSE
+public/php/maksekeskus/vendor/composer/platform_check.php
 
-# Test files
-tests/
-*.test.js
-*.spec.js
+# Supabase migrations (don't ignore but don't show in editor)
+supabase/migrations/
 
 # Temporary files
-*.tmp
-*.temp
 .DS_Store
 Thumbs.db
-
-# Large media files (if any)
-*.mp4
-*.webm
-*.mov
-*.avi
-
-# Backup files
-*.bak
-*~
