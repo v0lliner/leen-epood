@@ -151,7 +151,9 @@ function processOrder($transactionData, $paymentData) {
             'currency' => $transactionData->transaction->currency,
             'status' => $orderStatus,
             'notes' => $merchantData['notes'] ?? '',
-            'order_number' => $orderNumber
+            'order_number' => $orderNumber,
+            'omniva_parcel_machine_id' => $merchantData['omnivaParcelMachineId'] ?? null,
+            'omniva_parcel_machine_name' => $merchantData['omnivaParcelMachineName'] ?? null
         ];
         
         // If order exists, update it
@@ -300,6 +302,14 @@ function processOrder($transactionData, $paymentData) {
                 $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
                 $merchantData['order_reference'] = $orderReference;
                 
+                // Store delivery method information in merchant_data
+                if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine') {
+                    logMessage("Omniva delivery method detected", [
+                        'parcelMachineId' => $merchantData['omnivaParcelMachineId'] ?? 'not set',
+                        'parcelMachineName' => $merchantData['omnivaParcelMachineName'] ?? 'not set'
+                    ]);
+                }
+                
                 // Update the transaction with the new merchant_data
                 try {
                     $MK->addTransactionMeta($transaction->transaction->id, [
@@ -337,6 +347,16 @@ function processOrder($transactionData, $paymentData) {
                         <p><strong>E-post:</strong> {$customerEmail}</p>
                         <p><strong>Telefon:</strong> {$customerPhone}</p>
                         <p><strong>Summa:</strong> {$transactionData->transaction->amount} {$transactionData->transaction->currency}</p>
+                        
+                        <!-- Display Omniva parcel machine info if applicable -->";
+            
+            if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine' && !empty($merchantData['omnivaParcelMachineName'])) {
+                $message .= "
+                        <p><strong>Tarneviis:</strong> Omniva pakiautomaat</p>
+                        <p><strong>Pakiautomaat:</strong> " . htmlspecialchars($merchantData['omnivaParcelMachineName']) . "</p>";
+            }
+            
+            $message .= "
                     </div>
                     
                     <h2>Tellitud tooted:</h2>";

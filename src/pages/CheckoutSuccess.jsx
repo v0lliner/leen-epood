@@ -69,6 +69,10 @@ const CheckoutSuccess = () => {
                 customerEmail: data.order.customer_email,
                 customerName: data.order.customer_name,
                 customerPhone: data.order.customer_phone,
+                omnivaParcelMachineId: data.order.omniva_parcel_machine_id,
+                omnivaParcelMachineName: data.order.omniva_parcel_machine_name,
+                omnivaBarcode: data.order.omniva_barcode,
+                omnivaShipmentStatus: data.order.omniva_shipment_status,
                 timestamp: new Date(data.order.created_at).getTime(),
                 orderItems: data.order.items || [],
                 payments: data.order.payments || [],
@@ -318,6 +322,22 @@ const CheckoutSuccess = () => {
                           <span className="detail-value">{new Date(orderDetails.timestamp).toLocaleString('et-EE')}</span>
                         </div>
                       )}
+                    
+                    {/* Display Omniva parcel machine info if available */}
+                    {orderDetails.omnivaParcelMachineName && (
+                      <div className="order-detail">
+                        <span className="detail-label">Pakiautomaat:</span>
+                        <span className="detail-value">{orderDetails.omnivaParcelMachineName}</span>
+                      </div>
+                    )}
+                    
+                    {/* Display Omniva tracking number if available */}
+                    {orderDetails.omnivaBarcode && (
+                      <div className="order-detail">
+                        <span className="detail-label">Jälgimisnumber:</span>
+                        <span className="detail-value">{orderDetails.omnivaBarcode}</span>
+                      </div>
+                    )}
                       
                       {/* Display order items if available */}
                       {orderDetails.orderItems && orderDetails.orderItems.length > 0 && (
