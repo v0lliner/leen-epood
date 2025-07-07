@@ -5,7 +5,7 @@ import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
-import { getApiUrl, fetchOmnivaParcelMachines } from '../utils/api';
+import { getApiUrl } from '../utils/api';
 
 const Checkout = () => {
   const { t, i18n } = useTranslation();
