@@ -60,6 +60,22 @@ try {
         $locationsData = file_get_contents($cacheFile);
         $locations = json_decode($locationsData, true);
         
+        // Log the total number of locations loaded from cache
+        logMessage("Total locations loaded from cache", count($locations));
+        
+        // Log sample data to verify structure
+        if (count($locations) > 0) {
+            $sampleLocations = array_slice($locations, 0, 5);
+            logMessage("Sample location data structure", array_map(function($loc) {
+                return [
+                    'A0_NAME' => $loc['A0_NAME'] ?? 'missing',
+                    'TYPE' => $loc['TYPE'] ?? 'missing',
+                    'NAME' => $loc['NAME'] ?? 'missing',
+                    'ZIP' => $loc['ZIP'] ?? 'missing'
+                ];
+            }, $sampleLocations));
+        }
+        
         // Check if the cache is valid JSON
         if ($locations === null && json_last_error() !== JSON_ERROR_NONE) {
             logMessage("Cache file contains invalid JSON, fetching fresh data");
@@ -94,6 +110,22 @@ try {
         if (!$locations || !is_array($locations)) {
             throw new Exception("Invalid response from Omniva API");
         }
+
+        // Log the total number of locations loaded from API
+        logMessage("Total locations loaded from API", count($locations));
+        
+        // Log sample data to verify structure
+        if (count($locations) > 0) {
+            $sampleLocations = array_slice($locations, 0, 5);
+            logMessage("Sample location data structure", array_map(function($loc) {
+                return [
+                    'A0_NAME' => $loc['A0_NAME'] ?? 'missing',
+                    'TYPE' => $loc['TYPE'] ?? 'missing',
+                    'NAME' => $loc['NAME'] ?? 'missing',
+                    'ZIP' => $loc['ZIP'] ?? 'missing'
+                ];
+            }, $sampleLocations));
+        }
         
         // Cache the response
         if (file_put_contents($cacheFile, $response)) {
@@ -109,11 +141,36 @@ try {
     // Filter locations by country and type (parcel machines only)
     // In locationsfull.json, TYPE=0 is for parcel machines
     $filteredLocations = array_filter($locations, function($location) use ($country) {
+        $isMatch = isset($location['A0_NAME']) && 
+               strtolower($location['A0_NAME']) === $country && 
+               isset($location['TYPE']) && 
+               $location['TYPE'] === 0; // TYPE 0 = PARCEL_MACHINE
+        
+        // For detailed debugging of the first few items
+        static $debugCount = 0;
+        if ($debugCount < 10) {
+            logMessage("Filter check", [
+                'country_match' => isset($location['A0_NAME']) && strtolower($location['A0_NAME']) === $country,
+                'type_match' => isset($location['TYPE']) && $location['TYPE'] === 0,
+                'A0_NAME' => $location['A0_NAME'] ?? 'missing',
+                'TYPE' => $location['TYPE'] ?? 'missing',
+                'is_match' => $isMatch
+            ]);
+            $debugCount++;
+        }
+        
         return isset($location['A0_NAME']) && 
                strtolower($location['A0_NAME']) === $country && 
                isset($location['TYPE']) && 
                $location['TYPE'] === 0; // TYPE 0 = PARCEL_MACHINE
     });
+    
+    // Log the number of locations after filtering
+    logMessage("Locations after filtering", [
+        'country' => $country,
+        'total_before_filter' => count($locations),
+        'total_after_filter' => count($filteredLocations)
+    ]);
     
     // Reindex array to get sequential numeric keys
     $filteredLocations = array_values($filteredLocations);
