@@ -19,12 +19,24 @@ const AdminLayout = ({ children }) => {
     {
       name: t('admin.nav.dashboard'),
       href: '/admin/dashboard',
-      icon: '🏠'
+      icon: '🏠',
+      active: location.pathname === '/admin/dashboard' || location.pathname === '/admin'
     },
     {
       name: t('admin.nav.products'),
       href: '/admin/products',
       icon: '📦'
+    },
+    {
+      name: t('admin.nav.orders'),
+      href: '/admin/orders',
+      icon: '📋',
+      active: location.pathname.startsWith('/admin/orders')
+    },
+    {
+      name: 'Avaleht',
+      href: '/admin/homepage',
+      icon: '🏠'
     },
     {
       name: t('admin.nav.portfolio'),
@@ -37,21 +49,10 @@ const AdminLayout = ({ children }) => {
       icon: '👤'
     },
     {
-      name: 'Avaleht',
-      href: '/admin/homepage',
-      icon: '🏠'
-    },
-    {
       name: 'KKK',
       href: '/admin/faq',
       icon: '❓'
     },
-    {
-      name: t('admin.nav.orders'),
-      href: '/admin/orders',
-      icon: '📋',
-      active: location.pathname.startsWith('/admin/orders')
-    }, 
     {
       name: t('admin.nav.categories'),
       href: '/admin/categories',

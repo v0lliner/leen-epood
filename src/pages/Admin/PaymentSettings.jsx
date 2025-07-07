@@ -12,20 +12,39 @@ const PaymentSettings = () => {
   const [success, setSuccess] = useState('')
   
   // Form state for new values
-  const [formData, setFormData] = useState({
+  const [maksekeskusFormData, setMaksekeskusFormData] = useState({
     shop_id: '',
     api_secret_key: '',
     api_open_key: '',
     test_mode: false,
     active: true
   })
+
+  // Form state for Omniva settings
+  const [omnivaFormData, setOmnivaFormData] = useState({
+    customer_code: '',
+    username: '',
+    password: '',
+    test_mode: false,
+    active: true
+  })
   
   // Track which fields have been modified
-  const [modifiedFields, setModifiedFields] = useState({
+  const [maksekeskusModifiedFields, setMaksekeskusModifiedFields] = useState({
     shop_id: false,
     api_secret_key: false,
     api_open_key: false
   })
+
+  // Track which Omniva fields have been modified
+  const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
+    customer_code: false,
+    username: false,
+    password: false
+  })
+
+  // Active tab state
+  const [activeTab, setActiveTab] = useState('maksekeskus')
 
   useEffect(() => {
     loadConfig()
@@ -52,7 +71,7 @@ const PaymentSettings = () => {
       
       // Initialize form with masked data
       if (maskedData) {
-        setFormData({
+        setMaksekeskusFormData({
           id: maskedData.id,
           shop_id: maskedData.shop_id || '',
           api_secret_key: '', // Don't show actual key, just placeholder
@@ -61,6 +80,9 @@ const PaymentSettings = () => {
           active: maskedData.active || true
         })
       }
+
+      // Load Omniva settings
+      loadOmnivaSettings()
     } catch (err) {
       console.error('Error in loadConfig:', err)
       setError('Võrguühenduse viga')
@@ -69,18 +91,38 @@ const PaymentSettings = () => {
     }
   }
 
-  const handleInputChange = (e) => {
+  const loadOmnivaSettings = async () => {
+    try {
+      // Fetch Omniva settings from localStorage or API
+      const omnivaSettings = localStorage.getItem('omnivaSettings')
+      
+      if (omnivaSettings) {
+        const parsedSettings = JSON.parse(omnivaSettings)
+        setOmnivaFormData({
+          customer_code: parsedSettings.customer_code || '',
+          username: parsedSettings.username || '',
+          password: '', // Don't show actual password, just placeholder
+          test_mode: parsedSettings.test_mode || false,
+          active: parsedSettings.active || true
+        })
+      }
+    } catch (error) {
+      console.error('Error loading Omniva settings:', error)
+    }
+  }
+
+  const handleMaksekeskusInputChange = (e) => {
     const { name, value, type, checked } = e.target
     const newValue = type === 'checkbox' ? checked : value
     
-    setFormData(prev => ({
+    setMaksekeskusFormData(prev => ({
       ...prev,
       [name]: newValue
     }))
     
     // Track modified fields for text inputs
     if (type !== 'checkbox' && ['shop_id', 'api_secret_key', 'api_open_key'].includes(name)) {
-      setModifiedFields(prev => ({
+      setMaksekeskusModifiedFields(prev => ({
         ...prev,
         [name]: true
       }))
@@ -91,7 +133,29 @@ const PaymentSettings = () => {
     if (success) setSuccess('')
   }
 
-  const handleSubmit = async (e) => {
+  const handleOmnivaInputChange = (e) => {
+    const { name, value, type, checked } = e.target
+    const newValue = type === 'checkbox' ? checked : value
+    
+    setOmnivaFormData(prev => ({
+      ...prev,
+      [name]: newValue
+    }))
+    
+    // Track modified fields for text inputs
+    if (type !== 'checkbox' && ['customer_code', 'username', 'password'].includes(name)) {
+      setOmnivaModifiedFields(prev => ({
+        ...prev,
+        [name]: true
+      }))
+    }
+    
+    // Clear messages when user starts typing
+    if (error) setError('')
+    if (success) setSuccess('')
+  }
+
+  const handleMaksekeskusSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
     setError('')
@@ -100,25 +164,25 @@ const PaymentSettings = () => {
     try {
       // Prepare data for update, only including modified fields
       const updateData = {
-        id: formData.id,
-        test_mode: formData.test_mode,
-        active: formData.active
+        id: maksekeskusFormData.id,
+        test_mode: maksekeskusFormData.test_mode,
+        active: maksekeskusFormData.active
       }
       
       // Only include text fields that have been modified
-      if (modifiedFields.shop_id) {
-        updateData.shop_id = formData.shop_id
+      if (maksekeskusModifiedFields.shop_id) {
+        updateData.shop_id = maksekeskusFormData.shop_id
       }
       
-      if (modifiedFields.api_secret_key && formData.api_secret_key) {
-        updateData.api_secret_key = formData.api_secret_key
+      if (maksekeskusModifiedFields.api_secret_key && maksekeskusFormData.api_secret_key) {
+        updateData.api_secret_key = maksekeskusFormData.api_secret_key
       }
       
-      if (modifiedFields.api_open_key && formData.api_open_key) {
-        updateData.api_open_key = formData.api_open_key
+      if (maksekeskusModifiedFields.api_open_key && maksekeskusFormData.api_open_key) {
+        updateData.api_open_key = maksekeskusFormData.api_open_key
       }
       
-      // If this is a new config (no ID), include all fields
+      // If this is a new config (no ID), include all required fields
       if (!formData.id) {
         if (!formData.shop_id || !formData.api_secret_key || !formData.api_open_key) {
           setError('Kõik väljad on kohustuslikud uue konfiguratsiooni loomisel')
@@ -127,9 +191,9 @@ const PaymentSettings = () => {
         }
         
         // For new configs, include all required fields
-        updateData.shop_id = formData.shop_id
-        updateData.api_secret_key = formData.api_secret_key
-        updateData.api_open_key = formData.api_open_key
+        updateData.shop_id = maksekeskusFormData.shop_id
+        updateData.api_secret_key = maksekeskusFormData.api_secret_key
+        updateData.api_open_key = maksekeskusFormData.api_open_key
       }
       
       const { data, error } = await maksekeskusConfigService.upsertMaksekeskusConfig(updateData)
@@ -140,9 +204,9 @@ const PaymentSettings = () => {
         setSuccess('Maksekeskuse seaded edukalt salvestatud!')
         
         // Reset modified fields tracking
-        setModifiedFields({
+        setMaksekeskusModifiedFields({
           shop_id: false,
-          api_secret_key: false,
+          api_secret_key: false, 
           api_open_key: false
         })
         
@@ -155,6 +219,45 @@ const PaymentSettings = () => {
     } catch (err) {
       console.error('Error saving config:', err)
       setError('Võrguühenduse viga')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleOmnivaSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      // Validate required fields for new config
+      if (!omnivaFormData.customer_code || !omnivaFormData.username || 
+          (omnivaModifiedFields.password && !omnivaFormData.password)) {
+        setError('Kõik väljad on kohustuslikud')
+        setSaving(false)
+        return
+      }
+
+      // Store in localStorage (in a real app, this would be stored in the database)
+      const settingsToSave = {
+        customer_code: omnivaFormData.customer_code,
+        username: omnivaFormData.username,
+        // Only include password if it was modified
+        ...(omnivaModifiedFields.password && { password: '********' }), // Store masked password
+        test_mode: omnivaFormData.test_mode,
+        active: omnivaFormData.active
+      }
+
+      localStorage.setItem('omnivaSettings', JSON.stringify(settingsToSave))
+      
+      setSuccess('Omniva seaded edukalt salvestatud!')
+      setTimeout(() => setSuccess(''), 3000)
+      
+      // Reset modified fields
+      setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
+    } catch (err) {
+      setError('Seadete salvestamine ebaõnnestus: ' + err.message)
     } finally {
       setSaving(false)
     }
@@ -227,7 +330,7 @@ const PaymentSettings = () => {
     <AdminLayout>
       <div className="payment-settings-container">
         <div className="payment-settings-header">
-          <h1>Maksekeskuse seaded</h1>
+          <h1>Maksete ja tarne seaded</h1>
           <p>Hallake Maksekeskuse API võtmeid ja seadistusi</p>
         </div>
 
@@ -244,7 +347,26 @@ const PaymentSettings = () => {
         )}
 
         <div className="payment-settings-content">
-          <div className="settings-card">
+          {/* Tabs navigation */}
+          <div className="settings-tabs">
+            <button 
+              className={`tab-button ${activeTab === 'maksekeskus' ? 'active' : ''}`}
+              onClick={() => setActiveTab('maksekeskus')}
+            >
+              Maksekeskus
+            </button>
+            <button 
+              className={`tab-button ${activeTab === 'omniva' ? 'active' : ''}`}
+              onClick={() => setActiveTab('omniva')}
+            >
+              Omniva
+            </button>
+          </div>
+
+          {/* Maksekeskus Settings */}
+          <div 
+            className={`settings-card ${activeTab === 'maksekeskus' ? '' : 'hidden'}`}
+          >
             <h2>Maksekeskuse API seaded</h2>
             
             {config ? (
@@ -312,15 +434,15 @@ const PaymentSettings = () => {
             <div className="config-form-section">
               <h3>{config ? 'Muuda konfiguratsiooni' : 'Lisa uus konfiguratsioon'}</h3>
               
-              <form onSubmit={handleSubmit} className="config-form">
+              <form onSubmit={handleMaksekeskusSubmit} className="config-form">
                 <div className="form-group">
                   <label htmlFor="shop_id">Shop ID</label>
                   <input
                     type="text"
                     id="shop_id"
                     name="shop_id"
-                    value={formData.shop_id}
-                    onChange={handleInputChange}
+                    value={maksekeskusFormData.shop_id}
+                    onChange={handleMaksekeskusInputChange}
                     className="form-input"
                     placeholder={config ? "Jäta tühjaks, et mitte muuta" : "Sisesta Shop ID"}
                     required={!config}
@@ -333,8 +455,8 @@ const PaymentSettings = () => {
                     type="password"
                     id="api_secret_key"
                     name="api_secret_key"
-                    value={formData.api_secret_key}
-                    onChange={handleInputChange}
+                    value={maksekeskusFormData.api_secret_key}
+                    onChange={handleMaksekeskusInputChange}
                     className="form-input"
                     placeholder={config ? "Jäta tühjaks, et mitte muuta" : "Sisesta API Secret Key"}
                     required={!config}
@@ -347,8 +469,8 @@ const PaymentSettings = () => {
                     type="password"
                     id="api_open_key"
                     name="api_open_key"
-                    value={formData.api_open_key}
-                    onChange={handleInputChange}
+                    value={maksekeskusFormData.api_open_key}
+                    onChange={handleMaksekeskusInputChange}
                     className="form-input"
                     placeholder={config ? "Jäta tühjaks, et mitte muuta" : "Sisesta API Open Key"}
                     required={!config}
@@ -360,8 +482,8 @@ const PaymentSettings = () => {
                     <input
                       type="checkbox"
                       name="test_mode"
-                      checked={formData.test_mode}
-                      onChange={handleInputChange}
+                      checked={maksekeskusFormData.test_mode}
+                      onChange={handleMaksekeskusInputChange}
                       className="form-checkbox"
                     />
                     <span>Testrežiim</span>
@@ -376,8 +498,8 @@ const PaymentSettings = () => {
                     <input
                       type="checkbox"
                       name="active"
-                      checked={formData.active}
-                      onChange={handleInputChange}
+                      checked={maksekeskusFormData.active}
+                      onChange={handleMaksekeskusInputChange}
                       className="form-checkbox"
                     />
                     <span>Aktiivne</span>
@@ -400,7 +522,7 @@ const PaymentSettings = () => {
             </div>
           </div>
           
-          <div className="settings-card">
+          <div className={`settings-card ${activeTab === 'maksekeskus' ? '' : 'hidden'}`}>
             <h2>Maksekeskuse integratsioon</h2>
             
             <div className="integration-info">
@@ -430,6 +552,111 @@ const PaymentSettings = () => {
                 <p>API võtmed on tundlikud andmed. Ärge jagage neid kellegi teisega.</p>
                 <p>Kui kahtlustate, et teie võtmed on lekkinud, looge Maksekeskuse kontol uued võtmed ja uuendage need siin.</p>
               </div>
+            </div>
+          </div>
+
+          {/* Omniva Settings */}
+          <div className={`settings-card ${activeTab === 'omniva' ? '' : 'hidden'}`}>
+            <h2>Omniva API seaded</h2>
+            
+            <div className="omniva-info">
+              <p>Omniva API võimaldab automaatselt registreerida saadetisi ja genereerida jälgimisnumbreid pakiautomaati saadetavatele tellimustele.</p>
+            </div>
+            
+            <div className="config-form-section">
+              <h3>Omniva API seadistus</h3>
+              
+              <form onSubmit={handleOmnivaSubmit} className="config-form">
+                <div className="form-group">
+                  <label htmlFor="customer_code">Kliendikood</label>
+                  <input
+                    type="text"
+                    id="customer_code"
+                    name="customer_code"
+                    value={omnivaFormData.customer_code}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta Omniva kliendikood"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="username">Kasutajanimi</label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={omnivaFormData.username}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta Omniva kasutajanimi"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="password">Parool</label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={omnivaFormData.password}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta Omniva parool"
+                  />
+                  <small className="form-hint">
+                    {omnivaFormData.password === '' && localStorage.getItem('omnivaSettings') ? 
+                      'Jäta tühjaks, et säilitada olemasolev parool' : 
+                      'Sisesta Omniva API parool'}
+                  </small>
+                </div>
+                
+                <div className="form-group checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="test_mode"
+                      checked={omnivaFormData.test_mode}
+                      onChange={handleOmnivaInputChange}
+                      className="form-checkbox"
+                    />
+                    <span>Testrežiim</span>
+                  </label>
+                  <small className="form-hint">
+                    Testrežiimis ei toimu päris saadetiste registreerimist. Kasutage seda ainult testimiseks.
+                  </small>
+                </div>
+                
+                <div className="form-group checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="active"
+                      checked={omnivaFormData.active}
+                      onChange={handleOmnivaInputChange}
+                      className="form-checkbox"
+                    />
+                    <span>Aktiivne</span>
+                  </label>
+                </div>
+                
+                <div className="form-actions">
+                  <button 
+                    type="submit"
+                    disabled={saving}
+                    className="btn btn-primary"
+                  >
+                    {saving ? 'Salvestamine...' : 'Salvesta Omniva seaded'}
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <div className="omniva-info mt-6">
+              <p>Omniva API seadistamiseks on vaja kliendikood, kasutajanimi ja parool, mille saate Omniva klienditeenindusest.</p>
+              <p>Kui teil pole veel Omniva kontot, võtke ühendust Omniva klienditeenindusega telefonil 661 6616 või e-posti aadressil info@omniva.ee.</p>
             </div>
           </div>
         </div>
@@ -496,6 +723,49 @@ const PaymentSettings = () => {
           border-radius: 4px;
           border: 1px solid #cfc;
           margin-bottom: 24px;
+        }
+
+        .settings-tabs {
+          display: flex;
+          gap: 16px;
+          margin-bottom: 24px;
+          border-bottom: 1px solid #e9ecef;
+          padding-bottom: 16px;
+        }
+
+        .tab-button {
+          background: none;
+          border: none;
+          padding: 8px 16px;
+          font-family: var(--font-heading);
+          font-weight: 500;
+          font-size: 1rem;
+          color: var(--color-text);
+          cursor: pointer;
+          transition: all 0.2s ease;
+          position: relative;
+        }
+
+        .tab-button:hover {
+          color: var(--color-ultramarine);
+        }
+
+        .tab-button.active {
+          color: var(--color-ultramarine);
+        }
+
+        .tab-button.active:after {
+          content: '';
+          position: absolute;
+          bottom: -16px;
+          left: 0;
+          width: 100%;
+          height: 2px;
+          background-color: var(--color-ultramarine);
+        }
+
+        .hidden {
+          display: none;
         }
 
         .payment-settings-content {
@@ -741,6 +1011,28 @@ const PaymentSettings = () => {
           margin-bottom: 0;
         }
 
+        .omniva-info {
+          background: #f8f9fa;
+          padding: 16px;
+          border-radius: 8px;
+          margin-bottom: 24px;
+        }
+
+        .omniva-info p {
+          margin-bottom: 12px;
+          font-size: 0.95rem;
+          line-height: 1.5;
+          color: #495057;
+        }
+
+        .omniva-info p:last-child {
+          margin-bottom: 0;
+        }
+
+        .mt-6 {
+          margin-top: 24px;
+        }
+
         .btn {
           padding: 8px 16px;
           border: none;
@@ -783,6 +1075,21 @@ const PaymentSettings = () => {
           .payment-settings-content {
             grid-template-columns: 1fr;
             gap: 24px;
+          }
+
+          .settings-tabs {
+            overflow-x: auto;
+            padding-bottom: 12px;
+          }
+
+          .tab-button {
+            white-space: nowrap;
+            padding: 8px 12px;
+            font-size: 0.9rem;
+          }
+
+          .tab-button.active:after {
+            bottom: -12px;
           }
         }
 
