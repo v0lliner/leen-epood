@@ -1,8 +1,6 @@
+// file: src/hooks/useOmniva.js
 import { useState, useEffect } from 'react';
 import { getOmnivaParcelMachines, searchParcelMachines, getUniqueCities } from '../utils/omnivaApi';
-
-// Maximum number of retries for fetching parcel machines
-const MAX_RETRIES = 3;
 
 /**
  * Custom hook for managing Omniva parcel machines
@@ -19,58 +17,41 @@ export function useOmniva(country = 'EE') {
   // Fetch parcel machines on mount
   useEffect(() => {
     async function fetchParcelMachines() {
-      let retryCount = 0;
-      
       try {
         setLoading(true);
         setError(null);
         
-        while (retryCount < MAX_RETRIES) {
-          try {
-            console.log(`Fetching Omniva parcel machines from ${country}... (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
-            const machines = await getOmnivaParcelMachines(country);
-            
-            if (machines && Array.isArray(machines) && machines.length > 0) {
-              console.log(`Successfully received ${machines.length} parcel machines`);
-              setParcelMachines(machines);
-              setFilteredMachines(machines);
-              
-              const uniqueCities = getUniqueCities(machines);
-              setCities(uniqueCities);
-              
-              // Success - exit retry loop
-              break;
-            } else {
-              console.warn(`Received empty or invalid machines array (Attempt ${retryCount + 1}/${MAX_RETRIES})`);
-              retryCount++;
-              
-              if (retryCount >= MAX_RETRIES) {
-                throw new Error('Failed to load parcel machines after multiple attempts');
-              }
-              
-              // Wait before retrying
-              await new Promise(resolve => setTimeout(resolve, 1000));
-            }
-          } catch (attemptError) {
-            console.error(`Attempt ${retryCount + 1}/${MAX_RETRIES} failed:`, attemptError);
-            retryCount++;
-            
-            if (retryCount >= MAX_RETRIES) {
-              throw attemptError;
-            }
-            
-            // Wait before retrying
-            await new Promise(resolve => setTimeout(resolve, 1000));
-          }
+        console.log(`useOmniva: Starting initial fetch for ${country}...`);
+        const machines = await getOmnivaParcelMachines(country); // This calls the omnivaApi.js function
+
+        console.log('useOmniva: Raw machines received from getOmnivaParcelMachines:', machines);
+
+        if (machines && Array.isArray(machines) && machines.length > 0) {
+          console.log(`useOmniva: Data is valid. Setting ${machines.length} parcel machines.`);
+          setParcelMachines(machines);
+          setFilteredMachines(machines); // Initialize filtered with all machines
+
+          const uniqueCities = getUniqueCities(machines);
+          console.log('useOmniva: Unique cities generated:', uniqueCities);
+          setCities(uniqueCities);
+          
+          console.log('useOmniva: All state updates initiated successfully in initial fetch.');
+        } else {
+          console.warn('useOmniva: Received empty or invalid machines array from getOmnivaParcelMachines.');
+          setError('No parcel machines found or invalid data received.');
+          setParcelMachines([]);
+          setFilteredMachines([]);
+          setCities([]);
         }
         
       } catch (err) {
         setError('Failed to load parcel machines');
-        console.error('Error loading Omniva parcel machines:', err);
+        console.error('useOmniva: Error caught during fetchParcelMachines:', err);
         setParcelMachines([]);
         setFilteredMachines([]);
         setCities([]);
       } finally {
+        console.log('useOmniva: fetchParcelMachines finally block executed. Setting loading to false.');
         setLoading(false);
       }
     }
@@ -80,25 +61,30 @@ export function useOmniva(country = 'EE') {
 
   // Filter machines based on search query and selected city
   useEffect(() => {
-    let filtered = parcelMachines;
+    console.log('useOmniva: Filtering effect triggered.');
+    let filtered = parcelMachines; // This `parcelMachines` is the state from the previous useEffect
     
     if (!Array.isArray(filtered) || filtered.length === 0) {
+      console.log('useOmniva: No machines to filter or invalid array.');
       setFilteredMachines([]);
       return;
     }
 
     // Filter by city if selected
     if (selectedCity) {
+      console.log('useOmniva: Filtering by city:', selectedCity);
       filtered = filtered.filter(machine => machine.city === selectedCity);
     }
 
     // Filter by search query
     if (searchQuery) {
+      console.log('useOmniva: Filtering by search query:', searchQuery);
       filtered = searchParcelMachines(filtered, searchQuery);
     }
 
+    console.log(`useOmniva: Filtered machines count: ${filtered.length}`);
     setFilteredMachines(filtered);
-  }, [parcelMachines, searchQuery, selectedCity]);
+  }, [parcelMachines, searchQuery, selectedCity]); // Dependencies for this effect
 
   const handleSearch = (query) => {
     setSearchQuery(query);
@@ -114,8 +100,8 @@ export function useOmniva(country = 'EE') {
   };
 
   return {
-    parcelMachines: filteredMachines,
-    allParcelMachines: parcelMachines,
+    parcelMachines: filteredMachines, // This is the value consumed by Checkout.jsx
+    allParcelMachines: parcelMachines, // Keep this for debugging if needed
     cities,
     loading,
     error,
@@ -125,32 +111,27 @@ export function useOmniva(country = 'EE') {
     handleCityFilter,
     clearFilters,
     refetch: () => {
+      // Simplified refetch for debugging
       setLoading(true);
       setError(null);
-      // Force re-fetch with a new country parameter (same value)
-      const currentCountry = country.toUpperCase();
-      const tempCountry = currentCountry === 'EE' ? 'ee' : 'EE';
-      setParcelMachines([]); // Clear current data
+      setParcelMachines([]); // Clear current data to force re-render and re-fetch
       
-      // This will re-trigger the effect
-      setTimeout(() => {
-        getOmnivaParcelMachines(country)
-          .then(machines => {
-            setParcelMachines(machines);
-            setFilteredMachines(machines);
-            const uniqueCities = getUniqueCities(machines);
-            setCities(uniqueCities);
-            setLoading(false);
-          })
-          .catch(err => {
-            setError('Failed to load parcel machines');
-            console.error('Error reloading Omniva parcel machines:', err);
-            setParcelMachines([]);
-            setFilteredMachines([]);
-            setCities([]);
-            setLoading(false);
-          });
-      }, 100);
+      async function reFetchData() {
+        try {
+          console.log('useOmniva: Refetching data...');
+          const machines = await getOmnivaParcelMachines(country);
+          setParcelMachines(machines);
+          setFilteredMachines(machines);
+          setCities(getUniqueCities(machines));
+          console.log('useOmniva: Refetch completed successfully.');
+        } catch (err) {
+          setError('Failed to load parcel machines');
+          console.error('useOmniva: Error during refetch:', err);
+        } finally {
+          setLoading(false);
+        }
+      }
+      reFetchData();
     }
   };
 }

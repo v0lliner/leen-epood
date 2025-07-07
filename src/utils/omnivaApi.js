@@ -14,7 +14,7 @@ const OMNIVA_API_URL = getApiUrl('/php/get-omniva-parcel-machines.php');
  */
 export async function getOmnivaParcelMachines(country = 'EE') {
   try {
-    console.log(`Fetching from ${OMNIVA_API_URL}...`);
+    console.log(`omnivaApi: Fetching from ${OMNIVA_API_URL}?country=${country.toLowerCase()}...`);
     const response = await fetch(`${OMNIVA_API_URL}?country=${country.toLowerCase()}`, {
       method: 'GET',
       headers: {
@@ -26,7 +26,7 @@ export async function getOmnivaParcelMachines(country = 'EE') {
     if (!response.ok) {
       // Log the HTTP status and text if response is not OK
       const errorText = await response.text();
-      console.error(`HTTP error! Status: ${response.status}, Response Text:`, errorText);
+      console.error(`omnivaApi: HTTP error! Status: ${response.status}, Response Text:`, errorText);
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
@@ -35,42 +35,41 @@ export async function getOmnivaParcelMachines(country = 'EE') {
     
     // Check if the response is empty
     if (!rawResponseText || rawResponseText.trim() === '') {
-      console.error('Empty response received from Omniva API');
+      console.error('omnivaApi: Empty response received from Omniva API');
       throw new Error('Empty response from server');
     }
     
-    // Log the first 200 characters of the response for debugging
-    console.log('Response preview (first 200 chars):', 
-      rawResponseText.length > 200 ? rawResponseText.substring(0, 200) + '...' : rawResponseText);
+    // Log the FULL raw response text for debugging
+    console.log('omnivaApi: Full raw response text:', rawResponseText);
     
     // Try to parse the JSON
     let data;
     try {
       data = JSON.parse(rawResponseText);
     } catch (parseError) {
-      console.error('JSON parse error:', parseError);
-      console.error('Invalid JSON response:', rawResponseText);
+      console.error('omnivaApi: JSON parse error:', parseError);
+      console.error('omnivaApi: Invalid JSON response:', rawResponseText);
       throw new Error(`Failed to parse JSON response: ${parseError.message}`);
     }
 
     if (!data.success) {
-      console.error('API returned success: false', data.error || 'No error message provided');
+      console.error('omnivaApi: API returned success: false', data.error || 'No error message provided');
       throw new Error(data.error || 'Failed to load parcel machines');
     }
     
     if (!data.parcelMachines || !Array.isArray(data.parcelMachines)) {
-      console.error('Invalid parcel machines data:', data);
+      console.error('omnivaApi: Invalid parcel machines data:', data);
       throw new Error('Invalid parcel machines data received');
     }
     
-    console.log(`Successfully received ${data.parcelMachines.length} parcel machines from Omniva API`);
+    console.log(`omnivaApi: Successfully received ${data.parcelMachines.length} parcel machines.`);
     
     // Return the pre-formatted parcel machines from our PHP proxy
     return data.parcelMachines;
     
   } catch (error) {
-    console.error('Error loading parcel machines:', error);
-    throw new Error('Failed to load parcel machines');
+    console.error('omnivaApi: Error in getOmnivaParcelMachines:', error);
+    throw new Error('Failed to load parcel machines'); // Generic error for external consumption
   }
 }
 

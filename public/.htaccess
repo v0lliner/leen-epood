@@ -9,6 +9,13 @@
 # SetEnv OMNIVA_PASSWORD "Ddg(8?e:$A"
 # SetEnv SUPABASE_SERVICE_KEY "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.VQgOh4VmI0hmyXawVt0-uOmMFgHXkqhkMFQxBLjjQME"
 
+# Set environment variables for Omniva and Supabase
+# Note: These should be set in zone.ee control panel for production
+# SetEnv OMNIVA_CUSTOMER_CODE "247723"
+# SetEnv OMNIVA_USERNAME "247723"
+# SetEnv OMNIVA_PASSWORD "Ddg(8?e:$A"
+# SetEnv SUPABASE_SERVICE_KEY "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.VQgOh4VmI0hmyXawVt0-uOmMFgHXkqhkMFQxBLjjQME"
+
 +# Note: These should be set in zone.ee control panel for production
 +# SetEnv OMNIVA_CUSTOMER_CODE "247723"
 +# SetEnv OMNIVA_USERNAME "247723"
