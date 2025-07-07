@@ -19,37 +19,28 @@ const AdminOrders = () => {
   }, []) 
 
   const loadOrders = async () => {
-    setLoading(true);
-    setError(null);
-    
+    setLoading(true)
     try {
-      const response = await fetch('/php/admin/orders.php');
+      const response = await fetch('/php/admin/orders.php')
       
       if (!response.ok) {
-        if (response.status === 0 || !response.status) {
-          throw new Error('Backend server is not available. Please ensure the PHP server is running on localhost:8000');
-        }
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        throw new Error(`Error ${response.status}: ${await response.text()}`)
       }
       
-      const data = await response.json();
+      const data = await response.json()
       
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to load orders');
-      }
-      
-      setOrders(data.orders);
-    } catch (error) {
-      console.error('Error loading orders:', error);
-      if (error.name === 'TypeError' && error.message.includes('fetch')) {
-        setError('Backend server is not available. Please ensure the PHP server is running on localhost:8000');
+      if (data.success) {
+        setOrders(data.orders || [])
       } else {
-        setError(error.message);
+        setError(data.error || 'Failed to load orders')
       }
+    } catch (err) {
+      console.error('Error loading orders:', err)
+      setError('Tellimuste laadimine ebaõnnestus')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const loadOrderDetails = async (orderId) => {
     if (!orderId) return
@@ -98,7 +89,10 @@ const AdminOrders = () => {
       })
       
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`)
+        if (response.status === 0 || !response.status) {
+          throw new Error('Backend server is not available. Please ensure the PHP server is running on localhost:8000');
+        }
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
       }
       
       const data = await response.json()
@@ -123,7 +117,11 @@ const AdminOrders = () => {
       }
     } catch (err) {
       console.error('Error updating order status:', err)
-      setError('Tellimuse staatuse uuendamine ebaõnnestus')
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        alert('Backend server is not available. Please ensure the PHP server is running on localhost:8000');
+      } else {
+        alert(`Failed to update order status: ${err.message}`);
+      }
     }
   }
 
