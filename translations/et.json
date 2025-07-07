@@ -245,7 +245,7 @@
       "courier": {
         "title": "DPD kuller",
         "description": "Tarne 1-2 tööpäeva jooksul",
-        "price": "5.99€"
+        "price": "5.99€",
         "address": "Aadress",
         "address_placeholder": "Tänav, maja, korter",
         "city": "Linn",
