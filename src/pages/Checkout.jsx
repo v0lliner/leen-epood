@@ -1,67 +1,79 @@
-import { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useCart } from '../context/CartContext';
+import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
+import { useCart } from '../context/CartContext';
+import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
 
 const Checkout = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const { items, getTotalPrice } = useCart();
   const navigate = useNavigate();
-  const { items, getTotalPrice, clearCart } = useCart();
-  const [step, setStep] = useState('review');
-  const [loading, setLoading] = useState(false);
+  
+  const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
-  const [paymentMethods, setPaymentMethods] = useState([]);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
-  const [paymentUrl, setPaymentUrl] = useState('');
+  const [totalPrice, setTotalPrice] = useState('0.00');
+  const [formattedTotalPrice, setFormattedTotalPrice] = useState('0.00');
+  const [termsAgreed, setTermsAgreed] = useState(false);
+  const [termsError, setTermsError] = useState('');
+  const [deliveryMethod, setDeliveryMethod] = useState('');
+  const [deliveryMethodError, setDeliveryMethodError] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('swedbank');
+  const [selectedCountry, setSelectedCountry] = useState('Estonia');
   const [parcelMachines, setParcelMachines] = useState([]);
+  const [selectedParcelMachine, setSelectedParcelMachine] = useState('');
   const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
   const [parcelMachineError, setParcelMachineError] = useState('');
-  const [selectedParcelMachine, setSelectedParcelMachine] = useState('');
-  const [shippingMethod, setShippingMethod] = useState('home'); // 'home' or 'parcel'
-  const formRef = useRef(null);
+  const [cardDetails, setCardDetails] = useState({
+    cardNumber: '',
+    expiryMonth: '',
+    expiryYear: '',
+    cvc: '',
+    cardHolder: ''
+  });
   
   const [formData, setFormData] = useState({
+    email: '',
     firstName: '',
     lastName: '',
-    email: '',
     phone: '',
-    address: '',
-    city: '',
-    postalCode: '',
+    companyName: '',
     country: 'Estonia',
-    notes: '',
-    agreeToTerms: false
+    notes: ''
   });
 
+  // Update total price whenever cart items change
   useEffect(() => {
-    // Reset error when step changes
-    setError('');
-  }, [step]);
+    const total = getTotalPrice();
+    setTotalPrice(total.toFixed(2));
+    setFormattedTotalPrice(total.toFixed(2) + '€');
+  }, [items, getTotalPrice]);
 
+  // Load parcel machines when delivery method changes to parcel-machine
   useEffect(() => {
-    // Load parcel machines when shipping method is 'parcel'
-    if (shippingMethod === 'parcel') {
+    if (deliveryMethod === 'parcel-machine') {
       loadParcelMachines();
     }
-  }, [shippingMethod, formData.country]);
+  }, [deliveryMethod, selectedCountry]);
 
+  // Function to load parcel machines from the backend
   const loadParcelMachines = async () => {
-    setLoadingParcelMachines(true);
     setParcelMachineError('');
+    setLoadingParcelMachines(true);
     
     try {
-      // Get country code from country name
-      const countryMap = {
+      // Map country names to country codes
+      const countryCodeMap = {
         'Estonia': 'ee',
         'Latvia': 'lv',
         'Lithuania': 'lt',
         'Finland': 'fi'
       };
       
-      const countryCode = countryMap[formData.country] || 'ee';
+      const countryCode = countryCodeMap[selectedCountry] || 'ee';
       
+      // Fetch parcel machines from the backend
       const response = await fetch(`/php/get-parcel-machines.php?country=${countryCode}`);
       
       if (!response.ok) {
@@ -71,237 +83,382 @@ const Checkout = () => {
       const data = await response.json();
       
       if (data.success && data.destinations) {
-        setParcelMachines(data.destinations);
+        // Group parcel machines by carrier
+        const groupedMachines = {};
+        
+        data.destinations.forEach(destination => {
+          if (!groupedMachines[destination.carrier]) {
+            groupedMachines[destination.carrier] = [];
+          }
+          
+          groupedMachines[destination.carrier].push(destination);
+        });
+        
+        setParcelMachines(groupedMachines);
+        
         // Reset selected parcel machine when country changes
         setSelectedParcelMachine('');
       } else {
-        setParcelMachineError(data.error || 'Failed to load parcel machines');
+        throw new Error(data.error || 'Failed to load parcel machines');
       }
     } catch (error) {
       console.error('Error loading parcel machines:', error);
-      setParcelMachineError('Failed to load parcel machines. Please try again.');
+      setParcelMachineError('Pakiautomaatide laadimine ebaõnnestus');
     } finally {
       setLoadingParcelMachines(false);
     }
   };
 
+  // Handle parcel machine selection
+  const handleParcelMachineChange = (e) => {
+    setSelectedParcelMachine(e.target.value);
+    
+    // Find the selected parcel machine details
+    if (e.target.value) {
+      let selectedMachine = null;
+      
+      // Search through all carriers
+      Object.values(parcelMachines).forEach(carrierMachines => {
+        const found = carrierMachines.find(machine => machine.id === e.target.value);
+        if (found) {
+          selectedMachine = found;
+        }
+      });
+      
+      // If found, update shipping address fields
+      if (selectedMachine) {
+        // Update form data with parcel machine details
+        setFormData(prev => ({
+          ...prev,
+          shippingAddress: `${selectedMachine.name} (${selectedMachine.carrier})`,
+          shippingCity: selectedMachine.city || '',
+          shippingPostalCode: selectedMachine.postalCode || ''
+        }));
+      }
+    }
+  };
+
   const handleInputChange = (e) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
     
-    // Clear error when user starts typing
+    // Clear error when user types
+    if (error) setError('');
+  };
+  
+  // Function to scroll to top of page
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  const handleCardInputChange = (e) => {
+    const { name, value } = e.target;
+    setCardDetails(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when user types
     if (error) setError('');
   };
 
-  const handleShippingMethodChange = (method) => {
-    setShippingMethod(method);
+  const handleTermsChange = (e) => {
+    setTermsAgreed(e.target.checked);
+    if (e.target.checked) {
+      setTermsError('');
+    }
   };
 
-  const handleParcelMachineChange = (e) => {
-    setSelectedParcelMachine(e.target.value);
+  const handleDeliveryMethodChange = (method) => {
+    setDeliveryMethod(method);
+    setDeliveryMethodError('');
+  };
+
+  const handlePaymentMethodSelection = (method) => {
+    // Clear any previous errors when changing payment method
+    setError('');
+    setSelectedPaymentMethod(method);
+  };
+
+  const handleCountryChange = (e) => {
+    const country = e.target.value;
+    setSelectedCountry(country);
+    setFormData(prev => ({
+      ...prev,
+      country: country
+    }));
+    // Reset selected payment method when country changes
+    setSelectedPaymentMethod('');
+  };
+  
+  // Function to tokenize card details using Maksekeskus SDK
+  const tokenizeCardDetails = async () => {
+    try {
+      // Validate card details
+      if (!cardDetails.cardNumber || !cardDetails.expiryMonth || 
+          !cardDetails.expiryYear || !cardDetails.cvc || !cardDetails.cardHolder) {
+        throw new Error('Palun täitke kõik kaardi andmed');
+      }
+      
+      // Check if Maksekeskus SDK is loaded
+      if (!window.Maksekeskus) {
+        throw new Error('Maksekeskuse SDK ei ole laaditud');
+      }
+      
+      // Initialize Maksekeskus SDK
+      const mk = new window.Maksekeskus({
+        shopId: '4e2bed9a-aa24-4b87-801b-56c31c535d36',
+        testMode: false // Set to false for production
+      });
+      
+      // Tokenize card details
+      const token = await mk.tokenizeCard({
+        cardNumber: cardDetails.cardNumber.replace(/\s/g, ''),
+        expiryMonth: cardDetails.expiryMonth,
+        expiryYear: cardDetails.expiryYear,
+        cvc: cardDetails.cvc,
+        cardHolder: cardDetails.cardHolder
+      });
+      
+      return token;
+    } catch (err) {
+      throw new Error('Kaardi andmete töötlemine ebaõnnestus: ' + err.message);
+    }
   };
 
   const validateForm = () => {
-    // Basic validation
-    const requiredFields = ['firstName', 'lastName', 'email', 'phone'];
+    // Required fields
+    const requiredFields = ['email', 'firstName', 'lastName', 'phone'];
+    const missingFields = requiredFields.filter(field => !formData[field].trim());
     
-    // Add address validation if shipping method is 'home'
-    if (shippingMethod === 'home') {
-      requiredFields.push('address', 'city', 'postalCode');
-    } else if (shippingMethod === 'parcel' && !selectedParcelMachine) {
-      setError(t('checkout.shipping.parcel.required'));
+    if (missingFields.length > 0) {
+      setError('Palun täitke kõik kohustuslikud väljad');
       return false;
     }
     
-    for (const field of requiredFields) {
-      if (!formData[field]) {
-        setError(t('checkout.error.required_fields'));
-        return false;
-      }
-    }
-    
-    // Email validation
+    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError(t('checkout.error.invalid_email'));
+      setError('Palun sisestage korrektne e-posti aadress');
+      return false;
+    }
+
+    // Check delivery method
+    if (!deliveryMethod) {
+      setDeliveryMethodError('Palun valige tarneviis');
+      return false;
+    }
+
+    // Check terms agreement
+    if (!termsAgreed) {
+      setTermsError(t('checkout.terms.required'));
       return false;
     }
     
-    // Terms agreement validation
-    if (!formData.agreeToTerms) {
-      setError(t('checkout.terms.required'));
+    // Check if bank is selected
+    if (!selectedPaymentMethod) {
+      setError('Palun valige makseviis');
       return false;
     }
     
     return true;
   };
 
-  const handleContinueToShipping = () => {
+  // Function to generate a unique order reference
+  const generateOrderReference = () => {
+    const timestamp = Date.now();
+    const randomStr = Math.random().toString(36).substring(2, 8);
+    return `order-${timestamp}-${randomStr}`;
+  };
+
+  const handleCheckout = async () => {
     if (items.length === 0) {
-      setError(t('checkout.error.empty_cart'));
+      setError('Ostukorv on tühi');
       return;
     }
-    
-    setStep('shipping');
-  };
 
-  const handleBackToReview = () => {
-    setStep('review');
-  };
-
-  const handleContinueToPayment = () => {
     if (!validateForm()) {
-      // Scroll to error message
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     
-    setStep('payment');
-    loadPaymentMethods();
-  };
-
-  const handleBackToShipping = () => {
-    setStep('shipping');
-  };
-
-  const loadPaymentMethods = async () => {
-    setLoading(true);
-    setError('');
-    
-    try {
-      // Simulate loading payment methods
-      // In a real implementation, you would fetch this from your payment provider
-      setTimeout(() => {
-        setPaymentMethods([
-          { id: 'swedbank', name: 'Swedbank', type: 'bank' },
-          { id: 'seb', name: 'SEB', type: 'bank' },
-          { id: 'lhv', name: 'LHV', type: 'bank' },
-          { id: 'coop', name: 'Coop Pank', type: 'bank' },
-          { id: 'luminor', name: 'Luminor', type: 'bank' },
-          { id: 'card', name: 'Pangakaart', type: 'card' }
-        ]);
-        setLoading(false);
-      }, 1000);
-    } catch (error) {
-      console.error('Error loading payment methods:', error);
-      setError('Failed to load payment methods');
-      setLoading(false);
-    }
-  };
-
-  const handlePaymentMethodChange = (methodId) => {
-    setSelectedPaymentMethod(methodId);
-    // Clear error when user selects a payment method
-    if (error) setError('');
-  };
-
-  const handleSubmitPayment = async (e) => {
-    e.preventDefault();
-    
-    if (!selectedPaymentMethod) {
-      setError(t('checkout.payment.method_required'));
+    // Validate parcel machine selection if delivery method is parcel-machine
+    if (deliveryMethod === 'parcel-machine' && !selectedParcelMachine) {
+      setParcelMachineError('Palun valige pakiautomaat');
       return;
     }
-    
-    setLoading(true);
+
+    setIsProcessing(true);
     setError('');
-    
+
     try {
-      // Prepare shipping address based on shipping method
-      let shippingAddress = '';
-      
-      if (shippingMethod === 'home') {
-        shippingAddress = formData.address;
-      } else if (shippingMethod === 'parcel') {
-        // Find selected parcel machine
-        const selectedMachine = parcelMachines.find(pm => pm.id === selectedParcelMachine);
-        if (selectedMachine) {
-          shippingAddress = `Pakiautomaat: ${selectedMachine.name}, ${selectedMachine.address}`;
+      // For card payments, tokenize card details
+      let cardToken = null;
+      if (selectedPaymentMethod === 'card') {
+        try {
+          cardToken = await tokenizeCardDetails();
+          console.log('Card tokenized successfully');
+        } catch (tokenError) {
+          setError(tokenError.message);
+          setIsProcessing(false);
+          return;
         }
       }
       
-      // Prepare payment data
-      const paymentData = {
+      // Calculate final amount including delivery cost
+      const deliveryCost = deliveryMethod === 'parcel-machine' ? 3.99 : 0;
+      const finalAmount = (parseFloat(totalPrice) + deliveryCost).toFixed(2);
+
+      // Prepare shipping details based on delivery method
+      let shippingDetails = {};
+      if (deliveryMethod === 'parcel-machine' && selectedParcelMachine) {
+        // Find the selected parcel machine
+        let selectedMachine = null;
+        Object.values(parcelMachines).forEach(carrierMachines => {
+          const found = carrierMachines.find(machine => machine.id === selectedParcelMachine);
+          if (found) {
+            selectedMachine = found;
+          }
+        });
+      }
+      
+      // Generate a unique order reference
+      const orderReference = generateOrderReference();
+      
+      // Prepare order data to send to PHP backend
+      const orderData = {
+        amount: finalAmount,
+        reference: orderReference,
+        email: formData.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
-        email: formData.email,
         phone: formData.phone,
-        address: shippingAddress,
-        city: formData.city,
-        postalCode: formData.postalCode,
-        country: formData.country,
-        notes: formData.notes,
+        country: selectedCountry,
+        shippingAddress: formData.shippingAddress || '',
+        shippingCity: formData.shippingCity || '',
+        shippingPostalCode: formData.shippingPostalCode || '',
+        deliveryMethod: deliveryMethod,
+        parcelMachine: selectedParcelMachine || '',
+        // Add return URL with order reference for better tracking
+        return_url: `https://leen.ee/checkout/success?reference=${orderReference}`,
+        cancel_url: 'https://leen.ee/checkout',
+        // Add notes if provided
+        notes: formData.notes || '',
+        paymentMethod: selectedPaymentMethod,
         items: items.map(item => ({
           id: item.id,
           title: item.title,
-          price: parseFloat(item.price.replace('€', '')),
+          price: parsePriceToAmount(item.price),
           quantity: 1
-        })),
-        amount: getTotalPrice().toFixed(2),
-        reference: `order-${Date.now()}`,
-        paymentMethod: selectedPaymentMethod,
-        return_url: `${window.location.origin}/checkout/success`,
-        cancel_url: `${window.location.origin}/checkout`
+        }))
       };
       
-      console.log('Sending payment request:', paymentData);
+      // Prepare the final request payload
+      const payload = {
+        ...orderData,
+        // Only include token for card payments
+        ...(selectedPaymentMethod === 'card' && cardToken ? { token: cardToken } : {})
+      };
       
-      // Send payment request to backend
+      console.log('Sending payment request with payload:', payload);
+      
+      // Call the PHP endpoint to create a transaction and payment
       const response = await fetch('/php/process-payment.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(paymentData)
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
-      
+
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        // Try to parse error response as JSON
+        let errorData;
+        try {
+          errorData = await response.json();
+          throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+        } catch (jsonError) {
+          // If response is not JSON, get the raw text
+          const errorText = await response.text();
+          console.error('Raw error response:', errorText);
+          throw new Error(`HTTP error! Status: ${response.status}, Response is not valid JSON`);
+        }
+      }
+
+      let data;
+      try {
+        data = await response.json();
+        console.log('Payment response:', data);
+      } catch (jsonError) {
+        console.error('Error parsing response JSON:', jsonError);
+        const rawResponse = await response.text();
+        console.error('Raw response:', rawResponse);
+        throw new Error('Invalid JSON response from server');
       }
       
-      const result = await response.json();
-      
-      if (result.error) {
-        throw new Error(result.error);
+      if (data.error) {
+        throw new Error(data.error);
       }
       
-      console.log('Payment response:', result);
-      
-      // Store order details in localStorage for retrieval on success page
-      const orderDetails = {
-        orderReference: paymentData.reference,
-        orderAmount: paymentData.amount,
-        customerEmail: paymentData.email,
-        timestamp: Date.now(),
-        orderItems: paymentData.items
-      };
-      
-      localStorage.setItem('pendingOrder', JSON.stringify(orderDetails));
-      
-      // Redirect to payment URL
-      if (result.paymentUrl) {
-        setPaymentUrl(result.paymentUrl);
-        window.location.href = result.paymentUrl;
+      if (data.transactionId && data.paymentUrl) {
+        // Store order info in localStorage before redirecting
+        localStorage.setItem('pendingOrder', JSON.stringify({
+          orderReference: orderReference,
+          orderAmount: finalAmount,
+          orderItems: items,
+          customerEmail: formData.email,
+          timestamp: Date.now()
+        }));
+        
+        // Redirect to payment URL provided by Maksekeskus
+        window.location.href = data.paymentUrl;
       } else {
-        throw new Error('No payment URL received');
+        throw new Error('Maksekeskuse vastuses puudub tehingu ID või makse URL');
       }
-      
-    } catch (error) {
-      console.error('Payment error:', error);
-      setError(error.message || t('checkout.error.session_failed'));
-    } finally {
-      setLoading(false);
+    } catch (err) {
+      console.error('Error during checkout:', err);
+      setError('Tellimuse vormistamine ebaõnnestus: ' + (err.message || 'Tundmatu viga'));
+      setIsProcessing(false);
     }
   };
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  // Payment methods by country
+  const paymentMethodsByCountry = {
+    'Estonia': [
+      { id: 'swedbank', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'lhv', name: 'LHV', logo: 'https://static.maksekeskus.ee/img/channel/lnd/lhv.png' },
+      { id: 'luminor', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'coop', name: 'Coop Pank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/coop.png' },
+      { id: 'citadele', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'n26', name: 'N26', logo: 'https://static.maksekeskus.ee/img/channel/lnd/n26.png' },
+      { id: 'revolut', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Latvia': [
+      { id: 'swedbank-lv', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb-lv', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'citadele-lv', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'luminor-lv', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'revolut-lv', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise-lv', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Lithuania': [
+      { id: 'swedbank-lt', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
+      { id: 'seb-lt', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
+      { id: 'luminor-lt', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
+      { id: 'citadele-lt', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
+      { id: 'revolut-lt', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
+      { id: 'wise-lt', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
+    ],
+    'Finland': [
+      { id: 'nordea', name: 'Nordea', logo: 'https://static.maksekeskus.ee/img/channel/lnd/nordea.png' },
+      { id: 'op', name: 'OP', logo: 'https://static.maksekeskus.ee/img/channel/lnd/op.png' },
+      { id: 'danske', name: 'Danske Bank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/danske.png' }
+    ]
   };
 
-  if (items.length === 0 && step !== 'success') {
+  if (items.length === 0) {
     return (
       <>
         <SEOHead page="shop" />
@@ -310,55 +467,40 @@ const Checkout = () => {
             <div className="container">
               <FadeInSection>
                 <div className="empty-cart">
-                  <h1>{t('checkout.title')}</h1>
-                  <p>{t('cart.empty')}</p>
-                  <button 
-                    onClick={() => navigate('/epood')}
-                    className="btn btn-primary"
-                  >
+                  <h1>{t('cart.empty')}</h1>
+                  <Link to="/epood" className="btn btn-primary">
                     {t('cart.back_to_shop')}
-                  </button>
+                  </Link>
                 </div>
               </FadeInSection>
             </div>
           </section>
         </main>
+
         <style jsx>{`
           .empty-cart {
             text-align: center;
             max-width: 600px;
             margin: 0 auto;
-            padding: 48px 0;
+            padding: 64px 0;
           }
 
           .empty-cart h1 {
-            margin-bottom: 24px;
-          }
-
-          .empty-cart p {
             margin-bottom: 32px;
-            color: #666;
-          }
-
-          .btn {
-            padding: 12px 24px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-family: var(--font-body);
-            font-weight: 500;
-            transition: opacity 0.2s ease;
-            display: inline-block;
-            border: none;
-            cursor: pointer;
-            font-size: 1rem;
+            color: var(--color-text);
           }
 
           .btn-primary {
+            display: inline-block;
             background-color: var(--color-ultramarine);
             color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
           }
 
-          .btn:hover {
+          .btn-primary:hover {
             opacity: 0.9;
           }
         `}</style>
@@ -373,598 +515,614 @@ const Checkout = () => {
         <section className="section-large">
           <div className="container">
             <FadeInSection>
-              <h1 className="checkout-title">{t('checkout.title')}</h1>
-              
-              {/* Checkout Steps */}
-              <div className="checkout-steps">
-                <div className={`step ${step === 'review' ? 'active' : ''} ${step === 'shipping' || step === 'payment' ? 'completed' : ''}`}>
-                  <span className="step-number">1</span>
-                  <span className="step-name">{t('checkout.steps.review')}</span>
-                </div>
-                <div className={`step ${step === 'shipping' ? 'active' : ''} ${step === 'payment' ? 'completed' : ''}`}>
-                  <span className="step-number">2</span>
-                  <span className="step-name">{t('checkout.steps.shipping')}</span>
-                </div>
-                <div className={`step ${step === 'payment' ? 'active' : ''}`}>
-                  <span className="step-number">3</span>
-                  <span className="step-name">{t('checkout.steps.payment')}</span>
-                </div>
+              <div className="checkout-header">
+                <h1>{t('checkout.title')}</h1>
               </div>
-              
-              {/* Error Message */}
-              {error && (
-                <div className="error-message">
-                  {error}
-                </div>
-              )}
             </FadeInSection>
 
-            <div className="checkout-layout">
-              {/* Main Content */}
+            <div className="checkout-container">
+              {/* Main Checkout Form */}
               <div className="checkout-main">
                 <FadeInSection>
-                  {/* Step 1: Review */}
-                  {step === 'review' && (
-                    <div className="checkout-review">
-                      <h2>{t('checkout.review.title')}</h2>
-                      
-                      <div className="cart-items">
-                        {items.map((item) => (
-                          <div key={item.id} className="cart-item">
-                            <div className="item-image">
-                              <img src={item.image} alt={item.title} />
-                            </div>
-                            <div className="item-details">
-                              <h3 className="item-title">{item.title}</h3>
-                              <p className="item-price">{item.price}</p>
-                              <p className="item-quantity">{t('cart.quantity')}: 1</p>
-                            </div>
-                          </div>
-                        ))}
+                  <div className="checkout-form-container">
+                    {error && (
+                      <div className="error-message">
+                        {error}
                       </div>
-                      
-                      <div className="review-actions">
-                        <button 
-                          onClick={() => navigate('/epood')}
-                          className="btn btn-secondary"
-                        >
-                          {t('checkout.review.back_to_shop')}
-                        </button>
-                        <button 
-                          onClick={handleContinueToShipping}
-                          className="btn btn-primary"
-                        >
-                          {t('checkout.review.continue')}
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {/* Step 2: Shipping */}
-                  {step === 'shipping' && (
-                    <div className="checkout-shipping">
-                      <h2>{t('checkout.shipping.title')}</h2>
-                      
-                      <form ref={formRef} onSubmit={(e) => e.preventDefault()}>
-                        {/* Contact Information */}
-                        <div className="form-section">
-                          <h3>{t('checkout.shipping.contact.title')}</h3>
-                          
-                          <div className="form-row">
-                            <div className="form-group">
-                              <label htmlFor="firstName">{t('checkout.shipping.contact.name')} *</label>
-                              <div className="name-fields">
-                                <input
-                                  type="text"
-                                  id="firstName"
-                                  name="firstName"
-                                  value={formData.firstName}
-                                  onChange={handleInputChange}
-                                  placeholder={t('checkout.shipping.contact.name_placeholder')}
-                                  required
-                                  className="form-input"
-                                />
-                                <input
-                                  type="text"
-                                  id="lastName"
-                                  name="lastName"
-                                  value={formData.lastName}
-                                  onChange={handleInputChange}
-                                  placeholder="Perekonnanimi"
-                                  required
-                                  className="form-input"
-                                />
+                    )}
+                    
+                    <form className="checkout-form">
+                      {/* Order Summary Section */}
+                      <div className="form-section">
+                        <h3>1. Tellimuse kokkuvõte</h3>
+                        <div className="order-items">
+                          {items.map((item) => (
+                            <div key={item.id} className="order-item">
+                              <div className="item-image">
+                                {item.image ? (
+                                  <img src={item.image} alt={item.title} />
+                                ) : (
+                                  <div className="no-image">
+                                    <span>📷</span>
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                          </div>
-                          
-                          <div className="form-row">
-                            <div className="form-group">
-                              <label htmlFor="email">{t('checkout.shipping.contact.email')} *</label>
-                              <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleInputChange}
-                                placeholder={t('checkout.shipping.contact.email_placeholder')}
-                                required
-                                className="form-input"
-                              />
-                            </div>
-                            
-                            <div className="form-group">
-                              <label htmlFor="phone">{t('checkout.shipping.contact.phone')} *</label>
-                              <input
-                                type="tel"
-                                id="phone"
-                                name="phone"
-                                value={formData.phone}
-                                onChange={handleInputChange}
-                                placeholder={t('checkout.shipping.contact.phone_placeholder')}
-                                required
-                                className="form-input"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Shipping Method */}
-                        <div className="form-section">
-                          <h3>Tarneviis</h3>
-                          
-                          <div className="shipping-methods">
-                            <div 
-                              className={`shipping-method ${shippingMethod === 'home' ? 'active' : ''}`}
-                              onClick={() => handleShippingMethodChange('home')}
-                            >
-                              <div className="method-radio">
-                                <div className={`radio-inner ${shippingMethod === 'home' ? 'selected' : ''}`}></div>
-                              </div>
-                              <div className="method-info">
-                                <h4>Kullerteenus</h4>
-                                <p>Tarne koju või kontorisse</p>
-                                <p className="method-price">5.90€</p>
-                              </div>
-                            </div>
-                            
-                            <div 
-                              className={`shipping-method ${shippingMethod === 'parcel' ? 'active' : ''}`}
-                              onClick={() => handleShippingMethodChange('parcel')}
-                            >
-                              <div className="method-radio">
-                                <div className={`radio-inner ${shippingMethod === 'parcel' ? 'selected' : ''}`}></div>
-                              </div>
-                              <div className="method-info">
-                                <h4>Pakiautomaati</h4>
-                                <p>Tarne lähimasse pakiautomaati</p>
-                                <p className="method-price">3.90€</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Shipping Address */}
-                        <div className="form-section">
-                          <h3>{t('checkout.shipping.address.title')}</h3>
-                          
-                          {shippingMethod === 'home' ? (
-                            <>
-                              <div className="form-group">
-                                <label htmlFor="address">{t('checkout.shipping.address.address')} *</label>
-                                <input
-                                  type="text"
-                                  id="address"
-                                  name="address"
-                                  value={formData.address}
-                                  onChange={handleInputChange}
-                                  placeholder={t('checkout.shipping.address.address_placeholder')}
-                                  required={shippingMethod === 'home'}
-                                  className="form-input"
-                                />
-                              </div>
-                              
-                              <div className="form-row">
-                                <div className="form-group">
-                                  <label htmlFor="city">{t('checkout.shipping.address.city')} *</label>
-                                  <input
-                                    type="text"
-                                    id="city"
-                                    name="city"
-                                    value={formData.city}
-                                    onChange={handleInputChange}
-                                    placeholder={t('checkout.shipping.address.city_placeholder')}
-                                    required={shippingMethod === 'home'}
-                                    className="form-input"
-                                  />
+                              <div className="item-details">
+                                <h4 className="item-title">{item.title}</h4>
+                                <div className="item-meta">
+                                  {item.category && (
+                                    <span className="item-category">{item.category}</span>
+                                  )}
+                                  {item.dimensions && item.dimensions.height && (
+                                    <span className="item-dimensions">
+                                      {item.dimensions.height}×{item.dimensions.width}×{item.dimensions.depth}cm
+                                    </span>
+                                  )}
                                 </div>
-                                
-                                <div className="form-group">
-                                  <label htmlFor="postalCode">{t('checkout.shipping.address.postal_code')} *</label>
-                                  <input
-                                    type="text"
-                                    id="postalCode"
-                                    name="postalCode"
-                                    value={formData.postalCode}
-                                    onChange={handleInputChange}
-                                    placeholder={t('checkout.shipping.address.postal_code_placeholder')}
-                                    required={shippingMethod === 'home'}
-                                    className="form-input"
-                                  />
+                                <div className="item-price-row">
+                                  <span className="item-quantity">1 tk</span>
+                                  <span className="item-price">{item.price}</span>
                                 </div>
                               </div>
-                            </>
-                          ) : (
-                            <div className="form-group">
-                              <label htmlFor="parcelMachine">Vali pakiautomaat *</label>
-                              {loadingParcelMachines ? (
-                                <div className="loading-text">Laen pakiautomaate...</div>
-                              ) : parcelMachineError ? (
-                                <div className="error-text">{parcelMachineError}</div>
-                              ) : (
-                                <select
-                                  id="parcelMachine"
-                                  name="parcelMachine"
-                                  value={selectedParcelMachine}
-                                  onChange={handleParcelMachineChange}
-                                  className="form-input"
-                                  required={shippingMethod === 'parcel'}
-                                >
-                                  <option value="">Vali pakiautomaat</option>
-                                  {parcelMachines.map(machine => (
-                                    <option key={machine.id} value={machine.id}>
-                                      {machine.name} - {machine.address}
-                                    </option>
-                                  ))}
-                                </select>
-                              )}
                             </div>
-                          )}
-                          
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Delivery Method Section */}
+                      <div className="form-section">
+                        <h3>2. Tarneviis</h3>
+                        
+                        <div className="form-row">
                           <div className="form-group">
-                            <label htmlFor="country">{t('checkout.shipping.address.country')}</label>
+                            <label htmlFor="country">Riik</label>
                             <select
                               id="country"
                               name="country"
                               value={formData.country}
-                              onChange={handleInputChange}
+                              onChange={handleCountryChange}
                               className="form-input"
                             >
-                              <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
-                              <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
-                              <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
-                              <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
+                              <option value="Estonia">Eesti (Estonia)</option>
+                              <option value="Latvia">Läti (Latvia)</option>
+                              <option value="Lithuania">Leedu (Lithuania)</option>
+                              <option value="Finland">Soome (Finland)</option>
                             </select>
                           </div>
                         </div>
                         
-                        {/* Additional Information */}
-                        <div className="form-section">
-                          <h3>{t('checkout.shipping.notes.title')}</h3>
+                        <div className="delivery-methods">
+                          <div 
+                            className={`delivery-method ${deliveryMethod === 'self-pickup' ? 'selected' : ''}`}
+                            onClick={() => handleDeliveryMethodChange('self-pickup')}
+                          >
+                            <div className="delivery-method-radio">
+                              <div className={`radio-indicator ${deliveryMethod === 'self-pickup' ? 'active' : ''}`}></div>
+                            </div>
+                            <div className="delivery-method-content">
+                              <h4>Tulen ise järele</h4>
+                              <p>Jõeääre, Märjamaa, Märjamaa vald 78218</p>
+                              <p className="delivery-price">Tasuta</p>
+                            </div>
+                          </div>
                           
+                          <div 
+                            className={`delivery-method ${deliveryMethod === 'parcel-machine' ? 'selected' : ''} ${deliveryMethod === 'parcel-machine' && !selectedParcelMachine ? 'needs-selection' : ''}`}
+                            onClick={() => {
+                              handleDeliveryMethodChange('parcel-machine');
+                              if (parcelMachines.length === 0) {
+                                loadParcelMachines();
+                              }
+                            }}
+                          >
+                            <div className="delivery-method-radio">
+                              <div className={`radio-indicator ${deliveryMethod === 'parcel-machine' ? 'active' : ''}`}></div>
+                            </div>
+                            <div className="delivery-method-content">
+                              <h4>Pakiautomaati</h4>
+                              <p>Toode saadetakse valitud pakiautomaati</p>
+                              <p className="delivery-price">3.99€</p>
+                            </div>
+                          </div>
+
+                          {/* Parcel Machine Selection */}
+                          {deliveryMethod === 'parcel-machine' && (
+                            <div className="parcel-machine-selection">
+                              {loadingParcelMachines ? (
+                                <div className="loading-parcel-machines">
+                                  <div className="loading-spinner-small"></div>
+                                  <p>Laadin pakiautomaate...</p>
+                                </div>
+                              ) : parcelMachineError ? (
+                                <div className="parcel-machine-error">
+                                  <p>{parcelMachineError}</p>
+                                  <button 
+                                    type="button" 
+                                    onClick={loadParcelMachines}
+                                    className="retry-button"
+                                  >
+                                    Proovi uuesti
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="parcel-machine-dropdown">
+                                  <label htmlFor="parcel-machine">Valige pakiautomaat *</label>
+                                  <select
+                                    id="parcel-machine"
+                                    value={selectedParcelMachine}
+                                    onChange={handleParcelMachineChange}
+                                    className="form-input"
+                                    required={deliveryMethod === 'parcel-machine'}
+                                  >
+                                    <option value="">-- Valige pakiautomaat --</option>
+                                    {Object.entries(parcelMachines).map(([carrier, machines]) => (
+                                      <optgroup key={carrier} label={carrier === 'omniva' ? 'Omniva' : carrier === 'smartpost' ? 'Smartpost' : carrier}>
+                                        {machines.map(machine => (
+                                          <option key={machine.id} value={machine.id}>
+                                            {machine.name} - {machine.city}
+                                          </option>
+                                        ))}
+                                      </optgroup>
+                                    ))}
+                                  </select>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        
+                        {deliveryMethodError && (
+                          <div className="field-error">
+                            {deliveryMethodError}
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Customer Information Section */}
+                      <div className="form-section">
+                        <h3>3. Andmed</h3>
+                        
+                        <div className="form-row">
                           <div className="form-group">
-                            <label htmlFor="notes">{t('checkout.shipping.notes.notes')}</label>
-                            <textarea
+                            <label htmlFor="email">E-post *</label>
+                            <input
+                              type="email"
+                              id="email"
+                              name="email"
+                              value={formData.email}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="teie@email.ee"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="form-row two-columns">
+                          <div className="form-group">
+                            <label htmlFor="firstName">Eesnimi *</label>
+                            <input
+                              type="text"
+                              id="firstName"
+                              name="firstName"
+                              value={formData.firstName}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="Eesnimi"
+                            />
+                          </div>
+                          <div className="form-group">
+                            <label htmlFor="lastName">Perekonnanimi *</label>
+                            <input
+                              type="text"
+                              id="lastName"
+                              name="lastName"
+                              value={formData.lastName}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="Perekonnanimi"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="phone">Telefon *</label>
+                            <input
+                              type="tel"
+                              id="phone"
+                              name="phone"
+                              value={formData.phone}
+                              onChange={handleInputChange}
+                              required
+                              className="form-input"
+                              placeholder="+372 5xxx xxxx"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="companyName">Firma nimi (pole kohustuslik)</label>
+                            <input
+                              type="text"
+                              id="companyName"
+                              name="companyName"
+                              value={formData.companyName}
+                              onChange={handleInputChange}
+                              className="form-input"
+                              placeholder="Firma nimi"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label htmlFor="notes">Märkused tellimuse kohta</label>
+                            <textarea 
                               id="notes"
                               name="notes"
                               value={formData.notes}
                               onChange={handleInputChange}
-                              placeholder={t('checkout.shipping.notes.notes_placeholder')}
                               className="form-input"
-                              rows="4"
+                              rows="3"
+                              placeholder="Soovid või märkused tellimuse kohta"
                             ></textarea>
                           </div>
                         </div>
-                        
-                        {/* Terms Agreement */}
-                        <div className="form-section">
-                          <div className="form-group checkbox-group">
-                            <label className="checkbox-label">
-                              <input
-                                type="checkbox"
-                                name="agreeToTerms"
-                                checked={formData.agreeToTerms}
-                                onChange={handleInputChange}
-                                className="form-checkbox"
-                              />
-                              <span>
-                                {t('checkout.terms.agree')} <a href="/muugitingimused" target="_blank" rel="noopener noreferrer">{t('checkout.terms.terms_link')}</a>
-                              </span>
-                            </label>
-                          </div>
-                        </div>
-                        
-                        <div className="shipping-actions">
-                          <button 
-                            onClick={handleBackToReview}
-                            className="btn btn-secondary"
-                          >
-                            {t('checkout.shipping.back')}
-                          </button>
-                          <button 
-                            onClick={handleContinueToPayment}
-                            className="btn btn-primary"
-                          >
-                            {t('checkout.shipping.continue')}
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  )}
-                  
-                  {/* Step 3: Payment */}
-                  {step === 'payment' && (
-                    <div className="checkout-payment">
-                      <h2>{t('checkout.payment.title')}</h2>
+                      </div>
                       
-                      {loading ? (
-                        <div className="loading-container">
-                          <div className="loading-spinner"></div>
-                          <p>{t('checkout.payment.loading_methods')}</p>
-                        </div>
-                      ) : error ? (
-                        <div className="payment-error">
-                          <p>{t('checkout.payment.methods_error')}</p>
-                          <button 
-                            onClick={loadPaymentMethods}
-                            className="btn btn-secondary"
-                          >
-                            {t('checkout.payment.retry')}
-                          </button>
-                        </div>
-                      ) : paymentMethods.length === 0 ? (
-                        <div className="payment-error">
-                          <p>{t('checkout.payment.no_methods')}</p>
-                        </div>
-                      ) : (
-                        <form onSubmit={handleSubmitPayment}>
-                          <div className="payment-methods-container">
-                            <h3>{t('checkout.payment.select_method')}</h3>
-                            
-                            <div className="payment-methods-wrapper">
-                              <div className="payment-methods-tabs">
-                                {paymentMethods.filter(m => m.type === 'bank').map(method => (
-                                  <button
-                                    key={method.id}
-                                    type="button"
-                                    className={`payment-method-tab ${selectedPaymentMethod === method.id ? 'active' : ''}`}
-                                    onClick={() => handlePaymentMethodChange(method.id)}
-                                  >
-                                    <span className="bank-name">{method.name}</span>
-                                  </button>
-                                ))}
-                              </div>
-                              
-                              <div className="payment-methods-content">
-                                <div className="payment-method-description">
-                                  <p>Maksmine toimub panga turvalises keskkonnas.</p>
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="payment-methods-other">
-                              {paymentMethods.filter(m => m.type === 'card').map(method => (
+                      {/* Payment Section */}
+                      <div className="form-section">
+                        <h3>4. Vormista tellimus</h3>
+                        
+                        <div className="payment-section">
+                          <div className="payment-country-selector">
+                            <h4>Vali panga riik</h4>
+                            <div className="country-buttons">
+                              {Object.keys(paymentMethodsByCountry).map(country => (
                                 <button
-                                  key={method.id}
+                                  key={country}
                                   type="button"
-                                  className={`payment-method-card ${selectedPaymentMethod === method.id ? 'active' : ''}`}
-                                  onClick={() => handlePaymentMethodChange(method.id)}
+                                  className={`country-button ${selectedCountry === country ? 'active' : ''}`}
+                                  onClick={() => setSelectedCountry(country)}
                                 >
-                                  <span className="card-name">{method.name}</span>
+                                  {i18n.language === 'et' ? {
+                                    'Estonia': 'Eesti',
+                                    'Latvia': 'Läti',
+                                    'Lithuania': 'Leedu',
+                                    'Finland': 'Soome'
+                                  }[country] : country}
                                 </button>
                               ))}
                             </div>
                           </div>
                           
-                          <div className="payment-actions">
-                            <button 
-                              type="button"
-                              onClick={handleBackToShipping}
-                              className="btn btn-secondary"
-                            >
-                              {t('checkout.shipping.back')}
-                            </button>
-                            <button 
-                              type="submit"
-                              className="btn btn-primary"
-                              disabled={loading || !selectedPaymentMethod}
-                            >
-                              {loading ? t('checkout.payment.processing') : t('checkout.payment.proceed')}
-                            </button>
-                          </div>
-                        </form>
-                      )}
-                    </div>
-                  )}
-                </FadeInSection>
-              </div>
-              
-              {/* Order Summary */}
-              <div className="checkout-sidebar">
-                <FadeInSection>
-                  <div className="order-summary">
-                    <h3>{t('checkout.summary.title')}</h3>
-                    
-                    <div className="summary-items">
-                      {items.map((item) => (
-                        <div key={item.id} className="summary-item">
-                          <div className="summary-item-info">
-                            <span className="summary-item-title">{item.title}</span>
-                            <span className="summary-item-price">{item.price}</span>
+                          <div className="bank-selection">
+                            <h4>Vali pank</h4>
+                            <div className="bank-grid">
+                              {paymentMethodsByCountry[selectedCountry].map(method => (
+                                <div 
+                                  key={method.id}
+                                  className={`bank-option ${selectedPaymentMethod === method.id ? 'selected' : ''}`}
+                                  onClick={() => handlePaymentMethodSelection(method.id)}
+                                >
+                                  <img src={method.logo} alt={method.name} className="bank-logo" />
+                                  <div className="bank-name">{method.name}</div>
+                                  <div className={`bank-check ${selectedPaymentMethod === method.id ? 'visible' : ''}`}>✓</div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
-                    
-                    <div className="summary-totals">
-                      <div className="summary-row">
-                        <span>{t('checkout.summary.subtotal')}</span>
-                        <span>{getTotalPrice().toFixed(2)}€</span>
+                      
+                      {/* Card Payment Fields - Only show when card is selected */}
+                      {selectedPaymentMethod === 'card' && (
+                        <div className="card-payment-section">
+                          <h4>Sisestage kaardi andmed</h4>
+                          <div className="card-fields">
+                            <div className="form-group">
+                              <label htmlFor="cardNumber">Kaardi number</label>
+                              <input
+                                type="text"
+                                id="cardNumber"
+                                name="cardNumber"
+                                value={cardDetails.cardNumber}
+                                onChange={handleCardInputChange}
+                                className="form-input"
+                                placeholder="1234 5678 9012 3456"
+                                maxLength="19"
+                              />
+                            </div>
+                            
+                            <div className="card-expiry-cvc">
+                              <div className="form-group">
+                                <label htmlFor="expiryMonth">Kuu</label>
+                                <input
+                                  type="text"
+                                  id="expiryMonth"
+                                  name="expiryMonth"
+                                  value={cardDetails.expiryMonth}
+                                  onChange={handleCardInputChange}
+                                  className="form-input"
+                                  placeholder="MM"
+                                  maxLength="2"
+                                />
+                              </div>
+                              
+                              <div className="form-group">
+                                <label htmlFor="expiryYear">Aasta</label>
+                                <input
+                                  type="text"
+                                  id="expiryYear"
+                                  name="expiryYear"
+                                  value={cardDetails.expiryYear}
+                                  onChange={handleCardInputChange}
+                                  className="form-input"
+                                  placeholder="YY"
+                                  maxLength="2"
+                                />
+                              </div>
+                              
+                              <div className="form-group">
+                                <label htmlFor="cvc">CVC</label>
+                                <input
+                                  type="text"
+                                  id="cvc"
+                                  name="cvc"
+                                  value={cardDetails.cvc}
+                                  onChange={handleCardInputChange}
+                                  className="form-input"
+                                  placeholder="123"
+                                  maxLength="4"
+                                />
+                              </div>
+                            </div>
+                            
+                            <div className="form-group">
+                              <label htmlFor="cardHolder">Kaardi omanik</label>
+                              <input
+                                type="text"
+                                id="cardHolder"
+                                name="cardHolder"
+                                value={cardDetails.cardHolder}
+                                onChange={handleCardInputChange}
+                                className="form-input"
+                                placeholder="EESNIMI PEREKONNANIMI"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                        
+                        {/* Terms Agreement */}
+                        <div className="terms-agreement">
+                          <label className="terms-checkbox-label">
+                            <input
+                              type="checkbox"
+                              checked={termsAgreed}
+                              onChange={handleTermsChange}
+                              className="terms-checkbox"
+                            />
+                            <span className="terms-text">
+                              <strong>{t('checkout.terms.agree')} <Link to="/muugitingimused" className="terms-link" onClick={scrollToTop}>{t('checkout.terms.terms_link')}</Link></strong>
+                            </span>
+                          </label>
+                          {termsError && (
+                            <div className="field-error">
+                              {termsError}
+                            </div>
+                          )}
+                        </div>
+                        
+                        <button 
+                          type="button"
+                          onClick={handleCheckout}
+                          disabled={isProcessing}
+                          className="checkout-button"
+                        >
+                          {isProcessing ? 'Töötlemine...' : 'VORMISTA OST'}
+                        </button>
                       </div>
-                      <div className="summary-row">
-                        <span>{t('checkout.summary.shipping')}</span>
-                        <span>{shippingMethod === 'home' ? '5.90€' : '3.90€'}</span>
-                      </div>
-                      <div className="summary-row total">
-                        <span>{t('checkout.summary.total')}</span>
-                        <span>
-                          {(getTotalPrice() + (shippingMethod === 'home' ? 5.9 : 3.9)).toFixed(2)}€
-                        </span>
-                      </div>
-                    </div>
-                    
-                    <div className="summary-info">
-                      <div className="info-item">
-                        <span className="info-icon">🔒</span>
-                        <span>{t('checkout.summary.info.secure')}</span>
-                      </div>
-                      <div className="info-item">
-                        <span className="info-icon">🚚</span>
-                        <span>{t('checkout.summary.info.shipping')}</span>
-                      </div>
-                      <div className="info-item">
-                        <span className="info-icon">✉️</span>
-                        <span>{t('checkout.summary.info.personal')}</span>
-                      </div>
-                    </div>
+                    </form>
                   </div>
                 </FadeInSection>
               </div>
+
+              {/* Sidebar - Order Summary */}
+              <FadeInSection className="checkout-sidebar">
+                <div className="checkout-summary">
+                  <h3>Tellimuse kokkuvõte</h3>
+                  
+                  <div className="summary-items">
+                    {items.map((item) => (
+                      <div key={item.id} className="summary-item">
+                        <span className="summary-item-name">{item.title}</span>
+                        <span className="summary-item-price">{item.price}</span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="summary-divider"></div>
+                  
+                  <div className="summary-row">
+                    <span>Vahesumma</span>
+                    <span>{formattedTotalPrice}</span>
+                  </div>
+                  
+                  <div className="summary-row">
+                    <span>Tarne</span>
+                    <span>{deliveryMethod === 'parcel-machine' ? '3.99€' : '0.00€'}</span>
+                  </div>
+                  
+                  <div className="summary-total">
+                    <span>Kokku</span>
+                    <span>
+                      {deliveryMethod === 'parcel-machine' 
+                        ? (parseFloat(totalPrice) + 3.99).toFixed(2) + '€' 
+                        : formattedTotalPrice}
+                    </span>
+                  </div>
+                  
+                  <div className="checkout-info">
+                    <div className="info-item">
+                      <div className="info-icon">🔒</div>
+                      <p>{i18n.language === 'et' ? 'Turvaline tellimuse vormistamine' : 'Secure checkout'}</p>
+                    </div>
+                    <div className="info-item">
+                      <div className="info-icon">🚚</div>
+                      <p>{i18n.language === 'et' ? 'Tarne 2-4 tööpäeva jooksul' : 'Delivery within 2-4 business days'}</p>
+                    </div>
+                    <div className="info-item">
+                      <div className="info-icon">💌</div>
+                      <p>{i18n.language === 'et' ? 'Iga tellimuse juurde käib isiklik märge' : 'Each order includes a personal note'}</p>
+                    </div>
+                  </div>
+                </div>
+              </FadeInSection>
             </div>
           </div>
         </section>
       </main>
 
       <style jsx>{`
-        .checkout-title {
+        .checkout-header {
           text-align: center;
           margin-bottom: 48px;
         }
 
-        .checkout-steps {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 48px;
-          position: relative;
-        }
-
-        .checkout-steps::before {
-          content: '';
-          position: absolute;
-          top: 24px;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 80%;
-          height: 2px;
-          background-color: #e0e0e0;
-          z-index: 0;
-        }
-
-        .step {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          width: 120px;
-          position: relative;
-          z-index: 1;
-        }
-
-        .step-number {
-          width: 48px;
-          height: 48px;
-          border-radius: 50%;
-          background-color: #f0f0f0;
-          color: #666;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: var(--font-heading);
-          font-weight: 500;
-          margin-bottom: 8px;
-          transition: all 0.3s ease;
-        }
-
-        .step.active .step-number {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .step.completed .step-number {
-          background-color: #4caf50;
-          color: white;
-        }
-
-        .step-name {
-          font-family: var(--font-heading);
-          font-size: 0.9rem;
-          color: #666;
-          transition: all 0.3s ease;
-        }
-
-        .step.active .step-name {
+        .checkout-header h1 {
           color: var(--color-ultramarine);
-          font-weight: 500;
         }
 
-        .step.completed .step-name {
-          color: #4caf50;
-        }
-
-        .error-message {
-          background-color: #fee;
-          color: #c33;
-          padding: 16px;
-          border-radius: 4px;
-          margin-bottom: 32px;
-          text-align: center;
-        }
-
-        .checkout-layout {
+        .checkout-container {
           display: grid;
-          grid-template-columns: 1fr 350px;
-          gap: 48px;
+          grid-template-columns: 1fr 380px;
+          gap: 64px;
           align-items: start;
         }
 
         .checkout-main {
+          min-height: 400px;
+        }
+
+        .checkout-form-container {
           background: white;
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           padding: 32px;
         }
 
-        .checkout-main h2 {
-          font-family: var(--font-heading);
-          font-size: 1.5rem;
-          color: var(--color-ultramarine);
-          margin-bottom: 32px;
+        .error-message {
+          background-color: #fee;
+          color: #c33;
+          padding: 12px 16px;
+          border-radius: 4px;
+          border: 1px solid #fcc;
+          margin-bottom: 24px;
+          font-size: 0.9rem;
         }
 
-        .checkout-main h3 {
+        .field-error {
+          color: #c33;
+          font-size: 0.85rem;
+          margin-top: 8px;
+        }
+
+        .form-section {
+          margin-bottom: 40px;
+          padding-bottom: 40px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+
+        .form-section:last-child {
+          margin-bottom: 0;
+          padding-bottom: 0;
+          border-bottom: none;
+        }
+
+        .form-section h3 {
           font-family: var(--font-heading);
           font-size: 1.25rem;
-          color: var(--color-text);
+          font-weight: 500;
+          margin-bottom: 24px;
+          color: var(--color-ultramarine);
+        }
+
+        .form-row {
           margin-bottom: 16px;
         }
 
-        .cart-items {
-          margin-bottom: 32px;
+        .form-row:last-child {
+          margin-bottom: 0;
         }
 
-        .cart-item {
+        .form-row.two-columns {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .form-group label {
+          font-family: var(--font-heading);
+          font-weight: 500;
+          color: var(--color-text);
+          font-size: 0.9rem;
+        }
+
+        .form-input {
+          padding: 12px 16px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-family: var(--font-body);
+          font-size: 1rem;
+          transition: border-color 0.2s ease;
+          background-color: var(--color-background);
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: var(--color-ultramarine);
+          box-shadow: 0 0 0 3px rgba(47, 62, 156, 0.1);
+        }
+
+        .form-input::placeholder {
+          color: #999;
+        }
+
+        textarea.form-input {
+          resize: vertical;
+          min-height: 80px;
+        }
+
+        .order-items {
+          margin-bottom: 16px;
+        }
+
+        .order-item {
           display: flex;
           gap: 16px;
           padding: 16px 0;
           border-bottom: 1px solid #f0f0f0;
         }
 
-        .cart-item:last-child {
+        .order-item:last-child {
           border-bottom: none;
         }
 
         .item-image {
           width: 80px;
           height: 80px;
+          border-radius: 4px;
+          overflow: hidden;
           flex-shrink: 0;
         }
 
@@ -972,26 +1130,58 @@ const Checkout = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          border-radius: 4px;
+        }
+
+        .no-image {
+          width: 100%;
+          height: 100%;
+          background-color: #f5f5f5;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #999;
+          font-size: 1.5rem;
         }
 
         .item-details {
           flex: 1;
+          display: flex;
+          flex-direction: column;
         }
 
         .item-title {
           font-family: var(--font-heading);
           font-size: 1rem;
-          font-weight: 400;
-          margin-bottom: 4px;
+          font-weight: 500;
+          margin-bottom: 8px;
           color: var(--color-text);
         }
 
-        .item-price {
-          font-family: var(--font-heading);
-          font-weight: 500;
-          color: var(--color-ultramarine);
-          margin-bottom: 4px;
+        .item-meta {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+          margin-bottom: 8px;
+        }
+
+        .item-category {
+          font-size: 0.8rem;
+          color: #666;
+          background-color: #f0f0f0;
+          padding: 2px 8px;
+          border-radius: 12px;
+        }
+
+        .item-dimensions {
+          font-size: 0.8rem;
+          color: #666;
+        }
+
+        .item-price-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-top: auto;
         }
 
         .item-quantity {
@@ -999,223 +1189,394 @@ const Checkout = () => {
           color: #666;
         }
 
-        .review-actions,
-        .shipping-actions,
-        .payment-actions {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 32px;
-          padding-top: 24px;
-          border-top: 1px solid #f0f0f0;
-        }
-
-        .btn {
-          padding: 12px 24px;
-          border-radius: 4px;
-          text-decoration: none;
-          font-family: var(--font-body);
-          font-weight: 500;
-          transition: opacity 0.2s ease;
-          display: inline-block;
-          border: none;
-          cursor: pointer;
-          font-size: 1rem;
-        }
-
-        .btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-
-        .btn-primary {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .btn-secondary {
-          background-color: #6c757d;
-          color: white;
-        }
-
-        .btn:hover:not(:disabled) {
-          opacity: 0.9;
-        }
-
-        .form-section {
-          margin-bottom: 32px;
-        }
-
-        .form-row {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
-
-        .form-group {
-          margin-bottom: 16px;
-        }
-
-        .form-group label {
-          display: block;
-          margin-bottom: 8px;
+        .item-price {
           font-family: var(--font-heading);
           font-weight: 500;
-          font-size: 0.9rem;
-        }
-
-        .form-input {
-          width: 100%;
-          padding: 12px 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-size: 1rem;
-          transition: border-color 0.2s ease;
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: var(--color-ultramarine);
-        }
-
-        .name-fields {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
-
-        .checkbox-group {
-          display: flex;
-          align-items: flex-start;
-        }
-
-        .checkbox-label {
-          display: flex;
-          align-items: flex-start;
-          gap: 8px;
-          cursor: pointer;
-        }
-
-        .form-checkbox {
-          margin-top: 3px;
-        }
-
-        .checkbox-label a {
           color: var(--color-ultramarine);
-          text-decoration: underline;
+          font-size: 1.125rem;
         }
 
-        .shipping-methods {
+        .delivery-methods {
           display: flex;
           flex-direction: column;
           gap: 16px;
           margin-bottom: 24px;
         }
 
-        .shipping-method {
+        .delivery-method {
           display: flex;
           align-items: flex-start;
           gap: 16px;
           padding: 16px;
           border: 1px solid #ddd;
-          border-radius: 4px;
+          border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s ease;
         }
 
-        .shipping-method:hover {
-          border-color: var(--color-ultramarine);
-        }
-
-        .shipping-method.active {
+        .delivery-method:hover {
           border-color: var(--color-ultramarine);
           background-color: rgba(47, 62, 156, 0.05);
         }
 
-        .method-radio {
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
+        .delivery-method.selected {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.1);
+        }
+        
+        .delivery-method.needs-selection {
+          border-color: #ffc107;
+        }
+
+        .delivery-method-radio {
+          width: 24px;
+          height: 24px;
           border: 2px solid #ddd;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           flex-shrink: 0;
-          margin-top: 2px;
+          margin-top: 4px;
+          transition: all 0.2s ease;
         }
 
-        .shipping-method.active .method-radio {
+        .delivery-method.selected .delivery-method-radio {
           border-color: var(--color-ultramarine);
         }
 
-        .radio-inner {
-          width: 10px;
-          height: 10px;
+        .radio-indicator {
+          width: 12px;
+          height: 12px;
           border-radius: 50%;
           background-color: transparent;
+          transition: all 0.2s ease;
         }
 
-        .radio-inner.selected {
+        .radio-indicator.active {
           background-color: var(--color-ultramarine);
         }
 
-        .method-info {
+        .delivery-method-content {
           flex: 1;
         }
 
-        .method-info h4 {
+        .delivery-method-content h4 {
           font-family: var(--font-heading);
           font-size: 1rem;
+          font-weight: 500;
           margin-bottom: 4px;
           color: var(--color-text);
         }
 
-        .method-info p {
+        .delivery-method-content p {
           font-size: 0.9rem;
           color: #666;
           margin: 0;
+          margin-bottom: 4px;
         }
 
-        .method-price {
+        .delivery-method-content p:last-child {
+          margin-bottom: 0;
+        }
+
+        .delivery-price {
           font-weight: 500;
           color: var(--color-ultramarine) !important;
-          margin-top: 4px !important;
         }
 
-        .loading-text,
-        .error-text {
-          padding: 12px;
-          border-radius: 4px;
+        .parcel-machine-selection {
+          margin-top: 16px;
+          margin-left: 40px;
+          margin-bottom: 16px;
+        }
+
+        .parcel-machine-dropdown {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+
+        .parcel-machine-dropdown label {
+          font-family: var(--font-heading);
+          font-weight: 500;
+          color: var(--color-text);
           font-size: 0.9rem;
         }
 
-        .loading-text {
+        .loading-parcel-machines {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          padding: 12px;
           background-color: #f8f9fa;
-          color: #666;
+          border-radius: 4px;
         }
 
-        .error-text {
-          background-color: #fee;
-          color: #c33;
+        .loading-spinner-small {
+          width: 20px;
+          height: 20px;
+          border: 2px solid #f3f3f3;
+          border-top: 2px solid var(--color-ultramarine);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
         }
 
-        .checkout-sidebar {
-          position: sticky;
-          top: 100px;
+        .parcel-machine-error {
+          padding: 12px;
+          background-color: #fff3cd;
+          border: 1px solid #ffeeba;
+          border-radius: 4px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
         }
 
-        .order-summary {
+        .parcel-machine-error p {
+          color: #856404;
+          margin: 0;
+        }
+
+        .retry-button {
+          align-self: flex-start;
+          background-color: #6c757d;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          padding: 6px 12px;
+          font-size: 0.8rem;
+          cursor: pointer;
+          transition: background-color 0.2s ease;
+        }
+
+        .retry-button:hover {
+          background-color: #5a6268;
+        }
+
+        .payment-section {
+          margin-bottom: 24px;
+        }
+
+        .payment-country-selector {
+          margin-bottom: 24px;
+        }
+
+        .payment-country-selector h4 {
+          font-family: var(--font-heading);
+          font-size: 1rem;
+          font-weight: 500;
+          margin-bottom: 16px;
+          color: var(--color-text);
+        }
+
+        .country-buttons {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 12px;
+        }
+
+        .country-button {
+          padding: 8px 16px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          background-color: white;
+          color: var(--color-text);
+          font-family: var(--font-body);
+          font-size: 0.9rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .country-button:hover {
+          border-color: var(--color-ultramarine);
+        }
+
+        .country-button.active {
+          border-color: var(--color-ultramarine);
+          background-color: var(--color-ultramarine);
+          color: white;
+        }
+
+        .bank-selection h4 {
+          font-family: var(--font-heading);
+          font-size: 1rem;
+          font-weight: 500;
+          margin-bottom: 16px;
+          color: var(--color-text);
+        }
+
+        .bank-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+          gap: 16px;
+        }
+
+        .bank-option {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
+          padding: 16px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .bank-option:hover {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.05);
+        }
+
+        .bank-option.selected {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.1);
+        }
+
+        .bank-logo {
+          height: 32px;
+          width: auto;
+          object-fit: contain;
+        }
+
+        .bank-name {
+          font-size: 0.8rem;
+          color: var(--color-text);
+          text-align: center;
+        }
+
+        .bank-check {
+          position: absolute;
+          top: 8px;
+          right: 8px;
+          width: 20px;
+          height: 20px;
+          border-radius: 50%;
+          background-color: var(--color-ultramarine);
+          color: white;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.8rem;
+          opacity: 0;
+          transition: all 0.2s ease;
+        }
+
+        .bank-check.visible {
+          opacity: 1;
+        }
+
+        .card-payment-section {
+          margin: 24px 0;
+          padding: 20px;
+          border: 1px solid #e9ecef;
+          border-radius: 8px;
+          background: #fafbfc;
+        }
+
+        .card-payment-section h4 {
+          font-family: var(--font-heading);
+          color: var(--color-ultramarine);
+          margin-bottom: 16px;
+          font-size: 1rem;
+        }
+
+        .card-fields {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+
+        .card-expiry-cvc {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 12px;
+        }
+
+        .terms-agreement {
+          margin: 24px 0;
+        }
+
+        .terms-checkbox-label {
+          display: flex;
+          align-items: flex-start;
+          gap: 8px;
+          cursor: pointer;
+        }
+
+        .terms-checkbox {
+          margin-top: 3px;
+          width: 18px;
+          height: 18px;
+          accent-color: var(--color-ultramarine);
+        }
+
+        .terms-text {
+          font-size: 0.95rem;
+          line-height: 1.4;
+        }
+
+        .terms-link {
+          color: var(--color-ultramarine);
+          text-decoration: underline;
+          transition: opacity 0.2s ease;
+        }
+
+        .terms-link:hover {
+          opacity: 0.8;
+        }
+
+        .terms-link {
+          color: var(--color-ultramarine);
+          text-decoration: underline;
+          transition: opacity 0.2s ease;
+        }
+
+        .terms-link:hover {
+          opacity: 0.8;
+        }
+
+        .checkout-button {
+          width: 100%;
+          padding: 16px 24px;
+          background-color: var(--color-ultramarine);
+          color: white;
+          border: none;
+          border-radius: 4px;
+          font-family: var(--font-heading);
+          font-weight: 600;
+          font-size: 1.1rem;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          margin-top: 24px;
+        }
+
+        .checkout-button:hover:not(:disabled) {
+          opacity: 0.9;
+          transform: translateY(-1px);
+        }
+
+        .checkout-button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        .checkout-summary {
           background: white;
           border-radius: 8px;
-          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-          padding: 24px;
+          padding: 32px;
+          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+          position: sticky;
+          top: 32px;
         }
 
-        .order-summary h3 {
+        .checkout-summary h3 {
           font-family: var(--font-heading);
           font-size: 1.25rem;
-          color: var(--color-ultramarine);
+          font-weight: 500;
           margin-bottom: 24px;
+          color: var(--color-ultramarine);
         }
 
         .summary-items {
@@ -1223,68 +1584,59 @@ const Checkout = () => {
         }
 
         .summary-item {
-          padding: 12px 0;
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .summary-item:last-child {
-          border-bottom: none;
-        }
-
-        .summary-item-info {
           display: flex;
           justify-content: space-between;
-          align-items: center;
+          margin-bottom: 12px;
         }
 
-        .summary-item-title {
+        .summary-item-name {
           font-size: 0.9rem;
           color: var(--color-text);
+          max-width: 70%;
         }
 
         .summary-item-price {
           font-family: var(--font-heading);
           font-weight: 500;
-          color: var(--color-ultramarine);
+          color: var(--color-text);
+          font-size: 0.9rem;
         }
 
-        .summary-totals {
-          margin-bottom: 24px;
-          padding-top: 16px;
-          border-top: 1px solid #f0f0f0;
+        .summary-divider {
+          height: 1px;
+          background-color: #f0f0f0;
+          margin: 16px 0;
         }
 
         .summary-row {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 8px;
+          margin-bottom: 12px;
           font-size: 0.9rem;
           color: #666;
         }
 
-        .summary-row.total {
+        .summary-total {
+          display: flex;
+          justify-content: space-between;
+          margin: 24px 0;
           font-family: var(--font-heading);
-          font-weight: 500;
-          font-size: 1.1rem;
+          font-weight: 600;
+          font-size: 1.125rem;
           color: var(--color-text);
-          margin-top: 16px;
-          padding-top: 16px;
-          border-top: 1px solid #f0f0f0;
         }
 
-        .summary-info {
-          background-color: #f8f9fa;
-          padding: 16px;
-          border-radius: 4px;
+        .checkout-info {
+          margin-top: 24px;
+          padding-top: 24px;
+          border-top: 1px solid #f0f0f0;
         }
 
         .info-item {
           display: flex;
           align-items: center;
-          gap: 8px;
-          margin-bottom: 8px;
-          font-size: 0.85rem;
-          color: #666;
+          gap: 12px;
+          margin-bottom: 12px;
         }
 
         .info-item:last-child {
@@ -1292,198 +1644,97 @@ const Checkout = () => {
         }
 
         .info-icon {
-          font-size: 1rem;
-        }
-
-        .loading-container {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 48px 0;
-          gap: 16px;
-        }
-
-        .loading-spinner {
-          width: 40px;
-          height: 40px;
-          border: 3px solid #f3f3f3;
-          border-top: 3px solid var(--color-ultramarine);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        .payment-error {
-          text-align: center;
-          padding: 32px 0;
-        }
-
-        .payment-error p {
-          margin-bottom: 16px;
-          color: #666;
-        }
-
-        .payment-methods-container {
-          margin-bottom: 32px;
-        }
-
-        .payment-methods-wrapper {
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          overflow: hidden;
-          margin-bottom: 24px;
-        }
-
-        .payment-methods-tabs {
-          display: flex;
-          border-bottom: 1px solid #ddd;
-          background-color: #f8f9fa;
-          flex-wrap: wrap;
-          max-width: 100%;
-        }
-
-        .payment-method-tab {
-          padding: 12px 16px;
-          background: none;
-          border: none;
-          border-right: 1px solid #ddd;
-          font-family: var(--font-body);
-          font-size: 0.9rem;
-          color: #666;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          flex: 1;
-          min-width: 100px;
-          text-align: center;
-          white-space: nowrap;
-        }
-
-        .payment-method-tab:last-child {
-          border-right: none;
-        }
-
-        .payment-method-tab:hover {
-          background-color: #f0f0f0;
-        }
-
-        .payment-method-tab.active {
-          background-color: white;
+          font-size: 1.25rem;
           color: var(--color-ultramarine);
-          font-weight: 500;
-          box-shadow: inset 0 -2px 0 var(--color-ultramarine);
         }
 
-        .payment-methods-content {
-          padding: 24px;
-        }
-
-        .payment-method-description {
+        .info-item p {
+          font-size: 0.85rem;
           color: #666;
-          font-size: 0.9rem;
+          margin: 0;
         }
 
-        .payment-methods-other {
-          display: flex;
-          gap: 16px;
-          flex-wrap: wrap;
-        }
+        @media (max-width: 1024px) {
+          .checkout-container {
+            grid-template-columns: 1fr;
+            gap: 48px;
+          }
 
-        .payment-method-card {
-          flex: 1;
-          min-width: 120px;
-          padding: 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          background: none;
-          font-family: var(--font-body);
-          font-size: 0.9rem;
-          color: #666;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          text-align: center;
-        }
+          .checkout-sidebar {
+            order: -1;
+          }
 
-        .payment-method-card:hover {
-          border-color: var(--color-ultramarine);
-        }
-
-        .payment-method-card.active {
-          border-color: var(--color-ultramarine);
-          background-color: rgba(47, 62, 156, 0.05);
-          color: var(--color-ultramarine);
-          font-weight: 500;
+          .checkout-summary {
+            position: static;
+          }
         }
 
         @media (max-width: 768px) {
-          .checkout-layout {
+          .checkout-container {
             grid-template-columns: 1fr;
             gap: 32px;
           }
 
           .checkout-sidebar {
-            position: static;
             order: -1;
           }
 
-          .checkout-steps {
+          .checkout-summary {
+            position: static;
+          }
+
+          .checkout-header {
             margin-bottom: 32px;
           }
 
-          .checkout-steps::before {
-            width: 70%;
-          }
-
-          .step {
-            width: 100px;
-          }
-
-          .step-number {
-            width: 40px;
-            height: 40px;
-            font-size: 0.9rem;
-          }
-
-          .step-name {
-            font-size: 0.8rem;
-          }
-
-          .checkout-main {
+          .checkout-form-container {
             padding: 24px;
           }
 
-          .form-row {
+          .form-row.two-columns {
             grid-template-columns: 1fr;
-          }
-
-          .name-fields {
-            grid-template-columns: 1fr;
-          }
-
-          .review-actions,
-          .shipping-actions,
-          .payment-actions {
-            flex-direction: column;
             gap: 16px;
           }
 
-          .btn {
+          .order-item {
+            flex-direction: column;
+            gap: 12px;
+          }
+
+          .item-image {
             width: 100%;
-            text-align: center;
+            height: 160px;
           }
 
-          .payment-methods-tabs {
-            overflow-x: auto;
-            flex-wrap: nowrap;
-            max-width: 100%;
+          .bank-grid {
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 12px;
           }
 
-          .payment-method-tab {
-            flex: 0 0 auto;
+          .bank-option {
+            padding: 12px;
+          }
+
+          .bank-logo {
+            height: 24px;
+          }
+
+          .bank-name {
+            font-size: 0.7rem;
+          }
+          
+          .card-expiry-cvc {
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+          }
+          
+          .card-expiry-cvc .form-group:last-child {
+            grid-column: span 2;
+          }
+
+          .parcel-machine-selection {
+            margin-left: 0;
+            margin-top: 16px;
           }
         }
       `}</style>
