@@ -28,6 +28,7 @@ const ProductForm = () => {
     price: '',
     category: '',
     subcategory: '',
+    weight: '',
     dimensions: {
       height: '',
       width: '',
@@ -235,9 +236,13 @@ const ProductForm = () => {
         }
       })
 
+      // Process weight - convert to number
+      const weight = formData.weight !== '' ? parseFloat(formData.weight) : null;
+
       const productData = {
         ...formData,
         slug: uniqueSlug,
+        weight: weight,
         // Ensure price has € symbol and is properly formatted
         price: formData.price.includes('€') 
           ? formData.price 
@@ -512,6 +517,22 @@ const ProductForm = () => {
                 <div className="dimensions-help">
                   <small>Sisestage mõõdud sentimeetrites. Komakohad on lubatud (nt. 2.3).</small>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="weight">{t('admin.products.form.weight')} (kg)</label>
+                <input
+                  type="number"
+                  id="weight"
+                  name="weight"
+                  value={formData.weight}
+                  onChange={handleInputChange}
+                  step="0.001"
+                  min="0"
+                  placeholder="nt. 1.5"
+                  className="form-input"
+                />
+                <small className="form-hint">Sisestage kaal kilogrammides (nt. 1.5). Vajalik tarne jaoks.</small>
               </div>
 
               <div className="form-group">
