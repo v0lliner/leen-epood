@@ -3,9 +3,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
-import FadeInSection from '../components/UI/FadeInSection';
 import OmnivaLogo from '../components/Icons/OmnivaLogo';
 import ShopIcon from '../components/Icons/ShopIcon';
+import FadeInSection from '../components/UI/FadeInSection';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -26,8 +26,6 @@ const Checkout = () => {
     agreeToTerms: false
   });
   
-  // Checkout process state
-  const [step, setStep] = useState('review'); // review, shipping, payment
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [deliveryMethod, setDeliveryMethod] = useState('pickup'); // pickup, omniva-parcel-machine
@@ -287,153 +285,114 @@ const Checkout = () => {
             <FadeInSection>
               <h1 className="text-center">{t('checkout.title')}</h1>
             </FadeInSection>
-
             <div className="checkout-layout">
-              {/* Checkout Steps */}
-              <div className="checkout-steps">
-                <div className={`step ${step === 'review' ? 'active' : ''}`}>
-                  <span className="step-number">1</span>
-                  <span className="step-label">{t('checkout.steps.review')}</span>
-                </div>
-                <div className="step-connector"></div>
-                <div className={`step ${step === 'shipping' ? 'active' : ''}`}>
-                  <span className="step-number">2</span>
-                  <span className="step-label">{t('checkout.steps.shipping')}</span>
-                </div>
-                <div className="step-connector"></div>
-                <div className={`step ${step === 'payment' ? 'active' : ''}`}>
-                  <span className="step-number">3</span>
-                  <span className="step-label">{t('checkout.steps.payment')}</span>
-                </div>
-              </div>
-
               {/* Checkout Form */}
               <form onSubmit={handleCheckout} className="checkout-form">
-                {/* Step 1: Review */}
-                {step === 'review' && (
-                  <div className="checkout-step-content">
+                <div className="checkout-content">
+                  {/* Cart Items */}
+                  <div className="cart-items">
                     <h2>{t('checkout.review.title')}</h2>
-                    
-                    <div className="cart-items">
-                      {items.map((item) => (
-                        <div key={item.id} className="cart-item">
-                          <div className="item-image">
-                            <img src={item.image} alt={item.title} />
-                          </div>
-                          <div className="item-details">
-                            <h3 className="item-title">{item.title}</h3>
-                            <p className="item-price">{item.price}</p>
-                            <p className="item-quantity">{t('cart.quantity')}: 1</p>
-                          </div>
+                    {items.map((item) => (
+                      <div key={item.id} className="cart-item">
+                        <div className="item-image">
+                          <img src={item.image} alt={item.title} />
                         </div>
-                      ))}
+                        <div className="item-details">
+                          <h3 className="item-title">{item.title}</h3>
+                          <p className="item-price">{item.price}</p>
+                          <p className="item-quantity">{t('cart.quantity')}: 1</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Contact Information */}
+                  <div className="form-section">
+                    <h3>{t('checkout.shipping.contact.title')}</h3>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="firstName">{t('checkout.shipping.contact.name')} *</label>
+                        <input
+                          type="text"
+                          id="firstName"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          placeholder={t('checkout.shipping.contact.name_placeholder')}
+                          required
+                          className="form-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="lastName">{t('checkout.shipping.contact.name')} *</label>
+                        <input
+                          type="text"
+                          id="lastName"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          placeholder={t('checkout.shipping.contact.name_placeholder')}
+                          required
+                          className="form-input"
+                        />
+                      </div>
                     </div>
                     
-                    <div className="step-actions">
-                      <Link to="/epood" className="btn btn-secondary">
-                        {t('checkout.review.back_to_shop')}
-                      </Link>
-                      <button 
-                        type="button" 
-                        className="btn btn-primary"
-                        onClick={() => setStep('shipping')}
-                      >
-                        {t('checkout.review.continue')}
-                      </button>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="email">{t('checkout.shipping.contact.email')} *</label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          placeholder={t('checkout.shipping.contact.email_placeholder')}
+                          required
+                          className="form-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="phone">{t('checkout.shipping.contact.phone')} *</label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          placeholder={t('checkout.shipping.contact.phone_placeholder')}
+                          required
+                          className="form-input"
+                        />
+                      </div>
                     </div>
                   </div>
-                )}
-
-                {/* Step 2: Shipping */}
-                {step === 'shipping' && (
-                  <div className="checkout-step-content">
-                    <h2>{t('checkout.shipping.title')}</h2>
+                  
+                  {/* Shipping Information */}
+                  <div className="form-section">
+                    <h3>{t('checkout.shipping.address.title')}</h3>
                     
-                    <div className="form-section">
-                      <h3>{t('checkout.shipping.contact.title')}</h3>
-                      
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label htmlFor="firstName">{t('checkout.shipping.contact.name')} *</label>
-                          <input
-                            type="text"
-                            id="firstName"
-                            name="firstName"
-                            value={formData.firstName}
-                            onChange={handleInputChange}
-                            placeholder={t('checkout.shipping.contact.name_placeholder')}
-                            required
-                            className="form-input"
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label htmlFor="lastName">{t('checkout.shipping.contact.name')} *</label>
-                          <input
-                            type="text"
-                            id="lastName"
-                            name="lastName"
-                            value={formData.lastName}
-                            onChange={handleInputChange}
-                            placeholder={t('checkout.shipping.contact.name_placeholder')}
-                            required
-                            className="form-input"
-                          />
-                        </div>
-                      </div>
-                      
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label htmlFor="email">{t('checkout.shipping.contact.email')} *</label>
-                          <input
-                            type="email"
-                            id="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleInputChange}
-                            placeholder={t('checkout.shipping.contact.email_placeholder')}
-                            required
-                            className="form-input"
-                          />
-                        </div>
-                        <div className="form-group">
-                          <label htmlFor="phone">{t('checkout.shipping.contact.phone')} *</label>
-                          <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            placeholder={t('checkout.shipping.contact.phone_placeholder')}
-                            required
-                            className="form-input"
-                          />
-                        </div>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="country">{t('checkout.shipping.address.country')} *</label>
+                        <select
+                          id="country"
+                          name="country"
+                          value={formData.country}
+                          onChange={handleInputChange}
+                          required
+                          className="form-input"
+                        >
+                          <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
+                          <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
+                          <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
+                          <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
+                        </select>
                       </div>
                     </div>
                     
-                    <div className="form-section">
-                      <h3>{t('checkout.shipping.address.title')}</h3>
-                      
-                      <div className="form-row">
-                        <div className="form-group">
-                          <label htmlFor="country">{t('checkout.shipping.address.country')} *</label>
-                          <select
-                            id="country"
-                            name="country"
-                            value={formData.country}
-                            onChange={handleInputChange}
-                            required
-                            className="form-input"
-                          >
-                            <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
-                            <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
-                            <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
-                            <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
-                          </select>
-                        </div>
-                      </div>
-                      
-                      <div className="delivery-methods">
+                    <div className="delivery-methods">
                         <div 
                           className={`delivery-method ${deliveryMethod === 'pickup' ? 'active' : ''}`}
                           onClick={() => handleDeliveryMethodChange('pickup')}
@@ -599,65 +558,62 @@ const Checkout = () => {
                           )}
                         </div>
                       </div>
-                    </div>
+                  </div>
+                  
+                  {/* Additional Notes */}
+                  <div className="form-section">
+                    <h3>{t('checkout.shipping.notes.title')}</h3>
                     
-                    <div className="form-section">
-                      <h3>{t('checkout.shipping.notes.title')}</h3>
-                      
-                      <div className="form-group">
-                        <label htmlFor="notes">{t('checkout.shipping.notes.notes')}</label>
-                        <textarea
-                          id="notes"
-                          name="notes"
-                          value={formData.notes}
-                          onChange={handleInputChange}
-                          placeholder={t('checkout.shipping.notes.notes_placeholder')}
-                          className="form-input"
-                          rows="3"
-                        ></textarea>
-                      </div>
-                    </div>
-                    
-                    <div className="form-section">
-                      <div className="form-group checkbox-group">
-                        <input
-                          type="checkbox"
-                          id="agreeToTerms"
-                          name="agreeToTerms"
-                          checked={formData.agreeToTerms}
-                          onChange={handleInputChange}
-                          className="form-checkbox"
-                        />
-                        <label htmlFor="agreeToTerms" className="checkbox-label">
-                          {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
-                        </label>
-                      </div>
-                    </div>
-                    
-                    {error && (
-                      <div className="form-error">
-                        {error}
-                      </div>
-                    )}
-                    
-                    <div className="step-actions">
-                      <button 
-                        type="button" 
-                        className="btn btn-secondary"
-                        onClick={() => setStep('review')}
-                      >
-                        {t('checkout.shipping.back')}
-                      </button>
-                      <button 
-                        type="submit" 
-                        className="btn btn-primary"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? t('checkout.summary.processing') : t('checkout.shipping.continue')}
-                      </button>
+                    <div className="form-group">
+                      <label htmlFor="notes">{t('checkout.shipping.notes.notes')}</label>
+                      <textarea
+                        id="notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        placeholder={t('checkout.shipping.notes.notes_placeholder')}
+                        className="form-input"
+                        rows="3"
+                      ></textarea>
                     </div>
                   </div>
-                )}
+                  
+                  {/* Terms and Conditions */}
+                  <div className="form-section">
+                    <div className="form-group checkbox-group">
+                      <input
+                        type="checkbox"
+                        id="agreeToTerms"
+                        name="agreeToTerms"
+                        checked={formData.agreeToTerms}
+                        onChange={handleInputChange}
+                        className="form-checkbox"
+                      />
+                      <label htmlFor="agreeToTerms" className="checkbox-label">
+                        {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {error && (
+                    <div className="form-error">
+                      {error}
+                    </div>
+                  )}
+                  
+                  <div className="form-actions">
+                    <Link to="/epood" className="btn btn-secondary">
+                      {t('checkout.review.back_to_shop')}
+                    </Link>
+                    <button 
+                      type="submit" 
+                      className="btn btn-primary"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? t('checkout.summary.processing') : t('checkout.summary.pay')}
+                    </button>
+                  </div>
+                </div>
               </form>
 
               {/* Order Summary */}
@@ -726,59 +682,12 @@ const Checkout = () => {
           gap: 48px;
           margin-top: 48px;
         }
-
-        .checkout-steps {
-          display: flex;
-          align-items: center;
+        
+        .checkout-content {
           margin-bottom: 48px;
         }
 
-        .step {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-
-        .step-number {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: #f0f0f0;
-          color: #666;
-          font-weight: 600;
-          font-family: var(--font-heading);
-        }
-
-        .step.active .step-number {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .step-label {
-          font-weight: 500;
-          color: #666;
-        }
-
-        .step.active .step-label {
-          color: var(--color-ultramarine);
-          font-weight: 600;
-        }
-
-        .step-connector {
-          flex: 1;
-          height: 2px;
-          background-color: #f0f0f0;
-          margin: 0 16px;
-        }
-
-        .checkout-step-content {
-          margin-bottom: 32px;
-        }
-
-        .checkout-step-content h2 {
+        .checkout-content h2 {
           font-family: var(--font-heading);
           font-size: 1.5rem;
           font-weight: 500;
@@ -838,7 +747,7 @@ const Checkout = () => {
           color: #666;
         }
 
-        .step-actions {
+        .form-actions {
           display: flex;
           justify-content: space-between;
           margin-top: 32px;
@@ -1146,14 +1055,7 @@ const Checkout = () => {
           .checkout-layout {
             grid-template-columns: 1fr;
             gap: 32px;
-          }
-
-          .checkout-steps {
-            margin-bottom: 32px;
-          }
-
-          .step-label {
-            font-size: 0.9rem;
+            margin-top: 32px;
           }
 
           .form-row {
@@ -1161,12 +1063,12 @@ const Checkout = () => {
             gap: 0;
           }
 
-          .step-actions {
+          .form-actions {
             flex-direction: column;
             gap: 16px;
           }
 
-          .step-actions .btn {
+          .form-actions .btn {
             width: 100%;
           }
 
