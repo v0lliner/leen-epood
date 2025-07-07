@@ -1,21 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 
 const Contact = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     message: ''
   });
-  const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [error, setError] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -25,51 +19,12 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Reset states
-    setLoading(true);
-    setError('');
-    setSuccess(false);
-    
-    try {
-      // Validate form data
-      if (!formData.name.trim() || !formData.email.trim() || !formData.message.trim()) {
-        throw new Error('Palun täitke kõik kohustuslikud väljad');
-      }
-      
-      // Send form data to PHP endpoint
-      const response = await fetch('/php/mailer.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-      
-      // Parse response
-      const result = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(result.message || 'Sõnumi saatmine ebaõnnestus');
-      }
-      
-      // Success
-      setSuccess(true);
-      setFormData({ name: '', email: '', phone: '', message: '' });
-      
-      // Redirect to home page after 3 seconds
-      setTimeout(() => {
-        navigate('/');
-      }, 3000);
-      
-    } catch (err) {
-      console.error('Form submission error:', err);
-      setError(err.message || 'Sõnumi saatmine ebaõnnestus');
-    } finally {
-      setLoading(false);
-    }
+    console.log('Vormi saatmine:', formData);
+    // Here would be form submission logic
+    alert(t('contact.form.success_message'));
+    setFormData({ name: '', email: '', message: '' });
   };
 
   // Custom Google Maps styling that matches the website's aesthetic
@@ -328,10 +283,50 @@ const Contact = () => {
                         {t('contact.info.email')}
                       </a>
                     </div>
+                    
+                    <div className="contact-item">
+                      <span className="contact-label">{t('contact.info.phone_label')}</span>
+                      <a href="tel:+37253801413" className="btn btn-underline contact-value">
+                        {t('contact.info.phone')}
+                      </a>
+                    </div>
+                    
+                    <div className="contact-item">
+                      <span className="contact-label">{t('contact.info.social_label')}</span>
+                      <div className="social-links">
+                        <a href="https://www.facebook.com/leenvaranen" target="_blank" rel="noopener noreferrer" className="btn btn-underline social-link">
+                          {t('footer.facebook')}
+                        </a>
+                        <span className="social-separator">·</span>
+                        <a href="https://www.instagram.com/leen.tailor/" target="_blank" rel="noopener noreferrer" className="btn btn-underline social-link">
+                          {t('footer.instagram')}
+                        </a>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </FadeInSection>
             </div>
+
+            <FadeInSection className="map-section">
+              <div className="map-container">
+                <iframe
+                  src={`https://www.google.com/maps/embed/v1/place?key=AIzaSyBJNslJaIJX4bXJuwD03zHhCiLmWCzQuZ8&q=Jõeääre,Märjamaa,Rapla+vald,Estonia&zoom=14&maptype=roadmap`}
+                  width="100%"
+                  height="400"
+                  style={{ 
+                    border: 0,
+                    borderRadius: '8px', 
+                    boxShadow: '0 4px 12px rgba(47, 62, 156, 0.1)',
+                    filter: 'contrast(1.1) saturate(0.8) brightness(1.05)'
+                  }}
+                  allowFullScreen=""
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  title={t('contact.map.title')}
+                ></iframe>
+              </div>
+            </FadeInSection>
           </div>
         </section>
       </main>
@@ -406,51 +401,6 @@ const Contact = () => {
 
         .contact-submit-btn:hover {
           opacity: 0.8;
-        }
-        
-        .contact-submit-btn:disabled {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        
-        .error-message {
-          background-color: #fee;
-          color: #c33;
-          padding: 12px 16px;
-          border-radius: 4px;
-          border: 1px solid #fcc;
-          margin-bottom: 24px;
-          font-size: 0.9rem;
-        }
-        
-        .success-message {
-          text-align: center;
-          padding: 32px 0;
-        }
-        
-        .success-icon {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 64px;
-          height: 64px;
-          background-color: #d4edda;
-          color: #155724;
-          border-radius: 50%;
-          font-size: 32px;
-          margin-bottom: 16px;
-        }
-        
-        .success-message h4 {
-          font-family: var(--font-heading);
-          color: var(--color-ultramarine);
-          margin-bottom: 16px;
-          font-size: 1.25rem;
-        }
-        
-        .success-message p {
-          color: #666;
-          font-size: 0.9rem;
         }
 
         .contact-info h3 {
@@ -530,16 +480,6 @@ const Contact = () => {
 
           .contact-form {
             max-width: none;
-          }
-          
-          .success-message {
-            padding: 24px 0;
-          }
-          
-          .success-icon {
-            width: 56px;
-            height: 56px;
-            font-size: 28px;
           }
 
           .contact-form-container h3,
