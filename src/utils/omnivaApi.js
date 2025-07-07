@@ -1,7 +1,8 @@
 // Omniva parcel machines API utility
 // Replaces the PHP implementation with JavaScript
 
-const OMNIVA_API_URL = 'https://www.omniva.ee/locationsfull.json';
+// Use our PHP proxy instead of direct API access
+const OMNIVA_API_URL = '/php/get-omniva-parcel-machines.php';
 
 /**
  * Fetch Omniva parcel machines from their API
@@ -11,39 +12,22 @@ const OMNIVA_API_URL = 'https://www.omniva.ee/locationsfull.json';
 export async function getOmnivaParcelMachines(country = 'EE') {
   try {
     console.log(`Fetching from ${OMNIVA_API_URL}...`);
-    const response = await fetch(OMNIVA_API_URL);
+    const response = await fetch(`${OMNIVA_API_URL}?country=${country.toLowerCase()}`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     
     const data = await response.json();
+
+    if (!data.success) {
+      throw new Error(data.error || 'Failed to fetch parcel machines');
+    }
     
-    console.log(`Received ${data.length} locations from Omniva API`);
+    console.log(`Received ${data.parcelMachines.length} parcel machines from Omniva API`);
     
-    // Filter by country and only return parcel machines (TYPE === 0)
-    const parcelMachines = data.filter(location => 
-      location.A0_NAME?.toUpperCase() === country.toUpperCase() && 
-      (location.TYPE === 0 || location.TYPE === '0')
-    );
-    
-    console.log(`Filtered to ${parcelMachines.length} parcel machines for ${country}`);
-    
-    // Transform to a more usable format
-    return parcelMachines.map(machine => ({
-      id: machine.ZIP,
-      name: machine.NAME,
-      address: `${machine.A1_NAME || ''}, ${machine.A2_NAME || ''}`,
-      city: machine.A1_NAME || '',
-      county: machine.A2_NAME || '',
-      coordinates: {
-        lat: parseFloat(machine.Y_COORDINATE || 0),
-        lng: parseFloat(machine.X_COORDINATE || 0)
-      },
-      openingHours: machine.SERVICE_HOURS || '',
-      comment: machine.COMMENT_EST || machine.COMMENT_ENG || '',
-      disabled: machine.DISABLED === '1' || machine.DISABLED === 1
-    })).filter(machine => !machine.disabled && machine.id);
+    // Return the pre-formatted parcel machines from our PHP proxy
+    return data.parcelMachines;
     
   } catch (error) {
     console.error('Error fetching Omniva parcel machines:', error);
