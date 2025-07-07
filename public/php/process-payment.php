@@ -71,20 +71,12 @@ try {
        'Estonia' => 'ee',
        'Latvia' => 'lv',
        'Lithuania' => 'lt',
-       'Finland' => 'fi',
-       'Sweden' => 'se'
+       'Finland' => 'fi'
    ];
    
    // Get the correct country code from the map, default to 'ee' if not found
    $countryCode = $countryCodeMap[$data['country'] ?? 'Estonia'] ?? 'ee';
    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Country: " . ($data['country'] ?? 'Estonia') . ", Mapped country code: " . $countryCode . "\n", FILE_APPEND);
-   
-   // Log Omniva parcel machine data if present
-   if (isset($data['deliveryMethod']) && $data['deliveryMethod'] === 'omniva-parcel-machine') {
-       file_put_contents($logFile, date('Y-m-d H:i:s') . " - Omniva parcel machine selected: " . 
-           (isset($data['omnivaParcelMachineId']) ? $data['omnivaParcelMachineId'] : 'not set') . " - " . 
-           (isset($data['omnivaParcelMachineName']) ? $data['omnivaParcelMachineName'] : 'not set') . "\n", FILE_APPEND);
-   }
 
     // Validate required fields for all payment methods
     if (!isset($data['amount']) || !isset($data['reference']) || !isset($data['email']) || !isset($data['paymentMethod'])) {
@@ -120,15 +112,10 @@ try {
                 'customer_name' => $data['firstName'] . ' ' . $data['lastName'],
                 'customer_email' => $data['email'],
                 'customer_phone' => $data['phone'] ?? '',
-               'shipping_address' => $data['address'] ?? '',
-               'shipping_city' => $data['city'] ?? '',
-               'shipping_postal_code' => $data['postalCode'] ?? '',
-               'shipping_country' => $data['country'] ?? 'Estonia',
                 'items' => $data['items'] ?? [],
-               'deliveryMethod' => $data['deliveryMethod'] ?? 'standard',
-               'omnivaParcelMachineId' => $data['omnivaParcelMachineId'] ?? '',
-               'omnivaParcelMachineName' => $data['omnivaParcelMachineName'] ?? '',
-               'notes' => $data['notes'] ?? ''
+                'deliveryMethod' => $data['deliveryMethod'] ?? null,
+                'omnivaParcelMachineId' => $data['omnivaParcelMachineId'] ?? null,
+                'omnivaParcelMachineName' => $data['omnivaParcelMachineName'] ?? null
             ]),
             'return_url' => 'https://leen.ee/checkout/success',
             'cancel_url' => 'https://leen.ee/checkout',

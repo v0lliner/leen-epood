@@ -41,7 +41,6 @@ $validCountries = ['ee', 'lv', 'lt', 'fi'];
 
 if (!in_array($country, $validCountries)) {
     $country = 'ee'; // Default to Estonia if invalid country provided
-    logMessage("Invalid country provided, defaulting to 'ee'", $country);
 }
 
 try {
@@ -58,11 +57,6 @@ try {
         logMessage("Using cached parcel machine data");
         $locationsData = file_get_contents($cacheFile);
         $locations = json_decode($locationsData, true);
-        
-        if (!$locations) {
-            logMessage("Failed to decode cached data, fetching fresh data");
-            $useCache = false;
-        }
     } else {
         logMessage("Fetching fresh parcel machine data from Omniva API");
         
@@ -101,7 +95,7 @@ try {
     // Filter locations by country and type (parcel machines only)
     $filteredLocations = array_filter($locations, function($location) use ($country) {
         return isset($location['A0_NAME']) && 
-               strtolower($location['A0_NAME']) === strtolower($country) && 
+               strtolower($location['A0_NAME']) === $country && 
                isset($location['TYPE']) && 
                $location['TYPE'] === 'PARCEL_MACHINE';
     });
@@ -111,12 +105,6 @@ try {
     
     // Format the data for easier consumption by the frontend
     $formattedLocations = array_map(function($location) {
-        // Ensure all required fields exist
-        if (!isset($location['ZIP']) || !isset($location['NAME'])) {
-            logMessage("Missing required fields in location data", $location);
-            return null;
-        }
-        
         return [
             'id' => $location['ZIP'],
             'name' => $location['NAME'],
@@ -131,15 +119,12 @@ try {
         ];
     }, $filteredLocations);
     
-    // Remove any null entries from formatting errors
-    $formattedLocations = array_filter($formattedLocations);
-    
     // Sort by name
     usort($formattedLocations, function($a, $b) {
         return strcmp($a['name'], $b['name']);
     });
     
-    logMessage("Returning " . count($formattedLocations) . " parcel machines for country: $country", ['count' => count($formattedLocations)]);
+    logMessage("Returning " . count($formattedLocations) . " parcel machines for country: $country");
     
     echo json_encode([
         'success' => true,
