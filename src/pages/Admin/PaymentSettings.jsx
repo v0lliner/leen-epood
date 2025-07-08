@@ -37,13 +37,6 @@ const PaymentSettings = () => {
     api_open_key: false
   })
 
-  // Track which Omniva fields have been modified
-  const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
-    customer_code: false,
-    username: false,
-    password: false
-  })
-
   // Active tab state
   const [activeTab, setActiveTab] = useState('maksekeskus')
 
@@ -83,32 +76,12 @@ const PaymentSettings = () => {
       }
 
       // Load Omniva settings
-      loadOmnivaSettings()
+      // Removed Omniva settings loading
     } catch (err) {
       console.error('Error in loadConfig:', err)
       setError('Võrguühenduse viga')
     } finally {
       setLoading(false)
-    }
-  }
-
-  const loadOmnivaSettings = async () => {
-    try {
-      // Fetch Omniva settings from localStorage or API
-      const omnivaSettings = localStorage.getItem('omnivaSettings')
-      
-      if (omnivaSettings) {
-        const parsedSettings = JSON.parse(omnivaSettings)
-        setOmnivaFormData({
-          customer_code: parsedSettings.customer_code || '',
-          username: parsedSettings.username || '',
-          password: '', // Don't show actual password, just placeholder
-          test_mode: parsedSettings.test_mode || false,
-          active: parsedSettings.active || true
-        })
-      }
-    } catch (error) {
-      console.error('Error loading Omniva settings:', error)
     }
   }
 
@@ -124,28 +97,6 @@ const PaymentSettings = () => {
     // Track modified fields for text inputs
     if (type !== 'checkbox' && ['shop_id', 'api_secret_key', 'api_open_key'].includes(name)) {
       setMaksekeskusModifiedFields(prev => ({
-        ...prev,
-        [name]: true
-      }))
-    }
-    
-    // Clear messages when user starts typing
-    if (error) setError('')
-    if (success) setSuccess('')
-  }
-
-  const handleOmnivaInputChange = (e) => {
-    const { name, value, type, checked } = e.target
-    const newValue = type === 'checkbox' ? checked : value
-    
-    setOmnivaFormData(prev => ({
-      ...prev,
-      [name]: newValue
-    }))
-    
-    // Track modified fields for text inputs
-    if (type !== 'checkbox' && ['customer_code', 'username', 'password'].includes(name)) {
-      setOmnivaModifiedFields(prev => ({
         ...prev,
         [name]: true
       }))
@@ -220,45 +171,6 @@ const PaymentSettings = () => {
     } catch (err) {
       console.error('Error saving config:', err)
       setError('Võrguühenduse viga')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleOmnivaSubmit = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    setError('')
-    setSuccess('')
-
-    try {
-      // Validate required fields for new config
-      if (!omnivaFormData.customer_code || !omnivaFormData.username || 
-          (omnivaModifiedFields.password && !omnivaFormData.password)) {
-        setError('Kõik väljad on kohustuslikud')
-        setSaving(false)
-        return
-      }
-
-      // Store in localStorage (in a real app, this would be stored in the database)
-      const settingsToSave = {
-        customer_code: omnivaFormData.customer_code,
-        username: omnivaFormData.username,
-        // Only include password if it was modified
-        ...(omnivaModifiedFields.password && { password: '********' }), // Store masked password
-        test_mode: omnivaFormData.test_mode,
-        active: omnivaFormData.active
-      }
-
-      localStorage.setItem('omnivaSettings', JSON.stringify(settingsToSave))
-      
-      setSuccess('Omniva seaded edukalt salvestatud!')
-      setTimeout(() => setSuccess(''), 3000)
-      
-      // Reset modified fields
-      setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
-    } catch (err) {
-      setError('Seadete salvestamine ebaõnnestus: ' + err.message)
     } finally {
       setSaving(false)
     }

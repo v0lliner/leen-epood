@@ -300,13 +300,6 @@ function processOrder($transactionData, $paymentData) {
                 $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
                 $merchantData['order_reference'] = $orderReference;
                 
-                // Store delivery method information in merchant_data
-                if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine') {
-                    logMessage("Omniva delivery method detected", [
-                        'deliveryMethod' => $merchantData['deliveryMethod']
-                    ]);
-                }
-                
                 // Update the transaction with the new merchant_data
                 try {
                     $MK->addTransactionMeta($transaction->transaction->id, [
@@ -346,9 +339,7 @@ function processOrder($transactionData, $paymentData) {
                         <p><strong>Telefon:</strong> {$customerPhone}</p>
                         <p><strong>Summa:</strong> {$transactionData->transaction->amount} {$transactionData->transaction->currency}</p>
                         
-                        <!-- Display Omniva parcel machine info if applicable -->";
-            
-            $message .= "                    </div>
+                    </div>
                     
                     <h2>Tellitud tooted:</h2>";
             

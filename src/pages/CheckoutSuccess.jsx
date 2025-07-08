@@ -69,10 +69,6 @@ const CheckoutSuccess = () => {
                 customerEmail: data.order.customer_email,
                 customerName: data.order.customer_name,
                 customerPhone: data.order.customer_phone,
-                omnivaParcelMachineId: data.order.omniva_parcel_machine_id,
-                omnivaParcelMachineName: data.order.omniva_parcel_machine_name,
-                omnivaBarcode: data.order.omniva_barcode,
-                omnivaShipmentStatus: data.order.omniva_shipment_status,
                 timestamp: new Date(data.order.created_at).getTime(),
                 orderItems: data.order.items || [],
                 payments: data.order.payments || [],
@@ -322,22 +318,6 @@ const CheckoutSuccess = () => {
                           <span className="detail-value">{new Date(orderDetails.timestamp).toLocaleString('et-EE')}</span>
                         </div>
                       )}
-                    
-                      {/* Display order items if available */}
-                      {orderDetails.orderItems && orderDetails.orderItems.length > 0 && (
-                        <div className="order-items">
-                          <h3>Tellitud tooted:</h3>
-                          <table className="items-table">
-                            <thead>
-                              <tr>
-                                <th>Toode</th>
-                                <th>Kogus</th>
-                                <th>Hind</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {orderDetails.orderItems.map((item, index) => (
-                                <tr key={index} className="order-item">
                                   <td className="item-title">{item.product_title}</td>
                                   <td className="item-quantity">{item.quantity || 1}</td>
                                   <td className="item-price">{typeof item.price === 'number' ? `${item.price.toFixed(2)}€` : item.price}</td>
