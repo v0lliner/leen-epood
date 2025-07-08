@@ -323,22 +323,6 @@ const CheckoutSuccess = () => {
                         </div>
                       )}
                     
-                    {/* Display Omniva parcel machine info if available */}
-                    {orderDetails.omnivaParcelMachineName && (
-                      <div className="order-detail">
-                        <span className="detail-label">Pakiautomaat:</span>
-                        <span className="detail-value">{orderDetails.omnivaParcelMachineName}</span>
-                      </div>
-                    )}
-                    
-                    {/* Display Omniva tracking number if available */}
-                    {orderDetails.omnivaBarcode && (
-                      <div className="order-detail">
-                        <span className="detail-label">Jälgimisnumber:</span>
-                        <span className="detail-value">{orderDetails.omnivaBarcode}</span>
-                      </div>
-                    )}
-                      
                       {/* Display order items if available */}
                       {orderDetails.orderItems && orderDetails.orderItems.length > 0 && (
                         <div className="order-items">
