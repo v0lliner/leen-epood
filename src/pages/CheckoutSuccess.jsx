@@ -318,6 +318,20 @@ const CheckoutSuccess = () => {
                           <span className="detail-value">{new Date(orderDetails.timestamp).toLocaleString('et-EE')}</span>
                         </div>
                       )}
+                      {orderDetails.orderItems && orderDetails.orderItems.length > 0 && (
+                        <div className="order-items">
+                          <h3>Tellitud tooted</h3>
+                          <table className="items-table">
+                            <thead>
+                              <tr>
+                                <th>Toode</th>
+                                <th>Kogus</th>
+                                <th>Hind</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {orderDetails.orderItems.map((item, index) => (
+                                <tr key={index}>
                                   <td className="item-title">{item.product_title}</td>
                                   <td className="item-quantity">{item.quantity || 1}</td>
                                   <td className="item-price">{typeof item.price === 'number' ? `${item.price.toFixed(2)}€` : item.price}</td>
