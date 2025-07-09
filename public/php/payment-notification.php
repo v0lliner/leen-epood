@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
+    mkdir($logDir, 0777, true);
 }
 $logFile = $logDir . '/payment_notification.log';
 
@@ -50,6 +50,57 @@ function logMessage($message, $data = null) {
     
     if ($data !== null) {
         $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
+    }
+    
+    file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+}
+
+function sendEmail($to, $subject, $message, $replyTo = null) {
+    try {
+        // Load PHPMailer
+        require_once __DIR__ . '/phpmailer/PHPMailer.php';
+        require_once __DIR__ . '/phpmailer/SMTP.php';
+        require_once __DIR__ . '/phpmailer/Exception.php';
+        
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.zone.eu';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'leen@leen.ee';
+        $mail->Password = 'Leeeen484!';
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+        
+        // Recipients
+        $mail->setFrom('leen@leen.ee', 'Leen.ee');
+        $mail->addAddress($to);
+        
+        if ($replyTo) {
+            $mail->addReplyTo($replyTo);
+        } else {
+            $mail->addReplyTo('leen@leen.ee', 'Leen Väränen');
+        }
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
+        
+        // Create plain text version by stripping HTML
+        $textBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message));
+        $mail->AltBody = $textBody;
+        
+        // Send email
+        $mail->send();
+        logMessage("Email sent successfully to $to with subject: $subject");
+        return true;
+    } catch (Exception $e) {
+        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $e->getMessage());
+        return false;
+    }
 }
 
 // Function to create or update order in Supabase
@@ -477,7 +528,7 @@ function sendEmail($to, $subject, $message, $replyTo = null, $attachments = []) 
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
+        $mail->Password = 'Leeeen484!';
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
@@ -544,7 +595,7 @@ function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $repl
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
+        $mail->Password = 'Leeeen484!';
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';

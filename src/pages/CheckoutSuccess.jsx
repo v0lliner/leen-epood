@@ -29,7 +29,7 @@ const CheckoutSuccess = () => {
     const loadOrderDetails = async () => {
       try {
         setLoading(true);
-        setError(null);
+        setError(null); 
         
         // Log the reference for debugging
         console.log('Reference from URL:', reference);
@@ -38,8 +38,8 @@ const CheckoutSuccess = () => {
         if (reference) {
           console.log('Fetching order details from server for reference:', reference);
           
-          // Fetch order details from the backend using the reference parameter
-          const response = await fetch(`/php/admin/orders.php?reference=${reference}`);
+          // Fetch order details from the backend using the reference
+          const response = await fetch(`/php/admin/orders.php?order_number=${reference}`);
           
           if (!response.ok) {
             console.warn(`Failed to fetch order details from server: ${response.status}`);

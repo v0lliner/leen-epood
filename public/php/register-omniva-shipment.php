@@ -1,6 +1,18 @@
 <?php
+// Enable error reporting for development
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+// Set up logging
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0777, true);
+}
+$shipmentLogFile = $logDir . '/omniva_shipment.log';
+
+// Function to log messages
 function shipmentLog($message, $data = null) {
-    global $logFile;
+    global $shipmentLogFile;
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "$timestamp - $message";
     
@@ -8,7 +20,7 @@ function shipmentLog($message, $data = null) {
         $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
     }
     
-    file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+    file_put_contents($shipmentLogFile, $logEntry . "\n", FILE_APPEND);
 }
 
 // Set up logging
@@ -159,7 +171,7 @@ function saveLabelPDF($barcode, $orderNumber) {
         // Create PDF labels directory if it doesn't exist
         $pdfDir = __DIR__ . '/../pdf_labels';
         if (!is_dir($pdfDir)) {
-            mkdir($pdfDir, 0755, true);
+            mkdir($pdfDir, 0777, true);
         }
         
         // Initialize Omniva label class
@@ -820,7 +832,7 @@ function saveLabelPDF($barcode, $orderNumber) {
         
         // Generate filename
         $filename = 'omniva_' . preg_replace('/[^a-zA-Z0-9]/', '_', $orderNumber) . '_' . $barcode;
-        $filePath = "$pdfDir/$filename.pdf";
+        $filePath = $pdfDir . '/' . $filename . '.pdf';
         
         shipmentLog("Attempting to download label to", $filePath);
         // Download label and save to file
@@ -946,7 +958,7 @@ function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
+        $mail->Password = 'Leeeen484!';
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
