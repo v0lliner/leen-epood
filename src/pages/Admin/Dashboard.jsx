@@ -227,7 +227,7 @@ const AdminDashboard = () => {
         <div className="stats-section">
           <h2>📊 Kiire ülevaade</h2>
           <div className="stats-grid">
-            {getQuickStats().filter(stat => stat).map((stat, index) => (
+            {getQuickStats().map((stat, index) => (
               <Link key={index} to={stat.link} className={`stat-card ${stat.color}`}>
                 <div className="stat-icon">{stat.icon}</div>
                 <div className="stat-content">

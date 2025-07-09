@@ -26,7 +26,6 @@ const PaymentSettings = () => {
     customer_code: '',
     username: '',
     password: '',
-    shipping_price: '3.99',
     test_mode: false,
     active: true
   })
@@ -42,8 +41,7 @@ const PaymentSettings = () => {
   const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
     customer_code: false,
     username: false,
-    password: false,
-    shipping_price: false
+    password: false
   })
 
   // Active tab state
@@ -105,7 +103,6 @@ const PaymentSettings = () => {
           customer_code: parsedSettings.customer_code || '',
           username: parsedSettings.username || '',
           password: '', // Don't show actual password, just placeholder
-          shipping_price: parsedSettings.shipping_price || '3.99',
           test_mode: parsedSettings.test_mode || false,
           active: parsedSettings.active || true
         })
@@ -147,7 +144,7 @@ const PaymentSettings = () => {
     }))
     
     // Track modified fields for text inputs
-    if (type !== 'checkbox' && ['customer_code', 'username', 'password', 'shipping_price'].includes(name)) {
+    if (type !== 'checkbox' && ['customer_code', 'username', 'password'].includes(name)) {
       setOmnivaModifiedFields(prev => ({
         ...prev,
         [name]: true
@@ -237,8 +234,7 @@ const PaymentSettings = () => {
     try {
       // Validate required fields for new config
       if (!omnivaFormData.customer_code || !omnivaFormData.username || 
-          (omnivaModifiedFields.password && !omnivaFormData.password) ||
-          !omnivaFormData.shipping_price) {
+          (omnivaModifiedFields.password && !omnivaFormData.password)) {
         setError('Kõik väljad on kohustuslikud')
         setSaving(false)
         return
@@ -249,8 +245,7 @@ const PaymentSettings = () => {
         customer_code: omnivaFormData.customer_code,
         username: omnivaFormData.username,
         // Only include password if it was modified
-        ...(omnivaModifiedFields.password && { password: '********' }),
-        shipping_price: omnivaFormData.shipping_price,
+        ...(omnivaModifiedFields.password && { password: '********' }), // Store masked password
         test_mode: omnivaFormData.test_mode,
         active: omnivaFormData.active
       }
@@ -261,12 +256,7 @@ const PaymentSettings = () => {
       setTimeout(() => setSuccess(''), 3000)
       
       // Reset modified fields
-      setOmnivaModifiedFields({ 
-        customer_code: false, 
-        username: false, 
-        password: false,
-        shipping_price: false
-      })
+      setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
     } catch (err) {
       setError('Seadete salvestamine ebaõnnestus: ' + err.message)
     } finally {
@@ -735,24 +725,7 @@ const PaymentSettings = () => {
                   <small className="form-hint">
                     {omnivaFormData.password === '' && localStorage.getItem('omnivaSettings') ? 
                       'Jäta tühjaks, et säilitada olemasolev parool' : 
-                      'Sisesta Omniva API parool'} 
-                  </small>
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="shipping_price">Pakiautomaadi tarne hind (€)</label>
-                  <input
-                    type="text"
-                    id="shipping_price"
-                    name="shipping_price"
-                    value={omnivaFormData.shipping_price}
-                    onChange={handleOmnivaInputChange}
-                    className="form-input"
-                    placeholder="3.99"
-                    required
-                  />
-                  <small className="form-hint">
-                    Sisesta pakiautomaadi tarne hind eurodes (nt. 3.99)
+                      'Sisesta Omniva API parool'}
                   </small>
                 </div>
                 
