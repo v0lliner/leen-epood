@@ -156,6 +156,115 @@ try {
     // Check if order_number is provided in query string
     if (isset($_GET['order_number'])) {
         $orderNumber = $_GET['order_number'];
+        logMessage("Fetching order details for order number", $orderNumber);
+        
+        // Get order basic info
+        $orderResult = supabaseRequest(
+            "/rest/v1/orders?order_number=eq.$orderNumber&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at,reference",
+            'GET'
+        );
+        
+        if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+            logMessage("Order not found for order number", $orderNumber);
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Order not found'
+            ]);
+            exit();
+        }
+        
+        $order = $orderResult['data'][0];
+        $orderId = $order['id'];
+        
+        // Get order items
+        logMessage("Fetching order items for order", $orderId);
+        $itemsResult = supabaseRequest(
+            "/rest/v1/order_items?order_id=eq.$orderId&select=*",
+            'GET'
+        );
+        
+        if ($itemsResult['status'] === 200) {
+            $order['items'] = $itemsResult['data'];
+        } else {
+            $order['items'] = [];
+        }
+        
+        // Get payment info
+        logMessage("Fetching payment info for order", $orderId);
+        $paymentsResult = supabaseRequest(
+            "/rest/v1/order_payments?order_id=eq.$orderId&select=*",
+            'GET'
+        );
+        
+        if ($paymentsResult['status'] === 200) {
+            $order['payments'] = $paymentsResult['data'];
+        } else {
+            $order['payments'] = [];
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'order' => $order
+        ]);
+        exit();
+    }
+    
+    // Check if reference is provided in query string
+    if (isset($_GET['reference'])) {
+        $reference = $_GET['reference'];
+        logMessage("Fetching order details for reference", $reference);
+        
+        // Get order basic info
+        $orderResult = supabaseRequest(
+            "/rest/v1/orders?reference=eq.$reference&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at",
+            'GET'
+        );
+        
+        if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+            logMessage("Order not found for reference", $reference);
+            http_response_code(404);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Order not found'
+            ]);
+            exit();
+        }
+        
+        $order = $orderResult['data'][0];
+        $orderId = $order['id'];
+        
+        // Get order items
+        logMessage("Fetching order items for order", $orderId);
+        $itemsResult = supabaseRequest(
+            "/rest/v1/order_items?order_id=eq.$orderId&select=*",
+            'GET'
+        );
+        
+        if ($itemsResult['status'] === 200) {
+            $order['items'] = $itemsResult['data'];
+        } else {
+            $order['items'] = [];
+        }
+        
+        // Get payment info
+        logMessage("Fetching payment info for order", $orderId);
+        $paymentsResult = supabaseRequest(
+            "/rest/v1/order_payments?order_id=eq.$orderId&select=*",
+            'GET'
+        );
+        
+        if ($paymentsResult['status'] === 200) {
+            $order['payments'] = $paymentsResult['data'];
+        } else {
+            $order['payments'] = [];
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'order' => $order
+        ]);
+        exit();
     }
     
     // Check if reference is provided in query string
@@ -212,60 +321,22 @@ try {
             // Get order items
             logMessage("Fetching order items for order", $orderId);
             $itemsResult = supabaseRequest(
-                "/rest/v1/order_items?order_id=eq.$orderId&select=*",
-                'GET'
-            );
-            
-            if ($itemsResult['status'] === 200) {
-                $order['items'] = $itemsResult['data'];
-            } else {
-                $order['items'] = [];
-            }
-            
-            // Get payment info
-            logMessage("Fetching payment info for order", $orderId);
-            $paymentsResult = supabaseRequest(
-                "/rest/v1/order_payments?order_id=eq.$orderId&select=*",
-                'GET'
-            );
-            
-            if ($paymentsResult['status'] === 200) {
-                $order['payments'] = $paymentsResult['data'];
-            } else {
-                $order['payments'] = [];
-            }
-            
-            if ($order) {
-                echo json_encode([
-                    'success' => true,
-                    'order' => $order
-                ]);
-            } else {
-                http_response_code(404);
-                echo json_encode([
-                    'success' => false,
-                    'error' => 'Order not found'
-                ]);
-            }
-        } 
-        // Otherwise, get all orders
-        else {
-            // Query the admin_orders_view
-            logMessage("Fetching all orders from admin_orders_view");
-            $ordersResult = supabaseRequest(
-                "/rest/v1/admin_orders_view?select=*&order=created_at.desc",
-                'GET'
-            );
-            
-            if ($ordersResult['status'] !== 200) {
-                throw new Exception("Failed to fetch orders");
-            }
-            
-            echo json_encode([
-                'success' => true,
-                'orders' => $ordersResult['data']
-            ]);
+        // If we reach here, no specific order was requested, so get all orders
+        // Query the admin_orders_view
+        logMessage("Fetching all orders from admin_orders_view");
+        $ordersResult = supabaseRequest(
+            "/rest/v1/admin_orders_view?select=*&order=created_at.desc",
+            'GET'
+        );
+        
+        if ($ordersResult['status'] !== 200) {
+            throw new Exception("Failed to fetch orders");
         }
+        
+        echo json_encode([
+            'success' => true,
+            'orders' => $ordersResult['data']
+        ]);
     } 
     // Handle PUT requests for updating order status
     else if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $orderId && $action === 'status') {

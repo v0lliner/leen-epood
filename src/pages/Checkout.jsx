@@ -1,28 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
-import { shippingSettingsService } from '../utils/supabase/shippingSettings';
+import { Link } from 'react-router-dom';
 
 const Checkout = () => {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const { items, getTotalPrice, clearCart } = useCart();
-  const [step, setStep] = useState('review');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [parcelMachines, setParcelMachines] = useState([]);
-  const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
-  const [parcelMachineError, setParcelMachineError] = useState('');
-  const [paymentMethods, setPaymentMethods] = useState([]);
-  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false);
-  const [paymentMethodsError, setPaymentMethodsError] = useState('');
-  const [shippingPrice, setShippingPrice] = useState(3.99);
-  const [loadingShippingPrice, setLoadingShippingPrice] = useState(true);
-
-  // Form data
+  const navigate = useNavigate();
+  
+  // Form state
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -32,74 +21,66 @@ const Checkout = () => {
     deliveryMethod: 'omniva-parcel-machine',
     omnivaParcelMachineId: '',
     omnivaParcelMachineName: '',
-    paymentMethod: '',
     termsAccepted: false
   });
-
-  // Load shipping price from database
+  
+  // UI state
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [omnivaLocations, setOmnivaLocations] = useState([]);
+  const [loadingOmniva, setLoadingOmniva] = useState(false);
+  const [omnivaError, setOmnivaError] = useState('');
+  
+  // Redirect if cart is empty
   useEffect(() => {
-    const loadShippingPrice = async () => {
-      setLoadingShippingPrice(true);
-      try {
-        const { data, error } = await shippingSettingsService.getOmnivaShippingSettings();
-        if (error) {
-          console.error('Error loading shipping price:', error);
-        } else if (data) {
-          setShippingPrice(parseFloat(data.price));
-        }
-      } catch (err) {
-        console.error('Error in loadShippingPrice:', err);
-      } finally {
-        setLoadingShippingPrice(false);
-      }
-    };
-
-    loadShippingPrice();
-  }, []);
-
-  // Load parcel machines when country changes
+    if (items.length === 0) {
+      navigate('/epood');
+    }
+  }, [items, navigate]);
+  
+  // Load Omniva locations when country changes
   useEffect(() => {
     if (formData.deliveryMethod === 'omniva-parcel-machine') {
-      loadParcelMachines();
+      loadOmnivaLocations();
     }
   }, [formData.country, formData.deliveryMethod]);
-
-  const loadParcelMachines = async () => {
-    setLoadingParcelMachines(true);
-    setParcelMachineError('');
-    
+  
+  const loadOmnivaLocations = async () => {
     try {
+      setLoadingOmniva(true);
+      setOmnivaError('');
+      
       // Map country names to country codes
-      const countryMap = {
+      const countryCodeMap = {
         'Estonia': 'ee',
         'Latvia': 'lv',
         'Lithuania': 'lt',
         'Finland': 'fi'
       };
       
-      const countryCode = countryMap[formData.country] || 'ee';
+      const countryCode = countryCodeMap[formData.country] || 'ee';
       
       const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
       
       if (!response.ok) {
-        throw new Error(`Error ${response.status}`);
+        throw new Error(t('checkout.shipping.omniva.fetch_error'));
       }
       
       const data = await response.json();
       
       if (data.success) {
-        setParcelMachines(data.parcelMachines || []);
+        setOmnivaLocations(data.parcelMachines || []);
       } else {
-        setParcelMachineError(data.error || t('checkout.shipping.omniva.fetch_error'));
+        throw new Error(data.error || t('checkout.shipping.omniva.fetch_error'));
       }
     } catch (error) {
-      console.error('Error loading parcel machines:', error);
-      setParcelMachineError(t('checkout.shipping.omniva.fetch_error'));
+      console.error('Error loading Omniva locations:', error);
+      setOmnivaError(error.message);
     } finally {
-      setLoadingParcelMachines(false);
+      setLoadingOmniva(false);
     }
   };
-
+  
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     
@@ -110,19 +91,20 @@ const Checkout = () => {
     
     // Clear error when user starts typing
     if (error) setError('');
-  };
-
-  const handleParcelMachineChange = (e) => {
-    const selectedId = e.target.value;
-    const selectedMachine = parcelMachines.find(machine => machine.id === selectedId);
     
-    setFormData(prev => ({
-      ...prev,
-      omnivaParcelMachineId: selectedId,
-      omnivaParcelMachineName: selectedMachine ? selectedMachine.name : ''
-    }));
+    // Special handling for Omniva parcel machine selection
+    if (name === 'omnivaParcelMachineId') {
+      const selectedMachine = omnivaLocations.find(machine => machine.id === value);
+      if (selectedMachine) {
+        setFormData(prev => ({
+          ...prev,
+          omnivaParcelMachineId: value,
+          omnivaParcelMachineName: selectedMachine.name
+        }));
+      }
+    }
   };
-
+  
   const validateForm = () => {
     // Basic validation
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
@@ -143,12 +125,6 @@ const Checkout = () => {
       return false;
     }
     
-    // Payment method validation
-    if (!formData.paymentMethod) {
-      setError(t('checkout.payment.method_required'));
-      return false;
-    }
-    
     // Terms acceptance validation
     if (!formData.termsAccepted) {
       setError(t('checkout.terms.required'));
@@ -157,7 +133,7 @@ const Checkout = () => {
     
     return true;
   };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -176,14 +152,14 @@ const Checkout = () => {
       
       // Prepare payment data
       const paymentData = {
-        amount: (getTotalPrice() + shippingPrice).toFixed(2),
+        amount: getTotalPrice().toFixed(2),
         reference,
         email: formData.email,
         firstName: formData.firstName,
         lastName: formData.lastName,
         phone: formData.phone,
         country: formData.country,
-        paymentMethod: formData.paymentMethod,
+        paymentMethod: 'lhv', // Default to LHV bank
         deliveryMethod: formData.deliveryMethod,
         omnivaParcelMachineId: formData.omnivaParcelMachineId,
         omnivaParcelMachineName: formData.omnivaParcelMachineName,
@@ -195,7 +171,9 @@ const Checkout = () => {
         }))
       };
       
-      // Send payment request to backend
+      console.log('Sending payment request with data:', paymentData);
+      
+      // Send request to payment processor
       const response = await fetch('/php/process-payment.php', {
         method: 'POST',
         headers: {
@@ -205,7 +183,9 @@ const Checkout = () => {
       });
       
       if (!response.ok) {
-        throw new Error(`Error ${response.status}`);
+        const errorText = await response.text();
+        console.error('Payment processing error:', errorText);
+        throw new Error(t('checkout.error.session_failed'));
       }
       
       const result = await response.json();
@@ -218,355 +198,81 @@ const Checkout = () => {
       if (result.paymentUrl) {
         window.location.href = result.paymentUrl;
       } else {
-        throw new Error('No payment URL received');
+        throw new Error('No payment URL returned');
       }
       
     } catch (error) {
-      console.error('Payment error:', error);
+      console.error('Checkout error:', error);
       setError(error.message || t('checkout.error.network_error'));
       setIsSubmitting(false);
     }
   };
-
-  // Load payment methods
-  useEffect(() => {
-    const loadPaymentMethods = async () => {
-      setLoadingPaymentMethods(true);
-      setPaymentMethodsError('');
-      
-      try {
-        // Simulate loading payment methods
-        // In a real app, this would be fetched from your payment provider
-        setTimeout(() => {
-          setPaymentMethods([
-            { id: 'swedbank', name: 'Swedbank', type: 'bank' },
-            { id: 'seb', name: 'SEB', type: 'bank' },
-            { id: 'lhv', name: 'LHV', type: 'bank' },
-            { id: 'luminor', name: 'Luminor', type: 'bank' },
-            { id: 'coop', name: 'Coop Pank', type: 'bank' }
-          ]);
-          setLoadingPaymentMethods(false);
-        }, 500);
-      } catch (error) {
-        console.error('Error loading payment methods:', error);
-        setPaymentMethodsError(t('checkout.payment.methods_error'));
-        setLoadingPaymentMethods(false);
-      }
-    };
-    
-    loadPaymentMethods();
-  }, [t]);
-
-  // Check if cart is empty
-  useEffect(() => {
-    if (items.length === 0) {
-      navigate('/epood');
-    }
-  }, [items, navigate]);
-
+  
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  // Render different steps
-  const renderStep = () => {
-    switch (step) {
-      case 'review':
-        return (
-          <div className="checkout-review">
-            <h2>{t('checkout.review.title')}</h2>
-            
-            <div className="cart-items">
-              {items.map((item) => (
-                <div key={item.id} className="cart-item">
-                  <div className="item-image">
-                    <img src={item.image} alt={item.title} />
-                  </div>
-                  <div className="item-details">
-                    <h3 className="item-title">{item.title}</h3>
-                    <p className="item-price">{item.price}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="checkout-actions">
-              <Link to="/epood" className="btn btn-secondary" onClick={scrollToTop}>
-                {t('checkout.review.back_to_shop')}
-              </Link>
-              <button 
-                onClick={() => setStep('shipping')} 
-                className="btn btn-primary"
-              >
-                {t('checkout.review.continue')}
-              </button>
-            </div>
-          </div>
-        );
-      
-      case 'shipping':
-        return (
-          <div className="checkout-shipping">
-            <h2>{t('checkout.shipping.title')}</h2>
-            
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              setStep('payment');
-              scrollToTop();
-            }}>
-              {/* Contact Information */}
-              <div className="form-section">
-                <h3>{t('checkout.shipping.contact.title')}</h3>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="firstName">{t('checkout.shipping.contact.name')}</label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleInputChange}
-                      placeholder={t('checkout.shipping.contact.name_placeholder')}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="lastName">{t('checkout.shipping.contact.name')}</label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleInputChange}
-                      placeholder={t('checkout.shipping.contact.name_placeholder')}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-                
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="email">{t('checkout.shipping.contact.email')}</label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      placeholder={t('checkout.shipping.contact.email_placeholder')}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="phone">{t('checkout.shipping.contact.phone')}</label>
-                    <input
-                      type="tel"
-                      id="phone"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleInputChange}
-                      placeholder={t('checkout.shipping.contact.phone_placeholder')}
-                      required
-                      className="form-input"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Shipping Method */}
-              <div className="form-section">
-                <h3>Tarneviis</h3>
-                
-                <div className="shipping-methods">
-                  <div className="shipping-method">
-                    <input
-                      type="radio"
-                      id="omniva"
-                      name="deliveryMethod"
-                      value="omniva-parcel-machine"
-                      checked={formData.deliveryMethod === 'omniva-parcel-machine'}
-                      onChange={handleInputChange}
-                      className="shipping-radio"
-                    />
-                    <label htmlFor="omniva" className="shipping-label">
-                      <div className="shipping-info">
-                        <div className="shipping-title">{t('checkout.shipping.omniva.title')}</div>
-                        <div className="shipping-description">{t('checkout.shipping.omniva.description')}</div>
-                      </div>
-                      <div className="shipping-price">
-                        {loadingShippingPrice ? '...' : `${shippingPrice.toFixed(2)}€`}
-                      </div>
-                    </label>
-                  </div>
-                </div>
-                
-                {/* Omniva Parcel Machine Selector */}
-                {formData.deliveryMethod === 'omniva-parcel-machine' && (
-                  <div className="parcel-machine-selector">
-                    <div className="form-group">
-                      <label htmlFor="country">Riik</label>
-                      <select
-                        id="country"
-                        name="country"
-                        value={formData.country}
-                        onChange={handleInputChange}
-                        className="form-input"
-                      >
-                        <option value="Estonia">Eesti</option>
-                        <option value="Latvia">Läti</option>
-                        <option value="Lithuania">Leedu</option>
-                        <option value="Finland">Soome</option>
-                      </select>
-                    </div>
-                    
-                    <div className="form-group">
-                      <label htmlFor="omnivaParcelMachineId">{t('checkout.shipping.omniva.select_machine')}</label>
-                      {loadingParcelMachines ? (
-                        <div className="loading-text">{t('checkout.shipping.omniva.loading')}</div>
-                      ) : parcelMachineError ? (
-                        <div className="error-text">{parcelMachineError}</div>
-                      ) : parcelMachines.length === 0 ? (
-                        <div className="error-text">{t('checkout.shipping.omniva.no_machines')}</div>
-                      ) : (
-                        <select
-                          id="omnivaParcelMachineId"
-                          name="omnivaParcelMachineId"
-                          value={formData.omnivaParcelMachineId}
-                          onChange={handleParcelMachineChange}
-                          className="form-input"
-                          required
-                        >
-                          <option value="">{t('checkout.shipping.omniva.select_placeholder')}</option>
-                          {parcelMachines.map(machine => (
-                            <option key={machine.id} value={machine.id}>
-                              {machine.name}
-                            </option>
-                          ))}
-                        </select>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              <div className="checkout-actions">
-                <button 
-                  type="button"
-                  onClick={() => setStep('review')}
-                  className="btn btn-secondary"
-                >
-                  {t('checkout.shipping.back')}
-                </button>
-                <button 
-                  type="submit"
-                  className="btn btn-primary"
-                >
-                  {t('checkout.shipping.continue')}
-                </button>
-              </div>
-            </form>
-          </div>
-        );
-      
-      case 'payment':
-        return (
-          <div className="checkout-payment">
-            <h2>{t('checkout.payment.title')}</h2>
-            
-            <form onSubmit={handleSubmit}>
-              <div className="form-section">
-                <h3>{t('checkout.payment.select_method')}</h3>
-                
-                {loadingPaymentMethods ? (
-                  <div className="loading-text">{t('checkout.payment.loading_methods')}</div>
-                ) : paymentMethodsError ? (
-                  <div className="payment-error">
-                    <p>{paymentMethodsError}</p>
-                    <button 
-                      type="button"
-                      onClick={() => window.location.reload()}
-                      className="btn btn-secondary"
-                    >
-                      {t('checkout.payment.retry')}
-                    </button>
-                  </div>
-                ) : paymentMethods.length === 0 ? (
-                  <div className="payment-error">
-                    <p>{t('checkout.payment.no_methods')}</p>
-                  </div>
-                ) : (
-                  <div className="payment-methods">
-                    {paymentMethods.map(method => (
-                      <div key={method.id} className="payment-method">
-                        <input
-                          type="radio"
-                          id={method.id}
-                          name="paymentMethod"
-                          value={method.id}
-                          checked={formData.paymentMethod === method.id}
-                          onChange={handleInputChange}
-                          className="payment-radio"
-                        />
-                        <label htmlFor={method.id} className="payment-label">
-                          <div className="payment-info">
-                            <div className="payment-name">{method.name}</div>
-                          </div>
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              <div className="terms-section">
-                <label className="terms-label">
-                  <input
-                    type="checkbox"
-                    name="termsAccepted"
-                    checked={formData.termsAccepted}
-                    onChange={handleInputChange}
-                    className="terms-checkbox"
-                  />
-                  <span>
-                    {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
-                  </span>
-                </label>
-              </div>
-              
-              {error && (
-                <div className="checkout-error">
-                  {error}
-                </div>
-              )}
-              
-              <div className="checkout-actions">
-                <button 
-                  type="button"
-                  onClick={() => setStep('shipping')}
-                  className="btn btn-secondary"
-                  disabled={isSubmitting}
-                >
-                  {t('checkout.shipping.back')}
-                </button>
-                <button 
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? t('checkout.summary.processing') : t('checkout.payment.proceed')}
-                </button>
-              </div>
-            </form>
-          </div>
-        );
-      
+  
+  // Calculate shipping cost
+  const getShippingCost = () => {
+    switch (formData.deliveryMethod) {
+      case 'omniva-parcel-machine':
+        return 3.99;
+      case 'smartpost-parcel-machine':
+        return 3.99;
+      case 'courier':
+        return 5.99;
       default:
-        return null;
+        return 0;
     }
   };
+  
+  // Calculate total with shipping
+  const getTotalWithShipping = () => {
+    return getTotalPrice() + getShippingCost();
+  };
+  
+  if (items.length === 0) {
+    return (
+      <>
+        <SEOHead page="shop" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <div className="empty-cart">
+                <h1>{t('cart.empty')}</h1>
+                <Link to="/epood" className="btn btn-primary" onClick={scrollToTop}>
+                  {t('cart.back_to_shop')}
+                </Link>
+              </div>
+            </div>
+          </section>
+        </main>
+        <style jsx>{`
+          .empty-cart {
+            text-align: center;
+            padding: 64px 0;
+          }
+          
+          .empty-cart h1 {
+            margin-bottom: 32px;
+          }
+          
+          .btn-primary {
+            background-color: var(--color-ultramarine);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-weight: 500;
+            transition: opacity 0.2s ease;
+          }
+          
+          .btn-primary:hover {
+            opacity: 0.9;
+          }
+        `}</style>
+      </>
+    );
+  }
 
   return (
     <>
@@ -579,79 +285,238 @@ const Checkout = () => {
             </FadeInSection>
 
             <div className="checkout-layout">
-              <div className="checkout-main">
-                {/* Checkout Steps */}
-                <div className="checkout-steps">
-                  <div className={`checkout-step ${step === 'review' ? 'active' : ''} ${step === 'shipping' || step === 'payment' ? 'completed' : ''}`}>
-                    <div className="step-number">1</div>
-                    <div className="step-label">{t('checkout.steps.review')}</div>
+              {/* Checkout Form */}
+              <div className="checkout-form-section">
+                <form onSubmit={handleSubmit} className="checkout-form">
+                  {/* Contact Information */}
+                  <div className="form-section">
+                    <h2>{t('checkout.shipping.contact.title')}</h2>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="firstName">{t('checkout.shipping.contact.name')} *</label>
+                        <input
+                          type="text"
+                          id="firstName"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          placeholder={t('checkout.shipping.contact.name_placeholder')}
+                          required
+                          className="form-input"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="lastName">{t('checkout.shipping.contact.name')} *</label>
+                        <input
+                          type="text"
+                          id="lastName"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          placeholder={t('checkout.shipping.contact.name_placeholder')}
+                          required
+                          className="form-input"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="email">{t('checkout.shipping.contact.email')} *</label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          placeholder={t('checkout.shipping.contact.email_placeholder')}
+                          required
+                          className="form-input"
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="phone">{t('checkout.shipping.contact.phone')} *</label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          placeholder={t('checkout.shipping.contact.phone_placeholder')}
+                          required
+                          className="form-input"
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="step-connector"></div>
-                  <div className={`checkout-step ${step === 'shipping' ? 'active' : ''} ${step === 'payment' ? 'completed' : ''}`}>
-                    <div className="step-number">2</div>
-                    <div className="step-label">{t('checkout.steps.shipping')}</div>
-                  </div>
-                  <div className="step-connector"></div>
-                  <div className={`checkout-step ${step === 'payment' ? 'active' : ''}`}>
-                    <div className="step-number">3</div>
-                    <div className="step-label">{t('checkout.steps.payment')}</div>
-                  </div>
-                </div>
-
-                {/* Render current step */}
-                {renderStep()}
-              </div>
-
-              {/* Order Summary */}
-              <div className="checkout-sidebar">
-                <div className="order-summary">
-                  <h3>{t('checkout.summary.title')}</h3>
                   
-                  <div className="summary-items">
+                  {/* Shipping Method */}
+                  <div className="form-section">
+                    <h2>{t('checkout.shipping.title')}</h2>
+                    
+                    <div className="shipping-methods">
+                      <div className="shipping-method">
+                        <label className="shipping-method-label">
+                          <input
+                            type="radio"
+                            name="deliveryMethod"
+                            value="omniva-parcel-machine"
+                            checked={formData.deliveryMethod === 'omniva-parcel-machine'}
+                            onChange={handleInputChange}
+                            className="shipping-method-input"
+                          />
+                          <div className="shipping-method-content">
+                            <div className="shipping-method-info">
+                              <h3>{t('checkout.shipping.omniva.title')}</h3>
+                              <p>{t('checkout.shipping.omniva.description')}</p>
+                            </div>
+                            <div className="shipping-method-price">
+                              {t('checkout.shipping.omniva.price')}
+                            </div>
+                          </div>
+                        </label>
+                        
+                        {formData.deliveryMethod === 'omniva-parcel-machine' && (
+                          <div className="shipping-method-details">
+                            <div className="form-group">
+                              <label htmlFor="country">{t('checkout.shipping.address.country')}</label>
+                              <select
+                                id="country"
+                                name="country"
+                                value={formData.country}
+                                onChange={handleInputChange}
+                                className="form-input"
+                              >
+                                <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
+                                <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
+                                <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
+                                <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
+                              </select>
+                            </div>
+                            
+                            <div className="form-group">
+                              <label htmlFor="omnivaParcelMachineId">{t('checkout.shipping.omniva.select_machine')} *</label>
+                              {loadingOmniva ? (
+                                <div className="loading-text">{t('checkout.shipping.omniva.loading')}</div>
+                              ) : omnivaError ? (
+                                <div className="error-text">{omnivaError}</div>
+                              ) : omnivaLocations.length === 0 ? (
+                                <div className="info-text">{t('checkout.shipping.omniva.no_machines')}</div>
+                              ) : (
+                                <select
+                                  id="omnivaParcelMachineId"
+                                  name="omnivaParcelMachineId"
+                                  value={formData.omnivaParcelMachineId}
+                                  onChange={handleInputChange}
+                                  className="form-input"
+                                  required={formData.deliveryMethod === 'omniva-parcel-machine'}
+                                >
+                                  <option value="">{t('checkout.shipping.omniva.select_placeholder')}</option>
+                                  {omnivaLocations.map(machine => (
+                                    <option key={machine.id} value={machine.id}>
+                                      {machine.name}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Terms and Conditions */}
+                  <div className="form-section">
+                    <div className="form-group terms-group">
+                      <label className="terms-label">
+                        <input
+                          type="checkbox"
+                          name="termsAccepted"
+                          checked={formData.termsAccepted}
+                          onChange={handleInputChange}
+                          className="terms-checkbox"
+                          required
+                        />
+                        <span>
+                          {t('checkout.terms.agree')} <Link to="/muugitingimused" target="_blank" className="terms-link">{t('checkout.terms.terms_link')}</Link>
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                  
+                  {/* Error Message */}
+                  {error && (
+                    <div className="error-message">
+                      {error}
+                    </div>
+                  )}
+                  
+                  {/* Submit Button */}
+                  <div className="form-actions">
+                    <Link to="/epood" className="btn btn-secondary" onClick={scrollToTop}>
+                      {t('checkout.review.back_to_shop')}
+                    </Link>
+                    <button 
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="btn btn-primary"
+                    >
+                      {isSubmitting ? t('checkout.summary.processing') : t('checkout.summary.pay')}
+                    </button>
+                  </div>
+                </form>
+              </div>
+              
+              {/* Order Summary */}
+              <div className="order-summary-section">
+                <div className="order-summary">
+                  <h2>{t('checkout.summary.title')}</h2>
+                  
+                  <div className="order-items">
                     {items.map((item) => (
-                      <div key={item.id} className="summary-item">
-                        <div className="summary-item-name">{item.title}</div>
-                        <div className="summary-item-price">{item.price}</div>
+                      <div key={item.id} className="order-item">
+                        <div className="item-image">
+                          <img src={item.image} alt={item.title} />
+                        </div>
+                        <div className="item-details">
+                          <h3 className="item-title">{item.title}</h3>
+                          <p className="item-price">{item.price}</p>
+                        </div>
                       </div>
                     ))}
                   </div>
                   
-                  <div className="summary-totals">
-                    <div className="summary-row">
-                      <div className="summary-label">{t('checkout.summary.subtotal')}</div>
-                      <div className="summary-value">{getTotalPrice().toFixed(2)}€</div>
+                  <div className="order-totals">
+                    <div className="total-row">
+                      <span>{t('checkout.summary.subtotal')}</span>
+                      <span>{getTotalPrice().toFixed(2)}€</span>
                     </div>
-                    
-                    <div className="summary-row">
-                      <div className="summary-label">{t('checkout.summary.shipping')}</div>
-                      <div className="summary-value">
-                        {loadingShippingPrice ? '...' : `${shippingPrice.toFixed(2)}€`}
-                      </div>
+                    <div className="total-row">
+                      <span>{t('checkout.summary.shipping')}</span>
+                      <span>{getShippingCost().toFixed(2)}€</span>
                     </div>
-                    
-                    <div className="summary-row summary-total">
-                      <div className="summary-label">{t('checkout.summary.total')}</div>
-                      <div className="summary-value">
-                        {loadingShippingPrice 
-                          ? '...' 
-                          : `${(getTotalPrice() + shippingPrice).toFixed(2)}€`
-                        }
-                      </div>
+                    <div className="total-row grand-total">
+                      <span>{t('checkout.summary.total')}</span>
+                      <span>{getTotalWithShipping().toFixed(2)}€</span>
                     </div>
                   </div>
                   
-                  <div className="summary-info">
+                  <div className="order-info">
                     <div className="info-item">
                       <span className="info-icon">🔒</span>
-                      <span className="info-text">{t('checkout.summary.info.secure')}</span>
+                      <span>{t('checkout.summary.info.secure')}</span>
                     </div>
                     <div className="info-item">
                       <span className="info-icon">🚚</span>
-                      <span className="info-text">{t('checkout.summary.info.shipping')}</span>
+                      <span>{t('checkout.summary.info.shipping')}</span>
                     </div>
                     <div className="info-item">
                       <span className="info-icon">✉️</span>
-                      <span className="info-text">{t('checkout.summary.info.personal')}</span>
+                      <span>{t('checkout.summary.info.personal')}</span>
                     </div>
                   </div>
                 </div>
@@ -664,198 +529,64 @@ const Checkout = () => {
       <style jsx>{`
         .checkout-layout {
           display: grid;
-          grid-template-columns: 1fr 350px;
+          grid-template-columns: 1fr 400px;
           gap: 48px;
           margin-top: 48px;
         }
-
-        .checkout-steps {
-          display: flex;
-          align-items: center;
-          margin-bottom: 48px;
+        
+        .checkout-form-section {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          padding: 32px;
         }
-
-        .checkout-step {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          position: relative;
-        }
-
-        .step-number {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: #f0f0f0;
-          color: #666;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          margin-bottom: 8px;
-          transition: all 0.3s ease;
-        }
-
-        .checkout-step.active .step-number {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .checkout-step.completed .step-number {
-          background-color: #4CAF50;
-          color: white;
-        }
-
-        .step-label {
-          font-size: 0.9rem;
-          color: #666;
-          font-weight: 500;
-        }
-
-        .checkout-step.active .step-label {
-          color: var(--color-ultramarine);
-          font-weight: 600;
-        }
-
-        .step-connector {
-          flex: 1;
-          height: 2px;
-          background-color: #f0f0f0;
-          margin: 0 16px;
-          margin-bottom: 24px;
-        }
-
-        .checkout-review,
-        .checkout-shipping,
-        .checkout-payment {
-          margin-bottom: 48px;
-        }
-
-        .checkout-review h2,
-        .checkout-shipping h2,
-        .checkout-payment h2 {
-          font-family: var(--font-heading);
-          font-size: 1.5rem;
-          color: var(--color-ultramarine);
-          margin-bottom: 32px;
-        }
-
-        .cart-items {
-          margin-bottom: 32px;
-        }
-
-        .cart-item {
-          display: flex;
-          gap: 16px;
-          padding: 16px 0;
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .cart-item:last-child {
-          border-bottom: none;
-        }
-
-        .item-image {
-          width: 80px;
-          height: 80px;
-          flex-shrink: 0;
-        }
-
-        .item-image img {
-          width: 100%;
-          height: 100%;
-          object-fit: cover;
-          border-radius: 4px;
-        }
-
-        .item-details {
-          flex: 1;
-        }
-
-        .item-title {
-          font-family: var(--font-heading);
-          font-size: 1rem;
-          margin-bottom: 8px;
-        }
-
-        .item-price {
-          font-family: var(--font-heading);
-          font-weight: 500;
-          color: var(--color-ultramarine);
-        }
-
-        .checkout-actions {
-          display: flex;
-          justify-content: space-between;
-          margin-top: 32px;
-        }
-
-        .btn {
-          padding: 12px 24px;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: none;
-          font-size: 1rem;
-          text-decoration: none;
-        }
-
-        .btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-
-        .btn-primary {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .btn-primary:hover:not(:disabled) {
-          opacity: 0.9;
-        }
-
-        .btn-secondary {
-          background-color: #f0f0f0;
-          color: #333;
-        }
-
-        .btn-secondary:hover:not(:disabled) {
-          background-color: #e0e0e0;
-        }
-
+        
         .form-section {
           margin-bottom: 32px;
+          padding-bottom: 32px;
+          border-bottom: 1px solid #f0f0f0;
         }
-
-        .form-section h3 {
+        
+        .form-section:last-child {
+          margin-bottom: 0;
+          padding-bottom: 0;
+          border-bottom: none;
+        }
+        
+        .form-section h2 {
           font-family: var(--font-heading);
           font-size: 1.25rem;
-          color: var(--color-text);
+          font-weight: 500;
+          color: var(--color-ultramarine);
           margin-bottom: 24px;
         }
-
+        
         .form-row {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 16px;
-          margin-bottom: 16px;
+          gap: 24px;
+          margin-bottom: 24px;
         }
-
+        
         .form-group {
-          margin-bottom: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 24px;
         }
-
+        
+        .form-group:last-child {
+          margin-bottom: 0;
+        }
+        
         .form-group label {
-          display: block;
-          margin-bottom: 8px;
+          font-family: var(--font-heading);
           font-weight: 500;
           color: var(--color-text);
+          font-size: 0.9rem;
         }
-
+        
         .form-input {
-          width: 100%;
           padding: 12px 16px;
           border: 1px solid #ddd;
           border-radius: 4px;
@@ -863,290 +594,336 @@ const Checkout = () => {
           font-size: 1rem;
           transition: border-color 0.2s ease;
         }
-
+        
         .form-input:focus {
           outline: none;
           border-color: var(--color-ultramarine);
+          box-shadow: 0 0 0 3px rgba(47, 62, 156, 0.1);
         }
-
+        
         .shipping-methods {
-          margin-bottom: 24px;
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
         }
-
+        
         .shipping-method {
-          margin-bottom: 16px;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          overflow: hidden;
+          transition: border-color 0.2s ease;
         }
-
-        .shipping-radio {
+        
+        .shipping-method:hover {
+          border-color: var(--color-ultramarine);
+        }
+        
+        .shipping-method-label {
+          display: flex;
+          cursor: pointer;
+          width: 100%;
+        }
+        
+        .shipping-method-input {
           position: absolute;
           opacity: 0;
-          width: 0;
-          height: 0;
         }
-
-        .shipping-label {
+        
+        .shipping-method-content {
           display: flex;
           justify-content: space-between;
           align-items: center;
           padding: 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: all 0.2s ease;
+          width: 100%;
+          background-color: #f8f9fa;
+          transition: background-color 0.2s ease;
         }
-
-        .shipping-radio:checked + .shipping-label {
-          border-color: var(--color-ultramarine);
-          background-color: rgba(47, 62, 156, 0.05);
+        
+        .shipping-method-input:checked + .shipping-method-content {
+          background-color: rgba(47, 62, 156, 0.1);
         }
-
-        .shipping-info {
+        
+        .shipping-method-info {
           flex: 1;
         }
-
-        .shipping-title {
+        
+        .shipping-method-info h3 {
+          font-family: var(--font-heading);
+          font-size: 1rem;
           font-weight: 500;
+          color: var(--color-text);
           margin-bottom: 4px;
         }
-
-        .shipping-description {
+        
+        .shipping-method-info p {
           font-size: 0.9rem;
           color: #666;
+          margin: 0;
         }
-
-        .shipping-price {
-          font-weight: 600;
+        
+        .shipping-method-price {
+          font-family: var(--font-heading);
+          font-weight: 500;
           color: var(--color-ultramarine);
         }
-
-        .parcel-machine-selector {
-          margin-top: 16px;
+        
+        .shipping-method-details {
           padding: 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          background-color: #f9f9f9;
+          border-top: 1px solid #eee;
+          background-color: white;
         }
-
+        
+        .loading-text,
+        .error-text,
+        .info-text {
+          padding: 12px;
+          border-radius: 4px;
+          font-size: 0.9rem;
+        }
+        
         .loading-text {
-          padding: 12px;
+          background-color: #f8f9fa;
           color: #666;
-          font-style: italic;
         }
-
+        
         .error-text {
-          padding: 12px;
-          color: #c33;
-          font-style: italic;
-        }
-
-        .payment-methods {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-          gap: 16px;
-          margin-bottom: 32px;
-        }
-
-        .payment-method {
-          margin-bottom: 16px;
-        }
-
-        .payment-radio {
-          position: absolute;
-          opacity: 0;
-          width: 0;
-          height: 0;
-        }
-
-        .payment-label {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          height: 100%;
-        }
-
-        .payment-radio:checked + .payment-label {
-          border-color: var(--color-ultramarine);
-          background-color: rgba(47, 62, 156, 0.05);
-        }
-
-        .payment-info {
-          flex: 1;
-          text-align: center;
-        }
-
-        .payment-name {
-          font-weight: 500;
-        }
-
-        .payment-error {
-          padding: 16px;
           background-color: #fee;
-          border: 1px solid #fcc;
-          border-radius: 4px;
-          margin-bottom: 24px;
-          text-align: center;
-        }
-
-        .payment-error p {
-          margin-bottom: 16px;
           color: #c33;
         }
-
-        .terms-section {
-          margin-bottom: 24px;
+        
+        .info-text {
+          background-color: #e6f7ff;
+          color: #0c5460;
         }
-
+        
+        .terms-group {
+          margin-bottom: 0;
+        }
+        
         .terms-label {
           display: flex;
           align-items: flex-start;
           gap: 8px;
           cursor: pointer;
         }
-
+        
         .terms-checkbox {
           margin-top: 3px;
         }
-
+        
         .terms-link {
           color: var(--color-ultramarine);
           text-decoration: underline;
+          transition: opacity 0.2s ease;
         }
-
-        .checkout-error {
-          padding: 16px;
+        
+        .terms-link:hover {
+          opacity: 0.8;
+        }
+        
+        .error-message {
           background-color: #fee;
           color: #c33;
+          padding: 12px 16px;
           border-radius: 4px;
+          border: 1px solid #fcc;
           margin-bottom: 24px;
+          font-size: 0.9rem;
         }
-
-        .order-summary {
-          background-color: #f9f9f9;
-          border-radius: 8px;
-          padding: 24px;
+        
+        .form-actions {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        }
+        
+        .btn {
+          padding: 12px 24px;
+          border-radius: 4px;
+          font-family: var(--font-body);
+          font-weight: 500;
+          transition: opacity 0.2s ease;
+          text-decoration: none;
+          display: inline-block;
+          text-align: center;
+          border: none;
+          cursor: pointer;
+        }
+        
+        .btn:hover:not(:disabled) {
+          opacity: 0.9;
+        }
+        
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        
+        .btn-primary {
+          background-color: var(--color-ultramarine);
+          color: white;
+        }
+        
+        .btn-secondary {
+          background-color: #6c757d;
+          color: white;
+        }
+        
+        .order-summary-section {
+          align-self: start;
           position: sticky;
-          top: 100px;
+          top: 32px;
         }
-
-        .order-summary h3 {
+        
+        .order-summary {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          padding: 24px;
+        }
+        
+        .order-summary h2 {
           font-family: var(--font-heading);
           font-size: 1.25rem;
+          font-weight: 500;
           color: var(--color-ultramarine);
           margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid #f0f0f0;
         }
-
-        .summary-items {
+        
+        .order-items {
+          margin-bottom: 24px;
+          max-height: 320px;
+          overflow-y: auto;
+          padding-right: 8px;
+        }
+        
+        .order-item {
+          display: flex;
+          gap: 16px;
+          padding: 12px 0;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .order-item:last-child {
+          border-bottom: none;
+        }
+        
+        .item-image {
+          width: 64px;
+          height: 64px;
+          border-radius: 4px;
+          overflow: hidden;
+          flex-shrink: 0;
+        }
+        
+        .item-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+        }
+        
+        .item-details {
+          flex: 1;
+          min-width: 0;
+        }
+        
+        .item-title {
+          font-family: var(--font-heading);
+          font-size: 0.95rem;
+          font-weight: 400;
+          color: var(--color-text);
+          margin-bottom: 4px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+        
+        .item-price {
+          font-family: var(--font-heading);
+          font-weight: 500;
+          color: var(--color-ultramarine);
+          margin: 0;
+        }
+        
+        .order-totals {
+          padding: 24px 0;
+          border-top: 1px solid #f0f0f0;
+          border-bottom: 1px solid #f0f0f0;
           margin-bottom: 24px;
         }
-
-        .summary-item {
+        
+        .total-row {
           display: flex;
           justify-content: space-between;
           margin-bottom: 12px;
           font-size: 0.95rem;
         }
-
-        .summary-item-name {
-          flex: 1;
-          padding-right: 16px;
+        
+        .total-row:last-child {
+          margin-bottom: 0;
         }
-
-        .summary-totals {
-          border-top: 1px solid #e0e0e0;
-          padding-top: 16px;
-          margin-bottom: 24px;
-        }
-
-        .summary-row {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 12px;
-        }
-
-        .summary-total {
+        
+        .grand-total {
+          font-family: var(--font-heading);
           font-weight: 600;
-          font-size: 1.1rem;
+          font-size: 1.125rem;
           color: var(--color-ultramarine);
-          border-top: 1px solid #e0e0e0;
           padding-top: 12px;
+          margin-top: 12px;
+          border-top: 1px solid #f0f0f0;
         }
-
-        .summary-info {
-          background-color: #f0f4ff;
-          padding: 16px;
-          border-radius: 4px;
+        
+        .order-info {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
-
+        
         .info-item {
           display: flex;
           align-items: center;
           gap: 8px;
-          margin-bottom: 8px;
-          font-size: 0.9rem;
+          font-size: 0.85rem;
+          color: #666;
         }
-
-        .info-item:last-child {
-          margin-bottom: 0;
-        }
-
+        
         .info-icon {
-          font-size: 1.1rem;
+          font-size: 1rem;
         }
-
-        .info-text {
-          color: #555;
+        
+        @media (max-width: 1024px) {
+          .checkout-layout {
+            grid-template-columns: 1fr 350px;
+            gap: 32px;
+          }
         }
-
+        
         @media (max-width: 768px) {
           .checkout-layout {
             grid-template-columns: 1fr;
             gap: 32px;
           }
-
-          .checkout-steps {
-            margin-bottom: 32px;
+          
+          .order-summary-section {
+            position: static;
+            order: -1;
           }
-
-          .step-number {
-            width: 28px;
-            height: 28px;
-            font-size: 0.9rem;
-          }
-
-          .step-label {
-            font-size: 0.8rem;
-          }
-
-          .step-connector {
-            margin: 0 8px;
-            margin-bottom: 24px;
-          }
-
+          
           .form-row {
             grid-template-columns: 1fr;
-            gap: 0;
+            gap: 16px;
+            margin-bottom: 16px;
           }
-
-          .payment-methods {
-            grid-template-columns: 1fr;
-          }
-
-          .checkout-actions {
+          
+          .form-actions {
             flex-direction: column;
             gap: 16px;
           }
-
-          .checkout-actions .btn {
+          
+          .btn {
             width: 100%;
-          }
-
-          .order-summary {
-            position: static;
           }
         }
       `}</style>

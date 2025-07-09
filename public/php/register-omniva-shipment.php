@@ -1,18 +1,6 @@
 <?php
-// Enable error reporting for development
-error_reporting(E_ALL);
-ini_set('display_errors', 0);
-
-// Set up logging
-$logDir = __DIR__ . '/../logs';
-if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
-}
-$shipmentLogFile = $logDir . '/omniva_shipment.log';
-
-// Function to log messages
 function shipmentLog($message, $data = null) {
-    global $shipmentLogFile;
+    global $logFile;
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "$timestamp - $message";
     
@@ -20,7 +8,7 @@ function shipmentLog($message, $data = null) {
         $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
     }
     
-    file_put_contents($shipmentLogFile, $logEntry . "\n", FILE_APPEND);
+    file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
 }
 
 // Set up logging

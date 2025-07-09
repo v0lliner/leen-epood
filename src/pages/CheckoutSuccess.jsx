@@ -38,7 +38,7 @@ const CheckoutSuccess = () => {
         if (reference) {
           console.log('Fetching order details from server for reference:', reference);
           
-          // Fetch order details from the backend using the reference
+          // Fetch order details from the backend using the reference parameter
           const response = await fetch(`/php/admin/orders.php?reference=${reference}`);
           
           if (!response.ok) {

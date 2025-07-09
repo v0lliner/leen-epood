@@ -50,52 +50,6 @@ function logMessage($message, $data = null) {
     
     if ($data !== null) {
         $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
-    }
-    
-    file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
-}
-
-function sendEmail($to, $subject, $message, $replyTo = null) {
-    try {
-        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
-        
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host = 'smtp.zone.eu';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
-        $mail->CharSet = 'UTF-8';
-        
-        // Recipients
-        $mail->setFrom('leen@leen.ee', 'Leen.ee');
-        $mail->addAddress($to);
-        
-        if ($replyTo) {
-            $mail->addReplyTo($replyTo);
-        } else {
-            $mail->addReplyTo('leen@leen.ee', 'Leen Väränen');
-        }
-        
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body = $message;
-        
-        // Create plain text version by stripping HTML
-        $textBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message));
-        $mail->AltBody = $textBody;
-        
-        // Send email
-        $mail->send();
-        logMessage("Email sent successfully to $to with subject: $subject");
-        return true;
-    } catch (Exception $e) {
-        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $e->getMessage());
-        return false;
-    }
 }
 
 // Function to create or update order in Supabase
