@@ -31,6 +31,7 @@ const PaymentSettings = () => {
     customer_code: '',
     username: '',
     password: '',
+    shipping_price: 3.99,
     test_mode: false,
     active: true,
     price: '3.99'
@@ -48,6 +49,7 @@ const PaymentSettings = () => {
     customer_code: false,
     username: false,
     password: false,
+    shipping_price: false,
     price: false
   })
 
@@ -93,7 +95,7 @@ const PaymentSettings = () => {
       // Load Omniva settings
       loadOmnivaSettings()
     } catch (err) {
-      console.error('Error in loadConfig:', err)
+      console.error('Error loading Maksekeskus config:', err)
       setError('Võrguühenduse viga')
     } finally {
       setLoading(false)
@@ -103,57 +105,35 @@ const PaymentSettings = () => {
   const loadOmnivaSettings = async () => {
     try {
       // Fetch Omniva settings from localStorage or API
-      try {
-        const response = await fetch('/php/omniva_shipping_settings.php');
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.settings) {
-            // Get API settings for price
-            const apiSettings = data.settings;
-            
-            // Get credentials from localStorage
-            const storedSettings = localStorage.getItem('omnivaSettings');
-            const parsedStored = storedSettings ? JSON.parse(storedSettings) : {};
-            
-            setOmnivaFormData({
-              customer_code: parsedStored.customer_code || '',
-              username: parsedStored.username || '',
-              password: '', // Don't show actual password, just placeholder
-              test_mode: parsedStored.test_mode || false,
-              active: parsedStored.active || true,
-              price: apiSettings.price.toString() || '3.99'
-            });
-          }
-        } else {
-          // Fallback to localStorage only
-          const storedSettings = localStorage.getItem('omnivaSettings');
-          if (storedSettings) {
-            const parsedSettings = JSON.parse(storedSettings);
-            setOmnivaFormData({
-              customer_code: parsedSettings.customer_code || '',
-              username: parsedSettings.username || '',
-              password: '', // Don't show actual password, just placeholder
-              test_mode: parsedSettings.test_mode || false,
-              active: parsedSettings.active || true,
-              price: parsedSettings.price || '3.99'
-            });
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching Omniva shipping settings:', error);
-        // Fallback to localStorage
-        const storedSettings = localStorage.getItem('omnivaSettings');
-        if (storedSettings) {
-          const parsedSettings = JSON.parse(storedSettings);
+      // First try to get from API
+      const response = await fetch('/php/omniva_shipping_settings.php');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.settings) {
           setOmnivaFormData({
-            customer_code: parsedSettings.customer_code || '',
-            username: parsedSettings.username || '',
+            customer_code: data.settings.customer_code || localStorage.getItem('omnivaCustomerCode') || '',
+            username: data.settings.username || localStorage.getItem('omnivaUsername') || '',
             password: '', // Don't show actual password, just placeholder
-            test_mode: parsedSettings.test_mode || false,
-            active: parsedSettings.active || true,
-            price: parsedSettings.price || '3.99'
+            shipping_price: data.settings.price || 3.99,
+            test_mode: data.settings.test_mode || false,
+            active: data.settings.active || true
           });
+          return;
         }
+      }
+      
+      // Fallback to localStorage
+      const omnivaSettings = localStorage.getItem('omnivaSettings')
+      if (omnivaSettings) {
+        const parsedSettings = JSON.parse(omnivaSettings)
+        setOmnivaFormData({
+          customer_code: parsedSettings.customer_code || '',
+          username: parsedSettings.username || '',
+          password: '', // Don't show actual password, just placeholder
+          shipping_price: parsedSettings.shipping_price || 3.99,
+          test_mode: parsedSettings.test_mode || false,
+          active: parsedSettings.active || true
+        })
       }
     } catch (error) {
       console.error('Error loading Omniva settings:', error)
@@ -219,6 +199,14 @@ const PaymentSettings = () => {
       setOmnivaModifiedFields(prev => ({
         ...prev,
         price: true
+      }));
+    }
+    
+    // Track shipping_price field
+    if (name === 'shipping_price') {
+      setOmnivaModifiedFields(prev => ({
+        ...prev,
+        shipping_price: true
       }));
     }
     
@@ -302,6 +290,12 @@ const PaymentSettings = () => {
     setError('')
     setSuccess('')
 
+    // Validate shipping price
+    if (isNaN(parseFloat(omnivaFormData.shipping_price)) || parseFloat(omnivaFormData.shipping_price) <= 0) {
+      setError('Tarne hind peab olema positiivne number');
+      return;
+    }
+
     try {
       // Validate required fields for new config
       if (!omnivaFormData.customer_code || !omnivaFormData.username || 
@@ -318,6 +312,22 @@ const PaymentSettings = () => {
         return
       }
 
+      // Update shipping price in database
+      try {
+        const response = await fetch('/php/omniva_shipping_settings.php', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            price: parseFloat(omnivaFormData.shipping_price),
+            currency: 'EUR'
+          })
+        });
+      } catch (apiError) {
+        console.error('Error updating shipping price in API:', apiError);
+      }
+
       // Store in localStorage (in a real app, this would be stored in the database)
       const settingsToSave = {
         customer_code: omnivaFormData.customer_code,
@@ -325,6 +335,7 @@ const PaymentSettings = () => {
         // Only include password if it was modified
         ...(omnivaModifiedFields.password && { password: '********' }), // Store masked password
         test_mode: omnivaFormData.test_mode,
+        shipping_price: parseFloat(omnivaFormData.shipping_price),
         active: omnivaFormData.active,
         price: omnivaFormData.price
       }
@@ -358,7 +369,7 @@ const PaymentSettings = () => {
       setTimeout(() => setSuccess(''), 3000)
       
       // Reset modified fields
-      setOmnivaModifiedFields({ customer_code: false, username: false, password: false, price: false })
+      setOmnivaModifiedFields({ customer_code: false, username: false, password: false, shipping_price: false })
     } catch (err) {
       setError('Seadete salvestamine ebaõnnestus: ' + err.message)
     } finally {
@@ -890,7 +901,26 @@ const PaymentSettings = () => {
                   <small className="form-hint">
                     {omnivaFormData.password === '' && localStorage.getItem('omnivaSettings') ? 
                       'Jäta tühjaks, et säilitada olemasolev parool' : 
-                      'Sisesta Omniva API parool'}
+                      'Sisesta Omniva API parool'} 
+                  </small>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="shipping_price">Pakiautomaadi tarne hind (€)</label>
+                  <input
+                    type="number"
+                    id="shipping_price"
+                    name="shipping_price"
+                    value={omnivaFormData.shipping_price}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta tarne hind"
+                    step="0.01"
+                    min="0"
+                    required
+                  />
+                  <small className="form-hint">
+                    See hind kuvatakse klientidele ostukorvis Omniva pakiautomaadi valiku juures
                   </small>
                 </div>
                 
