@@ -19,7 +19,7 @@ const TermsAndConditionsCheckbox = ({ checked, onChange, validationError }) => {
           className={`checkbox-input ${validationError ? 'has-error' : ''}`}
         />
         <span className="checkbox-text">
-          {t('checkout.terms.agree')}{' '}
+          <strong className="terms-agree">{t('checkout.terms.agree')}</strong>{' '}
           <Link 
             to="/muugitingimused" 
             className="terms-link"
@@ -61,6 +61,11 @@ const TermsAndConditionsCheckbox = ({ checked, onChange, validationError }) => {
         .checkbox-text {
           font-size: 0.9rem;
           color: var(--color-text);
+        }
+        
+        .terms-agree {
+          font-family: var(--font-heading);
+          font-weight: 600;
         }
         
         .terms-link {

@@ -119,8 +119,9 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
           grid-column: 1 / -1;
         }
         
-        .form-group:last-child {
-          grid-column: 1 / -1;
+        .company-group {
+          grid-column: 2;
+          grid-row: 2;
         }
         
         .form-group label {
@@ -160,6 +161,10 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
             gap: 16px;
           }
         }
+          .company-group {
+            grid-column: 1;
+            grid-row: auto;
+          }
       `}</style>
     </div>
   );

@@ -47,14 +47,6 @@ const OrderSummaryDisplay = ({
         </div>
       </div>
       
-      <button 
-        type="submit"
-        className="checkout-button"
-        disabled={isSubmitting}
-        onClick={onSubmit}
-      >
-        {isSubmitting ? t('checkout.summary.processing') : 'VORMISTA OST'}
-      </button>
 
       <style jsx>{`
         .order-summary {

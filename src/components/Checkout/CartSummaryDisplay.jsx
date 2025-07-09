@@ -18,6 +18,9 @@ const CartSummaryDisplay = ({ cartItems }) => {
       <div className="cart-items">
         {cartItems.map((item) => (
           <div key={item.id} className="cart-item">
+            <div className="item-image">
+              <img src={item.image} alt={item.title} />
+            </div>
             <div className="item-details">
               <h4 className="item-title">{item.title}</h4>
               <div className="item-category">{item.category}</div>
@@ -31,7 +34,6 @@ const CartSummaryDisplay = ({ cartItems }) => {
                 </div>
               )}
               
-              <div className="item-quantity">1 tk</div>
             </div>
             <div className="item-price">{item.price}</div>
           </div>
@@ -59,9 +61,25 @@ const CartSummaryDisplay = ({ cartItems }) => {
         
         .cart-item {
           display: flex;
+          align-items: center;
           justify-content: space-between;
           padding-bottom: 16px;
           border-bottom: 1px solid #f0f0f0;
+          gap: 16px;
+        }
+        
+        .item-image {
+          width: 60px;
+          height: 60px;
+          flex-shrink: 0;
+          border-radius: 4px;
+          overflow: hidden;
+        }
+        
+        .item-image img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
         }
         
         .item-details {
@@ -114,8 +132,7 @@ const CartSummaryDisplay = ({ cartItems }) => {
         
         @media (max-width: 768px) {
           .cart-item {
-            flex-direction: column;
-            gap: 8px;
+            flex-wrap: wrap;
           }
           
           .item-price {
