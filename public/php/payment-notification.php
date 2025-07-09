@@ -46,7 +46,7 @@ $logFile = $logDir . '/payment_notification.log';
 function logMessage($message, $data = null) {
     global $logFile;
     $timestamp = date('Y-m-d H:i:s');
-    $logEntry = "$timestamp - $message"; 
+    $logEntry = "$timestamp - $message";
     
     if ($data !== null) {
         $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
@@ -54,7 +54,6 @@ function logMessage($message, $data = null) {
     
     file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
 }
-
 
 function sendEmail($to, $subject, $message, $replyTo = null) {
     try {
@@ -70,7 +69,7 @@ function sendEmail($to, $subject, $message, $replyTo = null) {
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
+        $mail->Password = 'Leeeen484!'; // Updated with actual password
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
@@ -107,7 +106,10 @@ function sendEmail($to, $subject, $message, $replyTo = null) {
 // Function to create or update order in Supabase
 function processOrder($transactionData, $paymentData) {
     try {
-        logMessage("Starting processOrder function", ['transactionData' => isset($transactionData) ? 'present' : 'missing', 'paymentData' => isset($paymentData) ? 'present' : 'missing']);
+        logMessage("Starting processOrder function", [
+            'transactionData' => isset($transactionData) ? 'present' : 'missing', 
+            'paymentData' => isset($paymentData) ? 'present' : 'missing'
+        ]);
         
         // Extract merchant data
         $merchantData = json_decode($transactionData->transaction->merchant_data ?? '{}', true);
@@ -128,158 +130,56 @@ function processOrder($transactionData, $paymentData) {
         // Check if order already exists with this reference
         $orderReference = $transactionData->transaction->reference ?? '';
         logMessage("Checking for existing order with reference", $orderReference);
-    $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.VQgOh4VmI0hmyXawVt0-uOmMFgHXkqhkMFQxBLjjQME';
-    
-    $url = $supabaseUrl . $endpoint;
-    
-    $ch = curl_init($url);
-    
-    $headers = [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $supabaseKey,
-        'apikey: ' . $supabaseKey
-    ];
-    
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    
-    if ($method === 'POST') {
-        curl_setopt($ch, CURLOPT_POST, true);
-        if ($data) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        }
-    } else if ($method === 'PATCH' || $method === 'PUT') {
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-        if ($data) {
-            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-        }
-    } else if ($method === 'DELETE') {
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
-    }
-    
-    $response = curl_exec($ch);
-    $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    $error = curl_error($ch);
-    
-    curl_close($ch);
-    
-    if ($error) {
-        logMessage("cURL Error", $error);
-        return ['error' => $error, 'status' => $statusCode];
-    }
-    
-    return [
-        'data' => json_decode($response, true),
-        'status' => $statusCode
-    ];
-}
 
-// Function to generate a unique order number
-function generateOrderNumber() {
-    return 'ORD-' . date('Ymd') . '-' . substr(uniqid(), -6);
-}
-
-// Function to send email
-function sendEmail($to, $subject, $message, $replyTo = null, $attachments = []) {
-    try {
-        $mail = new PHPMailer(true);
-        
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host = 'smtp.zone.eu';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // Replace with actual password from env
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
-        $mail->CharSet = 'UTF-8';
-        
-        // Recipients
-        $mail->setFrom('leen@leen.ee', 'Leen.ee');
-        $mail->addAddress($to);
-        
-        if ($replyTo) {
-            $mail->addReplyTo($replyTo);
-        } else {
-            $mail->addReplyTo('leen@leen.ee', 'Leen.ee');
-        }
-        
-        // Add attachments if any
-        if (!empty($attachments) && is_array($attachments)) {
-            foreach ($attachments as $attachment) {
-                if (isset($attachment['path']) && file_exists($attachment['path'])) {
-                    $mail->addAttachment(
-                        $attachment['path'],
-                        isset($attachment['name']) ? $attachment['name'] : ''
-                    );
+        // Define supabaseRequest function
+        function supabaseRequest($endpoint, $method = 'GET', $data = null) {
+            $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
+            $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.wbsLJEL_U-EHNkDe4CFt6-dPNpWHe50WKCQqsoyYdLs';
+            
+            $url = $supabaseUrl . $endpoint;
+            
+            $ch = curl_init($url);
+            
+            $headers = [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $supabaseKey,
+                'apikey: ' . $supabaseKey
+            ];
+            
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            
+            if ($method === 'POST') {
+                curl_setopt($ch, CURLOPT_POST, true);
+                if ($data) {
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
                 }
+            } else if ($method === 'PATCH' || $method === 'PUT') {
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+                if ($data) {
+                    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+                }
+            } else if ($method === 'DELETE') {
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
             }
+            
+            $response = curl_exec($ch);
+            $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $error = curl_error($ch);
+            
+            curl_close($ch);
+            
+            if ($error) {
+                logMessage("cURL Error", $error);
+                return ['error' => $error, 'status' => $statusCode];
+            }
+            
+            return [
+                'data' => json_decode($response, true),
+                'status' => $statusCode
+            ];
         }
-        
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body = $message;
-        
-        // Create plain text version by stripping HTML
-        $textBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message));
-        $mail->AltBody = $textBody;
-        
-        // Send email
-        $mail->send();
-        logMessage("Email sent successfully to $to with subject: $subject");
-        return true;
-    } catch (Exception $e) {
-        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $mail->ErrorInfo);
-        return false;
-    }
-}
 
-/**
- * Send email using PHPMailer with SMTP
- * 
- * @param string $to Recipient email
- * @param string $subject Email subject
- * @param string $message Email body (HTML)
- * @param string $altMessage Plain text alternative
- * @param string $replyTo Reply-to email address
- * @return bool Success status
- */
-function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $replyTo = 'leen@leen.ee') {
-    global $logFile;
-    
-    try {
-        $mail = new PHPMailer(true);
-        
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host = 'smtp.zone.eu';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
-        $mail->CharSet = 'UTF-8';
-        
-        // Recipients
-        $mail->setFrom('leen@leen.ee', 'Leen.ee');
-        $mail->addAddress($to);
-        $mail->addReplyTo($replyTo, 'Leen Väränen');
-        
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body = $message;
-        
-        if (!empty($altMessage)) {
-            $mail->AltBody = $altMessage;
-        } else {
-            // Generate plain text from HTML if not provided
-            $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $message));
-        }
-        
-        $mail->send();
-        logMessage("Email sent successfully to $to with subject: $subject");
         $existingOrderQuery = supabaseRequest(
             "/rest/v1/orders?reference=eq.$orderReference",
             'GET'
@@ -459,7 +359,6 @@ function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $repl
             
             // Store the order reference in the merchant_data for later retrieval
             if ($transactionData && isset($transactionData->transaction) && isset($transactionData->transaction->reference)) {
-    }
                 $merchantData = json_decode($transactionData->transaction->merchant_data ?? '{}', true);
                 $merchantData['order_reference'] = $orderReference;
                 
@@ -606,14 +505,128 @@ function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $repl
             }
         }
         
+        return true;
+    } catch (Exception $e) {
+        logMessage("Exception in processOrder", $e->getMessage());
+        return false;
+    }
+}
+
+// Function to generate a unique order number
+function generateOrderNumber() {
+    return 'ORD-' . date('Ymd') . '-' . substr(uniqid(), -6);
+}
+
+// Function to send email
+function sendEmail($to, $subject, $message, $replyTo = null, $attachments = []) {
+    try {
+        $mail = new PHPMailer(true);
+        
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.zone.eu';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'leen@leen.ee';
+        $mail->Password = 'your_password_here'; // Replace with actual password from env
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+        
+        // Recipients
+        $mail->setFrom('leen@leen.ee', 'Leen.ee');
+        $mail->addAddress($to);
+        
+        if ($replyTo) {
+            $mail->addReplyTo($replyTo);
+        } else {
+            $mail->addReplyTo('leen@leen.ee', 'Leen.ee');
+        }
+        
+        // Add attachments if any
+        if (!empty($attachments) && is_array($attachments)) {
+            foreach ($attachments as $attachment) {
+                if (isset($attachment['path']) && file_exists($attachment['path'])) {
+                    $mail->addAttachment(
+                        $attachment['path'],
+                        isset($attachment['name']) ? $attachment['name'] : ''
+                    );
+                }
+            }
+        }
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
+        
+        // Create plain text version by stripping HTML
+        $textBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message));
+        $mail->AltBody = $textBody;
+        
+        // Send email
+        $mail->send();
+        logMessage("Email sent successfully to $to with subject: $subject");
+        return true;
+    } catch (Exception $e) {
+        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $mail->ErrorInfo);
+        return false;
+    }
+}
+
+/**
+ * Send email using PHPMailer with SMTP
+ * 
+ * @param string $to Recipient email
+ * @param string $subject Email subject
+ * @param string $message Email body (HTML)
+ * @param string $altMessage Plain text alternative
+ * @param string $replyTo Reply-to email address
+ * @return bool Success status
+ */
+function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $replyTo = 'leen@leen.ee') {
+    global $logFile;
+    
+    try {
+        $mail = new PHPMailer(true);
+        
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.zone.eu';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'leen@leen.ee';
+        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+        
+        // Recipients
+        $mail->setFrom('leen@leen.ee', 'Leen.ee');
+        $mail->addAddress($to);
+        $mail->addReplyTo($replyTo, 'Leen Väränen');
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
+        
+        if (!empty($altMessage)) {
+            $mail->AltBody = $altMessage;
+        } else {
+            // Generate plain text from HTML if not provided
+            $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $message));
+        }
+        
+        $mail->send();
+        logMessage("Email sent successfully to $to with subject: $subject");
+        return true;
+    } catch (Exception $e) {
+        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $mail->ErrorInfo);
+        return false;
+    }
 }
 
 // Main execution starts here
 try {
-    // Log the notification
-    $requestData = file_get_contents('php://input');
-    logMessage("Notification received (raw input)", $requestData);
-
     // Log the notification
     $requestData = file_get_contents('php://input');
     logMessage("Notification received (raw input)", $requestData);
@@ -632,25 +645,21 @@ try {
 
     if (!$isValid) {
         logMessage("Invalid MAC signature");
-        logMessage("Invalid MAC signature");
         http_response_code(400);
         echo json_encode(['error' => 'Invalid signature']);
         exit();
     }
     
     logMessage("MAC signature verified successfully");
-    logMessage("MAC signature verified successfully");
     
     // Extract the notification data
     $data = $MK->extractRequestData($request);
-    logMessage("Extracted data", $data);
     logMessage("Extracted data", $data);
     
     // Get the transaction ID
     $transactionId = $data->transaction ?? null;
 
     if (!$transactionId) {
-        logMessage("No transaction ID in notification", $data);
         logMessage("No transaction ID in notification", $data);
         http_response_code(400);
         echo json_encode(['error' => 'Missing transaction ID']);
@@ -661,9 +670,7 @@ try {
     try {
         $transaction = $MK->getTransaction($transactionId);
         logMessage("Transaction details fetched", $transaction);
-        logMessage("Transaction details fetched", $transaction);
     } catch (\Exception $e) {
-        logMessage("Error fetching transaction details", $e->getMessage());
         logMessage("Error fetching transaction details", $e->getMessage());
         http_response_code(500);
         echo json_encode(['error' => 'Failed to fetch transaction details']);
@@ -675,21 +682,17 @@ try {
 
     if ($success) {
         logMessage("Order processed successfully");
-        logMessage("Order processed successfully");
         echo json_encode(['status' => 'success']);
     } else {
-        logMessage("Order processing failed");
         logMessage("Order processing failed");
         http_response_code(500);
         echo json_encode(['error' => 'Order processing failed']);
     }
 } catch (MKException $e) {
     logMessage("Maksekeskus Exception", $e->getMessage());
-    logMessage("Maksekeskus Exception", $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]); 
 } catch (\Exception $e) {
-    logMessage("General Exception", $e->getMessage());
     logMessage("General Exception", $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
