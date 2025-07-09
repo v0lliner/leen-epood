@@ -67,7 +67,8 @@ const Muugitingimused = () => {
                     <h3>3.1. Tarneajad ja -teenused</h3>
                     <p>Kauba kättetoimetamine toimub järgmiselt:</p>
                     <ul>
-                      <li>Pakiautomaadid: 1-3 tööpäeva</li>
+                      <li>Omniva pakiautomaadid: 1-3 tööpäeva</li>
+                      <li>SmartPost pakiautomaadid: 1-3 tööpäeva</li>
                       <li>DPD kulleriga koju: 1-2 tööpäeva</li>
                     </ul>
                     <p>Tarneaeg võib pikeneda erakorralistel juhtudel või kui tellimus sisaldab eritellimusi.</p>
@@ -160,7 +161,8 @@ const Muugitingimused = () => {
                     <h3>3.1. Delivery Times and Services</h3>
                     <p>Product delivery takes place as follows:</p>
                     <ul>
-                      <li>Parcel machines: 1-3 business days</li>
+                      <li>Omniva parcel machines: 1-3 business days</li>
+                      <li>SmartPost parcel machines: 1-3 business days</li>
                       <li>DPD courier to home: 1-2 business days</li>
                     </ul>
                     <p>Delivery time may be extended in exceptional cases or if the order contains custom orders.</p>

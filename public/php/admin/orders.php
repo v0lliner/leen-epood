@@ -83,7 +83,10 @@ function supabaseRequest($endpoint, $method = 'GET', $data = null) {
 // Get order details by ID
 function getOrderDetails($orderId) {
     // Get order basic info
-    $orderResult = supabaseRequest("/rest/v1/orders?id=eq.$orderId", 'GET');
+    $orderResult = supabaseRequest(
+        "/rest/v1/orders?id=eq.$orderId&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,omniva_shipment_status",
+        'GET'
+    );
     
     if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
         return null;
@@ -121,7 +124,10 @@ function getOrderDetails($orderId) {
 // Function to get order details by order number
 function getOrderDetailsByOrderNumber($orderNumber) {
     // Get order basic info
-    $orderResult = supabaseRequest("/rest/v1/orders?order_number=eq.$orderNumber", 'GET');
+    $orderResult = supabaseRequest(
+        "/rest/v1/orders?order_number=eq.$orderNumber&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,omniva_shipment_status",
+        'GET'
+    );
     
     if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
         return null;
