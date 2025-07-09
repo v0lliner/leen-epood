@@ -27,10 +27,10 @@ const CartSummaryDisplay = ({ cartItems }) => {
               
               {/* Show dimensions if available */}
               {item.dimensions && (
-                    {item.dimensions.height && item.dimensions.width && 
-                      `${item.dimensions.height}×${item.dimensions.width}${item.dimensions.depth ? `×${item.dimensions.depth}` : ''}cm`
-                    }
-                  )}
+                <div className="item-dimensions">
+                  {item.dimensions.height && item.dimensions.width && 
+                    `${item.dimensions.height}×${item.dimensions.width}${item.dimensions.depth ? `×${item.dimensions.depth}` : ''}cm`
+                  }
                 </div>
               )}
             </div>
