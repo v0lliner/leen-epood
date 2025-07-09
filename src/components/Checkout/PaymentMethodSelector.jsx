@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
-// Bank logos URL format from Maksekeskus
 const BANK_LOGO_URL = 'https://static.maksekeskus.ee/img/channel/lnd/';
 
 const PaymentMethodSelector = ({ 
@@ -49,7 +48,6 @@ const PaymentMethodSelector = ({
       { id: 'luminor', name: 'Luminor', type: 'pangalink' },
       { id: 'coop', name: 'Coop Pank', type: 'pangalink' },
       { id: 'citadele', name: 'Citadele', type: 'pis' },
-      { id: 'knik', name: 'Knik', type: 'knik' },
       { id: 'n26', name: 'N26', type: 'pis' },
       { id: 'revolut', name: 'Revolut', type: 'pis' },
       { id: 'wise', name: 'Wise', type: 'pis' }
@@ -59,7 +57,6 @@ const PaymentMethodSelector = ({
       { id: 'seb', name: 'SEB', type: 'pangalink' },
       { id: 'citadele', name: 'Citadele', type: 'pangalink' },
       { id: 'luminor', name: 'Luminor', type: 'pangalink' },
-      { id: 'knik', name: 'Knik', type: 'knik' },
       { id: 'n26', name: 'N26', type: 'pis' },
       { id: 'revolut', name: 'Revolut', type: 'pis' },
       { id: 'wise', name: 'Wise', type: 'pis' }
@@ -68,13 +65,11 @@ const PaymentMethodSelector = ({
       { id: 'swedbank', name: 'Swedbank', type: 'pangalink' },
       { id: 'seb', name: 'SEB', type: 'pangalink' },
       { id: 'luminor', name: 'Luminor', type: 'pangalink' },
-      { id: 'knik', name: 'Knik', type: 'knik' },
       { id: 'n26', name: 'N26', type: 'pis' },
       { id: 'revolut', name: 'Revolut', type: 'pis' },
       { id: 'wise', name: 'Wise', type: 'pis' }
     ],
     'fi': [
-      { id: 'knik', name: 'Knik', type: 'knik' },
       { id: 'n26', name: 'N26', type: 'pis' },
       { id: 'revolut', name: 'Revolut', type: 'pis' },
       { id: 'wise', name: 'Wise', type: 'pis' }
@@ -228,23 +223,26 @@ const PaymentMethodSelector = ({
         
         .bank-option {
           border: 1px solid #ddd;
-          border-radius: 4px;
-          padding: 12px;
+          border-radius: 8px;
+          padding: 16px;
           cursor: pointer;
           transition: all 0.2s ease;
           display: flex;
           align-items: center;
           justify-content: center;
-          height: 60px;
+          height: 80px;
+          background-color: white;
         }
         
         .bank-option:hover {
-          border-color: var(--color-ultramarine);
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
         
         .bank-option.selected {
           border-color: var(--color-ultramarine);
-          box-shadow: 0 0 0 2px var(--color-ultramarine);
+          box-shadow: 0 0 0 3px var(--color-ultramarine);
+          transform: translateY(-2px);
         }
         
         .bank-logo-container {
@@ -280,17 +278,17 @@ const PaymentMethodSelector = ({
         
         @media (max-width: 768px) {
           .banks-grid {
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             gap: 12px;
           }
           
           .banks-ee {
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
           }
           
           .bank-option {
-            padding: 8px;
-            height: 50px;
+            padding: 12px;
+            height: 70px;
           }
         }
       `}</style>

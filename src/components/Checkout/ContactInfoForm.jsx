@@ -8,85 +8,91 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
       <h3 className="section-title">{t('checkout.shipping.contact.title')}</h3>
       
       <div className="form-grid">
-        <div className="form-group">
-          <label htmlFor="firstName">{t('checkout.form.name')} *</label>
-          <input
-            type="text"
-            id="firstName"
-            name="firstName"
-            value={formData.firstName}
-            onChange={onChange}
-            className={`form-input ${validationErrors.firstName ? 'has-error' : ''}`}
-            placeholder="Eesnimi"
-            required
-          />
-          {validationErrors.firstName && (
-            <div className="error-message">{validationErrors.firstName}</div>
-          )}
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="firstName">{t('checkout.form.name')} *</label>
+            <input
+              type="text"
+              id="firstName"
+              name="firstName"
+              value={formData.firstName}
+              onChange={onChange}
+              className={`form-input ${validationErrors.firstName ? 'has-error' : ''}`}
+              placeholder="Eesnimi"
+              required
+            />
+            {validationErrors.firstName && (
+              <div className="error-message">{validationErrors.firstName}</div>
+            )}
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="lastName">Perekonnanimi *</label>
+            <input
+              type="text"
+              id="lastName"
+              name="lastName"
+              value={formData.lastName}
+              onChange={onChange}
+              className={`form-input ${validationErrors.lastName ? 'has-error' : ''}`}
+              placeholder="Perekonnanimi"
+              required
+            />
+            {validationErrors.lastName && (
+              <div className="error-message">{validationErrors.lastName}</div>
+            )}
+          </div>
         </div>
         
-        <div className="form-group">
-          <label htmlFor="lastName">Perekonnanimi *</label>
-          <input
-            type="text"
-            id="lastName"
-            name="lastName"
-            value={formData.lastName}
-            onChange={onChange}
-            className={`form-input ${validationErrors.lastName ? 'has-error' : ''}`}
-            placeholder="Perekonnanimi"
-            required
-          />
-          {validationErrors.lastName && (
-            <div className="error-message">{validationErrors.lastName}</div>
-          )}
+        <div className="form-row">
+          <div className="form-group">
+            <label htmlFor="email">{t('checkout.shipping.contact.email')} *</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={onChange}
+              className={`form-input ${validationErrors.email ? 'has-error' : ''}`}
+              placeholder={t('checkout.shipping.contact.email_placeholder')}
+              required
+            />
+            {validationErrors.email && (
+              <div className="error-message">{validationErrors.email}</div>
+            )}
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="phone">{t('checkout.shipping.contact.phone')} *</label>
+            <input
+              type="tel"
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={onChange}
+              className={`form-input ${validationErrors.phone ? 'has-error' : ''}`}
+              placeholder={t('checkout.shipping.contact.phone_placeholder')}
+              required
+            />
+            {validationErrors.phone && (
+              <div className="error-message">{validationErrors.phone}</div>
+            )}
+          </div>
         </div>
         
-        <div className="form-group">
-          <label htmlFor="email">{t('checkout.shipping.contact.email')} *</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={onChange}
-            className={`form-input ${validationErrors.email ? 'has-error' : ''}`}
-            placeholder={t('checkout.shipping.contact.email_placeholder')}
-            required
-          />
-          {validationErrors.email && (
-            <div className="error-message">{validationErrors.email}</div>
-          )}
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="phone">{t('checkout.shipping.contact.phone')} *</label>
-          <input
-            type="tel"
-            id="phone"
-            name="phone"
-            value={formData.phone}
-            onChange={onChange}
-            className={`form-input ${validationErrors.phone ? 'has-error' : ''}`}
-            placeholder={t('checkout.shipping.contact.phone_placeholder')}
-            required
-          />
-          {validationErrors.phone && (
-            <div className="error-message">{validationErrors.phone}</div>
-          )}
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="companyName">Firma nimi (pole kohustuslik)</label>
-          <input
-            type="text"
-            id="companyName"
-            name="companyName"
-            value={formData.companyName}
-            onChange={onChange}
-            className="form-input"
-            placeholder="Firma nimi"
-          />
+        <div className="form-row">
+          <div className="form-group full-width">
+            <label htmlFor="companyName">Firma nimi (pole kohustuslik)</label>
+            <input
+              type="text"
+              id="companyName"
+              name="companyName"
+              value={formData.companyName}
+              onChange={onChange}
+              className="form-input"
+              placeholder="Firma nimi"
+            />
+          </div>
         </div>
       </div>
 
@@ -104,12 +110,13 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
         }
         
         .form-grid {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          grid-template-areas: 
-            "firstName lastName"
-            "email phone"
-            "company company";
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+        }
+        
+        .form-row {
+          display: flex;
           gap: 24px;
         }
         
@@ -117,26 +124,11 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
           display: flex;
           flex-direction: column;
           gap: 8px;
+          flex: 1;
         }
         
-        .form-group:nth-child(1) {
-          grid-area: firstName;
-        }
-        
-        .form-group:nth-child(2) {
-          grid-area: lastName;
-        }
-        
-        .form-group:nth-child(3) {
-          grid-area: email;
-        }
-        
-        .form-group:nth-child(4) {
-          grid-area: phone;
-        }
-        
-        .form-group:nth-child(5) {
-          grid-area: company;
+        .full-width {
+          width: 100%;
         }
         
         .form-group label {
@@ -171,14 +163,8 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
         }
         
         @media (max-width: 768px) {
-          .form-grid {
-            grid-template-columns: 1fr;
-            grid-template-areas: 
-              "firstName"
-              "lastName"
-              "email"
-              "phone"
-              "company";
+          .form-row {
+            flex-direction: column;
             gap: 16px;
           }
         }
