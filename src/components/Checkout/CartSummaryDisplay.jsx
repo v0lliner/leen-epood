@@ -41,6 +41,10 @@ const CartSummaryDisplay = ({ cartItems }) => {
       </div>
 
       <style jsx>{`
+        .cart-summary {
+          margin-bottom: 32px;
+        }
+        
         .section-title {
           font-family: var(--font-heading);
           font-size: 1.25rem;
