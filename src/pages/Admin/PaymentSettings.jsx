@@ -308,7 +308,6 @@ const PaymentSettings = () => {
             price,
             currency: omnivaShippingFormData.currency,
             active: omnivaShippingFormData.active
-          }
         )
       } else {
         // Create new settings
