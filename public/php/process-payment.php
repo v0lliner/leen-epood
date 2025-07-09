@@ -109,6 +109,7 @@ try {
             'currency' => 'EUR',
             'reference' => $data['reference'], // This will be used as order_number in the return URL
             'notification_url' => 'https://leen.ee/php/payment-notification.php', // Webhook URL for payment notifications
+            'notification_url' => 'https://leen.ee/php/payment-notification.php', // Webhook URL for payment notifications
             'merchant_data' => json_encode([
                 'customer_name' => $data['firstName'] . ' ' . $data['lastName'],
                 'customer_email' => $data['email'],
