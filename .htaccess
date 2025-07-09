@@ -1,6 +1,11 @@
 # Enable Apache rewrite engine
 RewriteEngine On
 
+# Force PHP 8.3 for all PHP files
+<FilesMatch "\.php$">
+  AddHandler application/x-httpd-php83 .php
+</FilesMatch>
+
 # Allow direct access to PHP files in the php directory
 RewriteRule ^php/(.*)$ php/$1 [L]
 
