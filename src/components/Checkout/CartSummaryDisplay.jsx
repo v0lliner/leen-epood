@@ -62,7 +62,7 @@ const CartSummaryDisplay = ({ cartItems }) => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-bottom: 16px;
+          padding-bottom: 24px;
           border-bottom: 1px solid #f0f0f0;
           gap: 16px;
         }
@@ -70,6 +70,7 @@ const CartSummaryDisplay = ({ cartItems }) => {
         .item-image {
           width: 80px;
           height: 80px;
+          min-width: 80px;
           flex-shrink: 0;
           border-radius: 4px;
           overflow: hidden;
@@ -83,6 +84,8 @@ const CartSummaryDisplay = ({ cartItems }) => {
         
         .item-details {
           flex: 1;
+          min-width: 0;
+          overflow: hidden;
         }
         
         .item-title {
@@ -91,6 +94,9 @@ const CartSummaryDisplay = ({ cartItems }) => {
           font-weight: 500;
           margin: 0 0 4px 0;
           color: var(--color-text);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         
         .item-category {
@@ -102,9 +108,12 @@ const CartSummaryDisplay = ({ cartItems }) => {
         
         .item-dimensions {
           font-size: 0.85rem;
-          color: #666;
+          color: #666; 
           margin-bottom: 4px;
           font-family: var(--font-heading);
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         
         .item-quantity {
@@ -132,7 +141,7 @@ const CartSummaryDisplay = ({ cartItems }) => {
         @media (max-width: 768px) {
           .cart-item {
             display: grid;
-            grid-template-columns: 80px 1fr auto;
+            grid-template-columns: 80px minmax(0, 1fr) auto;
             gap: 12px;
             align-items: center;
           }
@@ -148,7 +157,14 @@ const CartSummaryDisplay = ({ cartItems }) => {
         
         @media (max-width: 480px) {
           .cart-item {
-            grid-template-columns: 60px 1fr;
+            grid-template-columns: 60px minmax(0, 1fr);
+            padding-bottom: 20px;
+          }
+          
+          .item-image {
+            width: 60px;
+            height: 60px;
+            min-width: 60px;
           }
           
           .item-price {
@@ -156,6 +172,7 @@ const CartSummaryDisplay = ({ cartItems }) => {
             justify-self: start;
             margin-left: 0;
             font-size: 1rem;
+            margin-top: 8px;
           }
         }
       `}</style>
