@@ -357,31 +357,19 @@ function processOrder($transactionData, $paymentData) {
                 // Update product availability if needed
                 if ($orderStatus === 'PAID' || $orderStatus === 'PROCESSING') {
                     $productId = $item['id'];
-                    
-                    // Get current product
-                    $productResult = supabaseRequest(
+
+                    // Mark product as unavailable (sold) - every product is unique
+                    $updateProductResult = supabaseRequest(
                         "/rest/v1/products?id=eq.$productId",
-                        'GET'
+                        'PATCH',
+                        ['available' => false]
                     );
                     
-                    if ($productResult['status'] === 200 && !empty($productResult['data'])) {
-                        $product = $productResult['data'][0];
-                        
-                        // If product is available, mark as unavailable (sold)
-                        if ($product['available']) {
-                            $updateProductResult = supabaseRequest(
-                                "/rest/v1/products?id=eq.$productId",
-                                'PATCH',
-                                ['available' => false]
-                            );
-                            
-                            logMessage("Updated product availability", [
-                                'product_id' => $productId, 
-                                'available' => false,
-                                'result' => $updateProductResult
-                            ]);
-                        }
-                    }
+                    logMessage("Updated product availability", [
+                        'product_id' => $productId, 
+                        'available' => false,
+                        'result' => $updateProductResult
+                    ]);
                 }
             }
         }
