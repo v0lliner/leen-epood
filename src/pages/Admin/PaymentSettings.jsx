@@ -154,21 +154,6 @@ const PaymentSettings = () => {
     }
   }
 
-  const loadOmnivaShippingSettings = async () => {
-    try {
-      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
-      
-      if (error) {
-        console.error('Error loading Omniva shipping settings:', error)
-      } else if (data) {
-        setOmnivaShippingSettings(data)
-        setShippingPrice(data.price.toString())
-      }
-    } catch (err) {
-      console.error('Error in loadOmnivaShippingSettings:', err)
-    }
-  }
-
   const handleMaksekeskusInputChange = (e) => {
     const { name, value, type, checked } = e.target
     const newValue = type === 'checkbox' ? checked : value
