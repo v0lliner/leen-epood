@@ -63,12 +63,16 @@ export const useHomepage = () => {
     setLoading(true)
     setError(null)
 
+      
+      console.log('🔄 Loading homepage content...')
     try {
       // Get content for both languages
       const { data, error } = await homepageContentService.getBilingualContent()
       
       if (error) {
         console.warn('Failed to load homepage content from Supabase, using fallback data:', error)
+      
+      console.log('✅ Homepage content loaded successfully')
         setContent(fallbackContent)
       } else {
         // If no content in database, use fallback data
@@ -81,7 +85,11 @@ export const useHomepage = () => {
         })
       }
     } catch (err) {
-      console.warn('Error loading homepage content, using fallback:', err)
+      console.error('❌ Error loading homepage content:', {
+        message: err.message,
+        name: err.name,
+        stack: err.stack
+      })
       setContent(fallbackContent)
     } finally {
       setLoading(false)
