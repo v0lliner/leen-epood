@@ -5,58 +5,70 @@ import { supabase } from './client'
  */
 export const shippingSettingsService = {
   /**
-   * Get active Omniva shipping settings
+   * Get Omniva shipping settings
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async getOmnivaShippingSettings() {
+  async getOmnivaSettings() {
     try {
       const { data, error } = await supabase
         .from('omniva_shipping_settings')
         .select('*')
         .eq('active', true)
-        .single()
+        .maybeSingle()
       
       return { data, error }
     } catch (error) {
+      console.error('Error fetching Omniva settings:', error)
       return { data: null, error: { message: 'Network error occurred' } }
     }
   },
 
   /**
-   * Update Omniva shipping price
+   * Update Omniva shipping settings
    * @param {string} id - Settings ID
-   * @param {number} price - New price
+   * @param {object} updates - Fields to update
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async updateOmnivaShippingPrice(id, price) {
+  async updateOmnivaSettings(id, updates) {
     try {
       const { data, error } = await supabase
         .from('omniva_shipping_settings')
-        .update({ price })
+        .update(updates)
         .eq('id', id)
         .select()
         .single()
       
       return { data, error }
     } catch (error) {
+      console.error('Error updating Omniva settings:', error)
       return { data: null, error: { message: 'Network error occurred' } }
     }
   },
 
   /**
-   * Get all shipping settings
-   * @returns {Promise<{data: Array, error: object|null}>}
+   * Create new Omniva shipping settings
+   * @param {object} settings - Settings data
+   * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async getAllShippingSettings() {
+  async createOmnivaSettings(settings) {
     try {
+      // First, deactivate all existing settings
+      await supabase
+        .from('omniva_shipping_settings')
+        .update({ active: false })
+        .eq('active', true)
+      
+      // Then create new settings
       const { data, error } = await supabase
         .from('omniva_shipping_settings')
-        .select('*')
-        .order('created_at', { ascending: false })
+        .insert(settings)
+        .select()
+        .single()
       
-      return { data: data || [], error }
+      return { data, error }
     } catch (error) {
-      return { data: [], error: { message: 'Network error occurred' } }
+      console.error('Error creating Omniva settings:', error)
+      return { data: null, error: { message: 'Network error occurred' } }
     }
   }
 }
