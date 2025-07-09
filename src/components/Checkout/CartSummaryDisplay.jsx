@@ -42,7 +42,7 @@ const CartSummaryDisplay = ({ cartItems }) => {
 
       <style jsx>{`
         .cart-summary {
-          margin-bottom: 32px;
+          margin-bottom: 16px;
         }
         
         .section-title {
