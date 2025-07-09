@@ -1,7 +1,7 @@
 <?php
 // Enable detailed error reporting for development
 error_reporting(E_ALL);
-ini_set('display_errors', 0); 
+ini_set('display_errors', 0);
 
 // Set up logging
 $logDir = __DIR__ . '/../logs';
@@ -15,6 +15,13 @@ require __DIR__ . '/maksekeskus/vendor/autoload.php';
 require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
 require __DIR__ . '/phpmailer/Exception.php';
+// Require PHPMailer
+require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
+require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
 
 use Maksekeskus\Maksekeskus;
 use Maksekeskus\MKException;
@@ -25,7 +32,11 @@ use PHPMailer\PHPMailer\Exception;
 header('Content-Type: application/json');
 
 // Log file for debugging
-$logFile = __DIR__ . '/notification_log.txt';
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+$logFile = $logDir . '/payment_notification.log';
 
 // Function to log messages
 function logMessage($message, $data = null) {
@@ -95,18 +106,59 @@ function generateOrderNumber() {
 }
 
 // Function to send email
-function sendEmail($to, $subject, $message) {
-    // Basic email headers
-    $headers = "MIME-Version: 1.0" . "\r\n";
-    $headers .= "Content-type:text/html;charset=UTF-8" . "\r\n";
-    $headers .= "From: Leen.ee <leen@leen.ee>" . "\r\n";
-    
-    // Attempt to send email
-    $success = mail($to, $subject, $message, $headers);
-    
-    logMessage("Email sending " . ($success ? "successful" : "failed") . " to $to with subject: $subject");
-    
-    return $success;
+function sendEmail($to, $subject, $message, $replyTo = null, $attachments = []) {
+    try {
+        $mail = new PHPMailer(true);
+        
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.zone.eu';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'leen@leen.ee';
+        $mail->Password = 'your_password_here'; // Replace with actual password from env
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+        
+        // Recipients
+        $mail->setFrom('leen@leen.ee', 'Leen.ee');
+        $mail->addAddress($to);
+        
+        if ($replyTo) {
+            $mail->addReplyTo($replyTo);
+        } else {
+            $mail->addReplyTo('leen@leen.ee', 'Leen.ee');
+        }
+        
+        // Add attachments if any
+        if (!empty($attachments) && is_array($attachments)) {
+            foreach ($attachments as $attachment) {
+                if (isset($attachment['path']) && file_exists($attachment['path'])) {
+                    $mail->addAttachment(
+                        $attachment['path'],
+                        isset($attachment['name']) ? $attachment['name'] : ''
+                    );
+                }
+            }
+        }
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
+        
+        // Create plain text version by stripping HTML
+        $textBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message));
+        $mail->AltBody = $textBody;
+        
+        // Send email
+        $mail->send();
+        logMessage("Email sent successfully to $to with subject: $subject");
+        return true;
+    } catch (Exception $e) {
+        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $mail->ErrorInfo);
+        return false;
+    }
 }
 
 /**

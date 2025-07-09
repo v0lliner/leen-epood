@@ -8,6 +8,26 @@ $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
     mkdir($logDir, 0755, true);
 }
+$shipmentLogFile = $logDir . '/omniva_shipment.log';
+
+// Function to log messages
+function shipmentLog($message, $data = null) {
+    global $shipmentLogFile;
+    $timestamp = date('Y-m-d H:i:s');
+    $logEntry = "$timestamp - $message";
+    
+    if ($data !== null) {
+        $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
+    }
+    
+    file_put_contents($shipmentLogFile, $logEntry . "\n", FILE_APPEND);
+}
+
+// Set up logging
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
 $logFile = $logDir . '/omniva_shipment_log.txt';
 
 // Set content type to JSON
@@ -130,13 +150,205 @@ function updateOrderWithOmnivaDetails($orderId, $barcode) {
         "/rest/v1/orders?id=eq.$orderId",
         'PATCH',
         [
-            'omniva_barcode' => $barcode
+            'omniva_barcode' => $barcode,
+            'tracking_url' => "https://www.omniva.ee/track?barcode=$barcode",
+            'shipment_registered_at' => date('c') // ISO 8601 format
         ]
     );
     
     return $updateResult['status'] === 204;
 }
 
+// Function to save PDF label
+function savePdfLabel($barcode, $orderId, $orderNumber) {
+    try {
+        // Create PDF labels directory if it doesn't exist
+        $pdfDir = __DIR__ . '/../../pdf_labels';
+        if (!is_dir($pdfDir)) {
+            mkdir($pdfDir, 0755, true);
+        }
+        
+        // Initialize Omniva label class
+        require_once __DIR__ . '/omniva/vendor/autoload.php';
+        $label = new \Mijora\Omniva\Shipment\Label();
+        
+        // Get Omniva credentials
+        $customerCode = '247723'; // Replace with your actual customer code
+        $username = '247723';     // Replace with your actual username
+        $password = 'Ddg(8?e:$A'; // Replace with your actual password
+        
+        $label->setAuth($username, $password);
+        
+        // Generate filename
+        $filename = $orderNumber ? "omniva-$orderNumber" : "omniva-order-$orderId";
+        $pdfPath = "$pdfDir/$filename.pdf";
+        
+        // Download label and save to file
+        $result = $label->downloadLabels([$barcode], false, 'F', $filename, false);
+        
+        // If successful, update the order with the label URL
+        if ($result !== false) {
+            $labelUrl = "/pdf_labels/$filename.pdf";
+            
+            // Update order with label URL
+            supabaseRequest(
+                "/rest/v1/orders?id=eq.$orderId",
+                'PATCH',
+                [
+                    'label_url' => $labelUrl
+                ]
+            );
+            
+            shipmentLog("PDF label saved successfully", $pdfPath);
+            return $labelUrl;
+        } else {
+            shipmentLog("Failed to save PDF label", "Barcode: $barcode, Order: $orderId");
+            return false;
+        }
+    } catch (Exception $e) {
+        shipmentLog("Exception saving PDF label", $e->getMessage());
+        return false;
+    }
+}
+
+// Function to send notification email with tracking info
+function sendTrackingNotification($orderId, $barcode, $labelUrl) {
+    try {
+        // Get order details
+        $orderResult = supabaseRequest("/rest/v1/orders?id=eq.$orderId&select=*", 'GET');
+        
+        if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+            shipmentLog("Failed to get order details for notification", "Order ID: $orderId");
+            return false;
+        }
+        
+        $order = $orderResult['data'][0];
+        
+        // Get order items
+        $itemsResult = supabaseRequest(
+            "/rest/v1/order_items?order_id=eq.$orderId&select=*",
+            'GET'
+        );
+        
+        $items = ($itemsResult['status'] === 200) ? $itemsResult['data'] : [];
+        
+        // Prepare email content
+        $trackingUrl = "https://www.omniva.ee/track?barcode=$barcode";
+        $labelDownloadUrl = $_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . $labelUrl;
+        
+        // Load PHPMailer
+        require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
+        require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
+        require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
+        
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.zone.eu';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'leen@leen.ee';
+        $mail->Password = 'your_password_here'; // Replace with actual password from env
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+        
+        // Recipients
+        $mail->setFrom('leen@leen.ee', 'Leen.ee');
+        $mail->addAddress('leen@leen.ee');
+        $mail->addReplyTo('leen@leen.ee', 'Leen.ee');
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = "OMNIVA triipkood lisatud tellimusele #{$order['order_number']} – Leen.ee";
+        
+        // Build HTML email
+        $emailBody = '
+        <html>
+            <head>
+                <meta charset="UTF-8">
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; }
+                    .header { background-color: #2f3e9c; color: white; padding: 20px; text-align: center; }
+                    .content { padding: 20px; }
+                    .order-details { background-color: #f5f5f5; padding: 15px; margin: 15px 0; }
+                    .tracking-info { background-color: #e6f7ff; padding: 15px; margin: 15px 0; border-left: 4px solid #2f3e9c; }
+                    .button { display: inline-block; background-color: #2f3e9c; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; }
+                    .footer { font-size: 12px; color: #666; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <h1>Omniva saadetis registreeritud</h1>
+                    </div>
+                    <div class="content">
+                        <p>Tellimuse <strong>#' . $order['order_number'] . '</strong> Omniva saadetis on edukalt registreeritud.</p>
+                        
+                        <div class="order-details">
+                            <h3>Tellimuse info:</h3>
+                            <p><strong>Tellimuse number:</strong> ' . $order['order_number'] . '</p>
+                            <p><strong>Klient:</strong> ' . $order['customer_name'] . '</p>
+                            <p><strong>E-post:</strong> ' . $order['customer_email'] . '</p>
+                            <p><strong>Telefon:</strong> ' . $order['customer_phone'] . '</p>
+                            <p><strong>Pakiautomaat:</strong> ' . $order['omniva_parcel_machine_name'] . '</p>
+                        </div>
+                        
+                        <div class="tracking-info">
+                            <h3>Saadetise info:</h3>
+                            <p><strong>Jälgimiskood:</strong> ' . $barcode . '</p>
+                            <p><a href="' . $trackingUrl . '" target="_blank">Jälgi saadetist</a></p>
+                            <p><a href="' . $labelDownloadUrl . '" target="_blank">Lae alla saateleht</a></p>
+                        </div>
+                        
+                        <p>Tooted:</p>
+                        <ul>';
+        
+        foreach ($items as $item) {
+            $emailBody .= '<li>' . $item['product_title'] . ' - ' . $item['quantity'] . 'tk</li>';
+        }
+        
+        $emailBody .= '
+                        </ul>
+                        
+                        <p>Palun prindi saateleht välja ja kinnita pakile.</p>
+                        
+                        <div class="footer">
+                            <p>See on automaatne teavitus Leen.ee süsteemist.</p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+        </html>';
+        
+        // Plain text alternative
+        $textBody = "Omniva saadetis registreeritud\n\n" .
+                   "Tellimuse #{$order['order_number']} Omniva saadetis on edukalt registreeritud.\n\n" .
+                   "Tellimuse info:\n" .
+                   "- Tellimuse number: {$order['order_number']}\n" .
+                   "- Klient: {$order['customer_name']}\n" .
+                   "- E-post: {$order['customer_email']}\n" .
+                   "- Telefon: {$order['customer_phone']}\n" .
+                   "- Pakiautomaat: {$order['omniva_parcel_machine_name']}\n\n" .
+                   "Saadetise info:\n" .
+                   "- Jälgimiskood: $barcode\n" .
+                   "- Jälgi saadetist: $trackingUrl\n" .
+                   "- Lae alla saateleht: $labelDownloadUrl\n\n" .
+                   "Palun prindi saateleht välja ja kinnita pakile.\n\n" .
+                   "See on automaatne teavitus Leen.ee süsteemist.";
+        
+        $mail->Body = $emailBody;
+        $mail->AltBody = $textBody;
+        
+        $mail->send();
+        shipmentLog("Tracking notification email sent successfully", "Order: {$order['order_number']}");
+        return true;
+    } catch (Exception $e) {
+        shipmentLog("Failed to send tracking notification email", $e->getMessage());
+        return false;
+    }
+}
 // Main execution starts here
 try {
     // Only accept POST requests
@@ -186,6 +398,14 @@ try {
     
     // Check if shipment is already registered
     if (!empty($order['omniva_barcode'])) {
+        
+        // Save PDF label
+        $labelUrl = savePdfLabel($barcode, $orderId, $order['order_number']);
+        
+        // Send notification email with tracking info
+        if ($labelUrl) {
+            sendTrackingNotification($orderId, $barcode, $labelUrl);
+        }
         // Shipment already registered, return the existing barcode
         echo json_encode([
             'success' => true,
@@ -356,10 +576,12 @@ try {
                 ]);
             }
         } else {
-            throw new Exception('No barcode received from Omniva API');
+            'barcode' => $barcode,
+            'tracking_url' => "https://www.omniva.ee/track?barcode=$barcode",
+            'label_url' => $labelUrl
         }
     } catch (OmnivaException $e) {
-        logMessage("Omniva Exception", $e->getMessage());
+        shipmentLog("Omniva Exception", $e->getMessage());
         http_response_code(500);
         echo json_encode([
             'success' => false,
@@ -367,7 +589,7 @@ try {
         ]);
     }
 } catch (Exception $e) {
-    logMessage("Exception", $e->getMessage());
+    shipmentLog("Exception", $e->getMessage());
     
     http_response_code(500);
     echo json_encode([

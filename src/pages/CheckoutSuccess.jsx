@@ -5,6 +5,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
+import { Link } from 'react-router-dom';
 
 const CheckoutSuccess = () => {
   const { t } = useTranslation();
@@ -26,27 +27,11 @@ const CheckoutSuccess = () => {
     reference = queryParams.get('reference') || '';
 
     // If no reference in query params, try to extract from path segments
-    if (!reference) {
-      const pathSegments = location.pathname.split('/');
-      if (pathSegments.length > 2 && pathSegments[2]) {
-        reference = pathSegments[2];
-      }
-    }
-    
-    if (reference) {
-      setOrderReference(reference);
-      console.log('Found order reference:', reference);
-    } else {
-      console.log('No order reference found in URL');
-    }
-    
-    // Function to load order details
-    const loadOrderDetails = async () => {
-      setLoading(true); 
-      setError(null); 
-
       try {
-        // Get order details from server using the reference
+        setLoading(true);
+        setError(null);
+        
+        // Only try to get order details from URL reference parameter
         if (reference) {
           console.log('Fetching order details from server for reference:', reference);
           
@@ -55,43 +40,41 @@ const CheckoutSuccess = () => {
           
           if (!response.ok) {
             console.warn(`Failed to fetch order details from server: ${response.status}`);
-            // Don't throw error here, try localStorage fallback instead
-          } else {
-            const data = await response.json();
+            throw new Error('Tellimuse andmete laadimine ebaõnnestus. Palun võtke ühendust klienditoega.');
+          }
+          
+          const data = await response.json();
+          
+          if (data.success && data.order) {
+            console.log('Order details fetched successfully from server:', data.order);
             
-            if (data.success && data.order) {
-              console.log('Order details fetched successfully from server:', data.order); 
-              
-              // Format the order data for display
-              const formattedOrder = {
-                orderReference: data.order.order_number,
-                orderAmount: data.order.total_amount,
-                customerEmail: data.order.customer_email,
-                customerName: data.order.customer_name,
-                customerPhone: data.order.customer_phone,
-                omnivaParcelMachineId: data.order.omniva_parcel_machine_id,
-                omnivaParcelMachineName: data.order.omniva_parcel_machine_name,
-                omnivaBarcode: data.order.omniva_barcode,
-                timestamp: new Date(data.order.created_at).getTime(),
-                orderItems: data.order.items || [],
-                payments: data.order.payments || [],
-                status: data.order.status
-              };
-              
-              setOrderDetails(formattedOrder);
-              return; 
-            } else {
-              throw new Error('Tellimuse andmeid ei leitud või serverivastus oli vigane');
-            } 
+            // Format the order data for display
+            const formattedOrder = {
+              orderReference: data.order.order_number,
+              orderAmount: data.order.total_amount,
+              customerEmail: data.order.customer_email,
+              customerName: data.order.customer_name,
+              customerPhone: data.order.customer_phone,
+              omnivaParcelMachineId: data.order.omniva_parcel_machine_id,
+              omnivaParcelMachineName: data.order.omniva_parcel_machine_name,
+              omnivaBarcode: data.order.omniva_barcode,
+              trackingUrl: data.order.tracking_url,
+              timestamp: new Date(data.order.created_at).getTime(),
+              orderItems: data.order.items || [],
+              payments: data.order.payments || [],
+              status: data.order.status
+            };
+            
+            setOrderDetails(formattedOrder);
           } else {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-          } 
+            throw new Error('Tellijat ei leitud – palun võta ühendust klienditoega.');
+          }
         } else {
-          throw new Error('Tellimuse viidet ei leitud URL-ist');
+          throw new Error('Tellimuse viidet ei leitud. Palun võtke ühendust klienditoega.');
         }
       } catch (error) {
         console.error('Error loading order details:', error);
-        setError('Tellimuse andmete laadimine ebaõnnestus. Palun võtke ühendust klienditoega.');
+        setError(error.message || 'Tellimuse andmete laadimine ebaõnnestus');
         
         // If no order data is found, redirect to shop after a delay
         setTimeout(() => {
@@ -307,14 +290,24 @@ const CheckoutSuccess = () => {
                           <span className="detail-value">{orderDetails.omnivaParcelMachineName}</span>
                         </div>
                       )}
-                      
-                      {/* Display Omniva tracking number if available */}
-                      {orderDetails.omnivaBarcode && (
+
+                      {/* Display Omniva tracking link if available */}
+                      {orderDetails.trackingUrl && (
                         <div className="order-detail">
                           <span className="detail-label">Jälgimisnumber:</span>
-                          <span className="detail-value">{orderDetails.omnivaBarcode}</span>
+                          <span className="detail-value">
+                            <a 
+                              href={orderDetails.trackingUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="tracking-link"
+                            >
+                              {orderDetails.omnivaBarcode} 🔗
+                            </a>
+                          </span>
                         </div>
                       )}
+                      
                       {orderDetails.timestamp && (
                         <div className="order-detail">
                           <span className="detail-label">Tellimuse aeg:</span>
