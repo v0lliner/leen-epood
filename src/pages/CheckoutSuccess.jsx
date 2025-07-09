@@ -20,10 +20,12 @@ const CheckoutSuccess = () => {
     // Clear the cart when the success page loads - this ensures cart is only cleared after successful payment
     clearCart();
 
+
     // Extract order reference from URL query parameters or path
     let reference = '';
     const queryParams = new URLSearchParams(location.search);
     reference = queryParams.get('reference') || '';
+
 
     // If no reference in query params, try to extract from path segments
     const loadOrderDetails = async () => {
@@ -34,11 +36,13 @@ const CheckoutSuccess = () => {
         // Only try to get order details from URL reference parameter
         if (reference) {
           console.log('Fetching order details from server for reference:', reference);
+          console.log('Fetching order details from server for reference:', reference);
           
           // Fetch order details from the backend using the reference
           const response = await fetch(`/php/admin/orders.php?order_number=${reference}`);
           
           if (!response.ok) {
+            console.warn(`Failed to fetch order details from server: ${response.status}`);
             console.warn(`Failed to fetch order details from server: ${response.status}`);
             throw new Error('Tellimuse andmete laadimine ebaõnnestus. Palun võtke ühendust klienditoega.');
           }
@@ -46,6 +50,7 @@ const CheckoutSuccess = () => {
           const data = await response.json();
           
           if (data.success && data.order) {
+            console.log('Order details fetched successfully from server:', data.order);
             console.log('Order details fetched successfully from server:', data.order);
             
             // Format the order data for display
@@ -73,6 +78,7 @@ const CheckoutSuccess = () => {
           throw new Error('Tellimuse viidet ei leitud. Palun võtke ühendust klienditoega.');
         }
       } catch (error) {
+        console.error('Error loading order details:', error);
         console.error('Error loading order details:', error);
         setError(error.message || 'Tellimuse andmete laadimine ebaõnnestus');
         

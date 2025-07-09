@@ -53,6 +53,8 @@ function logMessage($message, $data = null) {
     }
     
     file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+}
+
 function sendEmail($to, $subject, $message, $replyTo = null) {
     try {
         // Load PHPMailer
@@ -610,6 +612,10 @@ try {
     $requestData = file_get_contents('php://input');
     logMessage("Notification received (raw input)", $requestData);
 
+    // Log the notification
+    $requestData = file_get_contents('php://input');
+    logMessage("Notification received (raw input)", $requestData);
+
     // Initialize Maksekeskus client
     $shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
     $publicKey = 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
@@ -624,21 +630,25 @@ try {
 
     if (!$isValid) {
         logMessage("Invalid MAC signature");
+        logMessage("Invalid MAC signature");
         http_response_code(400);
         echo json_encode(['error' => 'Invalid signature']);
         exit();
     }
     
     logMessage("MAC signature verified successfully");
+    logMessage("MAC signature verified successfully");
     
     // Extract the notification data
     $data = $MK->extractRequestData($request);
+    logMessage("Extracted data", $data);
     logMessage("Extracted data", $data);
     
     // Get the transaction ID
     $transactionId = $data->transaction ?? null;
 
     if (!$transactionId) {
+        logMessage("No transaction ID in notification", $data);
         logMessage("No transaction ID in notification", $data);
         http_response_code(400);
         echo json_encode(['error' => 'Missing transaction ID']);
@@ -649,7 +659,9 @@ try {
     try {
         $transaction = $MK->getTransaction($transactionId);
         logMessage("Transaction details fetched", $transaction);
+        logMessage("Transaction details fetched", $transaction);
     } catch (\Exception $e) {
+        logMessage("Error fetching transaction details", $e->getMessage());
         logMessage("Error fetching transaction details", $e->getMessage());
         http_response_code(500);
         echo json_encode(['error' => 'Failed to fetch transaction details']);
@@ -661,17 +673,21 @@ try {
 
     if ($success) {
         logMessage("Order processed successfully");
+        logMessage("Order processed successfully");
         echo json_encode(['status' => 'success']);
     } else {
+        logMessage("Order processing failed");
         logMessage("Order processing failed");
         http_response_code(500);
         echo json_encode(['error' => 'Order processing failed']);
     }
 } catch (MKException $e) {
     logMessage("Maksekeskus Exception", $e->getMessage());
+    logMessage("Maksekeskus Exception", $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]); 
 } catch (\Exception $e) {
+    logMessage("General Exception", $e->getMessage());
     logMessage("General Exception", $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);

@@ -128,12 +128,14 @@ function getOrderDetails($orderId) {
 // Function to get order details by order number
 function getOrderDetailsByOrderNumber($orderNumber) {
     // Get order basic info
+    logMessage("Fetching order details for order number", $orderNumber);
     $orderResult = supabaseRequest(
         "/rest/v1/orders?order_number=eq.$orderNumber&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at,reference",
         'GET'
     );
     
     if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+        logMessage("Order not found for order number", $orderNumber);
         logMessage("Order not found for order number", $orderNumber);
         return null;
     }
@@ -142,6 +144,7 @@ function getOrderDetailsByOrderNumber($orderNumber) {
     $orderId = $order['id'];
     
     // Get order items
+    logMessage("Fetching order items for order", $orderId);
     logMessage("Fetching order items for order", $orderId);
     $itemsResult = supabaseRequest(
         "/rest/v1/order_items?order_id=eq.$orderId&select=*",
@@ -155,6 +158,7 @@ function getOrderDetailsByOrderNumber($orderNumber) {
     }
     
     // Get payment info
+    logMessage("Fetching payment info for order", $orderId);
     logMessage("Fetching payment info for order", $orderId);
     $paymentsResult = supabaseRequest(
         "/rest/v1/order_payments?order_id=eq.$orderId&select=*",

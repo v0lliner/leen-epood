@@ -7,15 +7,6 @@ ini_set('display_errors', 0);
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
     mkdir($logDir, 0755, true);
-// Function to log messages
-function shipmentLog($message, $data = null) {
-    shipmentLog($message, $data);
-}
-
-// Set up logging
-$logDir = __DIR__ . '/../logs';
-if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
 }
 $shipmentLogFile = $logDir . '/omniva_shipment.log';
 
@@ -34,9 +25,6 @@ function shipmentLog($message, $data = null) {
 
 // Set up logging
 $logDir = __DIR__ . '/../logs';
-if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
-}
 $logFile = $logDir . '/omniva_shipment_log.txt';
 
 // Set content type to JSON
@@ -161,16 +149,14 @@ function getOrderDetails($orderId) {
 function updateOrderWithOmnivaDetails($orderId, $barcode) {
     shipmentLog("Updating order with Omniva details", ['orderId' => $orderId, 'barcode' => $barcode]);
     $updateResult = supabaseRequest(
-        "/rest/v1/orders?id=eq.$orderId",
-        'PATCH',
-        [
-            'omniva_barcode' => $barcode,
-            'tracking_url' => "https://www.omniva.ee/track?barcode=$barcode",
-            'shipment_registered_at' => date('c') // ISO 8601 format
-            'tracking_url' => "https://www.omniva.ee/track?barcode=$barcode",
-            'shipment_registered_at' => date('c') // ISO 8601 format
-        ]
-    );
+       "/rest/v1/orders?id=eq.$orderId",
+       'PATCH',
+       [
+           'omniva_barcode' => $barcode,
+           'tracking_url' => "https://www.omniva.ee/track?barcode=$barcode",
+           'shipment_registered_at' => date('c') // ISO 8601 format
+       ]
+   );
     
     $success = $updateResult['status'] === 204;
     shipmentLog("Order update result", ['success' => $success, 'status' => $updateResult['status']]);
@@ -528,6 +514,7 @@ function sendTrackingNotification($orderId, $barcode, $labelUrl) {
 // Main execution starts here
 try {
     // Only accept POST requests
+    shipmentLog("Received request", $_SERVER['REQUEST_METHOD']);
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         http_response_code(405);
         echo json_encode(['success' => false, 'error' => 'Method not allowed']);
@@ -536,6 +523,7 @@ try {
     
     // Get the raw POST data
     $rawData = file_get_contents('php://input');
+    shipmentLog("Received data (raw input)", $rawData);
     shipmentLog("Received data (raw input)", $rawData);
     
     // Decode the JSON data
@@ -551,6 +539,7 @@ try {
     // Validate required fields
     if (empty($data['orderId'])) {
         http_response_code(400);
+        shipmentLog("Missing orderId in request");
         echo json_encode(['success' => false, 'error' => 'Order ID is required']);
         exit();
     }
@@ -558,6 +547,7 @@ try {
     // Get order details
     $orderId = $data['orderId'];
     $order = getOrderDetails($orderId);
+    shipmentLog("Order details retrieved", $order ? 'success' : 'failed');
     shipmentLog("Order details retrieved", $order ? 'success' : 'failed');
     
     if (!$order) {
@@ -570,6 +560,7 @@ try {
     if (empty($order['omniva_parcel_machine_id'])) {
         shipmentLog("Not an Omniva parcel machine order", $order);
         http_response_code(400);
+        http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Not an Omniva parcel machine order']);
         exit();
     }
@@ -577,6 +568,7 @@ try {
     // Check if shipment is already registered
     if (!empty($order['omniva_barcode'])) {
         shipmentLog("Shipment already registered", $order['omniva_barcode']);
+        
         
         // Generate and save PDF label if requested
         if (isset($data['sendNotification']) && $data['sendNotification']) {
@@ -607,7 +599,6 @@ try {
         // Send notification email with tracking info
         if ($labelUrl) {
             sendTrackingNotification($orderId, $barcode, $labelUrl);
-        }
         // Shipment already registered, return the existing barcode
         echo json_encode([
             'success' => true,
@@ -621,6 +612,7 @@ try {
     $customerCode = '247723'; // Replace with your actual customer code
     $username = '247723';
     $password = 'Ddg(8?e:$A';
+    shipmentLog("Omniva API credentials used", ['customerCode' => $customerCode, 'username' => $username]);
     
     shipmentLog("Omniva API credentials used", [
         'customerCode' => $customerCode,
@@ -662,6 +654,7 @@ try {
         }
     }
     
+    shipmentLog("Calculated package measurements", ['totalWeight' => $totalWeight, 'maxLength' => $maxLength, 'maxWidth' => $maxWidth, 'maxHeight' => $maxHeight]);
     shipmentLog("Calculated package measurements", [
         'totalWeight' => $totalWeight,
         'maxLength' => $maxLength,
@@ -674,6 +667,7 @@ try {
     if ($maxLength < 0.1) $maxLength = 0.3;     // Default to 30cm
     if ($maxWidth < 0.1) $maxWidth = 0.3;       // Default to 30cm
     if ($maxHeight < 0.1) $maxHeight = 0.3;     // Default to 30cm
+    if ($maxHeight < 0.1) $maxHeight = 0.3;     // Default to 30cm
     
     // Convert cm to meters for Omniva API
     $lengthM = $maxLength / 100;
@@ -682,6 +676,7 @@ try {
     
     try {
         // Initialize Omniva shipment
+        shipmentLog("Initializing Omniva shipment object");
         shipmentLog("Initializing Omniva shipment object");
         $shipment = new Shipment();
         $shipment->setComment("Order #{$order['order_number']}");
@@ -693,6 +688,7 @@ try {
             ->setFileId(date('YmdHis'));
         $shipment->setShipmentHeader($shipmentHeader);
         
+        // Create package
         // Create package
         $package = new Package();
         $package
@@ -709,6 +705,7 @@ try {
         $package->setMeasures($measures);
         
         // Set receiver contact info
+        // Set receiver contact info
         shipmentLog("Setting receiver contact", [
             'name' => $order['customer_name'],
             'email' => $order['customer_email'],
@@ -716,6 +713,7 @@ try {
             'parcelMachineId' => $order['omniva_parcel_machine_id']
         ]);
         
+        $receiverContact = new Contact();
         $receiverContact = new Contact();
         $receiverAddress = new Address();
         $receiverAddress
@@ -730,6 +728,7 @@ try {
         
         $package->setReceiverContact($receiverContact);
         
+        // Set sender contact info
         // Set sender contact info
         shipmentLog("Setting sender contact");
         $senderContact = new Contact();
@@ -751,6 +750,7 @@ try {
         
         // Add package to shipment
         $shipment->setPackages([$package]);
+        $shipment->setPackages([$package]);
         
         // Set authentication
         $shipment->setAuth($username, $password);
@@ -763,6 +763,7 @@ try {
         ]);
         
         shipmentLog("Calling shipment->registerShipment()");
+        shipmentLog("Calling shipment->registerShipment()");
         $result = $shipment->registerShipment();
         shipmentLog("Shipment registration result", $result);
         
@@ -770,6 +771,7 @@ try {
             try {
                 $barcode = $result['barcodes'][0];
                 
+            $updateResult = updateOrderWithOmnivaDetails($orderId, $barcode);
             $updateResult = updateOrderWithOmnivaDetails($orderId, $barcode);
             shipmentLog("Order updated with barcode", ['success' => $updateResult, 'barcode' => $barcode]);
             
@@ -783,6 +785,7 @@ try {
             if ($labelUrl) {
                 updateOrderWithTrackingDetails($orderId, $trackingUrl, $labelUrl);
             }
+            
             
             // Send notification email if requested
             if (isset($data['sendNotification']) && $data['sendNotification'] && $labelUrl) {
@@ -816,6 +819,7 @@ try {
                     'success' => false,
                     'error' => 'Error processing shipment: ' . $e->getMessage()
                 'barcode' => $barcode,
+                'tracking_url' => $trackingUrl,
                 'tracking_url' => $trackingUrl,
                 'label_url' => $labelUrl
             }
@@ -853,6 +857,7 @@ try {
 function saveLabelPDF($barcode, $orderNumber) {
     try {
         // Initialize Omniva label class
+        shipmentLog("Generating PDF label for barcode", $barcode);
         $label = new \Mijora\Omniva\Shipment\Label();
         
         // Omniva API credentials
@@ -861,6 +866,7 @@ function saveLabelPDF($barcode, $orderNumber) {
         $password = 'Ddg(8?e:$A';
         
         $label->setAuth($username, $password);
+        shipmentLog("PDF directory path", $pdfDir);
         
         // Create directory if it doesn't exist
         $pdfDir = __DIR__ . '/../pdf_labels';
@@ -871,6 +877,7 @@ function saveLabelPDF($barcode, $orderNumber) {
         // Generate filename
         $filename = 'omniva_' . preg_replace('/[^a-zA-Z0-9]/', '_', $orderNumber) . '_' . $barcode;
         $filePath = $pdfDir . '/' . $filename . '.pdf';
+        shipmentLog("Attempting to download label to", $filePath);
         
         // Download label and save to file
         $label->downloadLabels([$barcode], false, 'F', $filename, false);
@@ -879,6 +886,7 @@ function saveLabelPDF($barcode, $orderNumber) {
         return '/pdf_labels/' . $filename . '.pdf';
     } catch (Exception $e) {
         logMessage("Error saving label PDF: " . $e->getMessage());
+        shipmentLog("Error saving PDF label", $e->getMessage());
         return null;
     }
 }
@@ -894,10 +902,15 @@ function saveLabelPDF($barcode, $orderNumber) {
 function updateOrderWithTrackingDetails($orderId, $trackingUrl, $labelUrl) {
     try {
         $updateData = [
-            'tracking_url' => $trackingUrl,
-            'label_url' => $labelUrl,
-            'shipment_registered_at' => date('Y-m-d H:i:s')
+           'tracking_url' => $trackingUrl,
+           'label_url' => $labelUrl,
+           'shipment_registered_at' => date('Y-m-d H:i:s')
         ];
+        shipmentLog("Updating order with tracking details", [
+            'orderId' => $orderId, 
+            'trackingUrl' => $trackingUrl, 
+            'labelUrl' => $labelUrl
+        ]);
         
         $result = supabaseRequest(
             "/rest/v1/orders?id=eq.$orderId",
@@ -906,6 +919,7 @@ function updateOrderWithTrackingDetails($orderId, $trackingUrl, $labelUrl) {
         );
         
         return $result['status'] === 204;
+        shipmentLog("Order tracking update result", ['success' => $result['status'] === 204, 'status' => $result['status']]);
     } catch (Exception $e) {
         logMessage("Error updating order with tracking details: " . $e->getMessage());
         return false;
@@ -923,6 +937,11 @@ function updateOrderWithTrackingDetails($orderId, $trackingUrl, $labelUrl) {
  */
 function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl) {
     try {
+        shipmentLog("Sending admin shipment notification", [
+            'orderNumber' => $order['order_number'],
+            'barcode' => $barcode
+        ]);
+        
         // Prepare email content
         $serverName = $_SERVER['SERVER_NAME'] ?? 'leen.ee';
         $baseUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https://" : "http://") . $serverName;
@@ -930,6 +949,7 @@ function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl
         $subject = "OMNIVA triipkood lisatud tellimusele #{$order['order_number']} – Leen.ee";
         
         $emailMessage = '
+            <html>
             <html>
                 <head>
                     <meta charset="UTF-8">
@@ -977,6 +997,7 @@ function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl
                     </div>
                 </body>
             </html>
+            </html>
         ';
 
         // Send email using PHPMailer
@@ -1008,6 +1029,7 @@ function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl
         $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $emailMessage));
         
         $mail->send();
+        shipmentLog("Admin shipment notification email sent successfully");
         logMessage("Admin shipment notification email sent successfully");
         return true;
     } catch (Exception $e) {
