@@ -40,7 +40,7 @@ const AdminDashboard = () => {
 
       // Load order statistics
       try {
-        const orderResponse = await fetch('/php/admin_order_stats.php')
+        const orderResponse = await fetch('http://localhost:8000/php/admin_order_stats.php')
         console.log('📊 Dashboard: Order stats response status:', orderResponse.status)
         
         if (orderResponse.ok) {
