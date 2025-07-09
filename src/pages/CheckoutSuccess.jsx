@@ -19,12 +19,12 @@ const CheckoutSuccess = () => {
   useEffect(() => {
     // Clear the cart when the success page loads - this ensures cart is only cleared after successful payment
     clearCart();
-    
+
     // Extract order reference from URL query parameters or path
     let reference = '';
     const queryParams = new URLSearchParams(location.search);
     reference = queryParams.get('reference') || '';
-    
+
     // If no reference in query params, try to extract from path segments
     if (!reference) {
       const pathSegments = location.pathname.split('/');
@@ -42,11 +42,11 @@ const CheckoutSuccess = () => {
     
     // Function to load order details
     const loadOrderDetails = async () => {
-      setLoading(true);
-      setError(null);
-      
+      setLoading(true); 
+      setError(null); 
+
       try {
-        // First try to get order details from URL reference parameter
+        // Get order details from server using the reference
         if (reference) {
           console.log('Fetching order details from server for reference:', reference);
           
@@ -60,7 +60,7 @@ const CheckoutSuccess = () => {
             const data = await response.json();
             
             if (data.success && data.order) {
-              console.log('Order details fetched successfully from server:', data.order);
+              console.log('Order details fetched successfully from server:', data.order); 
               
               // Format the order data for display
               const formattedOrder = {
@@ -79,40 +79,24 @@ const CheckoutSuccess = () => {
               };
               
               setOrderDetails(formattedOrder);
-              
-              // Clear any pending order from localStorage since we got the data from the server
-              localStorage.removeItem('pendingOrder');
-              setLoading(false);
-              return;
-            }
-          }
-        }
-        
-        // Fallback to localStorage if URL parameter doesn't work
-        const pendingOrder = localStorage.getItem('pendingOrder');
-        
-        if (pendingOrder) {
-          console.log('Using order details from localStorage');
-          const orderData = JSON.parse(pendingOrder);
-          
-          // Set basic order details from localStorage
-          setOrderDetails(orderData);
-          console.log('Using order details from localStorage:', orderData);
-          
-          // Clear the pending order after retrieving it
-          localStorage.removeItem('pendingOrder');
+              return; 
+            } else {
+              throw new Error('Tellimuse andmeid ei leitud või serverivastus oli vigane');
+            } 
+          } else {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+          } 
         } else {
-          console.warn('No order information found in localStorage');
-          setError('Tellimuse andmeid ei leitud. Palun kontrollige oma e-posti tellimuse kinnituse saamiseks.');
-          
-          // If no order data is found, redirect to shop after a delay
-          setTimeout(() => {
-            navigate('/epood');
-          }, 5000);
+          throw new Error('Tellimuse viidet ei leitud URL-ist');
         }
       } catch (error) {
         console.error('Error loading order details:', error);
-        setError(error.message || 'Failed to load order details');
+        setError('Tellimuse andmete laadimine ebaõnnestus. Palun võtke ühendust klienditoega.');
+        
+        // If no order data is found, redirect to shop after a delay
+        setTimeout(() => {
+          navigate('/epood');
+        }, 5000);
       } finally {
         setLoading(false);
       }

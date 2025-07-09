@@ -388,25 +388,46 @@ const AdminOrders = () => {
                           <span className="info-value">{orderDetails.shipping_country}</span>
                         </div>
                         {orderDetails.omniva_parcel_machine_name && (
-                          <div className="info-item">
-                            <span className="info-label">Pakiautomaat:</span>
-                            <span className="info-value">{orderDetails.omniva_parcel_machine_name}</span>
-                          </div>
+                            <div className="info-item">
+                              <span className="info-label">Pakiautomaat:</span>
+                              <span className="info-value">{orderDetails.omniva_parcel_machine_name}</span>
+                            </div>
                         )}
                         {orderDetails.omniva_barcode && (
-                          <div className="info-item">
-                            <span className="info-label">Jälgimisnumber:</span>
-                            <span className="info-value">
-                              <a 
-                                href={`https://www.omniva.ee/track?barcode=${orderDetails.omniva_barcode}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="tracking-link"
-                              >
-                                {orderDetails.omniva_barcode} 🔗
-                              </a>
-                            </span>
-                          </div>
+                            <div className="info-item">
+                              <span className="info-label">Jälgimisnumber:</span>
+                              <span className="info-value">
+                                <a 
+                                  href={orderDetails.tracking_url || `https://www.omniva.ee/track?barcode=${orderDetails.omniva_barcode}`} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="tracking-link"
+                                >
+                                  {orderDetails.omniva_barcode} 🔗
+                                </a>
+                              </span>
+                            </div>
+                          )}
+                          {orderDetails.label_url && (
+                            <div className="info-item">
+                              <span className="info-label">Saateleht:</span>
+                              <span className="info-value">
+                                <a 
+                                  href={orderDetails.label_url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="tracking-link"
+                                >
+                                  Lae alla PDF 📄
+                                </a>
+                              </span>
+                            </div>
+                          )}
+                          {orderDetails.shipment_registered_at && (
+                            <div className="info-item">
+                              <span className="info-label">Saadetis registreeritud:</span>
+                              <span className="info-value">{formatDate(orderDetails.shipment_registered_at)}</span>
+                            </div>
                         )}
                       </div>
                     </div>
@@ -504,33 +525,34 @@ const AdminOrders = () => {
                       {orderDetails.omniva_parcel_machine_id && !orderDetails.omniva_barcode && 
                        (orderDetails.status === 'PAID' || orderDetails.status === 'PROCESSING') && (
                         <button 
-                          onClick={() => {
-                            if (window.confirm('Kas olete kindel, et soovite registreerida Omniva saadetise?')) {
-                              // Call the Omniva shipment registration endpoint
-                              fetch('/php/register-omniva-shipment.php', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                  orderId: orderDetails.id
-                                })
-                              })
-                              .then(response => response.json())
-                              .then(data => {
-                                if (data.success) {
-                                  alert(`Omniva saadetis edukalt registreeritud! Jälgimisnumber: ${data.barcode}`);
-                                  // Reload order details to show the new barcode
-                                  loadOrderDetails(orderDetails.id);
-                                } else {
-                                  alert(`Viga: ${data.error}`);
-                                }
-                              })
-                              .catch(err => {
-                                alert(`Viga: ${err.message}`);
-                              });
-                            }
-                          }}
+                         onClick={() => {
+                           if (window.confirm('Kas olete kindel, et soovite registreerida Omniva saadetise?')) {
+                             // Call the Omniva shipment registration endpoint
+                             fetch('/php/register-omniva-shipment.php', {
+                               method: 'POST',
+                               headers: {
+                                 'Content-Type': 'application/json'
+                               },
+                               body: JSON.stringify({
+                                 orderId: orderDetails.id,
+                                 notifyAdmin: true
+                               })
+                             })
+                             .then(response => response.json())
+                             .then(data => {
+                               if (data.success) {
+                                 alert(`Omniva saadetis edukalt registreeritud!\nJälgimisnumber: ${data.barcode}\nSaateleht: ${data.label_url || 'pole saadaval'}\nJälgimislink: ${data.tracking_url || 'pole saadaval'}`);
+                                 // Reload order details to show the new barcode and tracking info
+                                 loadOrderDetails(orderDetails.id);
+                               } else {
+                                 alert(`Viga: ${data.error}`);
+                               }
+                             })
+                             .catch(err => {
+                               alert(`Viga: ${err.message}`);
+                             });
+                           }
+                         }}
                           className="btn btn-status btn-omniva"
                         >
                           Registreeri Omniva saadetis

@@ -1,12 +1,25 @@
 <?php
 // Enable detailed error reporting for development
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors to users, but log them
+ini_set('display_errors', 0); 
+
+// Set up logging
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+$logFile = $logDir . '/payment_notification_log.txt';
 
 // Require the Maksekeskus SDK
 require __DIR__ . '/maksekeskus/vendor/autoload.php';
+require __DIR__ . '/phpmailer/PHPMailer.php';
+require __DIR__ . '/phpmailer/SMTP.php';
+require __DIR__ . '/phpmailer/Exception.php';
+
 use Maksekeskus\Maksekeskus;
 use Maksekeskus\MKException;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
 
 // Set content type to JSON for API responses
 header('Content-Type: application/json');
@@ -18,7 +31,7 @@ $logFile = __DIR__ . '/notification_log.txt';
 function logMessage($message, $data = null) {
     global $logFile;
     $timestamp = date('Y-m-d H:i:s');
-    $logEntry = "$timestamp - $message";
+    $logEntry = "$timestamp - $message"; 
     
     if ($data !== null) {
         $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
@@ -94,6 +107,58 @@ function sendEmail($to, $subject, $message) {
     logMessage("Email sending " . ($success ? "successful" : "failed") . " to $to with subject: $subject");
     
     return $success;
+}
+
+/**
+ * Send email using PHPMailer with SMTP
+ * 
+ * @param string $to Recipient email
+ * @param string $subject Email subject
+ * @param string $message Email body (HTML)
+ * @param string $altMessage Plain text alternative
+ * @param string $replyTo Reply-to email address
+ * @return bool Success status
+ */
+function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $replyTo = 'leen@leen.ee') {
+    global $logFile;
+    
+    try {
+        $mail = new PHPMailer(true);
+        
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.zone.eu';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'leen@leen.ee';
+        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+        
+        // Recipients
+        $mail->setFrom('leen@leen.ee', 'Leen.ee');
+        $mail->addAddress($to);
+        $mail->addReplyTo($replyTo, 'Leen Väränen');
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
+        
+        if (!empty($altMessage)) {
+            $mail->AltBody = $altMessage;
+        } else {
+            // Generate plain text from HTML if not provided
+            $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $message));
+        }
+        
+        $mail->send();
+        logMessage("Email sent successfully to $to with subject: $subject");
+        return true;
+    } catch (Exception $e) {
+        logMessage("Email sending failed to $to: " . $mail->ErrorInfo);
+        return false;
+    }
 }
 
 // Function to create or update order in Supabase
@@ -296,7 +361,7 @@ function processOrder($transactionData, $paymentData) {
         // Send confirmation email if payment is completed
         if ($paymentData->status === 'COMPLETED' && !empty($customerEmail)) {
             $subject = "Teie tellimus #{$orderNumber} on kinnitatud - Leen.ee";
-            
+
             // Store the order reference in the merchant_data for later retrieval
             if ($transaction && isset($transaction->transaction) && isset($transaction->transaction->reference)) {
                 $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
@@ -321,7 +386,7 @@ function processOrder($transactionData, $paymentData) {
             }
             
             // Build a simple HTML email
-            $message = "
+            $emailMessage = "
             <html>
             <head>
                 <title>Tellimuse kinnitus</title>
@@ -386,14 +451,14 @@ function processOrder($transactionData, $paymentData) {
             </body>
             </html>
             ";
-            
+
             // Send email to customer
-            sendEmail($customerEmail, $subject, $message);
-            
+            sendEmailWithPHPMailer($customerEmail, $subject, $emailMessage);
+
             // Also send notification to admin
             $adminEmail = "leen@leen.ee";
             $adminSubject = "Uus tellimus #{$orderNumber} - Leen.ee";
-            sendEmail($adminEmail, $adminSubject, $message);
+            sendEmailWithPHPMailer($adminEmail, $adminSubject, $emailMessage);
             
             // If this is an Omniva parcel machine order, register the shipment
             if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine' && 
@@ -403,7 +468,8 @@ function processOrder($transactionData, $paymentData) {
                 
                 // Make a request to the Omniva shipment registration script
                 $omnivaData = [
-                    'orderId' => $orderId
+                    'orderId' => $orderId,
+                    'notifyAdmin' => true
                 ];
                 
                 $ch = curl_init($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/php/register-omniva-shipment.php');
@@ -421,7 +487,7 @@ function processOrder($transactionData, $paymentData) {
                 
                 if ($error) {
                     logMessage("Error registering Omniva shipment", $error);
-                } else {
+                } else { 
                     $responseData = json_decode($response, true);
                     logMessage("Omniva shipment registration response", $responseData);
                     
@@ -433,6 +499,11 @@ function processOrder($transactionData, $paymentData) {
                         logMessage("Failed to register Omniva shipment", $responseData);
                     }
                 }
+            } else {
+                logMessage("Not an Omniva parcel machine order or missing data", [
+                    'deliveryMethod' => $merchantData['deliveryMethod'] ?? 'not set',
+                    'omnivaParcelMachineId' => $merchantData['omnivaParcelMachineId'] ?? 'not set'
+                ]);
             }
         }
         
@@ -448,7 +519,7 @@ try {
     // Log the notification
     $requestData = file_get_contents('php://input');
     logMessage("Notification received", $requestData);
-    
+
     // Initialize Maksekeskus client
     $shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
     $publicKey = 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
@@ -459,8 +530,8 @@ try {
     
     // Verify the notification
     $request = $_REQUEST;
-    $isValid = $MK->verifyMac($request);
-    
+    $isValid = $MK->verifyMac($request); 
+
     if (!$isValid) {
         logMessage("Invalid MAC signature");
         http_response_code(400);
@@ -476,7 +547,7 @@ try {
     
     // Get the transaction ID
     $transactionId = $data->transaction ?? null;
-    
+
     if (!$transactionId) {
         logMessage("No transaction ID in notification", $data);
         http_response_code(400);
@@ -488,7 +559,7 @@ try {
     try {
         $transaction = $MK->getTransaction($transactionId);
         logMessage("Transaction details fetched", $transaction);
-    } catch (Exception $e) {
+    } catch (\Exception $e) {
         logMessage("Error fetching transaction details", $e->getMessage());
         http_response_code(500);
         echo json_encode(['error' => 'Failed to fetch transaction details']);
@@ -496,8 +567,8 @@ try {
     }
     
     // Process the order in our database
-    $success = processOrder($transaction, $data);
-    
+    $success = processOrder($transaction, $data); 
+
     if ($success) {
         logMessage("Order processed successfully");
         echo json_encode(['status' => 'success']);
@@ -509,8 +580,8 @@ try {
 } catch (MKException $e) {
     logMessage("Maksekeskus Exception", $e->getMessage());
     http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
-} catch (Exception $e) {
+    echo json_encode(['error' => $e->getMessage()]); 
+} catch (\Exception $e) {
     logMessage("General Exception", $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
