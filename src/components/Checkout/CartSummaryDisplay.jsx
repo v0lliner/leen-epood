@@ -27,13 +27,12 @@ const CartSummaryDisplay = ({ cartItems }) => {
               
               {/* Show dimensions if available */}
               {item.dimensions && (
-                <div className="item-dimensions">
-                  {item.dimensions.height && item.dimensions.width && item.dimensions.depth && (
-                    `${item.dimensions.height}×${item.dimensions.width}×${item.dimensions.depth}cm`
+                    {item.dimensions.height && item.dimensions.width && 
+                      `${item.dimensions.height}×${item.dimensions.width}${item.dimensions.depth ? `×${item.dimensions.depth}` : ''}cm`
+                    }
                   )}
                 </div>
               )}
-              
             </div>
             <div className="item-price">{item.price}</div>
           </div>
@@ -69,8 +68,8 @@ const CartSummaryDisplay = ({ cartItems }) => {
         }
         
         .item-image {
-          width: 60px;
-          height: 60px;
+          width: 80px;
+          height: 80px;
           flex-shrink: 0;
           border-radius: 4px;
           overflow: hidden;

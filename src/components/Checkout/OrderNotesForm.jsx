@@ -5,8 +5,6 @@ const OrderNotesForm = ({ formData, onChange }) => {
 
   return (
     <div className="order-notes-form">
-      <h3 className="section-title">{t('checkout.shipping.notes.title')}</h3>
-      
       <div className="form-group">
         <label htmlFor="notes">{t('checkout.shipping.notes.notes')}</label>
         <textarea
@@ -23,14 +21,7 @@ const OrderNotesForm = ({ formData, onChange }) => {
       <style jsx>{`
         .order-notes-form {
           margin-bottom: 32px;
-        }
-        
-        .section-title {
-          font-family: var(--font-heading);
-          font-size: 1.25rem;
-          font-weight: 500;
-          margin-bottom: 24px;
-          color: var(--color-ultramarine);
+          margin-top: -16px;
         }
         
         .form-group {

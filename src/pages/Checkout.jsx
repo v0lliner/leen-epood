@@ -202,19 +202,21 @@ const Checkout = () => {
                   
                   {/* Terms and Conditions */}
                   <div className="checkout-section">
-                    <TermsAndConditionsCheckbox
-                      checked={formData.termsAccepted}
-                      onChange={handleInputChange}
-                      validationError={validationErrors.termsAccepted}
-                    />
-                    
-                    <button 
-                      type="submit"
-                      className="checkout-button"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? t('checkout.summary.processing') : 'VORMISTA OST'}
-                    </button>
+                    <div className="terms-and-submit">
+                      <TermsAndConditionsCheckbox
+                        checked={formData.termsAccepted}
+                        onChange={handleInputChange}
+                        validationError={validationErrors.termsAccepted}
+                      />
+                      
+                      <button 
+                        type="submit"
+                        className="checkout-button"
+                        disabled={isSubmitting}
+                      >
+                        {isSubmitting ? t('checkout.summary.processing') : 'VORMISTA OST'}
+                      </button>
+                    </div>
                   </div>
                 </form>
               </div>
@@ -274,16 +276,20 @@ const Checkout = () => {
         .checkout-button {
           width: 100%;
           padding: 16px;
+          margin-top: 16px;
           background-color: var(--color-ultramarine);
           color: white;
           border: none;
           border-radius: 4px;
-          font-family: var(--font-body);
+          font-family: var(--font-heading);
           font-weight: 600;
           font-size: 1rem;
           cursor: pointer;
           transition: opacity 0.2s ease;
-          margin-top: 24px;
+        }
+        
+        .terms-and-submit {
+          margin-top: 16px;
         }
         
         .checkout-button:hover:not(:disabled) {

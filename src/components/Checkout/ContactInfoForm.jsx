@@ -9,23 +9,6 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
       
       <div className="form-grid">
         <div className="form-group">
-          <label htmlFor="email">{t('checkout.shipping.contact.email')} *</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={formData.email}
-            onChange={onChange}
-            className={`form-input ${validationErrors.email ? 'has-error' : ''}`}
-            placeholder={t('checkout.shipping.contact.email_placeholder')}
-            required
-          />
-          {validationErrors.email && (
-            <div className="error-message">{validationErrors.email}</div>
-          )}
-        </div>
-        
-        <div className="form-group">
           <label htmlFor="firstName">{t('checkout.form.name')} *</label>
           <input
             type="text"
@@ -56,6 +39,23 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
           />
           {validationErrors.lastName && (
             <div className="error-message">{validationErrors.lastName}</div>
+          )}
+        </div>
+        
+        <div className="form-group">
+          <label htmlFor="email">{t('checkout.shipping.contact.email')} *</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={onChange}
+            className={`form-input ${validationErrors.email ? 'has-error' : ''}`}
+            placeholder={t('checkout.shipping.contact.email_placeholder')}
+            required
+          />
+          {validationErrors.email && (
+            <div className="error-message">{validationErrors.email}</div>
           )}
         </div>
         
@@ -106,6 +106,10 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
         .form-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
+          grid-template-areas: 
+            "firstName lastName"
+            "email phone"
+            "company company";
           gap: 24px;
         }
         
@@ -115,13 +119,24 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
           gap: 8px;
         }
         
-        .form-group:first-child {
-          grid-column: 1 / -1;
+        .form-group:nth-child(1) {
+          grid-area: firstName;
         }
         
-        .company-group {
-          grid-column: 2;
-          grid-row: 2;
+        .form-group:nth-child(2) {
+          grid-area: lastName;
+        }
+        
+        .form-group:nth-child(3) {
+          grid-area: email;
+        }
+        
+        .form-group:nth-child(4) {
+          grid-area: phone;
+        }
+        
+        .form-group:nth-child(5) {
+          grid-area: company;
         }
         
         .form-group label {
@@ -158,13 +173,15 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
         @media (max-width: 768px) {
           .form-grid {
             grid-template-columns: 1fr;
+            grid-template-areas: 
+              "firstName"
+              "lastName"
+              "email"
+              "phone"
+              "company";
             gap: 16px;
           }
         }
-          .company-group {
-            grid-column: 1;
-            grid-row: auto;
-          }
       `}</style>
     </div>
   );
