@@ -37,6 +37,22 @@ const PaymentSettings = () => {
     api_open_key: false
   })
 
+  // Form state for Omniva settings
+  const [omnivaFormData, setOmnivaFormData] = useState({
+    customer_code: '',
+    username: '',
+    password: '',
+    test_mode: false,
+    active: true
+  })
+  
+  // Track which Omniva fields have been modified
+  const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
+    customer_code: false,
+    username: false,
+    password: false
+  })
+
   // Active tab state
   const [activeTab, setActiveTab] = useState('maksekeskus')
 
@@ -76,12 +92,32 @@ const PaymentSettings = () => {
       }
 
       // Load Omniva settings
-      // Removed Omniva settings loading
+      loadOmnivaSettings()
     } catch (err) {
       console.error('Error in loadConfig:', err)
       setError('Võrguühenduse viga')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadOmnivaSettings = async () => {
+    try {
+      // Fetch Omniva settings from localStorage or API
+      const omnivaSettings = localStorage.getItem('omnivaSettings')
+      
+      if (omnivaSettings) {
+        const parsedSettings = JSON.parse(omnivaSettings)
+        setOmnivaFormData({
+          customer_code: parsedSettings.customer_code || '',
+          username: parsedSettings.username || '',
+          password: '', // Don't show actual password, just placeholder
+          test_mode: parsedSettings.test_mode || false,
+          active: parsedSettings.active || true
+        })
+      }
+    } catch (error) {
+      console.error('Error loading Omniva settings:', error)
     }
   }
 
@@ -97,6 +133,28 @@ const PaymentSettings = () => {
     // Track modified fields for text inputs
     if (type !== 'checkbox' && ['shop_id', 'api_secret_key', 'api_open_key'].includes(name)) {
       setMaksekeskusModifiedFields(prev => ({
+        ...prev,
+        [name]: true
+      }))
+    }
+    
+    // Clear messages when user starts typing
+    if (error) setError('')
+    if (success) setSuccess('')
+  }
+
+  const handleOmnivaInputChange = (e) => {
+    const { name, value, type, checked } = e.target
+    const newValue = type === 'checkbox' ? checked : value
+    
+    setOmnivaFormData(prev => ({
+      ...prev,
+      [name]: newValue
+    }))
+    
+    // Track modified fields for text inputs
+    if (type !== 'checkbox' && ['customer_code', 'username', 'password'].includes(name)) {
+      setOmnivaModifiedFields(prev => ({
         ...prev,
         [name]: true
       }))
@@ -171,6 +229,45 @@ const PaymentSettings = () => {
     } catch (err) {
       console.error('Error saving config:', err)
       setError('Võrguühenduse viga')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleOmnivaSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      // Validate required fields for new config
+      if (!omnivaFormData.customer_code || !omnivaFormData.username || 
+          (omnivaModifiedFields.password && !omnivaFormData.password)) {
+        setError('Kõik väljad on kohustuslikud')
+        setSaving(false)
+        return
+      }
+
+      // Store in localStorage (in a real app, this would be stored in the database)
+      const settingsToSave = {
+        customer_code: omnivaFormData.customer_code,
+        username: omnivaFormData.username,
+        // Only include password if it was modified
+        ...(omnivaModifiedFields.password && { password: '********' }), // Store masked password
+        test_mode: omnivaFormData.test_mode,
+        active: omnivaFormData.active
+      }
+
+      localStorage.setItem('omnivaSettings', JSON.stringify(settingsToSave))
+      
+      setSuccess('Omniva seaded edukalt salvestatud!')
+      setTimeout(() => setSuccess(''), 3000)
+      
+      // Reset modified fields
+      setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
+    } catch (err) {
+      setError('Seadete salvestamine ebaõnnestus: ' + err.message)
     } finally {
       setSaving(false)
     }
@@ -280,6 +377,13 @@ const PaymentSettings = () => {
           >
             <span className="tab-icon">💳</span>
             <span>Maksekeskus</span>
+          </button>
+          <button 
+            className={`tab-button ${activeTab === 'omniva' ? 'active' : ''}`}
+            onClick={() => setActiveTab('omniva')}
+          >
+            <span className="tab-icon">📦</span>
+            <span>Omniva</span>
           </button>
         </div>
 
@@ -475,7 +579,7 @@ const PaymentSettings = () => {
             </div>
           </div>
           
-          <div className="settings-card">
+          <div className={`settings-card ${activeTab === 'maksekeskus' ? '' : 'hidden'}`}>
             <h2>Maksekeskuse info</h2>
             
             <div className="info-cards">
@@ -549,6 +653,177 @@ const PaymentSettings = () => {
             </div>
           </div>
 
+          {/* Omniva Settings */}
+          <div className={`settings-card ${activeTab === 'omniva' ? '' : 'hidden'}`}>
+            <h2>Omniva API seaded</h2>
+            
+            <div className="config-summary">
+              <div className="config-status-card">
+                <div className="status-header">
+                  <h3>Omniva staatus</h3>
+                  <span className={`status-badge ${omnivaFormData.active ? 'status-active' : 'status-inactive'}`}>
+                    {omnivaFormData.active ? 'Aktiivne' : 'Mitteaktiivne'}
+                  </span>
+                </div>
+                <div className="status-body">
+                  <div className="status-row">
+                    <span className="status-label">Testrežiim:</span>
+                    <span className={`status-indicator ${omnivaFormData.test_mode ? 'status-test' : 'status-live'}`}>
+                      {omnivaFormData.test_mode ? 'Sees (Testimine)' : 'Väljas (Live)'}
+                    </span>
+                  </div>
+                  <div className="status-row">
+                    <span className="status-label">Seadistus:</span>
+                    <span className="status-value">
+                      {omnivaFormData.customer_code ? 'Seadistatud' : 'Puudub'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="config-info-card">
+                <h3>Mis on Omniva?</h3>
+                <p>Omniva API võimaldab automaatselt registreerida saadetisi ja genereerida jälgimisnumbreid pakiautomaati saadetavatele tellimustele.</p>
+                <p>Omniva pakiautomaadid on saadaval Eestis, Lätis ja Leedus.</p>
+              </div>
+            </div>
+            
+            <div className="config-form-section">
+              <h3 className="form-section-title">Omniva API seadistus</h3>
+              
+              <form onSubmit={handleOmnivaSubmit} className="config-form">
+                <div className="form-group">
+                  <label htmlFor="customer_code">Kliendikood</label>
+                  <input
+                    type="text"
+                    id="customer_code"
+                    name="customer_code"
+                    value={omnivaFormData.customer_code}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta Omniva kliendikood"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="username">Kasutajanimi</label>
+                  <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    value={omnivaFormData.username}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta Omniva kasutajanimi"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="password">Parool</label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    value={omnivaFormData.password}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta Omniva parool"
+                  />
+                  <small className="form-hint">
+                    {omnivaFormData.password === '' && localStorage.getItem('omnivaSettings') ? 
+                      'Jäta tühjaks, et säilitada olemasolev parool' : 
+                      'Sisesta Omniva API parool'}
+                  </small>
+                </div>
+                
+                <div className="form-group checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="test_mode"
+                      checked={omnivaFormData.test_mode}
+                      onChange={handleOmnivaInputChange}
+                      className="form-checkbox"
+                    />
+                    <span>Testrežiim</span>
+                  </label>
+                  <small className="form-hint">
+                    Testrežiimis ei toimu päris saadetiste registreerimist. Kasutage seda ainult testimiseks.
+                  </small>
+                </div>
+                
+                <div className="form-group checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="active"
+                      checked={omnivaFormData.active}
+                      onChange={handleOmnivaInputChange}
+                      className="form-checkbox"
+                    />
+                    <span>Aktiivne</span>
+                  </label>
+                </div>
+                
+                <div className="form-actions">
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      loadOmnivaSettings();
+                      setOmnivaModifiedFields({
+                        customer_code: false,
+                        username: false,
+                        password: false
+                      });
+                    }}
+                    className="btn btn-secondary"
+                  >
+                    Tühista
+                  </button>
+                  <button 
+                    type="submit"
+                    disabled={saving}
+                    className="btn btn-primary"
+                  >
+                    {saving ? 'Salvestamine...' : 'Salvesta Omniva seaded'}
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <div className="info-cards">
+              <div className="info-card">
+                <div className="info-card-header">
+                  <div className="info-card-icon">📦</div>
+                  <h3>Omniva seadistamine</h3>
+                </div>
+                <div className="info-card-body">
+                  <p>Omniva API seadistamiseks on vaja kliendikood, kasutajanimi ja parool, mille saate Omniva klienditeenindusest.</p>
+                  <p>Kui teil pole veel Omniva kontot, võtke ühendust Omniva klienditeenindusega telefonil 661 6616 või e-posti aadressil info@omniva.ee.</p>
+                  <a href="https://www.omniva.ee/ari" target="_blank" rel="noopener noreferrer" className="info-link">
+                    Külasta Omniva ärikliendi lehte →
+                  </a>
+                </div>
+              </div>
+              
+              <div className="info-card">
+                <div className="info-card-header">
+                  <div className="info-card-icon">🔄</div>
+                  <h3>Kuidas see töötab?</h3>
+                </div>
+                <div className="info-card-body">
+                  <ol className="numbered-list">
+                    <li>Klient valib ostukorvis Omniva pakiautomaadi.</li>
+                    <li>Pärast makse tegemist registreeritakse saadetis automaatselt Omniva süsteemis.</li>
+                    <li>Klient saab e-kirja jälgimisnumbriga.</li>
+                    <li>Tellimuste lehel näete saadetise staatust ja jälgimisnumbrit.</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

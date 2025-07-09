@@ -55,7 +55,7 @@ const Privaatsuspoliitika = () => {
                     <p>Müüja võib jagada Ostja isikuandmeid järgmiste kolmandate osapooltega:</p>
                     <ul>
                       <li>Tarneettevõtted (tellimuse kättetoimetamiseks)</li>
-                      <li>Maksekeskus (maksete töötlemiseks)</li>
+                      <li>Makseteenuse pakkujad (maksete töötlemiseks)</li>
                       <li>IT-teenuste pakkujad (veebilehe ja andmete haldamiseks)</li>
                     </ul>
                     <p>Müüja jagab isikuandmeid kolmandate osapooltega ainult ulatuses, mis on vajalik teenuse osutamiseks või seadusest tulenevate kohustuste täitmiseks.</p>
@@ -155,7 +155,7 @@ const Privaatsuspoliitika = () => {
                     <p>The Seller may share the Buyer's personal data with the following third parties:</p>
                     <ul>
                       <li>Delivery companies (for order delivery)</li>
-                      <li>Maksekeskus (for payment processing)</li>
+                      <li>Payment service providers (for payment processing)</li>
                       <li>IT service providers (for website and data management)</li>
                     </ul>
                     <p>The Seller shares personal data with third parties only to the extent necessary to provide the service or to fulfill legal obligations.</p>
