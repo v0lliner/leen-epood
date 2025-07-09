@@ -36,15 +36,6 @@ const PaymentSettings = () => {
     api_secret_key: false,
     api_open_key: false
   })
-
-  // Form state for Omniva settings
-  const [omnivaFormData, setOmnivaFormData] = useState({
-    customer_code: '',
-    username: '',
-    password: '',
-    test_mode: false,
-    active: true
-  })
   
   // Track which Omniva fields have been modified
   const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
