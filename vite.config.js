@@ -4,15 +4,6 @@ import viteImagemin from 'vite-plugin-imagemin'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  server: {
-    proxy: {
-      '/php': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/php/, '/php')
-      }
-    }
-  },
   plugins: [
     react(),
     viteImagemin({
