@@ -37,7 +37,7 @@ const TermsAndConditionsCheckbox = ({ checked, onChange, validationError }) => {
 
       <style jsx>{`
         .terms-checkbox {
-          margin-bottom: 24px;
+          margin-bottom: 32px;
         }
         
         .checkbox-label {
