@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0777, true);
+        $mail = new PHPMailer(true);
 }
 $logFile = $logDir . '/payment_notification.log';
 
@@ -22,10 +22,6 @@ require __DIR__ . '/maksekeskus/vendor/autoload.php';
 require __DIR__ . '/phpmailer/PHPMailer.php';
 require __DIR__ . '/phpmailer/SMTP.php';
 require __DIR__ . '/phpmailer/Exception.php';
-// Require PHPMailer
-require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/Exception.php';
-require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/PHPMailer.php';
-require_once __DIR__ . '/../vendor/phpmailer/phpmailer/src/SMTP.php';
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
@@ -648,58 +644,6 @@ try {
         logMessage("Invalid MAC signature");
         http_response_code(400);
         echo json_encode(['error' => 'Invalid signature']);
-        exit();
-    }
-    
-    logMessage("MAC signature verified successfully");
-    
-    // Extract the notification data
-    $data = $MK->extractRequestData($request);
-    logMessage("Extracted data", $data);
-    
-    // Get the transaction ID
-    $transactionId = $data->transaction ?? null;
-    $reference = isset($data->reference) ? $data->reference : null;
-
-    if (!$transactionId) {
-        logMessage("No transaction ID in notification", $data);
-        http_response_code(400);
-        echo json_encode(['error' => 'Missing transaction ID']);
-        exit();
-    }
-    
-    // Fetch the full transaction details from Maksekeskus
-    try {
-        $transaction = $MK->getTransaction($transactionId);
-        logMessage("Transaction details fetched", $transaction);
-    } catch (\Exception $e) {
-        logMessage("Error fetching transaction details", $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to fetch transaction details']);
-        exit();
-    }
-    
-    // Extract merchant data
-    $merchantData = json_decode(isset($transaction->transaction->merchant_data) ? $transaction->transaction->merchant_data : '{}', true);
-    logMessage("Merchant data", $merchantData);
-    
-    // Return success response
-    // Process the order in our database
-    $success = processOrder($transaction, $data); 
-
-    if ($success) {
-        logMessage("Order processed successfully");
-        echo json_encode(['status' => 'success']);
-    } else {
-        logMessage("Order processing failed");
-        http_response_code(500);
-        echo json_encode(['error' => 'Order processing failed']);
-    }
-} catch (MKException $e) {
-    logMessage("Maksekeskus Exception", $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]); 
-} catch (\Exception $e) {
     logMessage("General Exception", $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
