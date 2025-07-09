@@ -36,7 +36,7 @@ export default function PaymentSettings() {
       setLoading(true);
       
       // Load payment config
-      const paymentData = await maksekeskusConfigService.getConfig();
+      const paymentData = await maksekeskusConfigService.getMaksekeskusConfig();
       if (paymentData) {
         setPaymentConfig(paymentData);
       }
