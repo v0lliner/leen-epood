@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0777, true);
+    mkdir($logDir, 0755, true);
 }
 $logFile = $logDir . '/payment_notification.log';
 
@@ -57,11 +57,6 @@ function logMessage($message, $data = null) {
 
 function sendEmail($to, $subject, $message, $replyTo = null) {
     try {
-        // Load PHPMailer
-        require_once __DIR__ . '/phpmailer/PHPMailer.php';
-        require_once __DIR__ . '/phpmailer/SMTP.php';
-        require_once __DIR__ . '/phpmailer/Exception.php';
-        
         $mail = new PHPMailer\PHPMailer\PHPMailer(true);
         
         // Server settings
@@ -69,7 +64,7 @@ function sendEmail($to, $subject, $message, $replyTo = null) {
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'Leeeen484!';
+        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
@@ -528,7 +523,7 @@ function sendEmail($to, $subject, $message, $replyTo = null, $attachments = []) 
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'Leeeen484!';
+        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
@@ -595,7 +590,7 @@ function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $repl
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'Leeeen484!';
+        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
