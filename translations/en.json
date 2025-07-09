@@ -226,21 +226,10 @@
           "lithuania": "Lithuania"
         }
       },
-      "omniva": {
-        "title": "Omniva Parcel Machine",
-        "description": "Delivery in 1-3 business days",
-        "price": "3.99€", 
-        "select_machine": "Select Parcel Machine",
-        "select_placeholder": "Choose a parcel machine...",
-        "loading": "Loading parcel machines...",
-        "no_machines": "No parcel machines found for this country",
-        "fetch_error": "Failed to load parcel machines",
-        "required": "Please select a parcel machine"
-      },
       "smartpost": {
         "title": "SmartPost Parcel Machine",
         "description": "Delivery in 1-3 business days",
-        "price": "3.99€" 
+        "price": "3.99€"
       },
       "courier": {
         "title": "DPD Courier",
@@ -364,7 +353,7 @@
     "intro": "Here you'll find answers to questions I'm asked most often. If your question remains unanswered, feel free to get in touch!",
     "shipping": {
       "question": "How does order shipping work and how quickly will my order arrive?",
-      "answer": "I send all orders via Estonian Post within 1-3 working days after order confirmation. In Estonia, orders usually arrive within 2-4 working days. I always include a small personal note with each order – it's my way of saying thank you for choosing handcraft.\n\nLarger ceramic products are packed with extra care to ensure they arrive safely. I always use recycled packaging because sustainability is important to me."
+      "answer": "I send all orders within 1-3 working days after order confirmation. In Estonia, orders usually arrive within 2-4 working days. I always include a small personal note with each order – it's my way of saying thank you for choosing handcraft.\n\nLarger ceramic products are packed with extra care to ensure they arrive safely. I always use recycled packaging because sustainability is important to me."
     },
     "uniqueness": {
       "question": "Is each product truly unique? Why can't I order exactly the same product again?",

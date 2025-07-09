@@ -226,21 +226,10 @@
           "lithuania": "Leedu"
         }
       },
-      "omniva": {
-        "title": "Omniva pakiautomaat",
-        "description": "Tarne 1-3 tööpäeva jooksul",
-        "price": "3.99€", 
-        "select_machine": "Vali pakiautomaat",
-        "select_placeholder": "Vali pakiautomaat...",
-        "loading": "Laadin pakiautomaate...",
-        "no_machines": "Sellest riigist ei leitud pakiautomaate",
-        "fetch_error": "Pakiautomaatide laadimine ebaõnnestus",
-        "required": "Palun valige pakiautomaat"
-      },
       "smartpost": {
         "title": "SmartPost pakiautomaat",
         "description": "Tarne 1-3 tööpäeva jooksul",
-        "price": "3.99€" 
+        "price": "3.99€"
       },
       "courier": {
         "title": "DPD kuller",
@@ -364,7 +353,7 @@
     "intro": "Siin leiate vastused küsimustele, mida mulle kõige sagedamini esitatakse. Kui teie küsimus jääb vastuseta, võtke julgelt ühendust!",
     "shipping": {
       "question": "Kuidas toimub tellimuste saatmine ja kui kiiresti jõuab tellimus kohale?",
-      "answer": "Saadan kõik tellimused Eesti Posti kaudu 1-3 tööpäeva jooksul pärast tellimuse kinnitamist. Eestis jõuab tellimus tavaliselt kohale 2-4 tööpäeva jooksul. Iga tellimuse juurde panen alati väikese isikliku märkme – see on minu viis öelda aitäh, et valisite käsitöö.\n\nSuuremad keraamikatooted pakendatakse eriti hoolikalt, et need tervena kohale jõuaksid. Kasutan alati taaskasutatud pakendeid, sest jätkusuutlikkus on mulle oluline."
+      "answer": "Saadan kõik tellimused 1-3 tööpäeva jooksul pärast tellimuse kinnitamist. Eestis jõuab tellimus tavaliselt kohale 2-4 tööpäeva jooksul. Iga tellimuse juurde panen alati väikese isikliku märkme – see on minu viis öelda aitäh, et valisite käsitöö.\n\nSuuremad keraamikatooted pakendatakse eriti hoolikalt, et need tervena kohale jõuaksid. Kasutan alati taaskasutatud pakendeid, sest jätkusuutlikkus on mulle oluline."
     },
     "uniqueness": {
       "question": "Kas iga toode on tõesti ainulaadne? Miks ei saa täpselt sama toodet uuesti tellida?",

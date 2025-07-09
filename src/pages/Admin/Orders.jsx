@@ -387,35 +387,6 @@ const AdminOrders = () => {
                           <span className="info-label">Riik:</span>
                           <span className="info-value">{orderDetails.shipping_country}</span>
                         </div>
-                        {orderDetails.omniva_parcel_machine_name && (
-                          <div className="info-item">
-                            <span className="info-label">Pakiautomaat:</span>
-                            <span className="info-value">{orderDetails.omniva_parcel_machine_name}</span>
-                          </div>
-                        )}
-                        {orderDetails.omniva_barcode && (
-                          <div className="info-item">
-                            <span className="info-label">Jälgimisnumber:</span>
-                            <span className="info-value">
-                              <a 
-                                href={`https://www.omniva.ee/track?barcode=${orderDetails.omniva_barcode}`} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="tracking-link"
-                              >
-                                {orderDetails.omniva_barcode} 🔗
-                              </a>
-                            </span>
-                          </div>
-                        )}
-                        {orderDetails.omniva_shipment_status && (
-                          <div className="info-item">
-                            <span className="info-label">Saadetise staatus:</span>
-                            <span className={`info-value status-badge status-${orderDetails.omniva_shipment_status.toLowerCase()}`}>
-                              {orderDetails.omniva_shipment_status}
-                            </span>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>
@@ -496,43 +467,6 @@ const AdminOrders = () => {
                           className="btn btn-status btn-processing"
                         >
                           Märgi töötlemisele
-                        </button>
-                      )}
-                      
-                      {/* Register Omniva shipment button */}
-                      {orderDetails.omniva_parcel_machine_id && !orderDetails.omniva_barcode && 
-                       (orderDetails.status === 'PAID' || orderDetails.status === 'PROCESSING') && (
-                        <button 
-                          onClick={() => {
-                            if (window.confirm('Kas olete kindel, et soovite registreerida Omniva saadetise?')) {
-                              // Call the Omniva shipment registration endpoint
-                              fetch('/php/omniva-shipment-registration.php', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json'
-                                },
-                                body: JSON.stringify({
-                                  orderId: orderDetails.id
-                                })
-                              })
-                              .then(response => response.json())
-                              .then(data => {
-                                if (data.success) {
-                                  alert(`Omniva saadetis edukalt registreeritud! Jälgimisnumber: ${data.barcode}`);
-                                  // Reload order details to show the new barcode
-                                  loadOrderDetails(orderDetails.id);
-                                } else {
-                                  alert(`Viga: ${data.error}`);
-                                }
-                              })
-                              .catch(err => {
-                                alert(`Viga: ${err.message}`);
-                              });
-                            }
-                          }}
-                          className="btn btn-status btn-omniva"
-                        >
-                          Registreeri Omniva saadetis
                         </button>
                       )}
                       
@@ -1053,11 +987,6 @@ const AdminOrders = () => {
 
         .btn-shipped {
           background-color: #17a2b8;
-          color: white;
-        }
-
-        .btn-omniva {
-          background-color: #f47920;
           color: white;
         }
 

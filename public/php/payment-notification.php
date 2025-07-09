@@ -151,9 +151,7 @@ function processOrder($transactionData, $paymentData) {
             'currency' => $transactionData->transaction->currency,
             'status' => $orderStatus,
             'notes' => $merchantData['notes'] ?? '',
-            'order_number' => $orderNumber,
-            'omniva_parcel_machine_id' => $merchantData['omnivaParcelMachineId'] ?? null,
-            'omniva_parcel_machine_name' => $merchantData['omnivaParcelMachineName'] ?? null
+            'order_number' => $orderNumber
         ];
         
         // If order exists, update it
@@ -302,14 +300,6 @@ function processOrder($transactionData, $paymentData) {
                 $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
                 $merchantData['order_reference'] = $orderReference;
                 
-                // Store delivery method information in merchant_data
-                if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine') {
-                    logMessage("Omniva delivery method detected", [
-                        'parcelMachineId' => $merchantData['omnivaParcelMachineId'] ?? 'not set',
-                        'parcelMachineName' => $merchantData['omnivaParcelMachineName'] ?? 'not set'
-                    ]);
-                }
-                
                 // Update the transaction with the new merchant_data
                 try {
                     $MK->addTransactionMeta($transaction->transaction->id, [
@@ -349,15 +339,6 @@ function processOrder($transactionData, $paymentData) {
                         <p><strong>Telefon:</strong> {$customerPhone}</p>
                         <p><strong>Summa:</strong> {$transactionData->transaction->amount} {$transactionData->transaction->currency}</p>
                         
-                        <!-- Display Omniva parcel machine info if applicable -->";
-            
-            if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine' && !empty($merchantData['omnivaParcelMachineName'])) {
-                $message .= "
-                        <p><strong>Tarneviis:</strong> Omniva pakiautomaat</p>
-                        <p><strong>Pakiautomaat:</strong> " . htmlspecialchars($merchantData['omnivaParcelMachineName']) . "</p>";
-            }
-            
-            $message .= "
                     </div>
                     
                     <h2>Tellitud tooted:</h2>";
@@ -394,46 +375,6 @@ function processOrder($transactionData, $paymentData) {
             $adminEmail = "leen@leen.ee";
             $adminSubject = "Uus tellimus #{$orderNumber} - Leen.ee";
             sendEmail($adminEmail, $adminSubject, $message);
-            
-            // If this is an Omniva parcel machine order, register the shipment
-            if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine' && 
-                !empty($merchantData['omnivaParcelMachineId'])) {
-                
-                logMessage("Initiating Omniva shipment registration for order", $orderId);
-                
-                // Make a request to the Omniva shipment registration script
-                $omnivaData = [
-                    'orderId' => $orderId
-                ];
-                
-                $ch = curl_init($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/php/omniva-shipment-registration.php');
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($omnivaData));
-                curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-                curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-                
-                $response = curl_exec($ch);
-                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                $error = curl_error($ch);
-                
-                curl_close($ch);
-                
-                if ($error) {
-                    logMessage("Error registering Omniva shipment", $error);
-                } else {
-                    $responseData = json_decode($response, true);
-                    logMessage("Omniva shipment registration response", $responseData);
-                    
-                    if ($httpCode >= 200 && $httpCode < 300 && isset($responseData['success']) && $responseData['success']) {
-                        logMessage("Omniva shipment registered successfully", [
-                            'barcode' => $responseData['barcode'] ?? 'not provided'
-                        ]);
-                    } else {
-                        logMessage("Failed to register Omniva shipment", $responseData);
-                    }
-                }
-            }
         }
         
         return true;
