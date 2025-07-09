@@ -1,0 +1,131 @@
+<?php
+// Enable error reporting for development
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors to users, but log them
+
+// Set content type to JSON
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// Log file for debugging
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0777, true);
+}
+$logFile = $logDir . '/omniva_shipping_price.log';
+
+// Function to log messages
+function logMessage($message, $data = null) {
+    global $logFile;
+    $timestamp = date('Y-m-d H:i:s');
+    $logEntry = "$timestamp - $message";
+    
+    if ($data !== null) {
+        $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
+    }
+    
+    file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+}
+
+// Function to connect to Supabase via REST API
+function supabaseRequest($endpoint, $method = 'GET', $data = null) {
+    $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
+    $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.wbsLJEL_U-EHNkDe4CFt6-dPNpWHe50WKCQqsoyYdLs';
+    
+    $url = $supabaseUrl . $endpoint;
+    
+    $ch = curl_init($url);
+    
+    $headers = [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $supabaseKey,
+        'apikey: ' . $supabaseKey
+    ];
+    
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    
+    if ($method === 'POST') {
+        curl_setopt($ch, CURLOPT_POST, true);
+        if ($data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
+    } else if ($method === 'PATCH' || $method === 'PUT') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        if ($data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
+    } else if ($method === 'DELETE') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+    }
+    
+    $response = curl_exec($ch);
+    $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    
+    curl_close($ch);
+    
+    if ($error) {
+        logMessage("cURL Error", $error);
+        return ['error' => $error, 'status' => $statusCode];
+    }
+    
+    return [
+        'data' => json_decode($response, true),
+        'status' => $statusCode
+    ];
+}
+
+try {
+    logMessage("Starting shipping price request");
+    
+    // Query the omniva_shipping_settings table
+    $settingsResult = supabaseRequest(
+        "/rest/v1/omniva_shipping_settings?active=eq.true&select=*",
+        'GET'
+    );
+    
+    if ($settingsResult['status'] !== 200) {
+        logMessage("Error fetching shipping settings", $settingsResult);
+        throw new Exception("Failed to fetch shipping settings");
+    }
+    
+    $settings = $settingsResult['data'][0] ?? null;
+    
+    if (!$settings) {
+        // If no settings found, return default price
+        logMessage("No shipping settings found, using default");
+        echo json_encode([
+            'success' => true,
+            'price' => 3.99,
+            'currency' => 'EUR'
+        ]);
+    } else {
+        logMessage("Successfully fetched shipping settings", $settings);
+        
+        echo json_encode([
+            'success' => true,
+            'price' => (float)$settings['price'],
+            'currency' => $settings['currency']
+        ]);
+    }
+    
+} catch (Exception $e) {
+    logMessage("Exception", $e->getMessage());
+    
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage(),
+        'price' => 3.99, // Fallback price
+        'currency' => 'EUR'
+    ]);
+}
