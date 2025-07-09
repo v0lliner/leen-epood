@@ -10,13 +10,16 @@ const PaymentSettings = () => {
   const [config, setConfig] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [shippingLoading, setShippingLoading] = useState(true)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   
   // Omniva shipping settings
-  const [omnivaShippingSettings, setOmnivaShippingSettings] = useState(null)
-  const [shippingPrice, setShippingPrice] = useState('3.99')
+  const [omnivaShippingSettings, setOmnivaShippingSettings] = useState({
+    id: null,
+    price: 3.99,
+    currency: 'EUR',
+    active: true
+  })
   
   // Omniva shipping settings state
   const [omnivaShippingFormData, setOmnivaShippingFormData] = useState({
@@ -32,14 +35,6 @@ const PaymentSettings = () => {
     api_secret_key: '',
     api_open_key: '',
     test_mode: false,
-    active: true
-  })
-
-  // State for Omniva shipping settings
-  const [omnivaShippingSettings, setOmnivaShippingSettings] = useState({
-    id: null,
-    price: 3.99,
-    currency: 'EUR',
     active: true
   })
 
@@ -71,10 +66,6 @@ const PaymentSettings = () => {
 
   useEffect(() => {
     loadConfig()
-    loadOmnivaShippingSettings()
-  }, [])
-  
-  useEffect(() => {
     loadOmnivaShippingSettings()
   }, [])
 
@@ -120,23 +111,6 @@ const PaymentSettings = () => {
   }
 
   const loadOmnivaShippingSettings = async () => {
-    setShippingLoading(true)
-    try {
-      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
-      
-      if (error) {
-        console.warn('Failed to load Omniva shipping settings:', error)
-      } else if (data) {
-        setOmnivaShippingSettings(data)
-      }
-    } catch (err) {
-      console.error('Error loading Omniva shipping settings:', err)
-    } finally {
-      setShippingLoading(false)
-    }
-  }
-
-  const loadOmnivaShippingSettings = async () => {
     try {
       const { data, error } = await shippingSettingsService.getOmnivaSettings()
       
@@ -145,7 +119,12 @@ const PaymentSettings = () => {
         return
       }
       
-      setOmnivaShippingSettings(data)
+      setOmnivaShippingSettings(data || {
+        id: null,
+        price: 3.99,
+        currency: 'EUR',
+        active: true
+      })
       
       if (data) {
         setOmnivaShippingFormData({
@@ -196,20 +175,6 @@ const PaymentSettings = () => {
         [name]: true
       }))
     }
-    
-    // Clear messages when user starts typing
-    if (error) setError('')
-    if (success) setSuccess('')
-  }
-
-  const handleOmnivaShippingInputChange = (e) => {
-    const { name, value, type, checked } = e.target
-    const newValue = type === 'checkbox' ? checked : value
-    
-    setOmnivaShippingSettings(prev => ({
-      ...prev,
-      [name]: newValue
-    }))
     
     // Clear messages when user starts typing
     if (error) setError('')
@@ -323,55 +288,6 @@ const PaymentSettings = () => {
 
   const handleOmnivaShippingSubmit = async (e) => {
     e.preventDefault()
-    setSaving(true)
-    setError('')
-    setSuccess('')
-
-    try {
-      // Validate price
-      const price = parseFloat(omnivaShippingSettings.price)
-      if (isNaN(price) || price <= 0) {
-        setError('Hind peab olema positiivne number')
-        setSaving(false)
-        return
-      }
-
-      let result
-      if (omnivaShippingSettings.id) {
-        // Update existing settings
-        result = await shippingSettingsService.updateOmnivaShippingSettings(
-          omnivaShippingSettings.id, 
-          {
-            price: price,
-            currency: omnivaShippingSettings.currency,
-            active: omnivaShippingSettings.active
-          }
-        )
-      } else {
-        // Create new settings
-        result = await shippingSettingsService.createOmnivaShippingSettings({
-          price: price,
-          currency: omnivaShippingSettings.currency,
-          active: omnivaShippingSettings.active
-        })
-      }
-
-      if (result.error) {
-        setError(result.error.message || 'Viga seadete salvestamisel')
-      } else {
-        setOmnivaShippingSettings(result.data)
-        setSuccess('Omniva tarnehind edukalt salvestatud!')
-        setTimeout(() => setSuccess(''), 3000)
-      }
-    } catch (err) {
-      setError('Võrguühenduse viga: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleOmnivaShippingSubmit = async (e) => {
-    e.preventDefault()
     setSavingOmnivaSettings(true)
     setError('')
     setSuccess('')
@@ -453,44 +369,6 @@ const PaymentSettings = () => {
       setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
     } catch (err) {
       setError('Seadete salvestamine ebaõnnestus: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleShippingPriceSubmit = async (e) => {
-    e.preventDefault()
-    
-    if (!omnivaShippingSettings?.id) {
-      setError('Omniva shipping settings not found')
-      return
-    }
-    
-    const price = parseFloat(shippingPrice)
-    if (isNaN(price) || price <= 0) {
-      setError('Please enter a valid price greater than 0')
-      return
-    }
-    
-    setSaving(true)
-    setError('')
-    setSuccess('')
-    
-    try {
-      const { data, error } = await shippingSettingsService.updateOmnivaShippingPrice(
-        omnivaShippingSettings.id,
-        price
-      )
-      
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess('Omniva shipping price updated successfully!')
-        setOmnivaShippingSettings(data)
-        setTimeout(() => setSuccess(''), 3000)
-      }
-    } catch (err) {
-      setError('Network error occurred')
     } finally {
       setSaving(false)
     }
@@ -921,7 +799,7 @@ const PaymentSettings = () => {
                     type="number"
                     id="price"
                     name="price"
-                    value={omnivaShippingSettings.price}
+                    value={omnivaShippingFormData.price}
                     onChange={handleOmnivaShippingInputChange}
                     className="form-input"
                     placeholder="Sisesta tarnehind"
@@ -936,7 +814,7 @@ const PaymentSettings = () => {
                   <select
                     id="currency"
                     name="currency"
-                    value={omnivaShippingSettings.currency}
+                    value={omnivaShippingFormData.currency}
                     onChange={handleOmnivaShippingInputChange}
                     className="form-input"
                     required
@@ -950,7 +828,7 @@ const PaymentSettings = () => {
                     <input
                       type="checkbox"
                       name="active"
-                      checked={omnivaShippingSettings.active}
+                      checked={omnivaShippingFormData.active}
                       onChange={handleOmnivaShippingInputChange}
                       className="form-checkbox"
                     />
@@ -968,10 +846,10 @@ const PaymentSettings = () => {
                   </button>
                   <button 
                     type="submit"
-                    disabled={saving || shippingLoading}
+                    disabled={savingOmnivaSettings}
                     className="btn btn-primary"
                   >
-                    {saving ? 'Salvestamine...' : 'Salvesta tarnehind'}
+                    {savingOmnivaSettings ? 'Salvestamine...' : 'Salvesta tarnehind'}
                   </button>
                 </div>
               </form>
@@ -1001,37 +879,6 @@ const PaymentSettings = () => {
                     </span>
                   </div>
                 </div>
-              </div>
-              
-              <div className="config-info-card">
-                <h3>Omniva tarne hind</h3>
-                <form onSubmit={handleShippingPriceSubmit} className="shipping-price-form">
-                  <div className="form-group">
-                    <label htmlFor="shipping_price">Pakiautomaadi tarne hind</label>
-                    <div className="price-input-wrapper">
-                      <input
-                        type="text"
-                        id="shipping_price"
-                        value={shippingPrice}
-                        onChange={(e) => setShippingPrice(e.target.value)}
-                        className="form-input price-input"
-                        placeholder="3.99"
-                        required
-                      />
-                      <span className="currency-symbol">€</span>
-                    </div>
-                    <small className="form-hint">
-                      See hind kuvatakse klientidele ostukorvis Omniva pakiautomaadi valiku juures.
-                    </small>
-                  </div>
-                  <button 
-                    type="submit"
-                    disabled={saving}
-                    className="btn btn-primary shipping-price-btn"
-                  >
-                    {saving ? 'Salvestamine...' : 'Uuenda tarne hinda'}
-                  </button>
-                </form>
               </div>
             </div>
             
@@ -1549,37 +1396,11 @@ const PaymentSettings = () => {
         .form-input {
           padding: 12px 16px;
           border: 1px solid #e2e8f0;
-          border-radius: 8px 0 0 8px;
+          border-radius: 8px;
           font-family: var(--font-body);
           font-size: 1rem;
           transition: all 0.2s ease;
           background-color: white;
-        }
-
-        .price-input-wrapper {
-          display: flex;
-          align-items: stretch;
-        }
-
-        .currency-symbol {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background-color: #f1f5f9;
-          border: 1px solid #e2e8f0;
-          border-left: none;
-          border-radius: 0 8px 8px 0;
-          padding: 0 12px;
-          font-weight: 500;
-          color: #64748b;
-        }
-
-        .shipping-price-form {
-          margin-top: 16px;
-        }
-
-        .shipping-price-btn {
-          margin-top: 16px;
         }
 
         .form-input:focus {
