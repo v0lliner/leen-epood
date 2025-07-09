@@ -65,9 +65,6 @@ const PaymentSettings = () => {
     loadOmnivaShippingSettings()
   }, [])
   
-  useEffect(() => {
-    loadOmnivaShippingSettings()
-  }, [])
 
   const loadConfig = async () => {
     setLoading(true)
@@ -110,29 +107,6 @@ const PaymentSettings = () => {
     }
   }
 
-  const loadOmnivaShippingSettings = async () => {
-    try {
-      const { data, error } = await shippingSettingsService.getOmnivaSettings()
-      
-      if (error) {
-        console.error('Error loading Omniva shipping settings:', error)
-        return
-      }
-      
-      setOmnivaShippingSettings(data)
-      
-      if (data) {
-        setOmnivaShippingFormData({
-          id: data.id,
-          price: data.price.toString(),
-          currency: data.currency,
-          active: data.active
-        })
-      }
-    } catch (err) {
-      console.error('Error in loadOmnivaShippingSettings:', err)
-    }
-  }
 
   const loadOmnivaSettings = async () => {
     try {
@@ -156,11 +130,22 @@ const PaymentSettings = () => {
 
   const loadOmnivaShippingSettings = async () => {
     try {
-      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
+      const { data, error } = await shippingSettingsService.getOmnivaSettings()
       
       if (error) {
         console.error('Error loading Omniva shipping settings:', error)
-      } else if (data) {
+        return
+      }
+      
+      setOmnivaShippingSettings(data)
+      
+      if (data) {
+        setOmnivaShippingFormData({
+          id: data.id,
+          price: data.price.toString(),
+          currency: data.currency,
+          active: data.active
+        })
         setOmnivaShippingSettings(data)
         setShippingPrice(data.price.toString())
       }
