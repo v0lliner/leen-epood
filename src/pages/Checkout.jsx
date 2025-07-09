@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useLocation } from 'react-router-dom';
 import { Link, useNavigate } from 'react-router-dom';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
@@ -8,8 +9,10 @@ import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
 
 const Checkout = () => {
   const { t, i18n } = useTranslation();
+  const [omnivaLocationsCache, setOmnivaLocationsCache] = useState({});
   const { items, getTotalPrice } = useCart();
   const navigate = useNavigate();
+  const location = useLocation();
   
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -51,6 +54,52 @@ const Checkout = () => {
     setTotalPrice(total.toFixed(2));
     setFormattedTotalPrice(total.toFixed(2) + '€');
   }, [items, getTotalPrice]);
+
+  // Preload Omniva locations when the page loads
+  useEffect(() => {
+    // Check if we already have cached data for the current country
+    if (!omnivaLocationsCache[formData.country]) {
+      preloadOmnivaLocations(formData.country);
+    }
+  }, [location.pathname, formData.country]);
+
+  // Function to preload Omniva locations in the background
+  const preloadOmnivaLocations = async (country) => {
+    try {
+      // Don't show loading state for preloading
+      const countryCode = getCountryCode(country);
+      
+      // Check if we already have this country in cache
+      if (omnivaLocationsCache[country]) {
+        return;
+      }
+      
+      const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
+      
+      if (!response.ok) {
+        console.warn(`Failed to preload Omniva locations for ${country}`);
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        // Store in cache
+        
+        // Cache the results
+        setOmnivaLocationsCache(prev => ({
+          ...prev,
+          [formData.country]: data.parcelMachines
+        }));
+        setOmnivaLocationsCache(prev => ({
+          ...prev,
+          [country]: data.parcelMachines
+        }));
+      }
+    } catch (error) {
+      console.warn('Error preloading Omniva locations:', error);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -128,6 +177,12 @@ const Checkout = () => {
   // Function to load Omniva parcel machines
   const loadParcelMachines = async (country) => {
     setLoadingParcelMachines(true);
+      // Check if we already have cached data for the current country
+      if (omnivaLocationsCache[formData.country]) {
+        setOmnivaParcelMachines(omnivaLocationsCache[formData.country]);
+        return;
+      }
+      
     setParcelMachines([]);
     setSelectedParcelMachine('');
     
