@@ -990,7 +990,7 @@ const Checkout = () => {
                   
                   <div className="summary-row">
                     <span>Tarne</span>
-                    <span>{deliveryMethod === 'omniva-parcel-machine' ? `${omnivaShippingPrice.toFixed(2)}€` : '0.00€'}</span>
+                    <span>{deliveryMethod === 'omniva-parcel-machine' ? `${omnivaShippingPrice}€` : '0.00€'}</span>
                   </div>
                   
                   <div className="summary-total">

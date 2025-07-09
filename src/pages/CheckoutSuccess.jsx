@@ -21,19 +21,9 @@ const CheckoutSuccess = () => {
     clearCart();
 
     // Extract order reference from URL query parameters or path
-   // Extract order reference from URL query parameters or path
-   let reference = '';
-   const queryParams = new URLSearchParams(location.search);
-   reference = queryParams.get('reference') || queryParams.get('order_number') || '';
-   
-   // If no reference in query params, try to extract from path segments
-   if (!reference) {
-     const segments = location.pathname.split('/');
-     const lastSeg = segments[segments.length - 1];
-     if (lastSeg && lastSeg !== 'success') {
-       reference = lastSeg;
-     }
-   }
+    let reference = '';
+    const queryParams = new URLSearchParams(location.search);
+    reference = queryParams.get('reference') || '';
 
     // If no reference in query params, try to extract from path segments
     const loadOrderDetails = async () => {
@@ -49,7 +39,7 @@ const CheckoutSuccess = () => {
           console.log('Fetching order details from server for reference:', reference);
           
           // Fetch order details from the backend using the reference
-         const response = await fetch(`/php/admin/orders.php?reference=${reference}`);
+          const response = await fetch(`/php/admin/orders.php?order_number=${reference}`);
           
           if (!response.ok) {
             console.warn(`Failed to fetch order details from server: ${response.status}`);
