@@ -5,7 +5,6 @@ import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { shippingSettingsService } from '../utils/supabase/shippingSettings';
-import { shippingSettingsService } from '../utils/supabase/shippingSettings';
 
 const Checkout = () => {
   const { t } = useTranslation();
