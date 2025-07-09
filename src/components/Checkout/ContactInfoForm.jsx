@@ -127,7 +127,7 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
         }
         
         .form-input {
-          padding: 16px 16px;
+          padding: 12px 16px;
           border: 1px solid #ddd;
           border-radius: 4px;
           font-family: var(--font-body);
