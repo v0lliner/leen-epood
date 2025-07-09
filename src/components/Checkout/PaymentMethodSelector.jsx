@@ -4,6 +4,9 @@ import { useTranslation } from 'react-i18next';
 // Bank logos URL format from Maksekeskus
 const BANK_LOGO_URL = 'https://static.maksekeskus.ee/img/channel/lnd/';
 
+// Bank logos URL format from Maksekeskus
+const BANK_LOGO_URL = 'https://static.maksekeskus.ee/img/channel/lnd/';
+
 const PaymentMethodSelector = ({ 
   formData, 
   onChange, 
@@ -18,24 +21,24 @@ const PaymentMethodSelector = ({
   // Bank country options
   const bankCountries = [
     { code: 'ee', name: 'Eesti' },
-    { code: 'lv', name: 'Läti' },
     { code: 'lt', name: 'Leedu' },
-    { code: 'fi', name: 'Soome' }
+    { code: 'fi', name: 'Soome' },
+    { code: 'lv', name: 'Läti' }
   ];
 
-  // Bank logos (placeholder paths - these should be replaced with actual logo paths)
+  // Bank logos from Maksekeskus CDN
   const bankLogos = {
-    'swedbank': `${BANK_LOGO_URL}swedbank.png`,
-    'seb': `${BANK_LOGO_URL}seb.png`,
-    'lhv': `${BANK_LOGO_URL}lhv.png`,
-    'luminor': `${BANK_LOGO_URL}luminor.png`,
-    'coop': `${BANK_LOGO_URL}coop.png`,
-    'citadele': `${BANK_LOGO_URL}citadele.png`,
-    'n26': `${BANK_LOGO_URL}n26.png`,
-    'revolut': `${BANK_LOGO_URL}revolut.png`,
-    'wise': `${BANK_LOGO_URL}wise.png`,
-    'knik': `${BANK_LOGO_URL}knik.png`,
-    'pis': `${BANK_LOGO_URL}pis.png`,
+    'swedbank': `${BANK_LOGO_URL}swedbank.png`, 
+    'seb': `${BANK_LOGO_URL}seb.png`, 
+    'lhv': `${BANK_LOGO_URL}lhv.png`, 
+    'luminor': `${BANK_LOGO_URL}luminor.png`, 
+    'coop': `${BANK_LOGO_URL}coop.png`, 
+    'citadele': `${BANK_LOGO_URL}citadele.png`, 
+    'n26': `${BANK_LOGO_URL}n26.png`, 
+    'revolut': `${BANK_LOGO_URL}revolut.png`, 
+    'wise': `${BANK_LOGO_URL}wise.png`, 
+    'knik': `${BANK_LOGO_URL}knik.png`, 
+    'pis': `${BANK_LOGO_URL}pis.png`, 
     'pangalink': `${BANK_LOGO_URL}pangalink.png`
   };
 
@@ -43,31 +46,41 @@ const PaymentMethodSelector = ({
   // In a real implementation, this would come from an API
   const banksByCountry = {
     'ee': [
-      { id: 'swedbank', name: 'Swedbank' },
-      { id: 'seb', name: 'SEB Pank' },
-      { id: 'lhv', name: 'LHV Pank' },
-      { id: 'luminor', name: 'Luminor' },
-      { id: 'coop', name: 'Coop Pank' },
-      { id: 'knik', name: 'Knik' },
-      { id: 'citadele', name: 'Citadele' }
+      { id: 'swedbank', name: 'Swedbank', type: 'pangalink' },
+      { id: 'seb', name: 'SEB Pank', type: 'pangalink' },
+      { id: 'lhv', name: 'LHV Pank', type: 'pangalink' },
+      { id: 'luminor', name: 'Luminor', type: 'pangalink' },
+      { id: 'coop', name: 'Coop Pank', type: 'pangalink' },
+      { id: 'citadele', name: 'Citadele', type: 'pis' },
+      { id: 'knik', name: 'Knik', type: 'knik' },
+      { id: 'n26', name: 'N26', type: 'pis' },
+      { id: 'revolut', name: 'Revolut', type: 'pis' },
+      { id: 'wise', name: 'Wise', type: 'pis' }
     ],
     'lv': [
-      { id: 'swedbank', name: 'Swedbank' },
-      { id: 'seb', name: 'SEB' },
-      { id: 'citadele', name: 'Citadele' },
-      { id: 'luminor', name: 'Luminor' }
+      { id: 'swedbank', name: 'Swedbank', type: 'pangalink' },
+      { id: 'seb', name: 'SEB', type: 'pangalink' },
+      { id: 'citadele', name: 'Citadele', type: 'pangalink' },
+      { id: 'luminor', name: 'Luminor', type: 'pangalink' },
+      { id: 'knik', name: 'Knik', type: 'knik' },
+      { id: 'n26', name: 'N26', type: 'pis' },
+      { id: 'revolut', name: 'Revolut', type: 'pis' },
+      { id: 'wise', name: 'Wise', type: 'pis' }
     ],
     'lt': [
-      { id: 'swedbank', name: 'Swedbank' },
-      { id: 'seb', name: 'SEB' },
-      { id: 'luminor', name: 'Luminor' },
-      { id: 'knik', name: 'Knik' }
+      { id: 'swedbank', name: 'Swedbank', type: 'pangalink' },
+      { id: 'seb', name: 'SEB', type: 'pangalink' },
+      { id: 'luminor', name: 'Luminor', type: 'pangalink' },
+      { id: 'knik', name: 'Knik', type: 'knik' },
+      { id: 'n26', name: 'N26', type: 'pis' },
+      { id: 'revolut', name: 'Revolut', type: 'pis' },
+      { id: 'wise', name: 'Wise', type: 'pis' }
     ],
     'fi': [
-      { id: 'n26', name: 'N26' },
-      { id: 'revolut', name: 'Revolut' },
-      { id: 'wise', name: 'Wise' },
-      { id: 'knik', name: 'Knik' }
+      { id: 'knik', name: 'Knik', type: 'knik' },
+      { id: 'n26', name: 'N26', type: 'pis' },
+      { id: 'revolut', name: 'Revolut', type: 'pis' },
+      { id: 'wise', name: 'Wise', type: 'pis' }
     ]
   };
 
@@ -124,15 +137,13 @@ const PaymentMethodSelector = ({
         ) : banks.length === 0 ? (
           <div className="info-message">{t('checkout.payment.no_methods')}</div>
         ) : (
-          <div className="banks-grid">
+          <div className={`banks-grid banks-${formData.bankCountry}`}>
             {banks.map(bank => (
               <div 
                 key={bank.id} 
                 className={`bank-option ${formData.paymentMethod === bank.id ? 'selected' : ''}`}
                 onClick={() => handleBankSelection(bank.id)}
               >
-                <div className="bank-content">
-                  <div className="bank-name">{bank.name}</div>
                 <div className="bank-logo-container">
                   <img 
                     src={bankLogos[bank.id] || `${BANK_LOGO_URL}${bank.id}.png`} 
@@ -140,10 +151,9 @@ const PaymentMethodSelector = ({
                     className="bank-logo"
                     onError={(e) => {
                       e.target.onerror = null;
-                      e.target.src = `${BANK_LOGO_URL}default.png`;
+                      e.target.src = '/assets/banks/placeholder.svg';
                     }}
                   />
-                </div>
                 </div>
               </div>
             ))}
@@ -211,60 +221,48 @@ const PaymentMethodSelector = ({
         
         .banks-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
           gap: 16px;
+        }
+        
+        .banks-ee {
+          grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
         }
         
         .bank-option {
           border: 1px solid #ddd;
           border-radius: 4px;
-          padding: 16px;
+          padding: 12px;
           cursor: pointer;
           transition: all 0.2s ease;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          height: 60px;
         }
         
         .bank-option:hover {
           border-color: var(--color-ultramarine);
-          background-color: rgba(47, 62, 156, 0.05);
         }
         
         .bank-option.selected {
           border-color: var(--color-ultramarine);
-          background-color: rgba(47, 62, 156, 0.1);
-        }
-        
-        .bank-content {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
+          box-shadow: 0 0 0 2px var(--color-ultramarine);
         }
         
         .bank-logo-container {
-          height: 40px;
+          height: 100%;
+          width: 100%;
           display: flex;
           align-items: center;
           justify-content: center;
         }
         
         .bank-logo {
-          max-width: 100%;
-          max-height: 40px;
+          width: 100%;
+          height: 100%;
           object-fit: contain;
-        }
-        
-        .bank-name {
-          font-weight: 500;
-        }
-        
-        .bank-check {
-          color: var(--color-ultramarine);
-          font-weight: bold;
-          opacity: 0;
-          transition: opacity 0.2s ease;
-        }
-        
-        .bank-option.selected .bank-check {
-          opacity: 1;
+          padding: 4px;
         }
         
         .loading-message {
@@ -285,16 +283,17 @@ const PaymentMethodSelector = ({
         
         @media (max-width: 768px) {
           .banks-grid {
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
             gap: 12px;
           }
           
-          .bank-option {
-            padding: 12px;
+          .banks-ee {
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
           }
           
-          .bank-logo {
-            max-height: 30px;
+          .bank-option {
+            padding: 8px;
+            height: 50px;
           }
         }
       `}</style>
