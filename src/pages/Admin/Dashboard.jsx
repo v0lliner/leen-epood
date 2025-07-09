@@ -6,17 +6,22 @@ import AdminLayout from '../../components/Admin/AdminLayout'
 import { productService } from '../../utils/supabase/products'
 import { portfolioItemService } from '../../utils/supabase/portfolioItems'
 import { faqService } from '../../utils/supabase/faq'
+import { orderService } from '../../utils/supabase/orders'
 
 const AdminDashboard = () => {
   const { t } = useTranslation()
   const { user } = useAuth()
   const [orderStats, setOrderStats] = useState({
-    total: 0,
-    pending: 0,
-    paid: 0,
-    processing: 0,
-    shipped: 0,
-    completed: 0
+    total_orders: 0,
+    pending_orders: 0,
+    paid_orders: 0,
+    processing_orders: 0,
+    shipped_orders: 0,
+    completed_orders: 0,
+    cancelled_orders: 0,
+    refunded_orders: 0,
+    total_revenue: 0,
+    confirmed_revenue: 0
   })
   const [stats, setStats] = useState({
     products: 0,
@@ -40,23 +45,14 @@ const AdminDashboard = () => {
 
       // Load order statistics
       try {
-        const orderResponse = await fetch('http://localhost:8000/php/admin_order_stats.php')
-        console.log('📊 Dashboard: Order stats response status:', orderResponse.status)
+        const orderStatsResult = await orderService.getOrderStats()
+        console.log('📊 Dashboard: Order stats result:', orderStatsResult)
         
-        if (orderResponse.ok) {
-          const orderData = await orderResponse.json()
-          console.log('📊 Dashboard: Order stats data:', orderData)
-          
-          if (orderData.success) {
-            setOrderStats(orderData.stats)
-            console.log('📊 Dashboard: Order stats loaded:', orderData.stats)
-          } else {
-            console.error('❌ Dashboard: Order stats error:', orderData.error)
-          }
+        if (orderStatsResult.error) {
+          console.error('❌ Dashboard: Order stats error:', orderStatsResult.error)
         } else {
-          console.error('❌ Dashboard: Order stats HTTP error:', orderResponse.status)
-          const errorText = await orderResponse.text()
-          console.error('❌ Dashboard: Order stats error details:', errorText)
+          setOrderStats(orderStatsResult.data)
+          console.log('📊 Dashboard: Order stats loaded:', orderStatsResult.data)
         }
       } catch (orderError) {
         console.error('Error loading order stats:', orderError)
@@ -119,7 +115,7 @@ const AdminDashboard = () => {
   const getQuickStats = () => [
     {
       title: 'Tooted kokku',
-      value: stats.products.toString(),
+      value: stats.products?.toString() || '0',
       subtitle: `${stats.availableProducts || 0} saadaval`,
       icon: '📦',
       link: '/admin/products',
@@ -127,7 +123,7 @@ const AdminDashboard = () => {
     },
     {
       title: 'Minu lemmikud',
-      value: stats.portfolioItems.toString(),
+      value: stats.portfolioItems?.toString() || '0',
       subtitle: 'portfoolio tööd',
       icon: '🎨',
       link: '/admin/minu-lemmikud',
@@ -135,15 +131,15 @@ const AdminDashboard = () => {
     },
     {
       title: 'Tellimused',
-      value: orderStats.total.toString(),
-      subtitle: `${orderStats.paid || 0} makstud`,
+      value: orderStats.total_orders?.toString() || '0',
+      subtitle: `${orderStats.paid_orders || 0} makstud`,
       icon: '📋',
       link: '/admin/orders',
       color: 'green'
     },
     {
       title: 'KKK küsimused',
-      value: stats.faqItems.toString(),
+      value: stats.faqItems?.toString() || '0',
       subtitle: 'vastust eesti keeles',
       icon: '❓',
       link: '/admin/faq',
@@ -226,29 +222,6 @@ const AdminDashboard = () => {
             })}
           </div>
         </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            <div className="flex items-start">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Connection Error</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                  {error.includes('Backend server') && (
-                    <p className="mt-2">
-                      <strong>To fix this:</strong> Run <code className="bg-red-100 px-1 rounded">php -S localhost:8000 -t public</code> in your terminal.
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Quick Stats */}
         <div className="stats-section">
