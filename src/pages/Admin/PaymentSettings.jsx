@@ -37,8 +37,9 @@ const PaymentSettings = () => {
   // Form state for Omniva settings
   const [omnivaFormData, setOmnivaFormData] = useState({
     customer_code: '',
-    username: '',
-    password: '',
+    username: '', 
+    password: '', 
+    shipping_price: 3.99,
     test_mode: false,
     active: true
   })
@@ -53,8 +54,9 @@ const PaymentSettings = () => {
   // Track which Omniva fields have been modified
   const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
     customer_code: false,
-    username: false,
-    password: false
+    username: false, 
+    password: false,
+    shipping_price: false
   })
 
   // Active tab state
@@ -63,6 +65,7 @@ const PaymentSettings = () => {
   useEffect(() => {
     loadConfig()
     loadOmnivaShippingSettings()
+    loadOmnivaSettings()
   }, [])
   
   useEffect(() => {
@@ -136,19 +139,25 @@ const PaymentSettings = () => {
 
   const loadOmnivaSettings = async () => {
     try {
-      // Fetch Omniva settings from localStorage or API
+      // Get Omniva settings from localStorage for API credentials
       const omnivaSettings = localStorage.getItem('omnivaSettings')
+      let parsedSettings = {}
       
       if (omnivaSettings) {
-        const parsedSettings = JSON.parse(omnivaSettings)
-        setOmnivaFormData({
-          customer_code: parsedSettings.customer_code || '',
-          username: parsedSettings.username || '',
-          password: '', // Don't show actual password, just placeholder
-          test_mode: parsedSettings.test_mode || false,
-          active: parsedSettings.active || true
-        })
+        parsedSettings = JSON.parse(omnivaSettings)
       }
+      
+      // Get shipping price from database
+      const { data, error } = await shippingSettingsService.getOmnivaSettings()
+      
+      setOmnivaFormData({
+        customer_code: parsedSettings.customer_code || '',
+        username: parsedSettings.username || '',
+        password: '', // Don't show actual password, just placeholder
+        shipping_price: data?.price || 3.99,
+        test_mode: parsedSettings.test_mode || false,
+        active: parsedSettings.active || true
+      })
     } catch (error) {
       console.error('Error loading Omniva settings:', error)
     }
@@ -201,7 +210,7 @@ const PaymentSettings = () => {
     }))
     
     // Track modified fields for text inputs
-    if (type !== 'checkbox' && ['customer_code', 'username', 'password'].includes(name)) {
+    if (type !== 'checkbox' && ['customer_code', 'username', 'password', 'shipping_price'].includes(name)) {
       setOmnivaModifiedFields(prev => ({
         ...prev,
         [name]: true
@@ -370,13 +379,28 @@ const PaymentSettings = () => {
         active: omnivaFormData.active
       }
 
+      // Update shipping price in database
+      if (omnivaModifiedFields.shipping_price) {
+        const { error: shippingError } = await shippingSettingsService.updateOmnivaShippingPrice(
+          omnivaFormData.shipping_price
+        )
+        
+        if (shippingError) {
+          setError(`Tarne hinna uuendamine ebaõnnestus: ${shippingError.message}`)
+          setSaving(false)
+          return
+        }
+      }
+
       localStorage.setItem('omnivaSettings', JSON.stringify(settingsToSave))
       
       setSuccess('Omniva seaded edukalt salvestatud!')
       setTimeout(() => setSuccess(''), 3000)
       
       // Reset modified fields
-      setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
+      setOmnivaModifiedFields({
+        customer_code: false, username: false, password: false, shipping_price: false
+      })
     } catch (err) {
       setError('Seadete salvestamine ebaõnnestus: ' + err.message)
     } finally {
@@ -973,6 +997,22 @@ const PaymentSettings = () => {
                       'Jäta tühjaks, et säilitada olemasolev parool' : 
                       'Sisesta Omniva API parool'}
                   </small>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="shipping_price">Tarne hind (€)</label>
+                  <input
+                    type="number"
+                    id="shipping_price"
+                    name="shipping_price"
+                    value={omnivaFormData.shipping_price}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta Omniva tarne hind"
+                    step="0.01"
+                    min="0"
+                    required
+                  />
                 </div>
                 
                 <div className="form-group checkbox-group">
