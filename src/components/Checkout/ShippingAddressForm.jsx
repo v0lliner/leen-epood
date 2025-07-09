@@ -74,23 +74,6 @@ const ShippingAddressForm = ({
   return (
     <div className="shipping-address-form">
       <h3 className="section-title">{t('checkout.shipping.title')}</h3>
-      
-      <div className="form-group">
-        <label htmlFor="country">{t('checkout.shipping.address.country')}</label>
-        <select
-          id="country"
-          name="country"
-          value={formData.country}
-          onChange={onChange}
-          className="form-input"
-        >
-          <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
-          <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
-          <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
-          <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
-        </select>
-      </div>
-      
       <div className="shipping-methods">
         {/* Pickup option */}
         <div className="shipping-method">
@@ -136,40 +119,58 @@ const ShippingAddressForm = ({
         
         {/* Parcel machine selector (conditional) */}
         {formData.shippingMethod === 'omniva' && (
-          <div className="parcel-machine-selector">
-            <label htmlFor="omnivaParcelMachineId">{t('checkout.shipping.omniva.select_machine')}</label>
+          <div>
+            <div className="form-group">
+              <label htmlFor="country">{t('checkout.shipping.address.country')}</label>
+              <select
+                id="country"
+                name="country"
+                value={formData.country}
+                onChange={onChange}
+                className="form-input"
+              >
+                <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
+                <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
+                <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
+                <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
+              </select>
+            </div>
             
-            <select
-              id="omnivaParcelMachineId"
-              name="omnivaParcelMachineId"
-              value={formData.omnivaParcelMachineId}
-              onChange={handleParcelMachineChange}
-              className={`form-input ${validationErrors.omnivaParcelMachineId ? 'has-error' : ''}`}
-              disabled={loadingParcelMachines}
-            >
-              <option value="">{t('checkout.shipping.omniva.select_placeholder')}</option>
-              {parcelMachines.map(machine => (
-                <option key={machine.id} value={machine.id}>
-                  {machine.name}
-                </option>
-              ))}
-            </select>
-            
-            {loadingParcelMachines && (
-              <div className="loading-message">{t('checkout.shipping.omniva.loading')}</div>
-            )}
-            
-            {parcelMachineError && (
-              <div className="error-message">{parcelMachineError}</div>
-            )}
-            
-            {!loadingParcelMachines && !parcelMachineError && parcelMachines.length === 0 && (
-              <div className="info-message">{t('checkout.shipping.omniva.no_machines')}</div>
-            )}
-            
-            {validationErrors.omnivaParcelMachineId && (
-              <div className="error-message">{validationErrors.omnivaParcelMachineId}</div>
-            )}
+            <div className="parcel-machine-selector">
+              <label htmlFor="omnivaParcelMachineId">{t('checkout.shipping.omniva.select_machine')}</label>
+              
+              <select
+                id="omnivaParcelMachineId"
+                name="omnivaParcelMachineId"
+                value={formData.omnivaParcelMachineId}
+                onChange={handleParcelMachineChange}
+                className={`form-input ${validationErrors.omnivaParcelMachineId ? 'has-error' : ''}`}
+                disabled={loadingParcelMachines}
+              >
+                <option value="">{t('checkout.shipping.omniva.select_placeholder')}</option>
+                {parcelMachines.map(machine => (
+                  <option key={machine.id} value={machine.id}>
+                    {machine.name}
+                  </option>
+                ))}
+              </select>
+              
+              {loadingParcelMachines && (
+                <div className="loading-message">{t('checkout.shipping.omniva.loading')}</div>
+              )}
+              
+              {parcelMachineError && (
+                <div className="error-message">{parcelMachineError}</div>
+              )}
+              
+              {!loadingParcelMachines && !parcelMachineError && parcelMachines.length === 0 && (
+                <div className="info-message">{t('checkout.shipping.omniva.no_machines')}</div>
+              )}
+              
+              {validationErrors.omnivaParcelMachineId && (
+                <div className="error-message">{validationErrors.omnivaParcelMachineId}</div>
+              )}
+            </div>
           </div>
         )}
       </div>
