@@ -316,14 +316,29 @@ const ShippingAddressForm = ({
         
         @media (max-width: 768px) {
           .method-content {
-            flex-direction: column;
-            align-items: flex-start;
+            flex-wrap: wrap;
             gap: 8px;
           }
           
           .method-price {
+            margin-left: auto;
+          }
+          
+          .method-info {
+            flex: 1;
+            min-width: 0;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .method-content {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          
+          .method-price {
+            align-self: flex-start;
             margin-left: 0;
-            align-self: flex-end;
           }
         }
       `}</style>

@@ -278,17 +278,37 @@ const PaymentMethodSelector = ({
         @media (max-width: 768px) {
           .banks-grid {
             grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 12px;
+            gap: 8px;
             margin-top: 8px;
           }
           
           .banks-ee {
-            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
           }
           
           .bank-option {
-            padding: 8px;
-            height: 70px;
+            padding: 6px;
+            height: 60px;
+          }
+          
+          .bank-logo {
+            padding: 4px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .banks-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+          }
+          
+          .banks-ee {
+            grid-template-columns: repeat(3, 1fr);
+          }
+          
+          .bank-option {
+            height: 50px;
+            padding: 4px;
           }
         }
       `}</style>

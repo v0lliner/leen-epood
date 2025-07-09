@@ -377,12 +377,37 @@ const Checkout = () => {
         @media (max-width: 992px) {
           .checkout-layout {
             grid-template-columns: 1fr;
-            gap: 32px;
+            gap: 48px;
           }
           
           .checkout-sidebar {
             position: static;
             order: -1;
+          }
+        }
+        
+        @media (max-width: 768px) {
+          .checkout-layout {
+            margin-top: 32px;
+          }
+          
+          .checkout-section {
+            margin-bottom: 24px;
+          }
+          
+          .checkout-button {
+            padding: 14px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .checkout-layout {
+            margin-top: 24px;
+            gap: 32px;
+          }
+          
+          .checkout-section {
+            margin-bottom: 16px;
           }
         }
       `}</style>

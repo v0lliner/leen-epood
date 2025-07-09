@@ -153,13 +153,11 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
         @media (max-width: 768px) {
           .form-grid {
             grid-template-columns: 1fr;
-            grid-template-areas: 
-              "firstName"
-              "lastName"
-              "email"
-              "phone"
-              "company";
             gap: 16px;
+          }
+          
+          .form-group:last-child {
+            grid-column: 1;
           }
         }
       `}</style>

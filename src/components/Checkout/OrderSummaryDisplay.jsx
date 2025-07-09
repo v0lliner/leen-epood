@@ -113,6 +113,34 @@ const OrderSummaryDisplay = ({
           font-size: 1rem;
         }
         
+        @media (max-width: 768px) {
+          .order-summary {
+            padding: 20px;
+          }
+          
+          .section-title {
+            margin-bottom: 20px;
+          }
+          
+          .summary-rows {
+            margin-bottom: 20px;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .order-summary {
+            padding: 16px;
+          }
+          
+          .summary-row {
+            padding-bottom: 8px;
+          }
+          
+          .summary-info {
+            margin-bottom: 24px;
+          }
+        }
+        
         .checkout-button {
           width: 100%;
           padding: 16px;

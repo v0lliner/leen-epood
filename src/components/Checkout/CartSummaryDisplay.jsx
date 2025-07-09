@@ -131,12 +131,31 @@ const CartSummaryDisplay = ({ cartItems }) => {
         
         @media (max-width: 768px) {
           .cart-item {
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: 80px 1fr auto;
+            gap: 12px;
+            align-items: center;
+          }
+          
+          .item-image {
+            grid-row: span 1;
+          }
+          
+          .item-details {
+            grid-column: 2;
+          }
+        }
+        
+        @media (max-width: 480px) {
+          .cart-item {
+            grid-template-columns: 60px 1fr;
           }
           
           .item-price {
+            grid-column: 2;
+            justify-self: start;
             margin-left: 0;
-            align-self: flex-end;
+            font-size: 1rem;
           }
         }
       `}</style>
