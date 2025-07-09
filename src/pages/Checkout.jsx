@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useState, useEffect } from 'react';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { Link } from 'react-router-dom';
@@ -14,7 +15,7 @@ const Checkout = () => {
   // Form state
   const [formData, setFormData] = useState({
     firstName: '',
-    lastName: '',
+    lastName: '', 
     email: '',
     phone: '',
     country: 'Estonia',
@@ -29,7 +30,15 @@ const Checkout = () => {
   const [error, setError] = useState('');
   const [omnivaLocations, setOmnivaLocations] = useState([]);
   const [loadingOmniva, setLoadingOmniva] = useState(false);
-  const [omnivaError, setOmnivaError] = useState('');
+  const [omnivaError, setOmnivaError] = useState(''); 
+  const [paymentMethods, setPaymentMethods] = useState([
+    { id: 'lhv', name: 'LHV', logo: '/assets/banks/placeholder.svg' },
+    { id: 'swedbank', name: 'Swedbank', logo: '/assets/banks/placeholder.svg' },
+    { id: 'seb', name: 'SEB', logo: '/assets/banks/placeholder.svg' },
+    { id: 'coop', name: 'Coop Pank', logo: '/assets/banks/placeholder.svg' },
+    { id: 'luminor', name: 'Luminor', logo: '/assets/banks/placeholder.svg' }
+  ]);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('lhv');
   
   // Redirect if cart is empty
   useEffect(() => {
@@ -91,6 +100,11 @@ const Checkout = () => {
     
     // Clear error when user starts typing
     if (error) setError('');
+
+    // Special handling for payment method selection
+    if (name === 'paymentMethod') {
+      setSelectedPaymentMethod(value);
+    }
     
     // Special handling for Omniva parcel machine selection
     if (name === 'omnivaParcelMachineId') {
@@ -131,6 +145,12 @@ const Checkout = () => {
       return false;
     }
     
+    // Payment method validation
+    if (!selectedPaymentMethod) {
+      setError('Palun valige makseviis');
+      return false;
+    }
+    
     return true;
   };
   
@@ -155,11 +175,11 @@ const Checkout = () => {
         amount: getTotalPrice().toFixed(2),
         reference,
         email: formData.email,
-        firstName: formData.firstName,
+        firstName: formData.firstName, 
         lastName: formData.lastName,
         phone: formData.phone,
         country: formData.country,
-        paymentMethod: 'lhv', // Default to LHV bank
+        paymentMethod: selectedPaymentMethod,
         deliveryMethod: formData.deliveryMethod,
         omnivaParcelMachineId: formData.omnivaParcelMachineId,
         omnivaParcelMachineName: formData.omnivaParcelMachineName,
@@ -429,6 +449,29 @@ const Checkout = () => {
                     </div>
                   </div>
                   
+                  {/* Payment Methods */}
+                  <div className="form-section">
+                    <h2>{t('checkout.payment.title')}</h2>
+                    
+                    <div className="payment-methods">
+                      {paymentMethods.map(method => (
+                        <label key={method.id} className="payment-method-label">
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value={method.id}
+                            checked={selectedPaymentMethod === method.id}
+                            onChange={handleInputChange}
+                            className="payment-method-input"
+                          />
+                          <div className={`payment-method-card ${selectedPaymentMethod === method.id ? 'selected' : ''}`}>
+                            <span className="payment-method-name">{method.name}</span>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                  
                   {/* Terms and Conditions */}
                   <div className="form-section">
                     <div className="form-group terms-group">
@@ -458,14 +501,14 @@ const Checkout = () => {
                   {/* Submit Button */}
                   <div className="form-actions">
                     <Link to="/epood" className="btn btn-secondary" onClick={scrollToTop}>
-                      {t('checkout.review.back_to_shop')}
+                      ← {t('checkout.review.back_to_shop')}
                     </Link>
                     <button 
                       type="submit"
                       disabled={isSubmitting}
                       className="btn btn-primary"
                     >
-                      {isSubmitting ? t('checkout.summary.processing') : t('checkout.summary.pay')}
+                      {isSubmitting ? t('checkout.summary.processing') : `${t('checkout.summary.pay')} (${getTotalWithShipping().toFixed(2)}€)`}
                     </button>
                   </div>
                 </form>
@@ -636,11 +679,12 @@ const Checkout = () => {
           padding: 16px;
           width: 100%;
           background-color: #f8f9fa;
-          transition: background-color 0.2s ease;
+          transition: all 0.2s ease;
         }
         
         .shipping-method-input:checked + .shipping-method-content {
           background-color: rgba(47, 62, 156, 0.1);
+          border-color: var(--color-ultramarine);
         }
         
         .shipping-method-info {
@@ -671,6 +715,52 @@ const Checkout = () => {
           padding: 16px;
           border-top: 1px solid #eee;
           background-color: white;
+        }
+        
+        /* Payment Methods Styles */
+        .payment-methods {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+          gap: 16px;
+          margin-top: 16px;
+        }
+        
+        .payment-method-label {
+          cursor: pointer;
+        }
+        
+        .payment-method-input {
+          position: absolute;
+          opacity: 0;
+        }
+        
+        .payment-method-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 16px;
+          border: 2px solid #e2e8f0;
+          border-radius: 8px;
+          background-color: white;
+          transition: all 0.2s ease;
+          height: 80px;
+        }
+        
+        .payment-method-card:hover {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.05);
+        }
+        
+        .payment-method-card.selected {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.1);
+        }
+        
+        .payment-method-name {
+          font-weight: 500;
+          margin-top: 8px;
+          text-align: center;
         }
         
         .loading-text,
@@ -733,8 +823,9 @@ const Checkout = () => {
         
         .form-actions {
           display: flex;
-          justify-content: space-between;
+          justify-content: flex-end;
           align-items: center;
+          gap: 16px;
         }
         
         .btn {
@@ -761,7 +852,10 @@ const Checkout = () => {
         
         .btn-primary {
           background-color: var(--color-ultramarine);
-          color: white;
+          color: white; 
+          font-weight: 600;
+          font-size: 1.1rem;
+          padding: 14px 28px;
         }
         
         .btn-secondary {
@@ -919,11 +1013,16 @@ const Checkout = () => {
           
           .form-actions {
             flex-direction: column;
-            gap: 16px;
+            gap: 16px; 
+            align-items: stretch;
           }
           
           .btn {
             width: 100%;
+          }
+          
+          .payment-methods {
+            grid-template-columns: repeat(2, 1fr);
           }
         }
       `}</style>
