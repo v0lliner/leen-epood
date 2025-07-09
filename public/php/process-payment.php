@@ -112,7 +112,10 @@ try {
                 'customer_name' => $data['firstName'] . ' ' . $data['lastName'],
                 'customer_email' => $data['email'],
                 'customer_phone' => $data['phone'] ?? '',
-                'items' => $data['items'] ?? []
+                'items' => $data['items'] ?? [],
+                'deliveryMethod' => $data['deliveryMethod'] ?? null,
+                'omnivaParcelMachineId' => $data['omnivaParcelMachineId'] ?? null,
+                'omnivaParcelMachineName' => $data['omnivaParcelMachineName'] ?? null
             ]),
             'return_url' => 'https://leen.ee/checkout/success',
             'cancel_url' => 'https://leen.ee/checkout',
