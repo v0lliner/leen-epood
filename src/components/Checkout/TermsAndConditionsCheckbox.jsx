@@ -65,7 +65,7 @@ const TermsAndConditionsCheckbox = ({ checked, onChange, validationError }) => {
         
         .terms-agree {
           font-family: var(--font-heading);
-          font-weight: 500;
+          font-weight: 600;
         }
         
         .terms-link {
