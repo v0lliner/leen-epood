@@ -206,6 +206,9 @@ try {
         $orderNumber = $_GET['order_number'];
     }
     
+    // Check if reference is provided in query string
+    $referenceParam = $_GET['reference'] ?? null;
+    
     // Handle different request types
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // If order ID is provided, get specific order details
@@ -244,6 +247,41 @@ try {
                 ]);
             }
         } 
+        // If reference is provided, get order details by reference
+        else if ($referenceParam) {
+            logMessage("Fetching order details for reference", $referenceParam);
+            $orderResult = supabaseRequest(
+                "/rest/v1/orders?reference=eq.$referenceParam&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at,reference",
+                'GET'
+            );
+            
+            if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+                logMessage("Order not found for reference", $referenceParam);
+                http_response_code(404);
+                echo json_encode(['success' => false, 'error' => 'Order not found']);
+            } else {
+                $order = $orderResult['data'][0];
+                $orderIdFetched = $order['id'];
+                
+                // Get order items
+                $itemsResult = supabaseRequest(
+                    "/rest/v1/order_items?order_id=eq.$orderIdFetched&select=*",
+                    'GET'
+                );
+                
+                $order['items'] = ($itemsResult['status'] === 200) ? $itemsResult['data'] : [];
+                
+                // Get payment info
+                $paymentsResult = supabaseRequest(
+                    "/rest/v1/order_payments?order_id=eq.$orderIdFetched&select=*",
+                    'GET'
+                );
+                
+                $order['payments'] = ($paymentsResult['status'] === 200) ? $paymentsResult['data'] : [];
+                
+                echo json_encode(['success' => true, 'order' => $order]);
+            }
+        }
         // Otherwise, get all orders
         else {
             // Query the admin_orders_view
