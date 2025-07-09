@@ -21,7 +21,7 @@ const OrderNotesForm = ({ formData, onChange }) => {
       <style jsx>{`
         .order-notes-form {
           margin-bottom: 32px;
-          margin-top: -44px;
+          margin-top: -48px;
         }
         
         .form-group {
