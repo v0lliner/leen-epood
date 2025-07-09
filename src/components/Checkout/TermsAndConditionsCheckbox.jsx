@@ -59,7 +59,7 @@ const TermsAndConditionsCheckbox = ({ checked, onChange, validationError }) => {
         }
         
         .checkbox-text {
-          font-size: 0.9rem;
+          font-size: 1rem;
           color: var(--color-text);
         }
         
