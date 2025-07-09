@@ -32,7 +32,8 @@ const PaymentSettings = () => {
     username: '',
     password: '',
     test_mode: false,
-    active: true
+    active: true,
+    price: '3.99'
   })
   
   // Track which fields have been modified
@@ -46,7 +47,8 @@ const PaymentSettings = () => {
   const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
     customer_code: false,
     username: false,
-    password: false
+    password: false,
+    price: false
   })
 
   // Active tab state
@@ -101,17 +103,57 @@ const PaymentSettings = () => {
   const loadOmnivaSettings = async () => {
     try {
       // Fetch Omniva settings from localStorage or API
-      const omnivaSettings = localStorage.getItem('omnivaSettings')
-      
-      if (omnivaSettings) {
-        const parsedSettings = JSON.parse(omnivaSettings)
-        setOmnivaFormData({
-          customer_code: parsedSettings.customer_code || '',
-          username: parsedSettings.username || '',
-          password: '', // Don't show actual password, just placeholder
-          test_mode: parsedSettings.test_mode || false,
-          active: parsedSettings.active || true
-        })
+      try {
+        const response = await fetch('/php/omniva_shipping_settings.php');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.settings) {
+            // Get API settings for price
+            const apiSettings = data.settings;
+            
+            // Get credentials from localStorage
+            const storedSettings = localStorage.getItem('omnivaSettings');
+            const parsedStored = storedSettings ? JSON.parse(storedSettings) : {};
+            
+            setOmnivaFormData({
+              customer_code: parsedStored.customer_code || '',
+              username: parsedStored.username || '',
+              password: '', // Don't show actual password, just placeholder
+              test_mode: parsedStored.test_mode || false,
+              active: parsedStored.active || true,
+              price: apiSettings.price.toString() || '3.99'
+            });
+          }
+        } else {
+          // Fallback to localStorage only
+          const storedSettings = localStorage.getItem('omnivaSettings');
+          if (storedSettings) {
+            const parsedSettings = JSON.parse(storedSettings);
+            setOmnivaFormData({
+              customer_code: parsedSettings.customer_code || '',
+              username: parsedSettings.username || '',
+              password: '', // Don't show actual password, just placeholder
+              test_mode: parsedSettings.test_mode || false,
+              active: parsedSettings.active || true,
+              price: parsedSettings.price || '3.99'
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching Omniva shipping settings:', error);
+        // Fallback to localStorage
+        const storedSettings = localStorage.getItem('omnivaSettings');
+        if (storedSettings) {
+          const parsedSettings = JSON.parse(storedSettings);
+          setOmnivaFormData({
+            customer_code: parsedSettings.customer_code || '',
+            username: parsedSettings.username || '',
+            password: '', // Don't show actual password, just placeholder
+            test_mode: parsedSettings.test_mode || false,
+            active: parsedSettings.active || true,
+            price: parsedSettings.price || '3.99'
+          });
+        }
       }
     } catch (error) {
       console.error('Error loading Omniva settings:', error)
@@ -170,6 +212,14 @@ const PaymentSettings = () => {
         ...prev,
         [name]: true
       }))
+    }
+    
+    // Track price field separately
+    if (name === 'price') {
+      setOmnivaModifiedFields(prev => ({
+        ...prev,
+        price: true
+      }));
     }
     
     // Clear messages when user starts typing
@@ -260,6 +310,13 @@ const PaymentSettings = () => {
         setSaving(false)
         return
       }
+      
+      // Validate price
+      if (!omnivaFormData.price || isNaN(parseFloat(omnivaFormData.price)) || parseFloat(omnivaFormData.price) <= 0) {
+        setError('Hind peab olema positiivne number')
+        setSaving(false)
+        return
+      }
 
       // Store in localStorage (in a real app, this would be stored in the database)
       const settingsToSave = {
@@ -268,16 +325,40 @@ const PaymentSettings = () => {
         // Only include password if it was modified
         ...(omnivaModifiedFields.password && { password: '********' }), // Store masked password
         test_mode: omnivaFormData.test_mode,
-        active: omnivaFormData.active
+        active: omnivaFormData.active,
+        price: omnivaFormData.price
       }
 
       localStorage.setItem('omnivaSettings', JSON.stringify(settingsToSave))
+      
+      // Also update the price in the database
+      try {
+        const response = await fetch('/php/omniva_shipping_settings.php', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            price: parseFloat(omnivaFormData.price),
+            currency: 'EUR',
+            active: omnivaFormData.active
+          })
+        });
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update shipping price');
+        }
+      } catch (apiError) {
+        console.error('Error updating shipping price in database:', apiError);
+        // Continue anyway since we saved to localStorage
+      }
       
       setSuccess('Omniva seaded edukalt salvestatud!')
       setTimeout(() => setSuccess(''), 3000)
       
       // Reset modified fields
-      setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
+      setOmnivaModifiedFields({ customer_code: false, username: false, password: false, price: false })
     } catch (err) {
       setError('Seadete salvestamine ebaõnnestus: ' + err.message)
     } finally {
@@ -810,6 +891,23 @@ const PaymentSettings = () => {
                     {omnivaFormData.password === '' && localStorage.getItem('omnivaSettings') ? 
                       'Jäta tühjaks, et säilitada olemasolev parool' : 
                       'Sisesta Omniva API parool'}
+                  </small>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="price">Pakiautomaadi tarne hind (€)</label>
+                  <input
+                    type="text"
+                    id="price"
+                    name="price"
+                    value={omnivaFormData.price}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="3.99"
+                    required
+                  />
+                  <small className="form-hint">
+                    Sisestage pakiautomaadi tarne hind eurodes (nt 3.99)
                   </small>
                 </div>
                 
