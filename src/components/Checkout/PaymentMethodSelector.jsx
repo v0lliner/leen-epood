@@ -49,7 +49,6 @@ const PaymentMethodSelector = ({
       { id: 'luminor', name: 'Luminor', type: 'pangalink' },
       { id: 'coop', name: 'Coop Pank', type: 'pangalink' },
       { id: 'citadele', name: 'Citadele', type: 'pis' },
-      { id: 'knik', name: 'Knik', type: 'knik' },
       { id: 'n26', name: 'N26', type: 'pis' },
       { id: 'revolut', name: 'Revolut', type: 'pis' },
       { id: 'wise', name: 'Wise', type: 'pis' }
@@ -59,7 +58,6 @@ const PaymentMethodSelector = ({
       { id: 'seb', name: 'SEB', type: 'pangalink' },
       { id: 'citadele', name: 'Citadele', type: 'pangalink' },
       { id: 'luminor', name: 'Luminor', type: 'pangalink' },
-      { id: 'knik', name: 'Knik', type: 'knik' },
       { id: 'n26', name: 'N26', type: 'pis' },
       { id: 'revolut', name: 'Revolut', type: 'pis' },
       { id: 'wise', name: 'Wise', type: 'pis' }
@@ -68,13 +66,11 @@ const PaymentMethodSelector = ({
       { id: 'swedbank', name: 'Swedbank', type: 'pangalink' },
       { id: 'seb', name: 'SEB', type: 'pangalink' },
       { id: 'luminor', name: 'Luminor', type: 'pangalink' },
-      { id: 'knik', name: 'Knik', type: 'knik' },
       { id: 'n26', name: 'N26', type: 'pis' },
       { id: 'revolut', name: 'Revolut', type: 'pis' },
       { id: 'wise', name: 'Wise', type: 'pis' }
     ],
     'fi': [
-      { id: 'knik', name: 'Knik', type: 'knik' },
       { id: 'n26', name: 'N26', type: 'pis' },
       { id: 'revolut', name: 'Revolut', type: 'pis' },
       { id: 'wise', name: 'Wise', type: 'pis' }
@@ -227,7 +223,7 @@ const PaymentMethodSelector = ({
         }
         
         .bank-option {
-          border: 1px solid #ddd;
+          border: none;
           border-radius: 4px;
           padding: 12px;
           cursor: pointer;
@@ -235,16 +231,16 @@ const PaymentMethodSelector = ({
           display: flex;
           align-items: center;
           justify-content: center;
-          height: 60px;
+          height: 80px;
         }
         
         .bank-option:hover {
-          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.05);
         }
         
         .bank-option.selected {
-          border-color: var(--color-ultramarine);
-          box-shadow: 0 0 0 2px var(--color-ultramarine);
+          border: 2px solid var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.05);
         }
         
         .bank-logo-container {
@@ -257,9 +253,10 @@ const PaymentMethodSelector = ({
         
         .bank-logo {
           width: 100%;
-          height: 100%;
+          height: auto;
+          max-height: 100%;
           object-fit: contain;
-          padding: 4px;
+          padding: 8px;
         }
         
         .loading-message {
@@ -282,6 +279,7 @@ const PaymentMethodSelector = ({
           .banks-grid {
             grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
             gap: 12px;
+            margin-top: 8px;
           }
           
           .banks-ee {
@@ -290,7 +288,7 @@ const PaymentMethodSelector = ({
           
           .bank-option {
             padding: 8px;
-            height: 50px;
+            height: 70px;
           }
         }
       `}</style>

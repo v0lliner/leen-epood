@@ -9,7 +9,7 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
       
       <div className="form-grid">
         <div className="form-group">
-          <label htmlFor="firstName">{t('checkout.form.name')} *</label>
+          <label htmlFor="firstName">Eesnimi *</label>
           <input
             type="text"
             id="firstName"
@@ -106,10 +106,6 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
         .form-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          grid-template-areas: 
-            "firstName lastName"
-            "email phone"
-            "company company";
           gap: 24px;
         }
         
@@ -119,24 +115,8 @@ const ContactInfoForm = ({ formData, onChange, validationErrors }) => {
           gap: 8px;
         }
         
-        .form-group:nth-child(1) {
-          grid-area: firstName;
-        }
-        
-        .form-group:nth-child(2) {
-          grid-area: lastName;
-        }
-        
-        .form-group:nth-child(3) {
-          grid-area: email;
-        }
-        
-        .form-group:nth-child(4) {
-          grid-area: phone;
-        }
-        
-        .form-group:nth-child(5) {
-          grid-area: company;
+        .form-group:last-child {
+          grid-column: span 2;
         }
         
         .form-group label {
