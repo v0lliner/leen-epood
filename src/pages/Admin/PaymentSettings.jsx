@@ -4,10 +4,12 @@ import AdminLayout from '../../components/Admin/AdminLayout'
 import { Link } from 'react-router-dom'
 import { maksekeskusConfigService } from '../../utils/supabase/maksekeskusConfig'
 import { shippingSettingsService } from '../../utils/supabase/shippingSettings'
+import { shippingSettingsService } from '../../utils/supabase/shippingSettings'
 
 const PaymentSettings = () => {
   const { t } = useTranslation()
   const [config, setConfig] = useState(null)
+  const [omnivaSettings, setOmnivaSettings] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -37,10 +39,12 @@ const PaymentSettings = () => {
   // Form state for Omniva settings
   const [omnivaFormData, setOmnivaFormData] = useState({
     customer_code: '',
-    username: '',
-    password: '',
-    test_mode: false,
-    active: true
+    username: '', 
+    password: '', 
+    test_mode: false, 
+    active: true,
+    price: '3.99',
+    currency: 'EUR'
   })
   
   // Track which fields have been modified
@@ -53,8 +57,9 @@ const PaymentSettings = () => {
   // Track which Omniva fields have been modified
   const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
     customer_code: false,
-    username: false,
-    password: false
+    username: false, 
+    password: false,
+    price: false
   })
 
   // Active tab state
@@ -62,6 +67,7 @@ const PaymentSettings = () => {
 
   useEffect(() => {
     loadConfig()
+    loadOmnivaShippingSettings()
     loadOmnivaShippingSettings()
   }, [])
   
@@ -101,7 +107,7 @@ const PaymentSettings = () => {
       }
 
       // Load Omniva settings
-      loadOmnivaSettings()
+      loadOmnivaCredentials()
     } catch (err) {
       console.error('Error in loadConfig:', err)
       setError('Võrguühenduse viga')
@@ -134,7 +140,7 @@ const PaymentSettings = () => {
     }
   }
 
-  const loadOmnivaSettings = async () => {
+  const loadOmnivaCredentials = async () => {
     try {
       // Fetch Omniva settings from localStorage or API
       const omnivaSettings = localStorage.getItem('omnivaSettings')
@@ -145,12 +151,37 @@ const PaymentSettings = () => {
           customer_code: parsedSettings.customer_code || '',
           username: parsedSettings.username || '',
           password: '', // Don't show actual password, just placeholder
-          test_mode: parsedSettings.test_mode || false,
+          test_mode: parsedSettings.test_mode || false, 
+          price: omnivaSettings?.price || '3.99',
           active: parsedSettings.active || true
         })
       }
     } catch (error) {
       console.error('Error loading Omniva settings:', error)
+    }
+  }
+
+  const loadOmnivaShippingSettings = async () => {
+    try {
+      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
+      
+      if (error) {
+        console.warn('Failed to load Omniva shipping settings:', error)
+      } else {
+        setOmnivaSettings(data)
+        
+        // Update form data with shipping price if available
+        if (data) {
+          setOmnivaFormData(prev => ({
+            ...prev,
+            price: data.price.toString(),
+            currency: data.currency,
+            active: data.active
+          }))
+        }
+      }
+    } catch (err) {
+      console.error('Error loading Omniva shipping settings:', err)
     }
   }
 
@@ -336,13 +367,35 @@ const PaymentSettings = () => {
     setError('')
     setSuccess('')
 
-    try {
+    try { 
       // Validate required fields for new config
       if (!omnivaFormData.customer_code || !omnivaFormData.username || 
           (omnivaModifiedFields.password && !omnivaFormData.password)) {
         setError('Kõik väljad on kohustuslikud')
         setSaving(false)
         return
+      }
+
+      // Save shipping price to database
+      if (omnivaModifiedFields.price) {
+        const priceValue = parseFloat(omnivaFormData.price)
+        if (isNaN(priceValue) || priceValue <= 0) {
+          setError('Hind peab olema positiivne number')
+          setSaving(false)
+          return
+        }
+
+        if (omnivaSettings?.id) {
+          await shippingSettingsService.updateOmnivaShippingSettings(omnivaSettings.id, {
+            price: priceValue,
+            active: omnivaFormData.active
+          })
+        } else {
+          await shippingSettingsService.createOmnivaShippingSettings({
+            price: priceValue,
+            active: omnivaFormData.active
+          })
+        }
       }
 
       // Store in localStorage (in a real app, this would be stored in the database)
@@ -352,7 +405,8 @@ const PaymentSettings = () => {
         // Only include password if it was modified
         ...(omnivaModifiedFields.password && { password: '********' }), // Store masked password
         test_mode: omnivaFormData.test_mode,
-        active: omnivaFormData.active
+        active: omnivaFormData.active,
+        price: omnivaFormData.price
       }
 
       localStorage.setItem('omnivaSettings', JSON.stringify(settingsToSave))
@@ -361,7 +415,7 @@ const PaymentSettings = () => {
       setTimeout(() => setSuccess(''), 3000)
       
       // Reset modified fields
-      setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
+      setOmnivaModifiedFields({ customer_code: false, username: false, password: false, price: false })
     } catch (err) {
       setError('Seadete salvestamine ebaõnnestus: ' + err.message)
     } finally {
@@ -956,6 +1010,24 @@ const PaymentSettings = () => {
                   <small className="form-hint">
                     {omnivaFormData.password === '' && localStorage.getItem('omnivaSettings') ? 
                       'Jäta tühjaks, et säilitada olemasolev parool' : 
+                      'Sisesta Omniva API parool'}
+                  </small>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="price">Tarnehind (€)</label>
+                  <input
+                    type="text"
+                    id="price"
+                    name="price"
+                    value={omnivaFormData.price}
+                    onChange={handleOmnivaInputChange}
+                    className="form-input"
+                    placeholder="Sisesta tarnehind (nt. 3.99)"
+                    required
+                  />
+                  <small className="form-hint">
+                    Tarnehind kuvatakse kliendile ostukorvis ja tellimuse vormistamisel
                       'Sisesta Omniva API parool'}
                   </small>
                 </div>

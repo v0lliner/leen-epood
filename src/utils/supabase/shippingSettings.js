@@ -6,9 +6,9 @@ import { supabase } from './client'
 export const shippingSettingsService = {
   /**
    * Get Omniva shipping settings
-   * @returns {Promise<{data: object|null, error: object|null}>}
+   * @returns {Promise<{data: object|null, error: object|null}>} 
    */
-  async getOmnivaSettings() {
+  async getOmnivaShippingSettings() {
     try {
       const { data, error } = await supabase
         .from('omniva_shipping_settings')
@@ -26,10 +26,10 @@ export const shippingSettingsService = {
   /**
    * Update Omniva shipping settings
    * @param {string} id - Settings ID
-   * @param {object} updates - Fields to update
+   * @param {object} updates - Fields to update (price, currency, active)
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async updateOmnivaSettings(id, updates) {
+  async updateOmnivaShippingSettings(id, updates) {
     try {
       const { data, error } = await supabase
         .from('omniva_shipping_settings')
@@ -47,10 +47,10 @@ export const shippingSettingsService = {
 
   /**
    * Create new Omniva shipping settings
-   * @param {object} settings - Settings data
+   * @param {object} settings - Settings data (price, currency, active)
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async createOmnivaSettings(settings) {
+  async createOmnivaShippingSettings(settings) {
     try {
       // First, deactivate all existing settings
       await supabase
