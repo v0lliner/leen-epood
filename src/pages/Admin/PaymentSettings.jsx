@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import AdminLayout from '../../components/Admin/AdminLayout'
 import { Link } from 'react-router-dom'
 import { maksekeskusConfigService } from '../../utils/supabase/maksekeskusConfig'
+import { shippingSettingsService } from '../../utils/supabase/shippingSettings'
 
 const PaymentSettings = () => {
   const { t } = useTranslation()
@@ -11,6 +12,10 @@ const PaymentSettings = () => {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  
+  // Omniva shipping settings
+  const [omnivaShippingSettings, setOmnivaShippingSettings] = useState(null)
+  const [shippingPrice, setShippingPrice] = useState('3.99')
   
   // Form state for new values
   const [maksekeskusFormData, setMaksekeskusFormData] = useState({
@@ -49,6 +54,7 @@ const PaymentSettings = () => {
 
   useEffect(() => {
     loadConfig()
+    loadOmnivaShippingSettings()
   }, [])
 
   const loadConfig = async () => {
@@ -109,6 +115,21 @@ const PaymentSettings = () => {
       }
     } catch (error) {
       console.error('Error loading Omniva settings:', error)
+    }
+  }
+
+  const loadOmnivaShippingSettings = async () => {
+    try {
+      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
+      
+      if (error) {
+        console.error('Error loading Omniva shipping settings:', error)
+      } else if (data) {
+        setOmnivaShippingSettings(data)
+        setShippingPrice(data.price.toString())
+      }
+    } catch (err) {
+      console.error('Error in loadOmnivaShippingSettings:', err)
     }
   }
 
@@ -259,6 +280,44 @@ const PaymentSettings = () => {
       setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
     } catch (err) {
       setError('Seadete salvestamine ebaõnnestus: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleShippingPriceSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!omnivaShippingSettings?.id) {
+      setError('Omniva shipping settings not found')
+      return
+    }
+    
+    const price = parseFloat(shippingPrice)
+    if (isNaN(price) || price <= 0) {
+      setError('Please enter a valid price greater than 0')
+      return
+    }
+    
+    setSaving(true)
+    setError('')
+    setSuccess('')
+    
+    try {
+      const { data, error } = await shippingSettingsService.updateOmnivaShippingPrice(
+        omnivaShippingSettings.id,
+        price
+      )
+      
+      if (error) {
+        setError(error.message)
+      } else {
+        setSuccess('Omniva shipping price updated successfully!')
+        setOmnivaShippingSettings(data)
+        setTimeout(() => setSuccess(''), 3000)
+      }
+    } catch (err) {
+      setError('Network error occurred')
     } finally {
       setSaving(false)
     }
@@ -673,9 +732,34 @@ const PaymentSettings = () => {
               </div>
               
               <div className="config-info-card">
-                <h3>Mis on Omniva?</h3>
-                <p>Omniva API võimaldab automaatselt registreerida saadetisi ja genereerida jälgimisnumbreid pakiautomaati saadetavatele tellimustele.</p>
-                <p>Omniva pakiautomaadid on saadaval Eestis, Lätis ja Leedus.</p>
+                <h3>Omniva tarne hind</h3>
+                <form onSubmit={handleShippingPriceSubmit} className="shipping-price-form">
+                  <div className="form-group">
+                    <label htmlFor="shipping_price">Pakiautomaadi tarne hind</label>
+                    <div className="price-input-wrapper">
+                      <input
+                        type="text"
+                        id="shipping_price"
+                        value={shippingPrice}
+                        onChange={(e) => setShippingPrice(e.target.value)}
+                        className="form-input price-input"
+                        placeholder="3.99"
+                        required
+                      />
+                      <span className="currency-symbol">€</span>
+                    </div>
+                    <small className="form-hint">
+                      See hind kuvatakse klientidele ostukorvis Omniva pakiautomaadi valiku juures.
+                    </small>
+                  </div>
+                  <button 
+                    type="submit"
+                    disabled={saving}
+                    className="btn btn-primary shipping-price-btn"
+                  >
+                    {saving ? 'Salvestamine...' : 'Uuenda tarne hinda'}
+                  </button>
+                </form>
               </div>
             </div>
             
@@ -1193,11 +1277,37 @@ const PaymentSettings = () => {
         .form-input {
           padding: 12px 16px;
           border: 1px solid #e2e8f0;
-          border-radius: 8px;
+          border-radius: 8px 0 0 8px;
           font-family: var(--font-body);
           font-size: 1rem;
           transition: all 0.2s ease;
           background-color: white;
+        }
+
+        .price-input-wrapper {
+          display: flex;
+          align-items: stretch;
+        }
+
+        .currency-symbol {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-left: none;
+          border-radius: 0 8px 8px 0;
+          padding: 0 12px;
+          font-weight: 500;
+          color: #64748b;
+        }
+
+        .shipping-price-form {
+          margin-top: 16px;
+        }
+
+        .shipping-price-btn {
+          margin-top: 16px;
         }
 
         .form-input:focus {
