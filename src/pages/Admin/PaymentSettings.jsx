@@ -135,7 +135,7 @@ const PaymentSettings = () => {
 
   const loadOmnivaShippingSettings = async () => {
     try {
-      const { data, error } = await shippingSettingsService.getOmnivaSettings()
+      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
       
       if (error) {
         console.error('Error loading Omniva shipping settings:', error)
@@ -312,7 +312,7 @@ const PaymentSettings = () => {
         )
       } else {
         // Create new settings
-        result = await shippingSettingsService.createOmnivaSettings({
+        result = await shippingSettingsService.createOmnivaShippingSettings({
           price,
           currency: omnivaShippingFormData.currency,
           active: omnivaShippingFormData.active

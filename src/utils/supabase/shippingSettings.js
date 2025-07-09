@@ -5,6 +5,14 @@ import { supabase } from './client'
  */
 export const shippingSettingsService = {
   /**
+   * Get Omniva shipping settings (alias for backward compatibility)
+   * @returns {Promise<{data: object|null, error: object|null}>} 
+   */
+  async getOmnivaSettings() {
+    return this.getOmnivaShippingSettings()
+  },
+
+  /**
    * Get Omniva shipping settings
    * @returns {Promise<{data: object|null, error: object|null}>} 
    */
@@ -21,6 +29,16 @@ export const shippingSettingsService = {
       console.error('Error fetching Omniva settings:', error)
       return { data: null, error: { message: 'Network error occurred' } }
     }
+  },
+
+  /**
+   * Update Omniva shipping settings (alias for backward compatibility)
+   * @param {string} id - Settings ID
+   * @param {object} updates - Fields to update (price, currency, active)
+   * @returns {Promise<{data: object|null, error: object|null}>}
+   */
+  async updateOmnivaSettings(id, updates) {
+    return this.updateOmnivaShippingSettings(id, updates)
   },
 
   /**
@@ -43,6 +61,15 @@ export const shippingSettingsService = {
       console.error('Error updating Omniva settings:', error)
       return { data: null, error: { message: 'Network error occurred' } }
     }
+  },
+
+  /**
+   * Create new Omniva shipping settings (alias for backward compatibility)
+   * @param {object} settings - Settings data (price, currency, active)
+   * @returns {Promise<{data: object|null, error: object|null}>}
+   */
+  async createOmnivaSettings(settings) {
+    return this.createOmnivaShippingSettings(settings)
   },
 
   /**
