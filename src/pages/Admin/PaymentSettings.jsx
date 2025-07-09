@@ -14,12 +14,8 @@ const PaymentSettings = () => {
   const [success, setSuccess] = useState('')
   
   // Omniva shipping settings
-  const [omnivaShippingSettings, setOmnivaShippingSettings] = useState({
-    id: null,
-    price: 3.99,
-    currency: 'EUR',
-    active: true
-  })
+  const [omnivaShippingSettings, setOmnivaShippingSettings] = useState(null)
+  const [shippingPrice, setShippingPrice] = useState('3.99')
   
   // Omniva shipping settings state
   const [omnivaShippingFormData, setOmnivaShippingFormData] = useState({
@@ -57,7 +53,7 @@ const PaymentSettings = () => {
   // Track which Omniva fields have been modified
   const [omnivaModifiedFields, setOmnivaModifiedFields] = useState({
     customer_code: false,
-    username: false, 
+    username: false,
     password: false
   })
 
@@ -66,6 +62,10 @@ const PaymentSettings = () => {
 
   useEffect(() => {
     loadConfig()
+    loadOmnivaShippingSettings()
+  }, [])
+  
+  useEffect(() => {
     loadOmnivaShippingSettings()
   }, [])
 
@@ -119,12 +119,7 @@ const PaymentSettings = () => {
         return
       }
       
-      setOmnivaShippingSettings(data || {
-        id: null,
-        price: 3.99,
-        currency: 'EUR',
-        active: true
-      })
+      setOmnivaShippingSettings(data)
       
       if (data) {
         setOmnivaShippingFormData({
@@ -156,6 +151,21 @@ const PaymentSettings = () => {
       }
     } catch (error) {
       console.error('Error loading Omniva settings:', error)
+    }
+  }
+
+  const loadOmnivaShippingSettings = async () => {
+    try {
+      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
+      
+      if (error) {
+        console.error('Error loading Omniva shipping settings:', error)
+      } else if (data) {
+        setOmnivaShippingSettings(data)
+        setShippingPrice(data.price.toString())
+      }
+    } catch (err) {
+      console.error('Error in loadOmnivaShippingSettings:', err)
     }
   }
 
@@ -369,6 +379,44 @@ const PaymentSettings = () => {
       setOmnivaModifiedFields({ customer_code: false, username: false, password: false })
     } catch (err) {
       setError('Seadete salvestamine ebaõnnestus: ' + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleShippingPriceSubmit = async (e) => {
+    e.preventDefault()
+    
+    if (!omnivaShippingSettings?.id) {
+      setError('Omniva shipping settings not found')
+      return
+    }
+    
+    const price = parseFloat(shippingPrice)
+    if (isNaN(price) || price <= 0) {
+      setError('Please enter a valid price greater than 0')
+      return
+    }
+    
+    setSaving(true)
+    setError('')
+    setSuccess('')
+    
+    try {
+      const { data, error } = await shippingSettingsService.updateOmnivaShippingPrice(
+        omnivaShippingSettings.id,
+        price
+      )
+      
+      if (error) {
+        setError(error.message)
+      } else {
+        setSuccess('Omniva shipping price updated successfully!')
+        setOmnivaShippingSettings(data)
+        setTimeout(() => setSuccess(''), 3000)
+      }
+    } catch (err) {
+      setError('Network error occurred')
     } finally {
       setSaving(false)
     }
@@ -756,57 +804,28 @@ const PaymentSettings = () => {
 
           {/* Omniva Settings */}
           <div className={`settings-card ${activeTab === 'omniva' ? '' : 'hidden'}`}>
-            <h2>Omniva tarnehind</h2>
+            <h2>Omniva API seaded</h2>
             
-            <div className="config-summary">
-              <div className="config-status-card">
-                <div className="status-header">
-                  <h3>Omniva tarnehind</h3>
-                  <span className={`status-badge ${omnivaShippingSettings.active ? 'status-active' : 'status-inactive'}`}>
-                    {omnivaShippingSettings.active ? 'Aktiivne' : 'Mitteaktiivne'}
-                  </span>
-                </div>
-                <div className="status-body">
-                  <div className="status-row">
-                    <span className="status-label">Hind:</span>
-                    <span className="status-value">
-                      {omnivaShippingSettings.price} {omnivaShippingSettings.currency}
-                    </span>
-                  </div>
-                  <div className="status-row">
-                    <span className="status-label">Viimati uuendatud:</span>
-                    <span className="status-value">
-                      {omnivaShippingSettings.updated_at ? new Date(omnivaShippingSettings.updated_at).toLocaleString('et-EE') : 'Pole uuendatud'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="config-info-card">
-                <h3>Tarnehinna info</h3>
-                <p>Siin saate määrata Omniva pakiautomaadi tarnehinna, mis kuvatakse klientidele ostukorvis.</p>
-                <p>Hind kehtib kõikidele Omniva pakiautomaadi tarnetele.</p>
-              </div>
-            </div>
-            
+            {/* Omniva Shipping Price Settings */}
             <div className="config-form-section">
-              <h3 className="form-section-title">Omniva tarnehinna seadistus</h3>
+              <h3 className="form-section-title">Omniva tarnehind</h3>
               
               <form onSubmit={handleOmnivaShippingSubmit} className="config-form">
                 <div className="form-group">
                   <label htmlFor="price">Tarnehind</label>
                   <input
-                    type="number"
+                    type="text"
                     id="price"
                     name="price"
                     value={omnivaShippingFormData.price}
                     onChange={handleOmnivaShippingInputChange}
                     className="form-input"
-                    placeholder="Sisesta tarnehind"
-                    step="0.01"
-                    min="0"
+                    placeholder="Nt. 3.99"
                     required
                   />
+                  <small className="form-hint">
+                    Sisestage Omniva pakiautomaadi tarnehind (nt. 3.99)
+                  </small>
                 </div>
                 
                 <div className="form-group">
@@ -838,13 +857,6 @@ const PaymentSettings = () => {
                 
                 <div className="form-actions">
                   <button 
-                    type="button"
-                    onClick={loadOmnivaShippingSettings}
-                    className="btn btn-secondary"
-                  >
-                    Tühista
-                  </button>
-                  <button 
                     type="submit"
                     disabled={savingOmnivaSettings}
                     className="btn btn-primary"
@@ -854,8 +866,8 @@ const PaymentSettings = () => {
                 </div>
               </form>
             </div>
-
-            <h2>Omniva API seaded</h2>
+            
+            <div className="section-divider"></div>
             
             <div className="config-summary">
               <div className="config-status-card">
@@ -879,6 +891,37 @@ const PaymentSettings = () => {
                     </span>
                   </div>
                 </div>
+              </div>
+              
+              <div className="config-info-card">
+                <h3>Omniva tarne hind</h3>
+                <form onSubmit={handleShippingPriceSubmit} className="shipping-price-form">
+                  <div className="form-group">
+                    <label htmlFor="shipping_price">Pakiautomaadi tarne hind</label>
+                    <div className="price-input-wrapper">
+                      <input
+                        type="text"
+                        id="shipping_price"
+                        value={shippingPrice}
+                        onChange={(e) => setShippingPrice(e.target.value)}
+                        className="form-input price-input"
+                        placeholder="3.99"
+                        required
+                      />
+                      <span className="currency-symbol">€</span>
+                    </div>
+                    <small className="form-hint">
+                      See hind kuvatakse klientidele ostukorvis Omniva pakiautomaadi valiku juures.
+                    </small>
+                  </div>
+                  <button 
+                    type="submit"
+                    disabled={saving}
+                    className="btn btn-primary shipping-price-btn"
+                  >
+                    {saving ? 'Salvestamine...' : 'Uuenda tarne hinda'}
+                  </button>
+                </form>
               </div>
             </div>
             
@@ -1396,11 +1439,37 @@ const PaymentSettings = () => {
         .form-input {
           padding: 12px 16px;
           border: 1px solid #e2e8f0;
-          border-radius: 8px;
+          border-radius: 8px 0 0 8px;
           font-family: var(--font-body);
           font-size: 1rem;
           transition: all 0.2s ease;
           background-color: white;
+        }
+
+        .price-input-wrapper {
+          display: flex;
+          align-items: stretch;
+        }
+
+        .currency-symbol {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background-color: #f1f5f9;
+          border: 1px solid #e2e8f0;
+          border-left: none;
+          border-radius: 0 8px 8px 0;
+          padding: 0 12px;
+          font-weight: 500;
+          color: #64748b;
+        }
+
+        .shipping-price-form {
+          margin-top: 16px;
+        }
+
+        .shipping-price-btn {
+          margin-top: 16px;
         }
 
         .form-input:focus {
