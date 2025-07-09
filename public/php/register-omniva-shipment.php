@@ -560,7 +560,6 @@ try {
     if (empty($order['omniva_parcel_machine_id'])) {
         shipmentLog("Not an Omniva parcel machine order", $order);
         http_response_code(400);
-        http_response_code(400);
         echo json_encode(['success' => false, 'error' => 'Not an Omniva parcel machine order']);
         exit();
     }
@@ -568,7 +567,6 @@ try {
     // Check if shipment is already registered
     if (!empty($order['omniva_barcode'])) {
         shipmentLog("Shipment already registered", $order['omniva_barcode']);
-        
         
         // Generate and save PDF label if requested
         if (isset($data['sendNotification']) && $data['sendNotification']) {
@@ -592,13 +590,6 @@ try {
             }
         }
         
-        
-        // Save PDF label
-        $labelUrl = savePdfLabel($barcode, $orderId, $order['order_number']);
-        
-        // Send notification email with tracking info
-        if ($labelUrl) {
-            sendTrackingNotification($orderId, $barcode, $labelUrl);
         // Shipment already registered, return the existing barcode
         echo json_encode([
             'success' => true,
@@ -689,7 +680,6 @@ try {
         $shipment->setShipmentHeader($shipmentHeader);
         
         // Create package
-        // Create package
         $package = new Package();
         $package
             ->setId($order['order_number'])
@@ -705,7 +695,6 @@ try {
         $package->setMeasures($measures);
         
         // Set receiver contact info
-        // Set receiver contact info
         shipmentLog("Setting receiver contact", [
             'name' => $order['customer_name'],
             'email' => $order['customer_email'],
@@ -713,7 +702,6 @@ try {
             'parcelMachineId' => $order['omniva_parcel_machine_id']
         ]);
         
-        $receiverContact = new Contact();
         $receiverContact = new Contact();
         $receiverAddress = new Address();
         $receiverAddress
@@ -728,7 +716,6 @@ try {
         
         $package->setReceiverContact($receiverContact);
         
-        // Set sender contact info
         // Set sender contact info
         shipmentLog("Setting sender contact");
         $senderContact = new Contact();
@@ -750,7 +737,6 @@ try {
         
         // Add package to shipment
         $shipment->setPackages([$package]);
-        $shipment->setPackages([$package]);
         
         // Set authentication
         $shipment->setAuth($username, $password);
@@ -763,7 +749,6 @@ try {
         ]);
         
         shipmentLog("Calling shipment->registerShipment()");
-        shipmentLog("Calling shipment->registerShipment()");
         $result = $shipment->registerShipment();
         shipmentLog("Shipment registration result", $result);
         
@@ -771,61 +756,41 @@ try {
             try {
                 $barcode = $result['barcodes'][0];
                 
-            $updateResult = updateOrderWithOmnivaDetails($orderId, $barcode);
-            $updateResult = updateOrderWithOmnivaDetails($orderId, $barcode);
-            shipmentLog("Order updated with barcode", ['success' => $updateResult, 'barcode' => $barcode]);
-            
-            // Generate and save PDF label
-            $labelUrl = saveLabelPDF($barcode, $order['order_number']);
-            
-            // Create tracking URL
-            $trackingUrl = "https://www.omniva.ee/track?barcode=$barcode";
-            
-            // Update order with tracking URL and label URL
-            if ($labelUrl) {
-                updateOrderWithTrackingDetails($orderId, $trackingUrl, $labelUrl);
-            }
-            
-            
-            // Send notification email if requested
-            if (isset($data['sendNotification']) && $data['sendNotification'] && $labelUrl) {
-                sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl);
-            }
-                updateOrderWithOmnivaDetails($orderId, $barcode);
+                $updateResult = updateOrderWithOmnivaDetails($orderId, $barcode);
+                shipmentLog("Order updated with barcode", ['success' => $updateResult, 'barcode' => $barcode]);
                 
                 // Generate and save PDF label
-                $pdfPath = saveLabelPDF($barcode, $order['order_number']);
+                $labelUrl = saveLabelPDF($barcode, $order['order_number']);
                 
                 // Create tracking URL
-                $trackingUrl = 'https://www.omniva.ee/track?barcode=' . $barcode;
+                $trackingUrl = "https://www.omniva.ee/track?barcode=$barcode";
                 
-                // Update order with label URL and tracking URL
-                updateOrderWithTrackingDetails($orderId, $trackingUrl, $pdfPath);
+                // Update order with tracking URL and label URL
+                if ($labelUrl) {
+                    updateOrderWithTrackingDetails($orderId, $trackingUrl, $labelUrl);
+                }
                 
-                // Send notification email to admin with tracking and label info
-                sendAdminShipmentNotification($order, $barcode, $trackingUrl, $pdfPath);
+                // Send notification email if requested
+                if (isset($data['sendNotification']) && $data['sendNotification'] && $labelUrl) {
+                    sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl);
+                }
                 
                 echo json_encode([
                     'success' => true,
                     'message' => 'Shipment registered successfully',
-                    'barcode' => $barcode,
-                    'tracking_url' => $trackingUrl,
-                    'label_url' => $pdfPath
+                    'barcode' => $barcode, 
+                    'tracking_url' => "https://www.omniva.ee/track?barcode=$barcode",
+                    'label_url' => $labelUrl
                 ]);
             } catch (Exception $e) {
-                logMessage("Error processing shipment after registration: " . $e->getMessage());
+                shipmentLog("Error processing shipment after registration: " . $e->getMessage());
                 http_response_code(500);
                 echo json_encode([
                     'success' => false,
                     'error' => 'Error processing shipment: ' . $e->getMessage()
-                'barcode' => $barcode,
-                'tracking_url' => $trackingUrl,
-                'tracking_url' => $trackingUrl,
-                'label_url' => $labelUrl
+                ]);
             }
         } else {
-            'barcode' => $barcode,
-            'tracking_url' => "https://www.omniva.ee/track?barcode=$barcode",
             shipmentLog("No barcode received from Omniva API", $result);
             throw new Exception('Omniva API ei tagastanud triipkoodi');
         }
@@ -866,10 +831,10 @@ function saveLabelPDF($barcode, $orderNumber) {
         $password = 'Ddg(8?e:$A';
         
         $label->setAuth($username, $password);
-        shipmentLog("PDF directory path", $pdfDir);
         
         // Create directory if it doesn't exist
         $pdfDir = __DIR__ . '/../pdf_labels';
+        shipmentLog("PDF directory path", $pdfDir);
         if (!is_dir($pdfDir)) {
             mkdir($pdfDir, 0755, true);
         }
@@ -877,8 +842,8 @@ function saveLabelPDF($barcode, $orderNumber) {
         // Generate filename
         $filename = 'omniva_' . preg_replace('/[^a-zA-Z0-9]/', '_', $orderNumber) . '_' . $barcode;
         $filePath = $pdfDir . '/' . $filename . '.pdf';
-        shipmentLog("Attempting to download label to", $filePath);
         
+        shipmentLog("Attempting to download label to", $filePath);
         // Download label and save to file
         $label->downloadLabels([$barcode], false, 'F', $filename, false);
         
@@ -918,8 +883,9 @@ function updateOrderWithTrackingDetails($orderId, $trackingUrl, $labelUrl) {
             $updateData
         );
         
-        return $result['status'] === 204;
-        shipmentLog("Order tracking update result", ['success' => $result['status'] === 204, 'status' => $result['status']]);
+        $success = $result['status'] === 204;
+        shipmentLog("Order tracking update result", ['success' => $success, 'status' => $result['status']]);
+        return $success;
     } catch (Exception $e) {
         logMessage("Error updating order with tracking details: " . $e->getMessage());
         return false;
@@ -949,7 +915,6 @@ function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl
         $subject = "OMNIVA triipkood lisatud tellimusele #{$order['order_number']} – Leen.ee";
         
         $emailMessage = '
-            <html>
             <html>
                 <head>
                     <meta charset="UTF-8">
@@ -997,7 +962,6 @@ function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl
                     </div>
                 </body>
             </html>
-            </html>
         ';
 
         // Send email using PHPMailer
@@ -1029,8 +993,8 @@ function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl
         $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $emailMessage));
         
         $mail->send();
-        shipmentLog("Admin shipment notification email sent successfully");
         logMessage("Admin shipment notification email sent successfully");
+        shipmentLog("Admin shipment notification email sent successfully");
         return true;
     } catch (Exception $e) {
         logMessage("Error sending admin shipment notification: " . $e->getMessage());

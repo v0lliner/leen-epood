@@ -21,11 +21,23 @@ const CheckoutSuccess = () => {
     clearCart();
 
 
+
     // Extract order reference from URL query parameters or path
     let reference = '';
     const queryParams = new URLSearchParams(location.search);
     reference = queryParams.get('reference') || '';
 
+    // Try to find reference in path segments if not in query params
+    const pathSegments = location.pathname.split('/');
+    if (!reference && pathSegments.length > 2) {
+      // Try to find a segment that looks like a reference (starts with "order-")
+      const possibleReference = pathSegments.find(segment => segment.startsWith('order-'));
+      if (possibleReference) {
+        reference = possibleReference;
+        console.log('Found reference in path:', reference);
+      }
+    }
+    
 
     // If no reference in query params, try to extract from path segments
     const loadOrderDetails = async () => {
@@ -44,6 +56,15 @@ const CheckoutSuccess = () => {
           if (!response.ok) {
             console.warn(`Failed to fetch order details from server: ${response.status}`);
             console.warn(`Failed to fetch order details from server: ${response.status}`);
+            
+            // Try to get error details if available
+            try {
+              const errorText = await response.text();
+              console.error('Error response:', errorText);
+            } catch (e) {
+              console.error('Could not read error response');
+            }
+            
             throw new Error('Tellimuse andmete laadimine ebaõnnestus. Palun võtke ühendust klienditoega.');
           }
           
@@ -83,9 +104,13 @@ const CheckoutSuccess = () => {
         setError(error.message || 'Tellimuse andmete laadimine ebaõnnestus');
         
         // If no order data is found, redirect to shop after a delay
-        setTimeout(() => {
-          navigate('/epood');
-        }, 5000);
+        // Only redirect if there's no reference - if there is a reference, 
+        // it might be a temporary issue and the user might want to try again
+        if (!reference) {
+          setTimeout(() => {
+            navigate('/epood');
+          }, 5000);
+        }
       } finally {
         setLoading(false);
       }

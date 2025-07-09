@@ -4,11 +4,16 @@ RewriteEngine On
 # Allow direct access to PHP files in the php directory
 RewriteRule ^php/(.*)$ php/$1 [L]
 
+# Allow direct access to PHP files in the php directory
+RewriteRule ^php/(.*)$ php/$1 [L]
+
 # Redirect all requests to index.html for SPA routing
 RewriteBase /
 RewriteRule ^index\.html$ - [L]
 # Exclude robots.txt from rewrite rules
 RewriteCond %{REQUEST_URI} !^/robots\.txt$ [NC]
+# Exclude PHP files from rewrite rules
+RewriteCond %{REQUEST_URI} !^/php/ [NC]
 # Exclude PHP files from rewrite rules
 RewriteCond %{REQUEST_URI} !^/php/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
