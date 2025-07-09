@@ -396,14 +396,36 @@ const AdminOrders = () => {
                         {orderDetails.omniva_barcode && (
                             <div className="info-item">
                               <span className="info-label">Jälgimisnumber:</span>
-                              <span className="info-value">
+                              <span className="info-value tracking-info">
                                 <a 
-                                  href={orderDetails.tracking_url || `https://www.omniva.ee/track?barcode=${orderDetails.omniva_barcode}`} 
+                                  href={`https://www.omniva.ee/track?barcode=${orderDetails.omniva_barcode}`} 
                                   target="_blank" 
                                   rel="noopener noreferrer"
                                   className="tracking-link"
                                 >
-                                  {orderDetails.omniva_barcode} 🔗
+                                  {orderDetails.omniva_barcode}
+                                </a>
+                                <span className="tracking-status">
+                                  {orderDetails.shipment_registered_at ? 
+                                    `(Registreeritud: ${new Date(orderDetails.shipment_registered_at).toLocaleString('et-EE')})` : 
+                                    ''}
+                                </span>
+                              </span>
+                            </div>
+                          )}
+                          
+                          {/* Display PDF label download link if available */}
+                          {orderDetails.label_url && (
+                            <div className="info-item">
+                              <span className="info-label">Saateleht:</span>
+                              <span className="info-value">
+                                <a 
+                                  href={orderDetails.label_url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="label-link"
+                                >
+                                  Lae alla PDF 📄
                                 </a>
                               </span>
                             </div>
@@ -535,14 +557,14 @@ const AdminOrders = () => {
                                },
                                body: JSON.stringify({
                                  orderId: orderDetails.id,
-                                 notifyAdmin: true
+                                 sendNotification: true
                                })
                              })
                              .then(response => response.json())
                              .then(data => {
                                if (data.success) {
-                                 alert(`Omniva saadetis edukalt registreeritud!\nJälgimisnumber: ${data.barcode}\nSaateleht: ${data.label_url || 'pole saadaval'}\nJälgimislink: ${data.tracking_url || 'pole saadaval'}`);
-                                 // Reload order details to show the new barcode and tracking info
+                                 alert(`Omniva saadetis edukalt registreeritud!\n\nJälgimisnumber: ${data.barcode}\n\nSaateleht on salvestatud ja saadetud e-postiga.`);
+                                 // Reload order details to show the new barcode
                                  loadOrderDetails(orderDetails.id);
                                } else {
                                  alert(`Viga: ${data.error}`);
@@ -553,10 +575,10 @@ const AdminOrders = () => {
                              });
                            }
                          }}
-                          className="btn btn-status btn-omniva"
-                        >
-                          Registreeri Omniva saadetis
-                        </button>
+                         className="btn btn-status btn-omniva"
+                       >
+                         Registreeri Omniva saadetis
+                       </button>
                       )}
                       
                       {(orderDetails.status === 'PAID' || orderDetails.status === 'PROCESSING' || orderDetails.status === 'SHIPPED') && (
@@ -1093,11 +1115,49 @@ const AdminOrders = () => {
         .tracking-link {
           color: var(--color-ultramarine);
           text-decoration: underline;
-          transition: opacity 0.2s ease;
+          font-weight: 500;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
         }
 
         .tracking-link:hover {
           opacity: 0.8;
+        }
+        
+        .tracking-link::after {
+          content: '🔗';
+          display: inline-block;
+          margin-left: 4px;
+        }
+        
+        .label-link {
+          color: var(--color-ultramarine);
+          text-decoration: underline;
+          font-weight: 500;
+          transition: all 0.2s ease;
+          display: inline-flex;
+          align-items: center;
+          gap: 4px;
+        }
+        
+        .label-link:hover {
+          opacity: 0.8;
+        }
+        
+        .tracking-status {
+          font-size: 0.85rem;
+          color: #666;
+          margin-left: 8px;
+          font-style: italic;
+        }
+        
+        .tracking-info {
+          display: flex;
+          flex-wrap: wrap;
+          align-items: center;
+          gap: 4px;
         }
 
         .status-registered {
