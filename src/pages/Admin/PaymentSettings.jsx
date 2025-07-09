@@ -13,10 +13,6 @@ const PaymentSettings = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   
-  // Omniva shipping settings state
-  const [omnivaShippingSettings, setOmnivaShippingSettings] = useState(null)
-  const [shippingSettingsLoading, setShippingSettingsLoading] = useState(false)
-  
   // Omniva shipping settings
   const [omnivaShippingSettings, setOmnivaShippingSettings] = useState(null)
   const [shippingPrice, setShippingPrice] = useState('3.99')
@@ -67,9 +63,11 @@ const PaymentSettings = () => {
   useEffect(() => {
     loadConfig()
     loadOmnivaShippingSettings()
-    loadOmnivaShippingSettings()
   }, [])
   
+  useEffect(() => {
+    loadOmnivaShippingSettings()
+  }, [])
 
   const loadConfig = async () => {
     setLoading(true)
@@ -103,33 +101,12 @@ const PaymentSettings = () => {
       }
 
       // Load Omniva settings
-      loadOmnivaLocalSettings()
+      loadOmnivaSettings()
     } catch (err) {
       console.error('Error in loadConfig:', err)
       setError('Võrguühenduse viga')
     } finally {
       setLoading(false)
-    }
-  }
-
-
-  const loadOmnivaLocalSettings = async () => {
-    try {
-      // Fetch Omniva settings from localStorage or API
-      const omnivaSettings = localStorage.getItem('omnivaSettings')
-      
-      if (omnivaSettings) {
-        const parsedSettings = JSON.parse(omnivaSettings)
-        setOmnivaFormData({
-          customer_code: parsedSettings.customer_code || '',
-          username: parsedSettings.username || '',
-          password: '', // Don't show actual password, just placeholder
-          test_mode: parsedSettings.test_mode || false,
-          active: parsedSettings.active || true
-        })
-      }
-    } catch (error) {
-      console.error('Error loading Omniva settings:', error)
     }
   }
 
@@ -151,34 +128,44 @@ const PaymentSettings = () => {
           currency: data.currency,
           active: data.active
         })
-        setOmnivaShippingSettings(data)
-        setShippingPrice(data.price.toString())
       }
     } catch (err) {
       console.error('Error in loadOmnivaShippingSettings:', err)
     }
   }
 
+  const loadOmnivaSettings = async () => {
+    try {
+      // Fetch Omniva settings from localStorage or API
+      const omnivaSettings = localStorage.getItem('omnivaSettings')
+      
+      if (omnivaSettings) {
+        const parsedSettings = JSON.parse(omnivaSettings)
+        setOmnivaFormData({
+          customer_code: parsedSettings.customer_code || '',
+          username: parsedSettings.username || '',
+          password: '', // Don't show actual password, just placeholder
+          test_mode: parsedSettings.test_mode || false,
+          active: parsedSettings.active || true
+        })
+      }
+    } catch (error) {
+      console.error('Error loading Omniva settings:', error)
+    }
+  }
+
   const loadOmnivaShippingSettings = async () => {
     try {
-      setShippingSettingsLoading(true)
-      const { data, error } = await shippingSettingsService.getOmnivaSettings()
+      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
       
       if (error) {
         console.error('Error loading Omniva shipping settings:', error)
-        // If no settings exist, create default settings
-        if (error.code === 'PGRST116') {
-          setOmnivaShippingSettings({ price: 3.99, currency: 'EUR', active: true })
-        } else {
-          setError('Omniva tarnehinna seadete laadimine ebaõnnestus')
-        }
-      } else {
-        setOmnivaShippingSettings(data || { price: 3.99, currency: 'EUR', active: true })
+      } else if (data) {
+        setOmnivaShippingSettings(data)
+        setShippingPrice(data.price.toString())
       }
     } catch (err) {
       console.error('Error in loadOmnivaShippingSettings:', err)
-    } finally {
-      setShippingSettingsLoading(false)
     }
   }
 
@@ -433,62 +420,6 @@ const PaymentSettings = () => {
     } finally {
       setSaving(false)
     }
-  }
-
-  const handleOmnivaShippingSubmit = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    setError('')
-    setSuccess('')
-
-    try {
-      let result
-      
-      if (omnivaShippingSettings.id) {
-        // Update existing settings
-        result = await shippingSettingsService.updateOmnivaSettings(
-          omnivaShippingSettings.id,
-          {
-            price: parseFloat(omnivaShippingSettings.price),
-            currency: omnivaShippingSettings.currency,
-            active: omnivaShippingSettings.active
-          }
-        )
-      } else {
-        // Create new settings
-        result = await shippingSettingsService.createOmnivaSettings({
-          price: parseFloat(omnivaShippingSettings.price),
-          currency: omnivaShippingSettings.currency,
-          active: omnivaShippingSettings.active
-        })
-      }
-      
-      if (result.error) {
-        setError(result.error.message)
-      } else {
-        setOmnivaShippingSettings(result.data)
-        setSuccess('Omniva tarnehinna seaded edukalt salvestatud!')
-        setTimeout(() => setSuccess(''), 3000)
-      }
-    } catch (err) {
-      setError('Seadete salvestamine ebaõnnestus: ' + err.message)
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleOmnivaShippingChange = (e) => {
-    const { name, value, type, checked } = e.target
-    const newValue = type === 'checkbox' ? checked : value
-    
-    setOmnivaShippingSettings(prev => ({
-      ...prev,
-      [name]: newValue
-    }))
-    
-    // Clear messages when user starts typing
-    if (error) setError('')
-    if (success) setSuccess('')
   }
 
   const handleToggleTestMode = async () => {
@@ -874,94 +805,6 @@ const PaymentSettings = () => {
           {/* Omniva Settings */}
           <div className={`settings-card ${activeTab === 'omniva' ? '' : 'hidden'}`}>
             <h2>Omniva API seaded</h2>
-            
-            {/* Omniva Shipping Price Settings */}
-            <div className="config-summary">
-              <div className="config-status-card">
-                <div className="status-header">
-                  <h3>Omniva tarnehind</h3>
-                  <span className={`status-badge ${omnivaShippingSettings?.active ? 'status-active' : 'status-inactive'}`}>
-                    {omnivaShippingSettings?.active ? 'Aktiivne' : 'Mitteaktiivne'}
-                  </span>
-                </div>
-                <div className="status-body">
-                  <div className="status-row">
-                    <span className="status-label">Praegune hind:</span>
-                    <span className="status-value">
-                      {shippingSettingsLoading ? 'Laadin...' : 
-                        `${omnivaShippingSettings?.price || '3.99'} ${omnivaShippingSettings?.currency || 'EUR'}`}
-                    </span>
-                  </div>
-                  <div className="status-row">
-                    <span className="status-label">Viimati uuendatud:</span>
-                    <span className="status-value">
-                      {omnivaShippingSettings?.updated_at ? 
-                        new Date(omnivaShippingSettings.updated_at).toLocaleString('et-EE') : 
-                        'Pole veel uuendatud'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="config-form-section">
-                <h3 className="form-section-title">Muuda tarnehinda</h3>
-                
-                <form onSubmit={handleOmnivaShippingSubmit} className="config-form">
-                  <div className="form-group">
-                    <label htmlFor="price">Tarnehind</label>
-                    <input
-                      type="number"
-                      id="price"
-                      name="price"
-                      value={omnivaShippingSettings?.price || '3.99'}
-                      onChange={handleOmnivaShippingChange}
-                      className="form-input"
-                      placeholder="Sisesta tarnehind"
-                      step="0.01"
-                      min="0"
-                      required
-                    />
-                  </div>
-                  
-                  <div className="form-group">
-                    <label htmlFor="currency">Valuuta</label>
-                    <select
-                      id="currency"
-                      name="currency"
-                      value={omnivaShippingSettings?.currency || 'EUR'}
-                      onChange={handleOmnivaShippingChange}
-                      className="form-input"
-                      required
-                    >
-                      <option value="EUR">EUR</option>
-                    </select>
-                  </div>
-                  
-                  <div className="form-group checkbox-group">
-                    <label className="checkbox-label">
-                      <input
-                        type="checkbox"
-                        name="active"
-                        checked={omnivaShippingSettings?.active ?? true}
-                        onChange={handleOmnivaShippingChange}
-                        className="form-checkbox"
-                      />
-                      <span>Aktiivne</span>
-                    </label>
-                  </div>
-                  
-                  <div className="form-actions">
-                    <button 
-                      type="submit"
-                      disabled={saving || shippingSettingsLoading}
-                      className="btn btn-primary"
-                    >
-                      {saving ? 'Salvestamine...' : 'Salvesta tarnehind'}
-                    </button>
-                  </div>
-                </form>
-              </div>
-            </div>
             
             {/* Omniva Shipping Price Settings */}
             <div className="config-form-section">
