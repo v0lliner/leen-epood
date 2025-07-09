@@ -27,6 +27,7 @@ const CheckoutSuccess = () => {
     reference = queryParams.get('reference') || '';
 
     // If no reference in query params, try to extract from path segments
+    const loadOrderDetails = async () => {
       try {
         setLoading(true);
         setError(null);
