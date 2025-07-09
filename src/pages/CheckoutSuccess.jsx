@@ -20,10 +20,19 @@ const CheckoutSuccess = () => {
     // Clear the cart when the success page loads - this ensures cart is only cleared after successful payment
     clearCart();
 
-    // Extract order reference from URL query parameters or path
+    // Extract order reference from URL query parameters
     let reference = '';
     const queryParams = new URLSearchParams(location.search);
     reference = queryParams.get('reference') || queryParams.get('order_number') || '';
+    
+    // If no reference in query params, try to extract from path segments
+    if (!reference) {
+      const segments = location.pathname.split('/');
+      const lastSeg = segments[segments.length - 1];
+      if (lastSeg && lastSeg !== 'success') {
+        reference = lastSeg;
+      }
+    }
     
     // If no reference in query, check URL path segments
     if (!reference) {
@@ -48,7 +57,7 @@ const CheckoutSuccess = () => {
         
         // Only try to get order details from URL reference parameter
         if (reference) {
-          console.log('Fetching order details from server for reference:', reference); 
+          console.log('Fetching order details from server for reference:', reference);
           
           // Fetch order details from the backend using the reference
           const response = await fetch(`/php/admin/orders.php?reference=${reference}`);

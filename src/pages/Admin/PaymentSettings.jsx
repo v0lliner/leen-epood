@@ -17,6 +17,14 @@ const PaymentSettings = () => {
   const [omnivaShippingSettings, setOmnivaShippingSettings] = useState(null)
   const [shippingPrice, setShippingPrice] = useState('3.99')
   
+  // Omniva shipping settings state
+  const [omnivaShippingFormData, setOmnivaShippingFormData] = useState({
+    price: '3.99',
+    currency: 'EUR',
+    active: true
+  })
+  const [savingOmnivaSettings, setSavingOmnivaSettings] = useState(false)
+  
   // Form state for new values
   const [maksekeskusFormData, setMaksekeskusFormData] = useState({
     shop_id: '',
@@ -54,6 +62,10 @@ const PaymentSettings = () => {
 
   useEffect(() => {
     loadConfig()
+    loadOmnivaShippingSettings()
+  }, [])
+  
+  useEffect(() => {
     loadOmnivaShippingSettings()
   }, [])
 
@@ -95,6 +107,30 @@ const PaymentSettings = () => {
       setError('Võrguühenduse viga')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadOmnivaShippingSettings = async () => {
+    try {
+      const { data, error } = await shippingSettingsService.getOmnivaSettings()
+      
+      if (error) {
+        console.error('Error loading Omniva shipping settings:', error)
+        return
+      }
+      
+      setOmnivaShippingSettings(data)
+      
+      if (data) {
+        setOmnivaShippingFormData({
+          id: data.id,
+          price: data.price.toString(),
+          currency: data.currency,
+          active: data.active
+        })
+      }
+    } catch (err) {
+      console.error('Error in loadOmnivaShippingSettings:', err)
     }
   }
 
@@ -177,6 +213,20 @@ const PaymentSettings = () => {
     if (success) setSuccess('')
   }
 
+  const handleOmnivaShippingInputChange = (e) => {
+    const { name, value, type, checked } = e.target
+    const newValue = type === 'checkbox' ? checked : value
+    
+    setOmnivaShippingFormData(prev => ({
+      ...prev,
+      [name]: newValue
+    }))
+    
+    // Clear messages when user starts typing
+    if (error) setError('')
+    if (success) setSuccess('')
+  }
+
   const handleMaksekeskusSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
@@ -243,6 +293,55 @@ const PaymentSettings = () => {
       setError('Võrguühenduse viga')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleOmnivaShippingSubmit = async (e) => {
+    e.preventDefault()
+    setSavingOmnivaSettings(true)
+    setError('')
+    setSuccess('')
+
+    try {
+      // Validate price
+      const price = parseFloat(omnivaShippingFormData.price)
+      if (isNaN(price) || price <= 0) {
+        setError('Hind peab olema positiivne number')
+        setSavingOmnivaSettings(false)
+        return
+      }
+
+      let result
+      if (omnivaShippingSettings?.id) {
+        // Update existing settings
+        result = await shippingSettingsService.updateOmnivaSettings(
+          omnivaShippingSettings.id,
+          {
+            price,
+            currency: omnivaShippingFormData.currency,
+            active: omnivaShippingFormData.active
+          }
+        )
+      } else {
+        // Create new settings
+        result = await shippingSettingsService.createOmnivaSettings({
+          price,
+          currency: omnivaShippingFormData.currency,
+          active: omnivaShippingFormData.active
+        })
+      }
+
+      if (result.error) {
+        setError(result.error.message)
+      } else {
+        setSuccess('Omniva tarnehind edukalt salvestatud!')
+        setOmnivaShippingSettings(result.data)
+        setTimeout(() => setSuccess(''), 3000)
+      }
+    } catch (err) {
+      setError('Võrguühenduse viga')
+    } finally {
+      setSavingOmnivaSettings(false)
     }
   }
 
@@ -706,6 +805,69 @@ const PaymentSettings = () => {
           {/* Omniva Settings */}
           <div className={`settings-card ${activeTab === 'omniva' ? '' : 'hidden'}`}>
             <h2>Omniva API seaded</h2>
+            
+            {/* Omniva Shipping Price Settings */}
+            <div className="config-form-section">
+              <h3 className="form-section-title">Omniva tarnehind</h3>
+              
+              <form onSubmit={handleOmnivaShippingSubmit} className="config-form">
+                <div className="form-group">
+                  <label htmlFor="price">Tarnehind</label>
+                  <input
+                    type="text"
+                    id="price"
+                    name="price"
+                    value={omnivaShippingFormData.price}
+                    onChange={handleOmnivaShippingInputChange}
+                    className="form-input"
+                    placeholder="Nt. 3.99"
+                    required
+                  />
+                  <small className="form-hint">
+                    Sisestage Omniva pakiautomaadi tarnehind (nt. 3.99)
+                  </small>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="currency">Valuuta</label>
+                  <select
+                    id="currency"
+                    name="currency"
+                    value={omnivaShippingFormData.currency}
+                    onChange={handleOmnivaShippingInputChange}
+                    className="form-input"
+                    required
+                  >
+                    <option value="EUR">EUR</option>
+                  </select>
+                </div>
+                
+                <div className="form-group checkbox-group">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      name="active"
+                      checked={omnivaShippingFormData.active}
+                      onChange={handleOmnivaShippingInputChange}
+                      className="form-checkbox"
+                    />
+                    <span>Aktiivne</span>
+                  </label>
+                </div>
+                
+                <div className="form-actions">
+                  <button 
+                    type="submit"
+                    disabled={savingOmnivaSettings}
+                    className="btn btn-primary"
+                  >
+                    {savingOmnivaSettings ? 'Salvestamine...' : 'Salvesta tarnehind'}
+                  </button>
+                </div>
+              </form>
+            </div>
+            
+            <div className="section-divider"></div>
             
             <div className="config-summary">
               <div className="config-status-card">
@@ -1323,6 +1485,11 @@ const PaymentSettings = () => {
         .form-hint {
           font-size: 0.8rem;
           color: #718096;
+        }
+        
+        .section-divider {
+          margin: 32px 0;
+          border-top: 1px solid #e9ecef;
         }
 
         .form-actions {
