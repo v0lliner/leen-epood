@@ -63,7 +63,6 @@ const CartSummaryDisplay = ({ cartItems }) => {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          padding-bottom: 16px;
           border-bottom: 1px solid #f0f0f0;
           gap: 16px;
         }
