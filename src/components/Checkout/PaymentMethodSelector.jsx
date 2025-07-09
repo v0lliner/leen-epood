@@ -4,9 +4,6 @@ import { useTranslation } from 'react-i18next';
 // Bank logos URL format from Maksekeskus
 const BANK_LOGO_URL = 'https://static.maksekeskus.ee/img/channel/lnd/';
 
-// Bank logos URL format from Maksekeskus
-const BANK_LOGO_URL = 'https://static.maksekeskus.ee/img/channel/lnd/';
-
 const PaymentMethodSelector = ({ 
   formData, 
   onChange, 
