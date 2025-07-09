@@ -659,6 +659,7 @@ try {
     
     // Get the transaction ID
     $transactionId = $data->transaction ?? null;
+    $reference = isset($data->reference) ? $data->reference : null;
 
     if (!$transactionId) {
         logMessage("No transaction ID in notification", $data);
@@ -678,6 +679,11 @@ try {
         exit();
     }
     
+    // Extract merchant data
+    $merchantData = json_decode(isset($transaction->transaction->merchant_data) ? $transaction->transaction->merchant_data : '{}', true);
+    logMessage("Merchant data", $merchantData);
+    
+    // Return success response
     // Process the order in our database
     $success = processOrder($transaction, $data); 
 
