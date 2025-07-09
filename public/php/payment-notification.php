@@ -55,6 +55,7 @@ function logMessage($message, $data = null) {
     file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
 }
 
+
 function sendEmail($to, $subject, $message, $replyTo = null) {
     try {
         // Load PHPMailer
@@ -458,6 +459,7 @@ function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $repl
             
             // Store the order reference in the merchant_data for later retrieval
             if ($transactionData && isset($transactionData->transaction) && isset($transactionData->transaction->reference)) {
+    }
                 $merchantData = json_decode($transactionData->transaction->merchant_data ?? '{}', true);
                 $merchantData['order_reference'] = $orderReference;
                 
