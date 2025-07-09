@@ -136,6 +136,7 @@ function getOrderDetailsByOrderNumber($orderNumber) {
     
     if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
         logMessage("Order not found for order number", $orderNumber);
+        logMessage("Order not found for order number", $orderNumber);
         return null;
     }
     
@@ -143,6 +144,7 @@ function getOrderDetailsByOrderNumber($orderNumber) {
     $orderId = $order['id'];
     
     // Get order items
+    logMessage("Fetching order items for order", $orderId);
     logMessage("Fetching order items for order", $orderId);
     $itemsResult = supabaseRequest(
         "/rest/v1/order_items?order_id=eq.$orderId&select=*",
@@ -156,6 +158,7 @@ function getOrderDetailsByOrderNumber($orderNumber) {
     }
     
     // Get payment info
+    logMessage("Fetching payment info for order", $orderId);
     logMessage("Fetching payment info for order", $orderId);
     $paymentsResult = supabaseRequest(
         "/rest/v1/order_payments?order_id=eq.$orderId&select=*",

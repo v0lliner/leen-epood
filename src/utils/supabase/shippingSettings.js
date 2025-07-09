@@ -5,18 +5,10 @@ import { supabase } from './client'
  */
 export const shippingSettingsService = {
   /**
-   * Get Omniva shipping settings (alias for backward compatibility)
-   * @returns {Promise<{data: object|null, error: object|null}>} 
+   * Get Omniva shipping settings
+   * @returns {Promise<{data: object|null, error: object|null}>}
    */
   async getOmnivaSettings() {
-    return this.getOmnivaShippingSettings()
-  },
-
-  /**
-   * Get Omniva shipping settings
-   * @returns {Promise<{data: object|null, error: object|null}>} 
-   */
-  async getOmnivaShippingSettings() {
     try {
       const { data, error } = await supabase
         .from('omniva_shipping_settings')
@@ -32,22 +24,12 @@ export const shippingSettingsService = {
   },
 
   /**
-   * Update Omniva shipping settings (alias for backward compatibility)
+   * Update Omniva shipping settings
    * @param {string} id - Settings ID
-   * @param {object} updates - Fields to update (price, currency, active)
+   * @param {object} updates - Fields to update
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
   async updateOmnivaSettings(id, updates) {
-    return this.updateOmnivaShippingSettings(id, updates)
-  },
-
-  /**
-   * Update Omniva shipping settings
-   * @param {string} id - Settings ID
-   * @param {object} updates - Fields to update (price, currency, active)
-   * @returns {Promise<{data: object|null, error: object|null}>}
-   */
-  async updateOmnivaShippingSettings(id, updates) {
     try {
       const { data, error } = await supabase
         .from('omniva_shipping_settings')
@@ -64,20 +46,11 @@ export const shippingSettingsService = {
   },
 
   /**
-   * Create new Omniva shipping settings (alias for backward compatibility)
-   * @param {object} settings - Settings data (price, currency, active)
+   * Create new Omniva shipping settings
+   * @param {object} settings - Settings data
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
   async createOmnivaSettings(settings) {
-    return this.createOmnivaShippingSettings(settings)
-  },
-
-  /**
-   * Create new Omniva shipping settings
-   * @param {object} settings - Settings data (price, currency, active)
-   * @returns {Promise<{data: object|null, error: object|null}>}
-   */
-  async createOmnivaShippingSettings(settings) {
     try {
       // First, deactivate all existing settings
       await supabase
