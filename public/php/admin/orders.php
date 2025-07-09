@@ -1,7 +1,7 @@
 <?php
 // Enable error reporting for development
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors to users, but log them
+ini_set('display_errors', 0);
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -16,7 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Log file for debugging
-$logFile = __DIR__ . '/../admin_orders_log.txt';
+$logDir = __DIR__ . '/../../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+$logFile = $logDir . '/admin_orders.log';
 
 // Function to log messages
 function logMessage($message, $data = null) {
@@ -84,7 +88,7 @@ function supabaseRequest($endpoint, $method = 'GET', $data = null) {
 function getOrderDetails($orderId) {
     // Get order basic info
     $orderResult = supabaseRequest(
-        "/rest/v1/orders?id=eq.$orderId&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode",
+        "/rest/v1/orders?id=eq.$orderId&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at",
         'GET'
     );
     
@@ -125,11 +129,12 @@ function getOrderDetails($orderId) {
 function getOrderDetailsByOrderNumber($orderNumber) {
     // Get order basic info
     $orderResult = supabaseRequest(
-        "/rest/v1/orders?order_number=eq.$orderNumber&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode",
+        "/rest/v1/orders?order_number=eq.$orderNumber&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at,reference",
         'GET'
     );
     
     if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+        logMessage("Order not found for order number", $orderNumber);
         return null;
     }
     
@@ -137,6 +142,7 @@ function getOrderDetailsByOrderNumber($orderNumber) {
     $orderId = $order['id'];
     
     // Get order items
+    logMessage("Fetching order items for order", $orderId);
     $itemsResult = supabaseRequest(
         "/rest/v1/order_items?order_id=eq.$orderId&select=*",
         'GET'
@@ -149,6 +155,7 @@ function getOrderDetailsByOrderNumber($orderNumber) {
     }
     
     // Get payment info
+    logMessage("Fetching payment info for order", $orderId);
     $paymentsResult = supabaseRequest(
         "/rest/v1/order_payments?order_id=eq.$orderId&select=*",
         'GET'
@@ -176,6 +183,8 @@ function updateOrderStatus($orderId, $newStatus) {
 
 // Main execution starts here
 try {
+    logMessage("Received request", ['method' => $_SERVER['REQUEST_METHOD'], 'uri' => $_SERVER['REQUEST_URI'], 'get' => $_GET]);
+    
     // Parse the URL to get the order ID if present
     $requestUri = $_SERVER['REQUEST_URI'];
     $orderId = null;
@@ -197,6 +206,7 @@ try {
     if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // If order ID is provided, get specific order details
         if ($orderId) {
+            logMessage("Fetching order details for ID", $orderId);
             $order = getOrderDetails($orderId);
             
             if ($order) {
@@ -214,6 +224,7 @@ try {
         } 
         // If order number is provided, get order details by order number
         else if ($orderNumber) {
+            logMessage("Fetching order details for order number", $orderNumber);
             $order = getOrderDetailsByOrderNumber($orderNumber);
             
             if ($order) {
@@ -232,6 +243,7 @@ try {
         // Otherwise, get all orders
         else {
             // Query the admin_orders_view
+            logMessage("Fetching all orders from admin_orders_view");
             $ordersResult = supabaseRequest(
                 "/rest/v1/admin_orders_view?select=*&order=created_at.desc",
                 'GET'

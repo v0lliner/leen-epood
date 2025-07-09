@@ -16,7 +16,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Log file for debugging
-$logFile = __DIR__ . '/admin_stats_log.txt';
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+$logFile = $logDir . '/admin_stats.log';
 
 // Function to log messages
 function logMessage($message, $data = null) {

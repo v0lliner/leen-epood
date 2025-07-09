@@ -8,6 +8,13 @@ $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
     mkdir($logDir, 0755, true);
 }
+$logFile = $logDir . '/payment_notification.log';
+
+// Set up logging
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
 $logFile = $logDir . '/payment_notification_log.txt';
 
 // Require the Maksekeskus SDK
@@ -28,9 +35,6 @@ use Maksekeskus\MKException;
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Set content type to JSON for API responses
-header('Content-Type: application/json');
-
 // Log file for debugging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
@@ -49,11 +53,78 @@ function logMessage($message, $data = null) {
     }
     
     file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+function sendEmail($to, $subject, $message, $replyTo = null) {
+    try {
+        // Load PHPMailer
+        require_once __DIR__ . '/phpmailer/PHPMailer.php';
+        require_once __DIR__ . '/phpmailer/SMTP.php';
+        require_once __DIR__ . '/phpmailer/Exception.php';
+        
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        
+        // Server settings
+        $mail->isSMTP();
+        $mail->Host = 'smtp.zone.eu';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'leen@leen.ee';
+        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
+        $mail->SMTPSecure = 'tls';
+        $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
+        
+        // Recipients
+        $mail->setFrom('leen@leen.ee', 'Leen.ee');
+        $mail->addAddress($to);
+        
+        if ($replyTo) {
+            $mail->addReplyTo($replyTo);
+        } else {
+            $mail->addReplyTo('leen@leen.ee', 'Leen Väränen');
+        }
+        
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
+        
+        // Create plain text version by stripping HTML
+        $textBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message));
+        $mail->AltBody = $textBody;
+        
+        // Send email
+        $mail->send();
+        logMessage("Email sent successfully to $to with subject: $subject");
+        return true;
+    } catch (Exception $e) {
+        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $e->getMessage());
+        return false;
+    }
 }
 
-// Function to connect to Supabase via REST API
-function supabaseRequest($endpoint, $method = 'GET', $data = null) {
-    $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
+// Function to create or update order in Supabase
+function processOrder($transactionData, $paymentData) {
+    try {
+        logMessage("Starting processOrder function", ['transactionData' => isset($transactionData) ? 'present' : 'missing', 'paymentData' => isset($paymentData) ? 'present' : 'missing']);
+        
+        // Extract merchant data
+        $merchantData = json_decode($transactionData->transaction->merchant_data ?? '{}', true);
+        logMessage("Extracted merchant data", $merchantData);
+        
+        // Extract customer info
+        $customerName = $merchantData['customer_name'] ?? '';
+        $customerEmail = $merchantData['customer_email'] ?? '';
+        $customerPhone = $merchantData['customer_phone'] ?? '';
+        
+        // Extract order items
+        $items = $merchantData['items'] ?? [];
+        
+        // Generate order number if not exists
+        $orderNumber = generateOrderNumber();
+        logMessage("Generated order number", $orderNumber);
+        
+        // Check if order already exists with this reference
+        $orderReference = $transactionData->transaction->reference ?? '';
+        logMessage("Checking for existing order with reference", $orderReference);
     $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.VQgOh4VmI0hmyXawVt0-uOmMFgHXkqhkMFQxBLjjQME';
     
     $url = $supabaseUrl . $endpoint;
@@ -206,32 +277,6 @@ function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $repl
         
         $mail->send();
         logMessage("Email sent successfully to $to with subject: $subject");
-        return true;
-    } catch (Exception $e) {
-        logMessage("Email sending failed to $to: " . $mail->ErrorInfo);
-        return false;
-    }
-}
-
-// Function to create or update order in Supabase
-function processOrder($transactionData, $paymentData) {
-    try {
-        // Extract merchant data
-        $merchantData = json_decode($transactionData->transaction->merchant_data ?? '{}', true);
-        
-        // Extract customer info
-        $customerName = $merchantData['customer_name'] ?? '';
-        $customerEmail = $merchantData['customer_email'] ?? '';
-        $customerPhone = $merchantData['customer_phone'] ?? '';
-        
-        // Extract order items
-        $items = $merchantData['items'] ?? [];
-        
-        // Generate order number if not exists
-        $orderNumber = generateOrderNumber();
-        
-        // Check if order already exists with this reference
-        $orderReference = $transactionData->transaction->reference ?? '';
         $existingOrderQuery = supabaseRequest(
             "/rest/v1/orders?reference=eq.$orderReference",
             'GET'
@@ -270,7 +315,8 @@ function processOrder($transactionData, $paymentData) {
             'notes' => $merchantData['notes'] ?? '',
             'order_number' => $orderNumber,
             'omniva_parcel_machine_id' => $merchantData['omnivaParcelMachineId'] ?? null,
-            'omniva_parcel_machine_name' => $merchantData['omnivaParcelMachineName'] ?? null
+            'omniva_parcel_machine_name' => $merchantData['omnivaParcelMachineName'] ?? null,
+            'reference' => $orderReference // Store the reference for future lookups
         ];
         
         // If order exists, update it
@@ -283,7 +329,7 @@ function processOrder($transactionData, $paymentData) {
                 $orderData
             );
             
-            if ($updateResult['status'] !== 200 && $updateResult['status'] !== 204) {
+            if ($updateResult['status'] !== 204) {
                 logMessage("Error updating order", $updateResult);
                 return false;
             }
@@ -304,6 +350,7 @@ function processOrder($transactionData, $paymentData) {
             }
             
             // Get the new order ID
+            logMessage("Retrieving new order ID", $orderNumber);
             $getOrderResult = supabaseRequest(
                 "/rest/v1/orders?order_number=eq.$orderNumber",
                 'GET'
@@ -327,6 +374,7 @@ function processOrder($transactionData, $paymentData) {
         // Process order items
         if (!empty($items) && $orderId) {
             // First, delete any existing items for this order to avoid duplicates
+            logMessage("Deleting existing order items for order", $orderId);
             $deleteItemsResult = supabaseRequest(
                 "/rest/v1/order_items?order_id=eq.$orderId",
                 'DELETE'
@@ -344,6 +392,7 @@ function processOrder($transactionData, $paymentData) {
                     'price' => $item['price']
                 ];
                 
+                logMessage("Creating order item", $itemData);
                 $createItemResult = supabaseRequest(
                     "/rest/v1/order_items",
                     'POST',
@@ -357,8 +406,9 @@ function processOrder($transactionData, $paymentData) {
                 // Update product availability if needed
                 if ($orderStatus === 'PAID' || $orderStatus === 'PROCESSING') {
                     $productId = $item['id'];
-
+                    
                     // Mark product as unavailable (sold) - every product is unique
+                    logMessage("Updating product availability to false", ['product_id' => $productId]);
                     $updateProductResult = supabaseRequest(
                         "/rest/v1/products?id=eq.$productId",
                         'PATCH',
@@ -385,6 +435,7 @@ function processOrder($transactionData, $paymentData) {
                 'status' => $paymentData->status
             ];
             
+            logMessage("Creating payment record", $paymentData);
             $createPaymentResult = supabaseRequest(
                 "/rest/v1/order_payments",
                 'POST',
@@ -400,11 +451,12 @@ function processOrder($transactionData, $paymentData) {
         
         // Send confirmation email if payment is completed
         if ($paymentData->status === 'COMPLETED' && !empty($customerEmail)) {
+            logMessage("Sending confirmation email to customer", $customerEmail);
             $subject = "Teie tellimus #{$orderNumber} on kinnitatud - Leen.ee";
-
+            
             // Store the order reference in the merchant_data for later retrieval
-            if ($transaction && isset($transaction->transaction) && isset($transaction->transaction->reference)) {
-                $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
+            if ($transactionData && isset($transactionData->transaction) && isset($transactionData->transaction->reference)) {
+                $merchantData = json_decode($transactionData->transaction->merchant_data ?? '{}', true);
                 $merchantData['order_reference'] = $orderReference;
                 
                 // Store delivery method information in merchant_data
@@ -417,7 +469,7 @@ function processOrder($transactionData, $paymentData) {
                 
                 // Update the transaction with the new merchant_data
                 try {
-                    $MK->addTransactionMeta($transaction->transaction->id, [
+                    $MK->addTransactionMeta($transactionData->transaction->id, [
                         'merchant_data' => json_encode($merchantData)
                     ]);
                 } catch (Exception $e) {
@@ -426,7 +478,7 @@ function processOrder($transactionData, $paymentData) {
             }
             
             // Build a simple HTML email
-            $emailMessage = "
+            $message = "
             <html>
             <head>
                 <title>Tellimuse kinnitus</title>
@@ -444,7 +496,6 @@ function processOrder($transactionData, $paymentData) {
                 <div class='container'>
                     <h1>Täname teid ostu eest!</h1>
                     <p>Teie tellimus #{$orderNumber} on edukalt kinnitatud.</p>
-                    <p><strong>Tellimuse viide:</strong> {$orderReference}</p>
                     <p><strong>Tellimuse viide:</strong> {$orderReference}</p>
                     
                     <div class='order-details'>
@@ -491,14 +542,15 @@ function processOrder($transactionData, $paymentData) {
             </body>
             </html>
             ";
-
+            
             // Send email to customer
-            sendEmailWithPHPMailer($customerEmail, $subject, $emailMessage);
-
+            sendEmail($customerEmail, $subject, $message);
+            
             // Also send notification to admin
+            logMessage("Sending notification email to admin", "leen@leen.ee");
             $adminEmail = "leen@leen.ee";
             $adminSubject = "Uus tellimus #{$orderNumber} - Leen.ee";
-            sendEmailWithPHPMailer($adminEmail, $adminSubject, $emailMessage);
+            sendEmail($adminEmail, $adminSubject, $message);
             
             // If this is an Omniva parcel machine order, register the shipment
             if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine' && 
@@ -509,7 +561,7 @@ function processOrder($transactionData, $paymentData) {
                 // Make a request to the Omniva shipment registration script
                 $omnivaData = [
                     'orderId' => $orderId,
-                    'notifyAdmin' => true
+                    'sendNotification' => true
                 ];
                 
                 $ch = curl_init($_SERVER['REQUEST_SCHEME'] . '://' . $_SERVER['HTTP_HOST'] . '/php/register-omniva-shipment.php');
@@ -519,15 +571,18 @@ function processOrder($transactionData, $paymentData) {
                 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
                 curl_setopt($ch, CURLOPT_TIMEOUT, 30);
                 
+                logMessage("Omniva shipment registration request sent", $omnivaData);
                 $response = curl_exec($ch);
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 $error = curl_error($ch);
                 
                 curl_close($ch);
                 
+                logMessage("Omniva shipment registration response received", ['httpCode' => $httpCode, 'response' => $response, 'error' => $error]);
+                
                 if ($error) {
                     logMessage("Error registering Omniva shipment", $error);
-                } else { 
+                } else {
                     $responseData = json_decode($response, true);
                     logMessage("Omniva shipment registration response", $responseData);
                     
@@ -547,18 +602,13 @@ function processOrder($transactionData, $paymentData) {
             }
         }
         
-        return true;
-    } catch (Exception $e) {
-        logMessage("Error processing order", $e->getMessage());
-        return false;
-    }
 }
 
 // Main execution starts here
 try {
     // Log the notification
     $requestData = file_get_contents('php://input');
-    logMessage("Notification received", $requestData);
+    logMessage("Notification received (raw input)", $requestData);
 
     // Initialize Maksekeskus client
     $shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
