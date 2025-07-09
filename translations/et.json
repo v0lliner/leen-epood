@@ -229,7 +229,7 @@
       "omniva": {
         "title": "Omniva pakiautomaat",
         "description": "Tarne 1-3 tööpäeva jooksul",
-        "price": "3.99€",
+        "price": "3.99€", 
         "select_machine": "Vali pakiautomaat",
         "select_placeholder": "Vali pakiautomaat...",
         "loading": "Laadin pakiautomaate...",
@@ -240,7 +240,7 @@
       "smartpost": {
         "title": "SmartPost pakiautomaat",
         "description": "Tarne 1-3 tööpäeva jooksul",
-        "price": "3.99€"
+        "price": "3.99€" 
       },
       "courier": {
         "title": "DPD kuller",

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
@@ -8,7 +8,6 @@ import FadeInSection from '../components/UI/FadeInSection';
 const Checkout = () => {
   const { t } = useTranslation();
   const { items, getTotalPrice, clearCart } = useCart();
-  const [activeStep, setActiveStep] = useState(1); // 1: Review, 2: Shipping, 3: Payment
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -36,7 +35,6 @@ const Checkout = () => {
   const [paymentError, setPaymentError] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [termsError, setTermsError] = useState('');
-  const location = useLocation();
   const navigate = useNavigate();
 
   // Get country code for Omniva API
@@ -152,8 +150,8 @@ const Checkout = () => {
     setTermsError('');
   };
 
-  // Validate shipping form
-  const validateShippingForm = () => {
+  // Validate form
+  const validateForm = () => {
     const errors = {};
     
     if (!formData.firstName.trim()) errors.firstName = t('checkout.error.required_fields');
@@ -176,50 +174,25 @@ const Checkout = () => {
       errors.omnivaParcelMachineId = t('checkout.shipping.omniva.required');
     }
     
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  // Validate payment form
-  const validatePaymentForm = () => {
-    const errors = {};
-    
+    // Payment method validation
     if (!selectedPaymentMethod) {
       setPaymentError(t('checkout.payment.method_required'));
       return false;
     }
     
+    // Terms acceptance validation
     if (!termsAccepted) {
       setTermsError(t('checkout.terms.required'));
       return false;
     }
     
-    return true;
-  };
-
-  // Handle next step
-  const handleNextStep = () => {
-    if (activeStep === 1) {
-      setActiveStep(2);
-    } else if (activeStep === 2) {
-      if (validateShippingForm()) {
-        setActiveStep(3);
-      }
-    }
-  };
-
-  // Handle back step
-  const handleBackStep = () => {
-    if (activeStep === 2) {
-      setActiveStep(1);
-    } else if (activeStep === 3) {
-      setActiveStep(2);
-    }
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   // Process payment
   const processPayment = async () => {
-    if (!validatePaymentForm()) {
+    if (!validateForm()) {
       return;
     }
     
@@ -351,565 +324,356 @@ const Checkout = () => {
         <section className="section-large">
           <div className="container">
             <FadeInSection>
-              <div className="checkout-header">
-                <h1>{t('checkout.title')}</h1>
-                <div className="checkout-steps">
-                  <div className={`checkout-step ${activeStep === 1 ? 'active' : ''} ${activeStep > 1 ? 'completed' : ''}`}>
-                    <span className="step-number">1</span>
-                    <span className="step-label">{t('checkout.steps.review')}</span>
-                  </div>
-                  <div className="step-divider"></div>
-                  <div className={`checkout-step ${activeStep === 2 ? 'active' : ''} ${activeStep > 2 ? 'completed' : ''}`}>
-                    <span className="step-number">2</span>
-                    <span className="step-label">{t('checkout.steps.shipping')}</span>
-                  </div>
-                  <div className="step-divider"></div>
-                  <div className={`checkout-step ${activeStep === 3 ? 'active' : ''}`}>
-                    <span className="step-number">3</span>
-                    <span className="step-label">{t('checkout.steps.payment')}</span>
-                  </div>
-                </div>
-              </div>
+              <h1 className="text-center">{t('checkout.title')}</h1>
             </FadeInSection>
 
-            {/* Step 1: Review */}
-            {activeStep === 1 && (
-              <div className="checkout-content">
-                <div className="checkout-form">
-                  <h2>{t('checkout.review.title')}</h2>
-                  <p>Vaadake üle oma ostukorvi sisu enne jätkamist.</p>
+            <div className="checkout-content">
+              <div className="checkout-form">
+                <h2>{t('checkout.shipping.title')}</h2>
+                
+                {/* Contact Information */}
+                <div className="form-section">
+                  <h3>{t('checkout.shipping.contact.title')}</h3>
                   
-                  <div className="checkout-items-mobile">
-                    {items.map((item) => (
-                      <div key={item.id} className="checkout-item">
-                        <div className="item-image">
-                          <img src={item.image} alt={item.title} />
-                        </div>
-                        <div className="item-details">
-                          <h3>{item.title}</h3>
-                          <p className="item-price">{item.price}</p>
-                        </div>
-                      </div>
-                    ))}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="firstName">{t('checkout.shipping.contact.name')}</label>
+                      <input
+                        type="text"
+                        id="firstName"
+                        name="firstName"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        placeholder={t('checkout.shipping.contact.name_placeholder')}
+                        className={formErrors.firstName ? 'form-input error' : 'form-input'}
+                      />
+                      {formErrors.firstName && <div className="error-message">{formErrors.firstName}</div>}
+                    </div>
+                    
+                    <div className="form-group">
+                      <label htmlFor="lastName">Perekonnanimi</label>
+                      <input
+                        type="text"
+                        id="lastName"
+                        name="lastName"
+                        value={formData.lastName}
+                        onChange={handleInputChange}
+                        placeholder="Teie perekonnanimi"
+                        className={formErrors.lastName ? 'form-input error' : 'form-input'}
+                      />
+                      {formErrors.lastName && <div className="error-message">{formErrors.lastName}</div>}
+                    </div>
                   </div>
                   
-                  <div className="form-actions">
-                    <button 
-                      onClick={() => navigate('/epood')} 
-                      className="btn btn-secondary"
-                    >
-                      {t('checkout.review.back_to_shop')}
-                    </button>
-                    <button 
-                      onClick={handleNextStep} 
-                      className="btn btn-primary"
-                    >
-                      {t('checkout.review.continue')}
-                    </button>
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label htmlFor="email">{t('checkout.shipping.contact.email')}</label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        placeholder={t('checkout.shipping.contact.email_placeholder')}
+                        className={formErrors.email ? 'form-input error' : 'form-input'}
+                      />
+                      {formErrors.email && <div className="error-message">{formErrors.email}</div>}
+                    </div>
+                    
+                    <div className="form-group">
+                      <label htmlFor="phone">{t('checkout.shipping.contact.phone')}</label>
+                      <input
+                        type="tel"
+                        id="phone"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        placeholder={t('checkout.shipping.contact.phone_placeholder')}
+                        className={formErrors.phone ? 'form-input error' : 'form-input'}
+                      />
+                      {formErrors.phone && <div className="error-message">{formErrors.phone}</div>}
+                    </div>
                   </div>
                 </div>
                 
-                <div className="checkout-summary">
-                  <h2>{t('checkout.summary.title')}</h2>
+                {/* Country Selection */}
+                <div className="form-section">
+                  <div className="form-group">
+                    <label htmlFor="country">{t('checkout.shipping.address.country')}</label>
+                    <select
+                      id="country"
+                      name="country"
+                      value={formData.country}
+                      onChange={handleCountryChange}
+                      className="form-input"
+                    >
+                      <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
+                      <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
+                      <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
+                      <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
+                    </select>
+                  </div>
+                </div>
+                
+                {/* Delivery Method */}
+                <div className="form-section">
+                  <h3>Tarneviis</h3>
                   
-                  <div className="checkout-items">
-                    {items.map((item) => (
-                      <div key={item.id} className="checkout-item">
-                        <div className="item-image">
-                          <img src={item.image} alt={item.title} />
+                  <div className="delivery-methods">
+                    {/* Omniva Parcel Machine */}
+                    <div 
+                      className={`delivery-method ${formData.deliveryMethod === 'omniva-parcel-machine' ? 'selected' : ''}`}
+                      onClick={() => handleInputChange({ target: { name: 'deliveryMethod', value: 'omniva-parcel-machine' } })}
+                    >
+                      <div className="delivery-method-header">
+                        <div className="delivery-method-radio">
+                          <input
+                            type="radio"
+                            id="omniva-parcel-machine"
+                            name="deliveryMethod"
+                            value="omniva-parcel-machine"
+                            checked={formData.deliveryMethod === 'omniva-parcel-machine'}
+                            onChange={handleInputChange}
+                          />
+                          <label htmlFor="omniva-parcel-machine">Omniva pakiautomaat</label>
                         </div>
-                        <div className="item-details">
-                          <h3>{item.title}</h3>
-                          <p className="item-price">{item.price}</p>
+                        <div className="delivery-method-price">3.99€</div>
+                      </div>
+                      <div className="delivery-method-description">
+                        Tarne 1-3 tööpäeva jooksul
+                      </div>
+                      
+                      {formData.deliveryMethod === 'omniva-parcel-machine' && (
+                        <div className="delivery-method-details">
+                          <div className="form-group">
+                            <label htmlFor="omnivaParcelMachineId">Vali pakiautomaat</label>
+                            {loadingParcelMachines ? (
+                              <div className="loading-text">Laadin pakiautomaate...</div>
+                            ) : parcelMachinesError ? (
+                              <div className="error-message">{parcelMachinesError}</div>
+                            ) : parcelMachines.length === 0 ? (
+                              <div className="info-message">Sellest riigist ei leitud pakiautomaate</div>
+                            ) : (
+                              <select
+                                id="omnivaParcelMachineId"
+                                name="omnivaParcelMachineId"
+                                value={formData.omnivaParcelMachineId}
+                                onChange={handleInputChange}
+                                className={formErrors.omnivaParcelMachineId ? 'form-input error' : 'form-input'}
+                              >
+                                <option value="">Vali pakiautomaat...</option>
+                                {parcelMachines.map(machine => (
+                                  <option key={machine.id} value={machine.id}>
+                                    {machine.name} ({machine.address})
+                                  </option>
+                                ))}
+                              </select>
+                            )}
+                            {formErrors.omnivaParcelMachineId && (
+                              <div className="error-message">{formErrors.omnivaParcelMachineId}</div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    {/* SmartPost Parcel Machine */}
+                    <div 
+                      className={`delivery-method ${formData.deliveryMethod === 'smartpost' ? 'selected' : ''}`}
+                      onClick={() => handleInputChange({ target: { name: 'deliveryMethod', value: 'smartpost' } })}
+                    >
+                      <div className="delivery-method-header">
+                        <div className="delivery-method-radio">
+                          <input
+                            type="radio"
+                            id="smartpost"
+                            name="deliveryMethod"
+                            value="smartpost"
+                            checked={formData.deliveryMethod === 'smartpost'}
+                            onChange={handleInputChange}
+                          />
+                          <label htmlFor="smartpost">SmartPost pakiautomaat</label>
+                        </div>
+                        <div className="delivery-method-price">3.99€</div>
+                      </div>
+                      <div className="delivery-method-description">
+                        Tarne 1-3 tööpäeva jooksul
+                      </div>
+                    </div>
+                    
+                    {/* DPD Courier */}
+                    <div 
+                      className={`delivery-method ${formData.deliveryMethod === 'courier' ? 'selected' : ''}`}
+                      onClick={() => handleInputChange({ target: { name: 'deliveryMethod', value: 'courier' } })}
+                    >
+                      <div className="delivery-method-header">
+                        <div className="delivery-method-radio">
+                          <input
+                            type="radio"
+                            id="courier"
+                            name="deliveryMethod"
+                            value="courier"
+                            checked={formData.deliveryMethod === 'courier'}
+                            onChange={handleInputChange}
+                          />
+                          <label htmlFor="courier">DPD kuller</label>
+                        </div>
+                        <div className="delivery-method-price">5.99€</div>
+                      </div>
+                      <div className="delivery-method-description">
+                        Tarne 1-2 tööpäeva jooksul
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {formErrors.deliveryMethod && (
+                    <div className="error-message delivery-method-error">{formErrors.deliveryMethod}</div>
+                  )}
+                </div>
+                
+                {/* Order Notes */}
+                <div className="form-section">
+                  <div className="form-group">
+                    <label htmlFor="notes">{t('checkout.shipping.notes.notes')}</label>
+                    <textarea
+                      id="notes"
+                      name="notes"
+                      value={formData.notes}
+                      onChange={handleInputChange}
+                      placeholder={t('checkout.shipping.notes.notes_placeholder')}
+                      className="form-input"
+                      rows="3"
+                    ></textarea>
+                  </div>
+                </div>
+                
+                {/* Payment Method */}
+                <div className="form-section">
+                  <h3>{t('checkout.payment.title')}</h3>
+                  
+                  <div className="payment-methods">
+                    {paymentMethods.map(method => (
+                      <div 
+                        key={method.id}
+                        className={`payment-method ${selectedPaymentMethod === method.id ? 'selected' : ''}`}
+                        onClick={() => handlePaymentMethodChange(method.id)}
+                      >
+                        <div className="payment-method-radio">
+                          <input
+                            type="radio"
+                            id={method.id}
+                            name="paymentMethod"
+                            value={method.id}
+                            checked={selectedPaymentMethod === method.id}
+                            onChange={() => handlePaymentMethodChange(method.id)}
+                          />
+                          <label htmlFor={method.id}>{method.name}</label>
                         </div>
                       </div>
                     ))}
                   </div>
                   
-                  <div className="checkout-totals">
-                    <div className="total-row">
-                      <span>{t('checkout.summary.subtotal')}</span>
-                      <span>{getTotalPrice().toFixed(2)}€</span>
-                    </div>
-                    <div className="total-row">
-                      <span>{t('checkout.summary.shipping')}</span>
-                      <span>0.00€</span>
-                    </div>
-                    <div className="total-row total-final">
-                      <span>{t('checkout.summary.total')}</span>
-                      <span>{getTotalPrice().toFixed(2)}€</span>
-                    </div>
+                  {paymentError && (
+                    <div className="error-message payment-error">{paymentError}</div>
+                  )}
+                </div>
+                
+                {/* Terms and Conditions */}
+                <div className="form-section">
+                  <div className="terms-checkbox">
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      checked={termsAccepted}
+                      onChange={handleTermsChange}
+                    />
+                    <label htmlFor="terms">
+                      {t('checkout.terms.agree')} <a href="/muugitingimused" target="_blank">{t('checkout.terms.terms_link')}</a>
+                    </label>
                   </div>
                   
-                  <div className="checkout-info">
-                    <div className="info-item">
-                      <span className="info-icon">🔒</span>
-                      <span>{t('checkout.summary.info.secure')}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">🚚</span>
-                      <span>{t('checkout.summary.info.shipping')}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">✉️</span>
-                      <span>{t('checkout.summary.info.personal')}</span>
-                    </div>
-                  </div>
-                  
+                  {termsError && (
+                    <div className="error-message terms-error">{termsError}</div>
+                  )}
+                </div>
+                
+                {/* Submit Button */}
+                <div className="form-actions">
+                  <Link to="/epood" className="btn btn-secondary">
+                    {t('checkout.review.back_to_shop')}
+                  </Link>
                   <button 
-                    onClick={handleNextStep} 
-                    className="checkout-button"
+                    onClick={processPayment} 
+                    className="btn btn-primary"
+                    disabled={isSubmitting}
                   >
-                    {t('checkout.summary.continue')}
+                    {isSubmitting ? t('checkout.summary.processing') : t('checkout.summary.pay')}
                   </button>
                 </div>
               </div>
-            )}
-            
-            {/* Step 2: Shipping */}
-            {activeStep === 2 && (
-              <div className="checkout-content">
-                <div className="checkout-form">
-                  <h2>{t('checkout.shipping.title')}</h2>
-                  
-                  {/* Contact Information */}
-                  <div className="form-section">
-                    <h3>{t('checkout.shipping.contact.title')}</h3>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="firstName">{t('checkout.shipping.contact.name')}</label>
-                        <input
-                          type="text"
-                          id="firstName"
-                          name="firstName"
-                          value={formData.firstName}
-                          onChange={handleInputChange}
-                          placeholder={t('checkout.shipping.contact.name_placeholder')}
-                          className={formErrors.firstName ? 'form-input error' : 'form-input'}
-                        />
-                        {formErrors.firstName && <div className="error-message">{formErrors.firstName}</div>}
+              
+              <div className="checkout-summary">
+                <h2>{t('checkout.summary.title')}</h2>
+                
+                <div className="checkout-items">
+                  {items.map((item) => (
+                    <div key={item.id} className="checkout-item">
+                      <div className="item-image">
+                        <img src={item.image} alt={item.title} />
                       </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="lastName">Perekonnanimi</label>
-                        <input
-                          type="text"
-                          id="lastName"
-                          name="lastName"
-                          value={formData.lastName}
-                          onChange={handleInputChange}
-                          placeholder="Teie perekonnanimi"
-                          className={formErrors.lastName ? 'form-input error' : 'form-input'}
-                        />
-                        {formErrors.lastName && <div className="error-message">{formErrors.lastName}</div>}
+                      <div className="item-details">
+                        <h3>{item.title}</h3>
+                        <p className="item-price">{item.price}</p>
                       </div>
                     </div>
-                    
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label htmlFor="email">{t('checkout.shipping.contact.email')}</label>
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          placeholder={t('checkout.shipping.contact.email_placeholder')}
-                          className={formErrors.email ? 'form-input error' : 'form-input'}
-                        />
-                        {formErrors.email && <div className="error-message">{formErrors.email}</div>}
-                      </div>
-                      
-                      <div className="form-group">
-                        <label htmlFor="phone">{t('checkout.shipping.contact.phone')}</label>
-                        <input
-                          type="tel"
-                          id="phone"
-                          name="phone"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          placeholder={t('checkout.shipping.contact.phone_placeholder')}
-                          className={formErrors.phone ? 'form-input error' : 'form-input'}
-                        />
-                        {formErrors.phone && <div className="error-message">{formErrors.phone}</div>}
-                      </div>
-                    </div>
+                  ))}
+                </div>
+                
+                <div className="checkout-totals">
+                  <div className="total-row">
+                    <span>{t('checkout.summary.subtotal')}</span>
+                    <span>{getTotalPrice().toFixed(2)}€</span>
                   </div>
-                  
-                  {/* Country Selection */}
-                  <div className="form-section">
-                    <div className="form-group">
-                      <label htmlFor="country">{t('checkout.shipping.address.country')}</label>
-                      <select
-                        id="country"
-                        name="country"
-                        value={formData.country}
-                        onChange={handleCountryChange}
-                        className="form-input"
-                      >
-                        <option value="Estonia">{t('checkout.shipping.address.countries.estonia')}</option>
-                        <option value="Latvia">{t('checkout.shipping.address.countries.latvia')}</option>
-                        <option value="Lithuania">{t('checkout.shipping.address.countries.lithuania')}</option>
-                        <option value="Finland">{t('checkout.shipping.address.countries.finland')}</option>
-                      </select>
-                    </div>
+                  <div className="total-row">
+                    <span>{t('checkout.summary.shipping')}</span>
+                    <span>
+                      {formData.deliveryMethod === 'courier' ? '5.99€' : 
+                       formData.deliveryMethod === 'omniva-parcel-machine' || formData.deliveryMethod === 'smartpost' ? '3.99€' : 
+                       '0.00€'}
+                    </span>
                   </div>
-                  
-                  {/* Delivery Method */}
-                  <div className="form-section">
-                    <h3>Tarneviis</h3>
-                    
-                    <div className="delivery-methods">
-                      {/* Omniva Parcel Machine */}
-                      <div 
-                        className={`delivery-method ${formData.deliveryMethod === 'omniva-parcel-machine' ? 'selected' : ''}`}
-                        onClick={() => handleInputChange({ target: { name: 'deliveryMethod', value: 'omniva-parcel-machine' } })}
-                      >
-                        <div className="delivery-method-header">
-                          <div className="delivery-method-radio">
-                            <input
-                              type="radio"
-                              id="omniva-parcel-machine"
-                              name="deliveryMethod"
-                              value="omniva-parcel-machine"
-                              checked={formData.deliveryMethod === 'omniva-parcel-machine'}
-                              onChange={handleInputChange}
-                            />
-                            <label htmlFor="omniva-parcel-machine">Omniva pakiautomaat</label>
-                          </div>
-                          <div className="delivery-method-price">3.99€</div>
-                        </div>
-                        <div className="delivery-method-description">
-                          Tarne 1-3 tööpäeva jooksul
-                        </div>
-                        
-                        {formData.deliveryMethod === 'omniva-parcel-machine' && (
-                          <div className="delivery-method-details">
-                            <div className="form-group">
-                              <label htmlFor="omnivaParcelMachineId">Vali pakiautomaat</label>
-                              {loadingParcelMachines ? (
-                                <div className="loading-text">Laadin pakiautomaate...</div>
-                              ) : parcelMachinesError ? (
-                                <div className="error-message">{parcelMachinesError}</div>
-                              ) : parcelMachines.length === 0 ? (
-                                <div className="info-message">Sellest riigist ei leitud pakiautomaate</div>
-                              ) : (
-                                <select
-                                  id="omnivaParcelMachineId"
-                                  name="omnivaParcelMachineId"
-                                  value={formData.omnivaParcelMachineId}
-                                  onChange={handleInputChange}
-                                  className={formErrors.omnivaParcelMachineId ? 'form-input error' : 'form-input'}
-                                >
-                                  <option value="">Vali pakiautomaat...</option>
-                                  {parcelMachines.map(machine => (
-                                    <option key={machine.id} value={machine.id}>
-                                      {machine.name} ({machine.address})
-                                    </option>
-                                  ))}
-                                </select>
-                              )}
-                              {formErrors.omnivaParcelMachineId && (
-                                <div className="error-message">{formErrors.omnivaParcelMachineId}</div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* SmartPost Parcel Machine */}
-                      <div 
-                        className={`delivery-method ${formData.deliveryMethod === 'smartpost' ? 'selected' : ''}`}
-                        onClick={() => handleInputChange({ target: { name: 'deliveryMethod', value: 'smartpost' } })}
-                      >
-                        <div className="delivery-method-header">
-                          <div className="delivery-method-radio">
-                            <input
-                              type="radio"
-                              id="smartpost"
-                              name="deliveryMethod"
-                              value="smartpost"
-                              checked={formData.deliveryMethod === 'smartpost'}
-                              onChange={handleInputChange}
-                            />
-                            <label htmlFor="smartpost">SmartPost pakiautomaat</label>
-                          </div>
-                          <div className="delivery-method-price">3.99€</div>
-                        </div>
-                        <div className="delivery-method-description">
-                          Tarne 1-3 tööpäeva jooksul
-                        </div>
-                      </div>
-                      
-                      {/* DPD Courier */}
-                      <div 
-                        className={`delivery-method ${formData.deliveryMethod === 'courier' ? 'selected' : ''}`}
-                        onClick={() => handleInputChange({ target: { name: 'deliveryMethod', value: 'courier' } })}
-                      >
-                        <div className="delivery-method-header">
-                          <div className="delivery-method-radio">
-                            <input
-                              type="radio"
-                              id="courier"
-                              name="deliveryMethod"
-                              value="courier"
-                              checked={formData.deliveryMethod === 'courier'}
-                              onChange={handleInputChange}
-                            />
-                            <label htmlFor="courier">DPD kuller</label>
-                          </div>
-                          <div className="delivery-method-price">5.99€</div>
-                        </div>
-                        <div className="delivery-method-description">
-                          Tarne 1-2 tööpäeva jooksul
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {formErrors.deliveryMethod && (
-                      <div className="error-message delivery-method-error">{formErrors.deliveryMethod}</div>
-                    )}
-                  </div>
-                  
-                  {/* Order Notes */}
-                  <div className="form-section">
-                    <div className="form-group">
-                      <label htmlFor="notes">{t('checkout.shipping.notes.notes')}</label>
-                      <textarea
-                        id="notes"
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleInputChange}
-                        placeholder={t('checkout.shipping.notes.notes_placeholder')}
-                        className="form-input"
-                        rows="3"
-                      ></textarea>
-                    </div>
-                  </div>
-                  
-                  <div className="form-actions">
-                    <button 
-                      onClick={handleBackStep} 
-                      className="btn btn-secondary"
-                    >
-                      {t('checkout.shipping.back')}
-                    </button>
-                    <button 
-                      onClick={handleNextStep} 
-                      className="btn btn-primary"
-                    >
-                      {t('checkout.shipping.continue')}
-                    </button>
+                  <div className="total-row total-final">
+                    <span>{t('checkout.summary.total')}</span>
+                    <span>
+                      {(getTotalPrice() + 
+                        (formData.deliveryMethod === 'courier' ? 5.99 : 
+                         formData.deliveryMethod === 'omniva-parcel-machine' || formData.deliveryMethod === 'smartpost' ? 3.99 : 
+                         0)).toFixed(2)}€
+                    </span>
                   </div>
                 </div>
                 
-                <div className="checkout-summary">
-                  <h2>{t('checkout.summary.title')}</h2>
-                  
-                  <div className="checkout-items">
-                    {items.map((item) => (
-                      <div key={item.id} className="checkout-item">
-                        <div className="item-image">
-                          <img src={item.image} alt={item.title} />
-                        </div>
-                        <div className="item-details">
-                          <h3>{item.title}</h3>
-                          <p className="item-price">{item.price}</p>
-                        </div>
-                      </div>
-                    ))}
+                <div className="checkout-info">
+                  <div className="info-item">
+                    <span className="info-icon">🔒</span>
+                    <span>{t('checkout.summary.info.secure')}</span>
                   </div>
-                  
-                  <div className="checkout-totals">
-                    <div className="total-row">
-                      <span>{t('checkout.summary.subtotal')}</span>
-                      <span>{getTotalPrice().toFixed(2)}€</span>
-                    </div>
-                    <div className="total-row">
-                      <span>{t('checkout.summary.shipping')}</span>
-                      <span>
-                        {formData.deliveryMethod === 'courier' ? '5.99€' : 
-                         formData.deliveryMethod === 'omniva-parcel-machine' || formData.deliveryMethod === 'smartpost' ? '3.99€' : 
-                         '0.00€'}
-                      </span>
-                    </div>
-                    <div className="total-row total-final">
-                      <span>{t('checkout.summary.total')}</span>
-                      <span>
-                        {(getTotalPrice() + 
-                          (formData.deliveryMethod === 'courier' ? 5.99 : 
-                           formData.deliveryMethod === 'omniva-parcel-machine' || formData.deliveryMethod === 'smartpost' ? 3.99 : 
-                           0)).toFixed(2)}€
-                      </span>
-                    </div>
+                  <div className="info-item">
+                    <span className="info-icon">🚚</span>
+                    <span>{t('checkout.summary.info.shipping')}</span>
                   </div>
-                  
-                  <div className="checkout-info">
-                    <div className="info-item">
-                      <span className="info-icon">🔒</span>
-                      <span>{t('checkout.summary.info.secure')}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">🚚</span>
-                      <span>{t('checkout.summary.info.shipping')}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">✉️</span>
-                      <span>{t('checkout.summary.info.personal')}</span>
-                    </div>
+                  <div className="info-item">
+                    <span className="info-icon">✉️</span>
+                    <span>{t('checkout.summary.info.personal')}</span>
                   </div>
                 </div>
               </div>
-            )}
-            
-            {/* Step 3: Payment */}
-            {activeStep === 3 && (
-              <div className="checkout-content">
-                <div className="checkout-form">
-                  <h2>{t('checkout.payment.title')}</h2>
-                  
-                  <div className="form-section">
-                    <h3>{t('checkout.payment.select_method')}</h3>
-                    
-                    <div className="payment-methods">
-                      {paymentMethods.map(method => (
-                        <div 
-                          key={method.id}
-                          className={`payment-method ${selectedPaymentMethod === method.id ? 'selected' : ''}`}
-                          onClick={() => handlePaymentMethodChange(method.id)}
-                        >
-                          <div className="payment-method-radio">
-                            <input
-                              type="radio"
-                              id={method.id}
-                              name="paymentMethod"
-                              value={method.id}
-                              checked={selectedPaymentMethod === method.id}
-                              onChange={() => handlePaymentMethodChange(method.id)}
-                            />
-                            <label htmlFor={method.id}>{method.name}</label>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    
-                    {paymentError && (
-                      <div className="error-message payment-error">{paymentError}</div>
-                    )}
-                  </div>
-                  
-                  <div className="form-section">
-                    <div className="terms-checkbox">
-                      <input
-                        type="checkbox"
-                        id="terms"
-                        checked={termsAccepted}
-                        onChange={handleTermsChange}
-                      />
-                      <label htmlFor="terms">
-                        {t('checkout.terms.agree')} <a href="/muugitingimused" target="_blank">{t('checkout.terms.terms_link')}</a>
-                      </label>
-                    </div>
-                    
-                    {termsError && (
-                      <div className="error-message terms-error">{termsError}</div>
-                    )}
-                  </div>
-                  
-                  <div className="form-actions">
-                    <button 
-                      onClick={handleBackStep} 
-                      className="btn btn-secondary"
-                      disabled={isSubmitting}
-                    >
-                      {t('checkout.shipping.back')}
-                    </button>
-                    <button 
-                      onClick={processPayment} 
-                      className="btn btn-primary"
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? t('checkout.summary.processing') : t('checkout.summary.pay')}
-                    </button>
-                  </div>
-                </div>
-                
-                <div className="checkout-summary">
-                  <h2>{t('checkout.summary.title')}</h2>
-                  
-                  <div className="checkout-items">
-                    {items.map((item) => (
-                      <div key={item.id} className="checkout-item">
-                        <div className="item-image">
-                          <img src={item.image} alt={item.title} />
-                        </div>
-                        <div className="item-details">
-                          <h3>{item.title}</h3>
-                          <p className="item-price">{item.price}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  
-                  <div className="checkout-totals">
-                    <div className="total-row">
-                      <span>{t('checkout.summary.subtotal')}</span>
-                      <span>{getTotalPrice().toFixed(2)}€</span>
-                    </div>
-                    <div className="total-row">
-                      <span>{t('checkout.summary.shipping')}</span>
-                      <span>
-                        {formData.deliveryMethod === 'courier' ? '5.99€' : 
-                         formData.deliveryMethod === 'omniva-parcel-machine' || formData.deliveryMethod === 'smartpost' ? '3.99€' : 
-                         '0.00€'}
-                      </span>
-                    </div>
-                    <div className="total-row total-final">
-                      <span>{t('checkout.summary.total')}</span>
-                      <span>
-                        {(getTotalPrice() + 
-                          (formData.deliveryMethod === 'courier' ? 5.99 : 
-                           formData.deliveryMethod === 'omniva-parcel-machine' || formData.deliveryMethod === 'smartpost' ? 3.99 : 
-                           0)).toFixed(2)}€
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div className="checkout-info">
-                    <div className="info-item">
-                      <span className="info-icon">🔒</span>
-                      <span>{t('checkout.summary.info.secure')}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">🚚</span>
-                      <span>{t('checkout.summary.info.shipping')}</span>
-                    </div>
-                    <div className="info-item">
-                      <span className="info-icon">✉️</span>
-                      <span>{t('checkout.summary.info.personal')}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>
           </div>
         </section>
       </main>
 
       <style jsx>{`
-        .empty-cart {
-          text-align: center;
-          max-width: 600px;
-          margin: 0 auto;
-          padding: 64px 0;
-        }
-
-        .empty-cart h1 {
-          margin-bottom: 32px;
-          color: var(--color-text);
-        }
-
         .checkout-content {
           display: grid;
           grid-template-columns: 1fr 400px;
@@ -917,76 +681,11 @@ const Checkout = () => {
           margin-top: 48px;
         }
 
-        .checkout-header {
-          text-align: center;
-        }
-
-        .checkout-steps {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin-top: 32px;
-        }
-
-        .checkout-step {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          position: relative;
-        }
-
-        .step-number {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: #f0f0f0;
-          color: #666;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: 600;
-          margin-bottom: 8px;
-          transition: all 0.3s ease;
-        }
-
-        .step-label {
-          font-size: 0.9rem;
-          color: #666;
-          transition: all 0.3s ease;
-        }
-
-        .checkout-step.active .step-number {
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .checkout-step.active .step-label {
-          color: var(--color-ultramarine);
-          font-weight: 600;
-        }
-
-        .checkout-step.completed .step-number {
-          background-color: #4caf50;
-          color: white;
-        }
-
-        .step-divider {
-          width: 60px;
-          height: 1px;
-          background-color: #ddd;
-          margin: 0 16px;
-          margin-bottom: 24px;
-        }
-
-        .checkout-form {
-          flex: 1;
-        }
-
         .checkout-form h2, .checkout-summary h2 {
           font-family: var(--font-heading);
           font-size: 1.5rem;
           font-weight: 500;
-          margin-bottom: 16px;
+          margin-bottom: 24px;
           color: var(--color-ultramarine);
         }
 
@@ -1194,6 +893,9 @@ const Checkout = () => {
           cursor: pointer;
           transition: all 0.2s ease;
           font-size: 1rem;
+          text-decoration: none;
+          display: inline-block;
+          text-align: center;
         }
 
         .btn:hover:not(:disabled) {
@@ -1213,26 +915,6 @@ const Checkout = () => {
         .btn-secondary {
           background-color: #6c757d;
           color: white;
-        }
-
-        .checkout-button {
-          width: 100%;
-          padding: 16px 24px;
-          background-color: var(--color-ultramarine);
-          color: white;
-          border: none;
-          border-radius: 4px;
-          font-family: var(--font-heading);
-          font-weight: 600;
-          font-size: 1.1rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          margin-top: 24px;
-        }
-
-        .checkout-button:hover {
-          opacity: 0.9;
-          transform: translateY(-1px);
         }
 
         .checkout-summary {
@@ -1275,6 +957,7 @@ const Checkout = () => {
           font-weight: 500;
           margin-bottom: 4px;
           color: var(--color-text);
+          margin-top: 0;
         }
 
         .item-price {
@@ -1283,10 +966,6 @@ const Checkout = () => {
           color: var(--color-ultramarine);
           margin: 0;
           font-size: 0.9rem;
-        }
-
-        .checkout-items-mobile {
-          display: none;
         }
 
         .checkout-totals {
@@ -1341,32 +1020,19 @@ const Checkout = () => {
             gap: 48px;
           }
 
-          .checkout-steps {
-            margin-bottom: 32px;
-          }
-
           .form-row {
             grid-template-columns: 1fr;
             gap: 0;
           }
 
-          .checkout-items-mobile {
-            display: block;
-            margin-bottom: 32px;
-          }
-
           .checkout-summary {
-            display: none;
+            position: static;
           }
         }
 
         @media (max-width: 768px) {
           .checkout-item {
             flex-direction: column;
-          }
-
-          .step-divider {
-            width: 30px;
           }
 
           .form-actions {
