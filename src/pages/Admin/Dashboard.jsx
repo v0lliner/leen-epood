@@ -120,7 +120,7 @@ const AdminDashboard = () => {
     {
       title: 'Tooted kokku',
       value: stats.products.toString(),
-      subtitle: `${stats.availableProducts || 0} saadaval`,
+      subtitle: `${stats.availableProducts} saadaval`,
       icon: '📦',
       link: '/admin/products',
       color: 'blue'
@@ -136,7 +136,7 @@ const AdminDashboard = () => {
     {
       title: 'Tellimused',
       value: orderStats.total.toString(),
-      subtitle: `${orderStats.paid || 0} makstud`,
+      subtitle: `${orderStats.paid} makstud`,
       icon: '📋',
       link: '/admin/orders',
       color: 'green'
