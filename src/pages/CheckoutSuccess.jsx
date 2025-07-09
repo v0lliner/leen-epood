@@ -20,24 +20,10 @@ const CheckoutSuccess = () => {
     // Clear the cart when the success page loads - this ensures cart is only cleared after successful payment
     clearCart();
 
-
-
     // Extract order reference from URL query parameters or path
     let reference = '';
     const queryParams = new URLSearchParams(location.search);
     reference = queryParams.get('reference') || '';
-
-    // Try to find reference in path segments if not in query params
-    const pathSegments = location.pathname.split('/');
-    if (!reference && pathSegments.length > 2) {
-      // Try to find a segment that looks like a reference (starts with "order-")
-      const possibleReference = pathSegments.find(segment => segment.startsWith('order-'));
-      if (possibleReference) {
-        reference = possibleReference;
-        console.log('Found reference in path:', reference);
-      }
-    }
-    
 
     // If no reference in query params, try to extract from path segments
     const loadOrderDetails = async () => {
@@ -48,30 +34,18 @@ const CheckoutSuccess = () => {
         // Only try to get order details from URL reference parameter
         if (reference) {
           console.log('Fetching order details from server for reference:', reference);
-          console.log('Fetching order details from server for reference:', reference);
           
           // Fetch order details from the backend using the reference
           const response = await fetch(`/php/admin/orders.php?order_number=${reference}`);
           
           if (!response.ok) {
             console.warn(`Failed to fetch order details from server: ${response.status}`);
-            console.warn(`Failed to fetch order details from server: ${response.status}`);
-            
-            // Try to get error details if available
-            try {
-              const errorText = await response.text();
-              console.error('Error response:', errorText);
-            } catch (e) {
-              console.error('Could not read error response');
-            }
-            
             throw new Error('Tellimuse andmete laadimine ebaõnnestus. Palun võtke ühendust klienditoega.');
           }
           
           const data = await response.json();
           
           if (data.success && data.order) {
-            console.log('Order details fetched successfully from server:', data.order);
             console.log('Order details fetched successfully from server:', data.order);
             
             // Format the order data for display
@@ -100,17 +74,12 @@ const CheckoutSuccess = () => {
         }
       } catch (error) {
         console.error('Error loading order details:', error);
-        console.error('Error loading order details:', error);
         setError(error.message || 'Tellimuse andmete laadimine ebaõnnestus');
         
         // If no order data is found, redirect to shop after a delay
-        // Only redirect if there's no reference - if there is a reference, 
-        // it might be a temporary issue and the user might want to try again
-        if (!reference) {
-          setTimeout(() => {
-            navigate('/epood');
-          }, 5000);
-        }
+        setTimeout(() => {
+          navigate('/epood');
+        }, 5000);
       } finally {
         setLoading(false);
       }

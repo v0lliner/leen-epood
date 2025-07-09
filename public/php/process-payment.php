@@ -109,6 +109,7 @@ try {
             'currency' => 'EUR',
             'reference' => $data['reference'], // This will be used as order_number in the return URL
             'notification_url' => 'https://leen.ee/php/payment-notification.php',
+            'notification_url' => 'https://leen.ee/php/payment-notification.php',
             'merchant_data' => json_encode([
                 'customer_name' => $data['firstName'] . ' ' . $data['lastName'],
                 'customer_email' => $data['email'],
@@ -212,6 +213,10 @@ try {
     echo json_encode([
         'transactionId' => $transaction->id,
         'paymentUrl' => $paymentUrl,
+        'debug' => [
+            'notification_url' => $transaction->notification_url ?? 'not_set',
+            'return_url' => $transaction->return_url ?? 'not_set'
+        ]
         'debug' => [
             'notification_url' => $transaction->notification_url ?? 'not_set',
             'return_url' => $transaction->return_url ?? 'not_set'
