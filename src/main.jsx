@@ -3,7 +3,6 @@ import { createRoot } from 'react-dom/client'
 import App from './App.jsx'
 
 // Import debug utilities in development
-import './utils/debug.js'
 if (import.meta.env.DEV) {
   import('./utils/debug.js');
 }

@@ -100,7 +100,6 @@ export const homepageContentService = {
         this.getOrganizedContent('et'),
         this.getOrganizedContent('en')
       ])
-    console.log('🏠 Fetching homepage content for language:', language)
       
       if (etResult.error && enResult.error) {
         return { data: {}, error: etResult.error }
@@ -109,18 +108,12 @@ export const homepageContentService = {
       return { 
         data: {
           et: etResult.data || {},
-      console.error('❌ Homepage content database error:', error)
           en: enResult.data || {}
         }, 
         error: null 
-    console.log('✅ Homepage content fetched successfully:', data?.length, 'items')
       }
     } catch (error) {
-    console.error('❌ Error fetching homepage content:', {
-      message: error.message,
-      name: error.name,
-      stack: error.stack
-    })
+      return { data: {}, error: { message: 'Network error occurred' } }
     }
   }
 }

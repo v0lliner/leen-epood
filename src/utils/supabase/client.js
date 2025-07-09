@@ -22,47 +22,6 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     headers: {
       'X-Client-Info': 'supabase-js-web'
-    },
-    fetch: (url, options = {}) => {
-      console.log('🌐 Supabase fetch request:', url)
-      
-      // Add timeout to prevent hanging requests
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-      
-      const fetchOptions = {
-        ...options,
-        signal: controller.signal,
-        headers: {
-          ...options.headers,
-          'Access-Control-Allow-Origin': '*',
-        }
-      }
-      
-      return fetch(url, fetchOptions)
-        .then(response => {
-          clearTimeout(timeoutId)
-          console.log('✅ Supabase response:', response.status, response.statusText)
-          return response
-        })
-        .catch(error => {
-          clearTimeout(timeoutId)
-          console.error('❌ Supabase fetch error:', {
-            url,
-            error: error.message,
-            name: error.name,
-            stack: error.stack
-          })
-          
-          // Provide more specific error messages
-          if (error.name === 'AbortError') {
-            throw new Error('Request timeout - Supabase server may be unreachable')
-          } else if (error.message.includes('Failed to fetch')) {
-            throw new Error('Network error - Check your internet connection and Supabase URL configuration')
-          }
-          
-          throw error
-        })
     }
   }
 })
