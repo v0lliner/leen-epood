@@ -67,12 +67,8 @@ const PaymentSettings = () => {
   useEffect(() => {
     loadConfig()
     loadOmnivaShippingSettings()
-    loadOmnivaShippingSettings()
   }, [])
   
-  useEffect(() => {
-    loadOmnivaShippingSettings()
-  }, [])
 
   const loadConfig = async () => {
     setLoading(true)
@@ -115,29 +111,6 @@ const PaymentSettings = () => {
     }
   }
 
-  const loadOmnivaShippingSettings = async () => {
-    try {
-      const { data, error } = await shippingSettingsService.getOmnivaSettings()
-      
-      if (error) {
-        console.error('Error loading Omniva shipping settings:', error)
-        return
-      }
-      
-      setOmnivaShippingSettings(data)
-      
-      if (data) {
-        setOmnivaShippingFormData({
-          id: data.id,
-          price: data.price.toString(),
-          currency: data.currency,
-          active: data.active
-        })
-      }
-    } catch (err) {
-      console.error('Error in loadOmnivaShippingSettings:', err)
-    }
-  }
 
   const loadOmnivaCredentials = async () => {
     try {
@@ -162,25 +135,25 @@ const PaymentSettings = () => {
 
   const loadOmnivaShippingSettings = async () => {
     try {
-      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
+      const { data, error } = await shippingSettingsService.getOmnivaSettings()
       
       if (error) {
-        console.warn('Failed to load Omniva shipping settings:', error)
-      } else {
-        setOmnivaSettings(data)
-        
-        // Update form data with shipping price if available
-        if (data) {
-          setOmnivaFormData(prev => ({
-            ...prev,
-            price: data.price.toString(),
-            currency: data.currency,
-            active: data.active
-          }))
-        }
+        console.error('Error loading Omniva shipping settings:', error)
+        return
+      }
+      
+      setOmnivaShippingSettings(data)
+      
+      if (data) {
+        setOmnivaShippingFormData({
+          id: data.id,
+          price: data.price.toString(),
+          currency: data.currency,
+          active: data.active
+        })
       }
     } catch (err) {
-      console.error('Error loading Omniva shipping settings:', err)
+      console.error('Error in loadOmnivaShippingSettings:', err)
     }
   }
 
