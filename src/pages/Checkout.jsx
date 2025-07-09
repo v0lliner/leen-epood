@@ -6,6 +6,7 @@ import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { useCart } from '../context/CartContext';
 import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
+import { shippingSettingsService } from '../utils/supabase/shippingSettings';
 
 const Checkout = () => {
   const { t, i18n } = useTranslation();
@@ -37,6 +38,8 @@ const Checkout = () => {
   const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
   const [selectedParcelMachine, setSelectedParcelMachine] = useState('');
   const [parcelMachineError, setParcelMachineError] = useState('');
+  const [omnivaShippingPrice, setOmnivaShippingPrice] = useState(3.99);
+  const [omnivaShippingCurrency, setOmnivaShippingCurrency] = useState('EUR');
   
   const [formData, setFormData] = useState({
     email: '',
@@ -62,6 +65,33 @@ const Checkout = () => {
       preloadOmnivaLocations(formData.country);
     }
   }, [location.pathname, formData.country]);
+
+  useEffect(() => {
+    // If cart is empty, redirect to shop
+    if (items.length === 0) {
+      navigate('/epood');
+    } else {
+      // Load Omniva shipping price
+      loadOmnivaShippingPrice();
+    }
+  }, [items, navigate]);
+
+  const loadOmnivaShippingPrice = async () => {
+    try {
+      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings();
+      
+      if (error) {
+        console.warn('Failed to load Omniva shipping price:', error);
+        // Keep default price
+      } else if (data) {
+        setOmnivaShippingPrice(data.price);
+        setOmnivaShippingCurrency(data.currency);
+      }
+    } catch (err) {
+      console.warn('Error loading Omniva shipping price:', err);
+      // Keep default price
+    }
+  };
 
   // Function to preload Omniva locations in the background
   const preloadOmnivaLocations = async (country) => {
@@ -332,7 +362,7 @@ const Checkout = () => {
       }
       
       // Calculate final amount including delivery cost
-      const deliveryCost = deliveryMethod === 'omniva-parcel-machine' ? 3.99 : 0;
+      const deliveryCost = deliveryMethod === 'omniva-parcel-machine' ? omnivaShippingPrice : 0;
       const finalAmount = (parseFloat(totalPrice) + deliveryCost).toFixed(2);
       
       // Generate a unique order reference
@@ -636,7 +666,7 @@ const Checkout = () => {
                             <div className="delivery-method-content">
                               <h4>Omniva pakiautomaati</h4>
                               <p>Toode saadetakse valitud pakiautomaati</p>
-                              <p className="delivery-price">3.99€</p>
+                              <p className="delivery-price">{omnivaShippingPrice}{omnivaShippingCurrency === 'EUR' ? '€' : omnivaShippingCurrency}</p>
                             </div>
                           </div>
                         </div>
@@ -960,14 +990,14 @@ const Checkout = () => {
                   
                   <div className="summary-row">
                     <span>Tarne</span>
-                    <span>{deliveryMethod === 'omniva-parcel-machine' ? '3.99€' : '0.00€'}</span>
+                    <span>{deliveryMethod === 'omniva-parcel-machine' ? `${omnivaShippingPrice}€` : '0.00€'}</span>
                   </div>
                   
                   <div className="summary-total">
                     <span>Kokku</span>
                     <span>
                       {deliveryMethod === 'omniva-parcel-machine' 
-                        ? (parseFloat(totalPrice) + 3.99).toFixed(2) + '€' 
+                        ? (parseFloat(totalPrice) + omnivaShippingPrice).toFixed(2) + '€' 
                         : formattedTotalPrice}
                     </span>
                   </div>
