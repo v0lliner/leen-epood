@@ -29,7 +29,10 @@ const CheckoutSuccess = () => {
     const loadOrderDetails = async () => {
       try {
         setLoading(true);
-        setError(null);
+        setError(null); 
+        
+        // Log the reference for debugging
+        console.log('Reference from URL:', reference);
         
         // Only try to get order details from URL reference parameter
         if (reference) {
@@ -40,6 +43,7 @@ const CheckoutSuccess = () => {
           
           if (!response.ok) {
             console.warn(`Failed to fetch order details from server: ${response.status}`);
+            console.error('Response text:', await response.text());
             throw new Error('Tellimuse andmete laadimine ebaõnnestus. Palun võtke ühendust klienditoega.');
           }
           
