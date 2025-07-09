@@ -24,50 +24,45 @@ export const shippingSettingsService = {
   },
 
   /**
-   * Update Omniva shipping settings
-   * @param {string} id - Settings ID
-   * @param {object} updates - Fields to update
+   * Update Omniva shipping price
+   * @param {number} price - New shipping price
    * @returns {Promise<{data: object|null, error: object|null}>}
    */
-  async updateOmnivaSettings(id, updates) {
+  async updateOmnivaShippingPrice(price) {
     try {
-      const { data, error } = await supabase
-        .from('omniva_shipping_settings')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single()
+      // First get the active settings
+      const { data: existingSettings, error: fetchError } = await this.getOmnivaSettings()
       
-      return { data, error }
+      if (fetchError) {
+        return { data: null, error: fetchError }
+      }
+      
+      if (existingSettings) {
+        // Update existing settings
+        const { data, error } = await supabase
+          .from('omniva_shipping_settings')
+          .update({ price })
+          .eq('id', existingSettings.id)
+          .select()
+          .single()
+        
+        return { data, error }
+      } else {
+        // Create new settings
+        const { data, error } = await supabase
+          .from('omniva_shipping_settings')
+          .insert({
+            price,
+            currency: 'EUR',
+            active: true
+          })
+          .select()
+          .single()
+        
+        return { data, error }
+      }
     } catch (error) {
-      console.error('Error updating Omniva settings:', error)
-      return { data: null, error: { message: 'Network error occurred' } }
-    }
-  },
-
-  /**
-   * Create new Omniva shipping settings
-   * @param {object} settings - Settings data
-   * @returns {Promise<{data: object|null, error: object|null}>}
-   */
-  async createOmnivaSettings(settings) {
-    try {
-      // First, deactivate all existing settings
-      await supabase
-        .from('omniva_shipping_settings')
-        .update({ active: false })
-        .eq('active', true)
-      
-      // Then create new settings
-      const { data, error } = await supabase
-        .from('omniva_shipping_settings')
-        .insert(settings)
-        .select()
-        .single()
-      
-      return { data, error }
-    } catch (error) {
-      console.error('Error creating Omniva settings:', error)
+      console.error('Error updating Omniva shipping price:', error)
       return { data: null, error: { message: 'Network error occurred' } }
     }
   }
