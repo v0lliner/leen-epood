@@ -147,7 +147,9 @@ const ShippingAddressForm = ({
                 className={`form-input ${validationErrors.omnivaParcelMachineId ? 'has-error' : ''}`}
                 disabled={loadingParcelMachines}
               >
-                <option value="">{t('checkout.shipping.omniva.select_placeholder')}</option>
+                {!formData.omnivaParcelMachineId && (
+                  <option value="">{t('checkout.shipping.omniva.select_placeholder')}</option>
+                )}
                 {parcelMachines.map(machine => (
                   <option key={machine.id} value={machine.id}>
                     {machine.name}
