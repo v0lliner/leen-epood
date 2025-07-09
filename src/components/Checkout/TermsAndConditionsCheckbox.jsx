@@ -81,7 +81,7 @@ const TermsAndConditionsCheckbox = ({ checked, onChange, validationError }) => {
         
         .error-message {
           color: #dc3545;
-          font-size: 0.85rem;
+          font-size: 0.9rem;
           margin-top: 8px;
           margin-left: 24px;
         }
