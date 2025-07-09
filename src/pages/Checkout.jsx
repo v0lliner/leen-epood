@@ -5,6 +5,7 @@ import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import { shippingSettingsService } from '../utils/supabase/shippingSettings';
+import { shippingSettingsService } from '../utils/supabase/shippingSettings';
 
 const Checkout = () => {
   const { t } = useTranslation();
@@ -35,6 +36,8 @@ const Checkout = () => {
   const [parcelMachines, setParcelMachines] = useState([]);
   const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
   const [parcelMachinesError, setParcelMachinesError] = useState('');
+  const [omnivaShippingPrice, setOmnivaShippingPrice] = useState(0.1);
+  const [loadingShippingPrice, setLoadingShippingPrice] = useState(true);
   const [omnivaShippingPrice, setOmnivaShippingPrice] = useState(3.99);
   const [loadingShippingPrice, setLoadingShippingPrice] = useState(true);
   
@@ -67,6 +70,31 @@ const Checkout = () => {
       { id: 'danskebank', name: 'Danske Bank', logo: '/assets/banks/placeholder.svg' }
     ]
   };
+
+  // Load Omniva shipping price from database
+  useEffect(() => {
+    const loadShippingPrice = async () => {
+      setLoadingShippingPrice(true);
+      try {
+        const { data, error } = await shippingSettingsService.getOmnivaShippingSettings();
+        
+        if (error) {
+          console.error('Error loading Omniva shipping price:', error);
+          // Keep default price if error
+        } else if (data && data.price) {
+          console.log('Loaded Omniva shipping price:', data.price);
+          setOmnivaShippingPrice(parseFloat(data.price));
+        }
+      } catch (err) {
+        console.error('Exception loading Omniva shipping price:', err);
+        // Keep default price if exception
+      } finally {
+        setLoadingShippingPrice(false);
+      }
+    };
+    
+    loadShippingPrice();
+  }, []);
 
   // Load Omniva shipping price from database
   useEffect(() => {
@@ -634,6 +662,8 @@ const Checkout = () => {
                       <span>Tarne</span>
                       <span>
                         {formData.deliveryMethod === 'omniva' 
+                          ? (loadingShippingPrice ? 'Laadin...' : formatPrice(omnivaShippingPrice)) 
+                          : 'Tasuta'}
                           ? (loadingShippingPrice ? 'Laadin...' : formatPrice(omnivaShippingPrice)) 
                           : 'Tasuta'}
                       </span>
