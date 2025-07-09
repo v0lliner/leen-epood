@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+// Bank logos URL format from Maksekeskus
+const BANK_LOGO_URL = 'https://static.maksekeskus.ee/img/channel/lnd/';
+
 const PaymentMethodSelector = ({ 
   formData, 
   onChange, 
@@ -22,15 +25,18 @@ const PaymentMethodSelector = ({
 
   // Bank logos (placeholder paths - these should be replaced with actual logo paths)
   const bankLogos = {
-    'swedbank': '/assets/banks/placeholder.svg',
-    'seb': '/assets/banks/placeholder.svg',
-    'lhv': '/assets/banks/placeholder.svg',
-    'luminor': '/assets/banks/placeholder.svg',
-    'coop': '/assets/banks/placeholder.svg',
-    'citadele': '/assets/banks/placeholder.svg',
-    'n26': '/assets/banks/placeholder.svg',
-    'revolut': '/assets/banks/placeholder.svg',
-    'wise': '/assets/banks/placeholder.svg'
+    'swedbank': `${BANK_LOGO_URL}swedbank.png`,
+    'seb': `${BANK_LOGO_URL}seb.png`,
+    'lhv': `${BANK_LOGO_URL}lhv.png`,
+    'luminor': `${BANK_LOGO_URL}luminor.png`,
+    'coop': `${BANK_LOGO_URL}coop.png`,
+    'citadele': `${BANK_LOGO_URL}citadele.png`,
+    'n26': `${BANK_LOGO_URL}n26.png`,
+    'revolut': `${BANK_LOGO_URL}revolut.png`,
+    'wise': `${BANK_LOGO_URL}wise.png`,
+    'knik': `${BANK_LOGO_URL}knik.png`,
+    'pis': `${BANK_LOGO_URL}pis.png`,
+    'pangalink': `${BANK_LOGO_URL}pangalink.png`
   };
 
   // Hardcoded bank data for each country
@@ -38,25 +44,30 @@ const PaymentMethodSelector = ({
   const banksByCountry = {
     'ee': [
       { id: 'swedbank', name: 'Swedbank' },
-      { id: 'seb', name: 'SEB' },
-      { id: 'lhv', name: 'LHV' },
+      { id: 'seb', name: 'SEB Pank' },
+      { id: 'lhv', name: 'LHV Pank' },
       { id: 'luminor', name: 'Luminor' },
-      { id: 'coop', name: 'Coop Pank' }
+      { id: 'coop', name: 'Coop Pank' },
+      { id: 'knik', name: 'Knik' },
+      { id: 'citadele', name: 'Citadele' }
     ],
     'lv': [
       { id: 'swedbank', name: 'Swedbank' },
       { id: 'seb', name: 'SEB' },
-      { id: 'citadele', name: 'Citadele' }
+      { id: 'citadele', name: 'Citadele' },
+      { id: 'luminor', name: 'Luminor' }
     ],
     'lt': [
       { id: 'swedbank', name: 'Swedbank' },
       { id: 'seb', name: 'SEB' },
-      { id: 'luminor', name: 'Luminor' }
+      { id: 'luminor', name: 'Luminor' },
+      { id: 'knik', name: 'Knik' }
     ],
     'fi': [
       { id: 'n26', name: 'N26' },
       { id: 'revolut', name: 'Revolut' },
-      { id: 'wise', name: 'Wise' }
+      { id: 'wise', name: 'Wise' },
+      { id: 'knik', name: 'Knik' }
     ]
   };
 
@@ -122,7 +133,17 @@ const PaymentMethodSelector = ({
               >
                 <div className="bank-content">
                   <div className="bank-name">{bank.name}</div>
-                  <div className="bank-check">✓</div>
+                <div className="bank-logo-container">
+                  <img 
+                    src={bankLogos[bank.id] || `${BANK_LOGO_URL}${bank.id}.png`} 
+                    alt={bank.name} 
+                    className="bank-logo"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = `${BANK_LOGO_URL}default.png`;
+                    }}
+                  />
+                </div>
                 </div>
               </div>
             ))}
@@ -215,7 +236,20 @@ const PaymentMethodSelector = ({
         .bank-content {
           display: flex;
           justify-content: space-between;
+          align-items: flex-start;
+        }
+        
+        .bank-logo-container {
+          height: 40px;
+          display: flex;
           align-items: center;
+          justify-content: center;
+        }
+        
+        .bank-logo {
+          max-width: 100%;
+          max-height: 40px;
+          object-fit: contain;
         }
         
         .bank-name {
@@ -251,12 +285,16 @@ const PaymentMethodSelector = ({
         
         @media (max-width: 768px) {
           .banks-grid {
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 12px;
           }
           
           .bank-option {
             padding: 12px;
+          }
+          
+          .bank-logo {
+            max-height: 30px;
           }
         }
       `}</style>
