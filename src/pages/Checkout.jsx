@@ -1,561 +1,289 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useLocation } from 'react-router-dom';
-import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
-import { useCart } from '../context/CartContext';
-import { formatPrice, parsePriceToAmount } from '../utils/formatPrice';
 import { shippingSettingsService } from '../utils/supabase/shippingSettings';
 
 const Checkout = () => {
-  const { t, i18n } = useTranslation();
-  const [omnivaLocationsCache, setOmnivaLocationsCache] = useState({});
-  const { items, getTotalPrice } = useCart();
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const location = useLocation();
+  const { items, getTotalPrice, clearCart } = useCart();
   
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [error, setError] = useState('');
-  const [totalPrice, setTotalPrice] = useState('0.00');
-  const [formattedTotalPrice, setFormattedTotalPrice] = useState('0.00');
-  const [termsAgreed, setTermsAgreed] = useState(false);
-  const [termsError, setTermsError] = useState('');
-  const [deliveryMethod, setDeliveryMethod] = useState('');
-  const [deliveryMethodError, setDeliveryMethodError] = useState('');
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('swedbank');
-  const [selectedCountry, setSelectedCountry] = useState('Estonia');
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: '',
-    expiryMonth: '',
-    expiryYear: '',
-    cvc: '',
-    cardHolder: ''
-  });
-  
-  // Omniva parcel machine states
-  const [parcelMachines, setParcelMachines] = useState([]);
-  const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
-  const [selectedParcelMachine, setSelectedParcelMachine] = useState('');
-  const [parcelMachineError, setParcelMachineError] = useState('');
-  const [omnivaShippingPrice, setOmnivaShippingPrice] = useState(3.99);
-  const [omnivaShippingCurrency, setOmnivaShippingCurrency] = useState('EUR');
-  
+  // Form state
   const [formData, setFormData] = useState({
     email: '',
     firstName: '',
     lastName: '',
     phone: '',
     companyName: '',
-    country: 'Estonia',
-    notes: ''
+    notes: '',
+    country: 'estonia',
+    deliveryMethod: 'pickup',
+    omnivaParcelMachineId: '',
+    omnivaParcelMachineName: '',
+    bankCountry: 'estonia',
+    bank: '',
+    termsAccepted: false
   });
+  
+  // UI state
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [parcelMachines, setParcelMachines] = useState([]);
+  const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
+  const [parcelMachinesError, setParcelMachinesError] = useState('');
+  const [omnivaShippingPrice, setOmnivaShippingPrice] = useState(3.99);
+  const [loadingShippingPrice, setLoadingShippingPrice] = useState(true);
+  
+  // Banks data
+  const banks = {
+    estonia: [
+      { id: 'swedbank', name: 'Swedbank', logo: '/assets/banks/placeholder.svg' },
+      { id: 'seb', name: 'SEB', logo: '/assets/banks/placeholder.svg' },
+      { id: 'lhv', name: 'LHV', logo: '/assets/banks/placeholder.svg' },
+      { id: 'luminor', name: 'Luminor', logo: '/assets/banks/placeholder.svg' },
+      { id: 'coop', name: 'Coop Pank', logo: '/assets/banks/placeholder.svg' },
+      { id: 'citadele', name: 'Citadele', logo: '/assets/banks/placeholder.svg' },
+      { id: 'n26', name: 'N26', logo: '/assets/banks/placeholder.svg' },
+      { id: 'revolut', name: 'Revolut', logo: '/assets/banks/placeholder.svg' },
+      { id: 'wise', name: 'Wise', logo: '/assets/banks/placeholder.svg' }
+    ],
+    latvia: [
+      { id: 'swedbank', name: 'Swedbank', logo: '/assets/banks/placeholder.svg' },
+      { id: 'seb', name: 'SEB', logo: '/assets/banks/placeholder.svg' },
+      { id: 'citadele', name: 'Citadele', logo: '/assets/banks/placeholder.svg' }
+    ],
+    lithuania: [
+      { id: 'swedbank', name: 'Swedbank', logo: '/assets/banks/placeholder.svg' },
+      { id: 'seb', name: 'SEB', logo: '/assets/banks/placeholder.svg' },
+      { id: 'luminor', name: 'Luminor', logo: '/assets/banks/placeholder.svg' }
+    ],
+    finland: [
+      { id: 'nordea', name: 'Nordea', logo: '/assets/banks/placeholder.svg' },
+      { id: 'osuuspankki', name: 'OP', logo: '/assets/banks/placeholder.svg' },
+      { id: 'danskebank', name: 'Danske Bank', logo: '/assets/banks/placeholder.svg' }
+    ]
+  };
 
-  // Update total price whenever cart items change
+  // Load Omniva shipping price from database
   useEffect(() => {
-    const total = getTotalPrice();
-    setTotalPrice(total.toFixed(2));
-    setFormattedTotalPrice(total.toFixed(2) + '€');
-  }, [items, getTotalPrice]);
+    const loadShippingPrice = async () => {
+      setLoadingShippingPrice(true);
+      try {
+        const { data, error } = await shippingSettingsService.getOmnivaShippingSettings();
+        
+        if (error) {
+          console.error('Error loading Omniva shipping price:', error);
+          // Keep default price if error
+        } else if (data && data.price) {
+          console.log('Loaded Omniva shipping price:', data.price);
+          setOmnivaShippingPrice(parseFloat(data.price));
+        }
+      } catch (err) {
+        console.error('Exception loading Omniva shipping price:', err);
+        // Keep default price if exception
+      } finally {
+        setLoadingShippingPrice(false);
+      }
+    };
+    
+    loadShippingPrice();
+  }, []);
 
-  // Preload Omniva locations when the page loads
+  // Load parcel machines when country or delivery method changes
   useEffect(() => {
-    // Check if we already have cached data for the current country
-    if (!omnivaLocationsCache[formData.country]) {
-      preloadOmnivaLocations(formData.country);
+    if (formData.deliveryMethod === 'omniva') {
+      loadParcelMachines(formData.country);
     }
-  }, [location.pathname, formData.country]);
+  }, [formData.country, formData.deliveryMethod]);
 
+  // Redirect to shop if cart is empty
   useEffect(() => {
-    // If cart is empty, redirect to shop
     if (items.length === 0) {
       navigate('/epood');
-    } else {
-      // Load Omniva shipping price
-      loadOmnivaShippingPrice();
     }
   }, [items, navigate]);
 
-  const loadOmnivaShippingPrice = async () => {
+  const loadParcelMachines = async (country) => {
+    setLoadingParcelMachines(true);
+    setParcelMachinesError('');
+    
     try {
-      const { data, error } = await shippingSettingsService.getOmnivaShippingSettings();
-      
-      if (error) {
-        console.warn('Failed to load Omniva shipping price:', error);
-        // Keep default price
-      } else if (data) {
-        setOmnivaShippingPrice(data.price);
-        setOmnivaShippingCurrency(data.currency);
-      }
-    } catch (err) {
-      console.warn('Error loading Omniva shipping price:', err);
-      // Keep default price
-    }
-  };
-
-  // Function to preload Omniva locations in the background
-  const preloadOmnivaLocations = async (country) => {
-    try {
-      // Don't show loading state for preloading
-      const countryCode = getCountryCode(country);
-      
-      // Check if we already have this country in cache
-      if (omnivaLocationsCache[country]) {
-        return;
-      }
-      
-      const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
+      const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${country}`);
       
       if (!response.ok) {
-        console.warn(`Failed to preload Omniva locations for ${country}`);
-        return;
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const data = await response.json();
       
       if (data.success) {
-        // Store in cache
-        
-        // Cache the results
-        setOmnivaLocationsCache(prev => ({
-          ...prev,
-          [formData.country]: data.parcelMachines
-        }));
-        setOmnivaLocationsCache(prev => ({
-          ...prev,
-          [country]: data.parcelMachines
-        }));
-      }
-    } catch (error) {
-      console.warn('Error preloading Omniva locations:', error);
-    }
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user types
-    if (error) setError('');
-  };
-  
-  // Function to scroll to top of page
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  
-  const handleCardInputChange = (e) => {
-    const { name, value } = e.target;
-    setCardDetails(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user types
-    if (error) setError('');
-  };
-
-  const handleTermsChange = (e) => {
-    setTermsAgreed(e.target.checked);
-    if (e.target.checked) {
-      setTermsError('');
-    }
-  };
-
-  const handleDeliveryMethodChange = (method) => {
-    setDeliveryMethod(method);
-    setDeliveryMethodError('');
-    
-    // Load parcel machines if Omniva is selected
-    if (method === 'omniva-parcel-machine') {
-      loadParcelMachines(formData.country);
-    }
-  };
-
-  const handleParcelMachineChange = (e) => {
-    setSelectedParcelMachine(e.target.value);
-    if (e.target.value) {
-      setParcelMachineError('');
-    }
-  };
-
-  const handlePaymentMethodSelection = (method) => {
-    // Clear any previous errors when changing payment method
-    setError('');
-    setSelectedPaymentMethod(method);
-  };
-
-  const handleCountryChange = (e) => {
-    const country = e.target.value;
-    setSelectedCountry(country);
-    setFormData(prev => ({
-      ...prev,
-      country: country
-    }));
-    // Reset selected payment method when country changes
-    setSelectedPaymentMethod('');
-    
-    // If delivery method is parcel machine, reload parcel machines for new country
-    if (deliveryMethod === 'omniva-parcel-machine') {
-      loadParcelMachines(country);
-    }
-  };
-  
-  // Function to load Omniva parcel machines
-  const loadParcelMachines = async (country) => {
-    setLoadingParcelMachines(true);
-      // Check if we already have cached data for the current country
-      if (omnivaLocationsCache[formData.country]) {
-        setOmnivaParcelMachines(omnivaLocationsCache[formData.country]);
-        return;
-      }
-      
-    setParcelMachines([]);
-    setSelectedParcelMachine('');
-    
-    try {
-      // Convert country name to country code
-      const countryMap = {
-        'Estonia': 'ee',
-        'Latvia': 'lv',
-        'Lithuania': 'lt',
-        'Finland': 'fi'
-      };
-      
-      const countryCode = countryMap[country] || 'ee';
-      
-      const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (data.success && data.parcelMachines) {
-        setParcelMachines(data.parcelMachines);
+        setParcelMachines(data.parcelMachines || []);
       } else {
-        throw new Error(data.error || 'Failed to load parcel machines');
+        setParcelMachinesError(data.error || 'Failed to load parcel machines');
+        setParcelMachines([]);
       }
     } catch (error) {
       console.error('Error loading parcel machines:', error);
-      setError('Pakiautomaatide laadimine ebaõnnestus: ' + error.message);
+      setParcelMachinesError('Network error occurred');
+      setParcelMachines([]);
     } finally {
       setLoadingParcelMachines(false);
     }
   };
-  
-  // Function to tokenize card details using Maksekeskus SDK
-  const tokenizeCardDetails = async () => {
-    try {
-      // Validate card details
-      if (!cardDetails.cardNumber || !cardDetails.expiryMonth || 
-          !cardDetails.expiryYear || !cardDetails.cvc || !cardDetails.cardHolder) {
-        throw new Error('Palun täitke kõik kaardi andmed');
-      }
-      
-      // Check if Maksekeskus SDK is loaded
-      if (!window.Maksekeskus) {
-        throw new Error('Maksekeskuse SDK ei ole laaditud');
-      }
-      
-      // Initialize Maksekeskus SDK
-      const mk = new window.Maksekeskus({
-        shopId: '4e2bed9a-aa24-4b87-801b-56c31c535d36',
-        testMode: false // Set to false for production
-      });
-      
-      // Tokenize card details
-      const token = await mk.tokenizeCard({
-        cardNumber: cardDetails.cardNumber.replace(/\s/g, ''),
-        expiryMonth: cardDetails.expiryMonth,
-        expiryYear: cardDetails.expiryYear,
-        cvc: cardDetails.cvc,
-        cardHolder: cardDetails.cardHolder
-      });
-      
-      return token;
-    } catch (err) {
-      throw new Error('Kaardi andmete töötlemine ebaõnnestus: ' + err.message);
+
+  const handleInputChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    // Reset error when user types
+    if (error) setError('');
+    
+    // Reset parcel machine selection when delivery method changes
+    if (name === 'deliveryMethod' && value !== 'omniva') {
+      setFormData(prev => ({
+        ...prev,
+        omnivaParcelMachineId: '',
+        omnivaParcelMachineName: ''
+      }));
     }
   };
 
-  const validateForm = () => {
-    // Required fields
-    const requiredFields = ['email', 'firstName', 'lastName', 'phone'];
-    const missingFields = requiredFields.filter(field => !formData[field].trim());
+  const handleParcelMachineChange = (e) => {
+    const selectedId = e.target.value;
+    const selectedMachine = parcelMachines.find(machine => machine.id === selectedId);
     
-    if (missingFields.length > 0) {
-      setError('Palun täitke kõik kohustuslikud väljad');
+    setFormData(prev => ({
+      ...prev,
+      omnivaParcelMachineId: selectedId,
+      omnivaParcelMachineName: selectedMachine ? selectedMachine.name : ''
+    }));
+  };
+
+  const validateForm = () => {
+    // Basic validation
+    if (!formData.email || !formData.firstName || !formData.lastName || !formData.phone) {
+      setError(t('checkout.error.required_fields'));
       return false;
     }
     
-    // Basic email validation
+    // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      setError('Palun sisestage korrektne e-posti aadress');
-      return false;
-    }
-
-    // Check delivery method
-    if (!deliveryMethod) {
-      setDeliveryMethodError('Palun valige tarneviis');
+      setError(t('checkout.error.invalid_email'));
       return false;
     }
     
-    // Check parcel machine selection if Omniva is selected
-    if (deliveryMethod === 'omniva-parcel-machine' && !selectedParcelMachine) {
-      setParcelMachineError('Palun valige pakiautomaat');
-      return false;
-    }
-
-    // Check terms agreement
-    if (!termsAgreed) {
-      setTermsError(t('checkout.terms.required'));
+    // Delivery method validation
+    if (formData.deliveryMethod === 'omniva' && !formData.omnivaParcelMachineId) {
+      setError(t('checkout.shipping.omniva.required'));
       return false;
     }
     
-    // Check if bank is selected
-    if (!selectedPaymentMethod) {
-      setError('Palun valige makseviis');
+    // Bank selection validation
+    if (!formData.bank) {
+      setError('Palun valige pank');
+      return false;
+    }
+    
+    // Terms acceptance validation
+    if (!formData.termsAccepted) {
+      setError(t('checkout.terms.required'));
       return false;
     }
     
     return true;
   };
 
-  // Function to generate a unique order reference
-  const generateOrderReference = () => {
-    const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).substring(2, 8);
-    return `order-${timestamp}-${randomStr}`;
-  };
-
-  const handleCheckout = async () => {
-    if (items.length === 0) {
-      setError('Ostukorv on tühi');
-      return;
-    }
-
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
     if (!validateForm()) {
       return;
     }
-
-    setIsProcessing(true);
+    
+    setIsSubmitting(true);
     setError('');
-
+    
     try {
-      // For card payments, tokenize card details
-      let cardToken = null;
-      if (selectedPaymentMethod === 'card') {
-        try {
-          cardToken = await tokenizeCardDetails();
-          console.log('Card tokenized successfully');
-        } catch (tokenError) {
-          setError(tokenError.message);
-          setIsProcessing(false);
-          return;
-        }
-      }
+      // Generate a unique reference for this order
+      const reference = `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       
-      // Calculate final amount including delivery cost
-      const deliveryCost = deliveryMethod === 'omniva-parcel-machine' ? omnivaShippingPrice : 0;
-      const finalAmount = (parseFloat(totalPrice) + deliveryCost).toFixed(2);
-      
-      // Generate a unique order reference
-      const orderReference = generateOrderReference();
-      
-      // Get selected parcel machine name if applicable
-      let omnivaParcelMachineId = null;
-      let omnivaParcelMachineName = null;
-      
-      if (deliveryMethod === 'omniva-parcel-machine' && selectedParcelMachine) {
-        omnivaParcelMachineId = selectedParcelMachine;
-        const selectedMachine = parcelMachines.find(pm => pm.id === selectedParcelMachine);
-        if (selectedMachine) {
-          omnivaParcelMachineName = `${selectedMachine.name} (${selectedMachine.address})`;
-        }
-      }
-      
-      // Prepare order data to send to PHP backend
-      const orderData = {
-        amount: finalAmount,
-        reference: orderReference,
-        email: formData.email,
+      // Prepare payment data
+      const paymentData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
+        email: formData.email,
         phone: formData.phone,
-        country: formData.country,
-        paymentMethod: selectedPaymentMethod,
-        deliveryMethod: deliveryMethod,
-        omnivaParcelMachineId: omnivaParcelMachineId,
-        omnivaParcelMachineName: omnivaParcelMachineName,
+        reference: reference,
+        amount: calculateTotalWithShipping(),
+        paymentMethod: formData.bank,
         items: items.map(item => ({
           id: item.id,
           title: item.title,
-          price: parsePriceToAmount(item.price),
+          price: parseFloat(item.price.replace('€', '')),
           quantity: 1
-        }))
+        })),
+        deliveryMethod: formData.deliveryMethod,
+        omnivaParcelMachineId: formData.omnivaParcelMachineId,
+        omnivaParcelMachineName: formData.omnivaParcelMachineName
       };
       
-      // Prepare the final request payload
-      const payload = {
-        ...orderData,
-        // Only include token for card payments
-        ...(selectedPaymentMethod === 'card' && cardToken ? { token: cardToken } : {})
-      };
-      
-      console.log('Sending payment request with payload:', payload);
-      
-      // Call the PHP endpoint to create a transaction and payment
+      // Call payment processing endpoint
       const response = await fetch('/php/process-payment.php', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(paymentData)
       });
-
+      
       if (!response.ok) {
-        // Try to parse error response as JSON
-        let errorData;
-        try {
-          errorData = await response.json();
-          throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
-        } catch (jsonError) {
-          // If response is not JSON, get the raw text
-          const errorText = await response.text();
-          console.error('Raw error response:', errorText);
-          throw new Error(`HTTP error! Status: ${response.status}, Response is not valid JSON`);
-        }
-      }
-
-      let data;
-      try {
-        data = await response.json();
-        console.log('Payment response:', data);
-      } catch (jsonError) {
-        console.error('Error parsing response JSON:', jsonError);
-        const rawResponse = await response.text();
-        console.error('Raw response:', rawResponse);
-        throw new Error('Invalid JSON response from server');
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
       
-      if (data.error) {
-        throw new Error(data.error);
+      const result = await response.json();
+      
+      if (result.error) {
+        throw new Error(result.error);
       }
       
-      if (data.transactionId && data.paymentUrl) {
-        // Store order info in localStorage before redirecting
-        localStorage.setItem('pendingOrder', JSON.stringify({
-          orderReference: orderReference,
-          orderAmount: finalAmount,
-          orderItems: items,
-          customerEmail: formData.email,
-          customerName: `${formData.firstName} ${formData.lastName}`,
-          customerPhone: formData.phone,
-          omnivaParcelMachineId: omnivaParcelMachineId,
-          omnivaParcelMachineName: omnivaParcelMachineName,
-          timestamp: Date.now()
-        }));
-        
-        // Redirect to payment URL provided by Maksekeskus
-        window.location.href = data.paymentUrl;
-      } else {
-        throw new Error('Maksekeskuse vastuses puudub tehingu ID või makse URL');
-      }
-    } catch (err) {
-      console.error('Error during checkout:', err);
-      setError('Tellimuse vormistamine ebaõnnestus: ' + (err.message || 'Tundmatu viga'));
-      setIsProcessing(false);
+      // Clear cart and redirect to payment URL
+      clearCart();
+      window.location.href = result.paymentUrl;
+      
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      setError(error.message || t('checkout.error.network_error'));
+      setIsSubmitting(false);
     }
   };
 
-  // Payment methods by country
-  const paymentMethodsByCountry = {
-    'Estonia': [
-      { id: 'swedbank', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
-      { id: 'seb', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
-      { id: 'lhv', name: 'LHV', logo: 'https://static.maksekeskus.ee/img/channel/lnd/lhv.png' },
-      { id: 'luminor', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
-      { id: 'coop', name: 'Coop Pank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/coop.png' },
-      { id: 'citadele', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
-      { id: 'n26', name: 'N26', logo: 'https://static.maksekeskus.ee/img/channel/lnd/n26.png' },
-      { id: 'revolut', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
-      { id: 'wise', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
-    ],
-    'Latvia': [
-      { id: 'swedbank-lv', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
-      { id: 'seb-lv', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
-      { id: 'citadele-lv', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
-      { id: 'luminor-lv', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
-      { id: 'revolut-lv', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
-      { id: 'wise-lv', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
-    ],
-    'Lithuania': [
-      { id: 'swedbank-lt', name: 'Swedbank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/swedbank.png' },
-      { id: 'seb-lt', name: 'SEB', logo: 'https://static.maksekeskus.ee/img/channel/lnd/seb.png' },
-      { id: 'luminor-lt', name: 'Luminor', logo: 'https://static.maksekeskus.ee/img/channel/lnd/luminor.png' },
-      { id: 'citadele-lt', name: 'Citadele', logo: 'https://static.maksekeskus.ee/img/channel/lnd/citadele.png' },
-      { id: 'revolut-lt', name: 'Revolut', logo: 'https://static.maksekeskus.ee/img/channel/lnd/revolut.png' },
-      { id: 'wise-lt', name: 'Wise', logo: 'https://static.maksekeskus.ee/img/channel/lnd/wise.png' }
-    ],
-    'Finland': [
-      { id: 'nordea', name: 'Nordea', logo: 'https://static.maksekeskus.ee/img/channel/lnd/nordea.png' },
-      { id: 'op', name: 'OP', logo: 'https://static.maksekeskus.ee/img/channel/lnd/op.png' },
-      { id: 'danske', name: 'Danske Bank', logo: 'https://static.maksekeskus.ee/img/channel/lnd/danske.png' }
-    ]
+  const calculateTotalWithShipping = () => {
+    const subtotal = getTotalPrice();
+    let shippingCost = 0;
+    
+    if (formData.deliveryMethod === 'omniva') {
+      shippingCost = omnivaShippingPrice;
+    }
+    
+    return subtotal + shippingCost;
   };
 
+  const formatPrice = (price) => {
+    return price.toFixed(2).replace('.', ',') + '€';
+  };
+
+  // If cart is empty, don't render the component
   if (items.length === 0) {
-    return (
-      <>
-        <SEOHead page="shop" />
-        <main>
-          <section className="section-large">
-            <div className="container">
-              <FadeInSection>
-                <div className="empty-cart">
-                  <h1>{t('cart.empty')}</h1>
-                  <Link to="/epood" className="btn btn-primary">
-                    {t('cart.back_to_shop')}
-                  </Link>
-                </div>
-              </FadeInSection>
-            </div>
-          </section>
-        </main>
-
-        <style jsx>{`
-          .empty-cart {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 64px 0;
-          }
-
-          .empty-cart h1 {
-            margin-bottom: 32px;
-            color: var(--color-text);
-          }
-
-          .btn-primary {
-            display: inline-block;
-            background-color: var(--color-ultramarine);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 4px;
-            font-weight: 500;
-            transition: opacity 0.2s ease;
-          }
-
-          .btn-primary:hover {
-            opacity: 0.9;
-          }
-        `}</style>
-      </>
-    );
+    return null;
   }
 
   return (
@@ -565,593 +293,430 @@ const Checkout = () => {
         <section className="section-large">
           <div className="container">
             <FadeInSection>
-              <div className="checkout-header">
-                <h1>{t('checkout.title')}</h1>
-              </div>
+              <h1 className="text-center">{t('checkout.title')}</h1>
             </FadeInSection>
 
-            <div className="checkout-container">
-              {/* Main Checkout Form */}
-              <div className="checkout-main">
-                <FadeInSection>
-                  <div className="checkout-form-container">
+            <form onSubmit={handleSubmit} className="checkout-form">
+              <div className="checkout-layout">
+                {/* Left Column - Form */}
+                <div className="checkout-main">
+                  {/* Step 1: Order Summary */}
+                  <div className="checkout-section">
+                    <h2 className="section-title">1. Tellimuse kokkuvõte</h2>
+                    <div className="order-items">
+                      {items.map((item) => (
+                        <div key={item.id} className="order-item">
+                          <div className="item-image">
+                            <img src={item.image} alt={item.title} />
+                          </div>
+                          <div className="item-details">
+                            <h3 className="item-title">{item.title}</h3>
+                            <div className="item-meta">
+                              <span className="item-category">{item.category}</span>
+                              {item.dimensions && (
+                                <span className="item-dimensions">
+                                  {item.dimensions.height && `${item.dimensions.height}×`}
+                                  {item.dimensions.width && `${item.dimensions.width}×`}
+                                  {item.dimensions.depth && `${item.dimensions.depth}`}cm
+                                </span>
+                              )}
+                              <span className="item-quantity">1 tk</span>
+                            </div>
+                            <span className="item-price">{item.price}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Step 2: Delivery Method */}
+                  <div className="checkout-section">
+                    <h2 className="section-title">2. Tarneviis</h2>
+                    
+                    <div className="form-group">
+                      <label>Riik</label>
+                      <select
+                        name="country"
+                        value={formData.country}
+                        onChange={handleInputChange}
+                        className="form-input"
+                      >
+                        <option value="estonia">Eesti (Estonia)</option>
+                        <option value="finland">Soome (Finland)</option>
+                        <option value="latvia">Läti (Latvia)</option>
+                        <option value="lithuania">Leedu (Lithuania)</option>
+                      </select>
+                    </div>
+                    
+                    <div className="delivery-options">
+                      <label className="delivery-option">
+                        <input
+                          type="radio"
+                          name="deliveryMethod"
+                          value="pickup"
+                          checked={formData.deliveryMethod === 'pickup'}
+                          onChange={handleInputChange}
+                        />
+                        <div className="delivery-option-content">
+                          <div className="delivery-option-header">
+                            <span className="delivery-option-title">Tulen ise järele</span>
+                            <span className="delivery-option-price">Tasuta</span>
+                          </div>
+                          <p className="delivery-option-description">
+                            Jõeääre, Märjamaa, Märjamaa vald 78218
+                          </p>
+                        </div>
+                      </label>
+                      
+                      <label className="delivery-option">
+                        <input
+                          type="radio"
+                          name="deliveryMethod"
+                          value="omniva"
+                          checked={formData.deliveryMethod === 'omniva'}
+                          onChange={handleInputChange}
+                        />
+                        <div className="delivery-option-content">
+                          <div className="delivery-option-header">
+                            <span className="delivery-option-title">Omniva pakiautomaati</span>
+                            <span className="delivery-option-price">
+                              {loadingShippingPrice ? 'Laadin...' : `${omnivaShippingPrice.toFixed(2).replace('.', ',')}€`}
+                            </span>
+                          </div>
+                          <p className="delivery-option-description">
+                            Toode saadetakse valitud pakiautomaati
+                          </p>
+                          
+                          {formData.deliveryMethod === 'omniva' && (
+                            <div className="parcel-machine-selector">
+                              <label htmlFor="omnivaParcelMachineId">Vali pakiautomaat</label>
+                              {loadingParcelMachines ? (
+                                <div className="loading-text">Laadin pakiautomaate...</div>
+                              ) : parcelMachinesError ? (
+                                <div className="error-text">{parcelMachinesError}</div>
+                              ) : parcelMachines.length === 0 ? (
+                                <div className="info-text">Valitud riigis pole pakiautomaate saadaval</div>
+                              ) : (
+                                <select
+                                  id="omnivaParcelMachineId"
+                                  name="omnivaParcelMachineId"
+                                  value={formData.omnivaParcelMachineId}
+                                  onChange={handleParcelMachineChange}
+                                  className="form-input"
+                                >
+                                  <option value="">Vali pakiautomaat...</option>
+                                  {parcelMachines.map(machine => (
+                                    <option key={machine.id} value={machine.id}>
+                                      {machine.name} - {machine.address}
+                                    </option>
+                                  ))}
+                                </select>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Step 3: Customer Information */}
+                  <div className="checkout-section">
+                    <h2 className="section-title">3. Andmed</h2>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="email">E-post *</label>
+                        <input
+                          type="email"
+                          id="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="teie@email.ee"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="firstName">Eesnimi *</label>
+                        <input
+                          type="text"
+                          id="firstName"
+                          name="firstName"
+                          value={formData.firstName}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="Eesnimi"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="lastName">Perekonnanimi *</label>
+                        <input
+                          type="text"
+                          id="lastName"
+                          name="lastName"
+                          value={formData.lastName}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="Perekonnanimi"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="phone">Telefon *</label>
+                        <input
+                          type="tel"
+                          id="phone"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="+372 5xxx xxxx"
+                          required
+                        />
+                      </div>
+                      
+                      <div className="form-group">
+                        <label htmlFor="companyName">Firma nimi (pole kohustuslik)</label>
+                        <input
+                          type="text"
+                          id="companyName"
+                          name="companyName"
+                          value={formData.companyName}
+                          onChange={handleInputChange}
+                          className="form-input"
+                          placeholder="Firma nimi"
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label htmlFor="notes">Märkused tellimuse kohta</label>
+                      <textarea
+                        id="notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleInputChange}
+                        className="form-input"
+                        placeholder="Soovid või märkused tellimuse kohta"
+                        rows="3"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  {/* Step 4: Payment */}
+                  <div className="checkout-section">
+                    <h2 className="section-title">4. Vormista tellimus</h2>
+                    
+                    <div className="form-group">
+                      <label>Vali panga riik</label>
+                      <div className="bank-country-options">
+                        <label className={`bank-country-option ${formData.bankCountry === 'estonia' ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="bankCountry"
+                            value="estonia"
+                            checked={formData.bankCountry === 'estonia'}
+                            onChange={handleInputChange}
+                          />
+                          <span>Eesti</span>
+                        </label>
+                        
+                        <label className={`bank-country-option ${formData.bankCountry === 'latvia' ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="bankCountry"
+                            value="latvia"
+                            checked={formData.bankCountry === 'latvia'}
+                            onChange={handleInputChange}
+                          />
+                          <span>Läti</span>
+                        </label>
+                        
+                        <label className={`bank-country-option ${formData.bankCountry === 'lithuania' ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="bankCountry"
+                            value="lithuania"
+                            checked={formData.bankCountry === 'lithuania'}
+                            onChange={handleInputChange}
+                          />
+                          <span>Leedu</span>
+                        </label>
+                        
+                        <label className={`bank-country-option ${formData.bankCountry === 'finland' ? 'active' : ''}`}>
+                          <input
+                            type="radio"
+                            name="bankCountry"
+                            value="finland"
+                            checked={formData.bankCountry === 'finland'}
+                            onChange={handleInputChange}
+                          />
+                          <span>Soome</span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div className="form-group">
+                      <label>Vali pank</label>
+                      <div className="bank-options">
+                        {banks[formData.bankCountry]?.map(bank => (
+                          <label 
+                            key={bank.id} 
+                            className={`bank-option ${formData.bank === bank.id ? 'active' : ''}`}
+                          >
+                            <input
+                              type="radio"
+                              name="bank"
+                              value={bank.id}
+                              checked={formData.bank === bank.id}
+                              onChange={handleInputChange}
+                            />
+                            <div className="bank-option-content">
+                              <span className="bank-name">{bank.name}</span>
+                              <span className="bank-check">✓</span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    
+                    <div className="terms-acceptance">
+                      <label className="terms-label">
+                        <input
+                          type="checkbox"
+                          name="termsAccepted"
+                          checked={formData.termsAccepted}
+                          onChange={handleInputChange}
+                          required
+                        />
+                        <span>
+                          Nõustun <Link to="/muugitingimused" target="_blank" className="terms-link">müügitingimustega</Link>
+                        </span>
+                      </label>
+                    </div>
+                    
                     {error && (
                       <div className="error-message">
                         {error}
                       </div>
                     )}
                     
-                    <form className="checkout-form">
-                      {/* Order Summary Section */}
-                      <div className="form-section">
-                        <h3>1. Tellimuse kokkuvõte</h3>
-                        <div className="order-items">
-                          {items.map((item) => (
-                            <div key={item.id} className="order-item">
-                              <div className="item-image">
-                                {item.image ? (
-                                  <img src={item.image} alt={item.title} />
-                                ) : (
-                                  <div className="no-image">
-                                    <span>📷</span>
-                                  </div>
-                                )}
-                              </div>
-                              <div className="item-details">
-                                <h4 className="item-title">{item.title}</h4>
-                                <div className="item-meta">
-                                  {item.category && (
-                                    <span className="item-category">{item.category}</span>
-                                  )}
-                                  {item.dimensions && item.dimensions.height && (
-                                    <span className="item-dimensions">
-                                      {item.dimensions.height}×{item.dimensions.width}×{item.dimensions.depth}cm
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="item-price-row">
-                                  <span className="item-quantity">1 tk</span>
-                                  <span className="item-price">{item.price}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                      
-                      {/* Delivery Method Section */}
-                      <div className="form-section">
-                        <h3>2. Tarneviis</h3>
-                        
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor="country">Riik</label>
-                            <select
-                              id="country"
-                              name="country"
-                              value={formData.country}
-                              onChange={handleCountryChange}
-                              className="form-input"
-                            >
-                              <option value="Estonia">Eesti (Estonia)</option>
-                              <option value="Latvia">Läti (Latvia)</option>
-                              <option value="Lithuania">Leedu (Lithuania)</option>
-                              <option value="Finland">Soome (Finland)</option>
-                            </select>
-                          </div>
-                        </div>
-                        
-                        <div className="delivery-methods">
-                          <div 
-                            className={`delivery-method ${deliveryMethod === 'self-pickup' ? 'selected' : ''}`}
-                            onClick={() => handleDeliveryMethodChange('self-pickup')}
-                          >
-                            <div className="delivery-method-radio">
-                              <div className={`radio-indicator ${deliveryMethod === 'self-pickup' ? 'active' : ''}`}></div>
-                            </div>
-                            <div className="delivery-method-content">
-                              <h4>Tulen ise järele</h4>
-                              <p>Jõeääre, Märjamaa, Märjamaa vald 78218</p>
-                              <p className="delivery-price">Tasuta</p>
-                            </div>
-                          </div>
-                          
-                          <div 
-                            className={`delivery-method ${deliveryMethod === 'omniva-parcel-machine' ? 'selected' : ''}`}
-                            onClick={() => handleDeliveryMethodChange('omniva-parcel-machine')}
-                          >
-                            <div className="delivery-method-radio">
-                              <div className={`radio-indicator ${deliveryMethod === 'omniva-parcel-machine' ? 'active' : ''}`}></div>
-                            </div>
-                            <div className="delivery-method-content">
-                              <h4>Omniva pakiautomaati</h4>
-                              <p>Toode saadetakse valitud pakiautomaati</p>
-                              <p className="delivery-price">{omnivaShippingPrice}{omnivaShippingCurrency === 'EUR' ? '€' : omnivaShippingCurrency}</p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {deliveryMethodError && (
-                          <div className="field-error">
-                            {deliveryMethodError}
-                          </div>
-                        )}
-                        
-                        {/* Parcel machine selection */}
-                        {deliveryMethod === 'omniva-parcel-machine' && (
-                          <div className="parcel-machine-section">
-                            <div className="form-group">
-                              <label htmlFor="parcel-machine">Valige pakiautomaat</label>
-                              {loadingParcelMachines ? (
-                                <div className="loading-parcel-machines">
-                                  <div className="loading-spinner-small"></div>
-                                  <span>Laadin pakiautomaate...</span>
-                                </div>
-                              ) : (
-                                <>
-                                  <select
-                                    id="parcel-machine"
-                                    value={selectedParcelMachine}
-                                    onChange={handleParcelMachineChange}
-                                    className="form-input"
-                                  >
-                                    <option value="">Valige pakiautomaat</option>
-                                    {parcelMachines.map(machine => (
-                                      <option key={machine.id} value={machine.id}>
-                                        {machine.name} ({machine.address})
-                                      </option>
-                                    ))}
-                                  </select>
-                                  {parcelMachineError && (
-                                    <div className="field-error">
-                                      {parcelMachineError}
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Customer Information Section */}
-                      <div className="form-section">
-                        <h3>3. Andmed</h3>
-                        
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor="email">E-post *</label>
-                            <input
-                              type="email"
-                              id="email"
-                              name="email"
-                              value={formData.email}
-                              onChange={handleInputChange}
-                              required
-                              className="form-input"
-                              placeholder="teie@email.ee"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="form-row two-columns">
-                          <div className="form-group">
-                            <label htmlFor="firstName">Eesnimi *</label>
-                            <input
-                              type="text"
-                              id="firstName"
-                              name="firstName"
-                              value={formData.firstName}
-                              onChange={handleInputChange}
-                              required
-                              className="form-input"
-                              placeholder="Eesnimi"
-                            />
-                          </div>
-                          <div className="form-group">
-                            <label htmlFor="lastName">Perekonnanimi *</label>
-                            <input
-                              type="text"
-                              id="lastName"
-                              name="lastName"
-                              value={formData.lastName}
-                              onChange={handleInputChange}
-                              required
-                              className="form-input"
-                              placeholder="Perekonnanimi"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor="phone">Telefon *</label>
-                            <input
-                              type="tel"
-                              id="phone"
-                              name="phone"
-                              value={formData.phone}
-                              onChange={handleInputChange}
-                              required
-                              className="form-input"
-                              placeholder="+372 5xxx xxxx"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor="companyName">Firma nimi (pole kohustuslik)</label>
-                            <input
-                              type="text"
-                              id="companyName"
-                              name="companyName"
-                              value={formData.companyName}
-                              onChange={handleInputChange}
-                              className="form-input"
-                              placeholder="Firma nimi"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label htmlFor="notes">Märkused tellimuse kohta</label>
-                            <textarea
-                              id="notes"
-                              name="notes"
-                              value={formData.notes}
-                              onChange={handleInputChange}
-                              className="form-input"
-                              rows="3"
-                              placeholder="Soovid või märkused tellimuse kohta"
-                            ></textarea>
-                          </div>
-                        </div>
-                      </div>
-                      
-                      {/* Payment Section */}
-                      <div className="form-section">
-                        <h3>4. Vormista tellimus</h3>
-                        
-                        <div className="payment-section">
-                          <div className="payment-country-selector">
-                            <h4>Vali panga riik</h4>
-                            <div className="country-buttons">
-                              {Object.keys(paymentMethodsByCountry).map(country => (
-                                <button
-                                  key={country}
-                                  type="button"
-                                  className={`country-button ${selectedCountry === country ? 'active' : ''}`}
-                                  onClick={() => setSelectedCountry(country)}
-                                >
-                                  {i18n.language === 'et' ? {
-                                    'Estonia': 'Eesti',
-                                    'Latvia': 'Läti',
-                                    'Lithuania': 'Leedu',
-                                    'Finland': 'Soome'
-                                  }[country] : country}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                          
-                          <div className="bank-selection">
-                            <h4>Vali pank</h4>
-                            <div className="bank-grid">
-                              {paymentMethodsByCountry[selectedCountry].map(method => (
-                                <div 
-                                  key={method.id}
-                                  className={`bank-option ${selectedPaymentMethod === method.id ? 'selected' : ''}`}
-                                  onClick={() => handlePaymentMethodSelection(method.id)}
-                                >
-                                  <img src={method.logo} alt={method.name} className="bank-logo" />
-                                  <div className="bank-name">{method.name}</div>
-                                  <div className={`bank-check ${selectedPaymentMethod === method.id ? 'visible' : ''}`}>✓</div>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        </div>
-                      
-                      {/* Card Payment Fields - Only show when card is selected */}
-                      {selectedPaymentMethod === 'card' && (
-                        <div className="card-payment-section">
-                          <h4>Sisestage kaardi andmed</h4>
-                          <div className="card-fields">
-                            <div className="form-group">
-                              <label htmlFor="cardNumber">Kaardi number</label>
-                              <input
-                                type="text"
-                                id="cardNumber"
-                                name="cardNumber"
-                                value={cardDetails.cardNumber}
-                                onChange={handleCardInputChange}
-                                className="form-input"
-                                placeholder="1234 5678 9012 3456"
-                                maxLength="19"
-                              />
-                            </div>
-                            
-                            <div className="card-expiry-cvc">
-                              <div className="form-group">
-                                <label htmlFor="expiryMonth">Kuu</label>
-                                <input
-                                  type="text"
-                                  id="expiryMonth"
-                                  name="expiryMonth"
-                                  value={cardDetails.expiryMonth}
-                                  onChange={handleCardInputChange}
-                                  className="form-input"
-                                  placeholder="MM"
-                                  maxLength="2"
-                                />
-                              </div>
-                              
-                              <div className="form-group">
-                                <label htmlFor="expiryYear">Aasta</label>
-                                <input
-                                  type="text"
-                                  id="expiryYear"
-                                  name="expiryYear"
-                                  value={cardDetails.expiryYear}
-                                  onChange={handleCardInputChange}
-                                  className="form-input"
-                                  placeholder="YY"
-                                  maxLength="2"
-                                />
-                              </div>
-                              
-                              <div className="form-group">
-                                <label htmlFor="cvc">CVC</label>
-                                <input
-                                  type="text"
-                                  id="cvc"
-                                  name="cvc"
-                                  value={cardDetails.cvc}
-                                  onChange={handleCardInputChange}
-                                  className="form-input"
-                                  placeholder="123"
-                                  maxLength="4"
-                                />
-                              </div>
-                            </div>
-                            
-                            <div className="form-group">
-                              <label htmlFor="cardHolder">Kaardi omanik</label>
-                              <input
-                                type="text"
-                                id="cardHolder"
-                                name="cardHolder"
-                                value={cardDetails.cardHolder}
-                                onChange={handleCardInputChange}
-                                className="form-input"
-                                placeholder="EESNIMI PEREKONNANIMI"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                        
-                        {/* Terms Agreement */}
-                        <div className="terms-agreement">
-                          <label className="terms-checkbox-label">
-                            <input
-                              type="checkbox"
-                              checked={termsAgreed}
-                              onChange={handleTermsChange}
-                              className="terms-checkbox"
-                            />
-                            <span className="terms-text">
-                              <strong>{t('checkout.terms.agree')} <Link to="/muugitingimused" className="terms-link" onClick={scrollToTop}>{t('checkout.terms.terms_link')}</Link></strong>
-                            </span>
-                          </label>
-                          {termsError && (
-                            <div className="field-error">
-                              {termsError}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <button 
-                          type="button"
-                          onClick={handleCheckout}
-                          disabled={isProcessing}
-                          className="checkout-button"
-                        >
-                          {isProcessing ? 'Töötlemine...' : 'VORMISTA OST'}
-                        </button>
-                      </div>
-                    </form>
+                    <button 
+                      type="submit" 
+                      className="checkout-button"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? 'TÖÖTLEN...' : 'VORMISTA OST'}
+                    </button>
                   </div>
-                </FadeInSection>
-              </div>
+                </div>
 
-              {/* Sidebar - Order Summary */}
-              <FadeInSection className="checkout-sidebar">
-                <div className="checkout-summary">
-                  <h3>Tellimuse kokkuvõte</h3>
-                  
-                  <div className="summary-items">
-                    {items.map((item) => (
-                      <div key={item.id} className="summary-item">
-                        <span className="summary-item-name">{item.title}</span>
-                        <span className="summary-item-price">{item.price}</span>
+                {/* Right Column - Order Summary */}
+                <div className="checkout-sidebar">
+                  <div className="order-summary">
+                    <h3 className="summary-title">Tellimuse kokkuvõte</h3>
+                    
+                    <div className="summary-row">
+                      <span>Vahesumma</span>
+                      <span>{formatPrice(getTotalPrice())}</span>
+                    </div>
+                    
+                    <div className="summary-row">
+                      <span>Tarne</span>
+                      <span>
+                        {formData.deliveryMethod === 'omniva' 
+                          ? (loadingShippingPrice ? 'Laadin...' : formatPrice(omnivaShippingPrice)) 
+                          : 'Tasuta'}
+                      </span>
+                    </div>
+                    
+                    <div className="summary-row total">
+                      <span>Kokku</span>
+                      <span>{formatPrice(calculateTotalWithShipping())}</span>
+                    </div>
+                    
+                    <div className="summary-info">
+                      <div className="info-item">
+                        <span className="info-icon">🔒</span>
+                        <span>Turvaline makse Maksekeskuse kaudu</span>
                       </div>
-                    ))}
-                  </div>
-                  
-                  <div className="summary-divider"></div>
-                  
-                  <div className="summary-row">
-                    <span>Vahesumma</span>
-                    <span>{formattedTotalPrice}</span>
-                  </div>
-                  
-                  <div className="summary-row">
-                    <span>Tarne</span>
-                    <span>{deliveryMethod === 'omniva-parcel-machine' ? `${omnivaShippingPrice}€` : '0.00€'}</span>
-                  </div>
-                  
-                  <div className="summary-total">
-                    <span>Kokku</span>
-                    <span>
-                      {deliveryMethod === 'omniva-parcel-machine' 
-                        ? (parseFloat(totalPrice) + omnivaShippingPrice).toFixed(2) + '€' 
-                        : formattedTotalPrice}
-                    </span>
-                  </div>
-                  
-                  <div className="checkout-info">
-                    <div className="info-item">
-                      <div className="info-icon">🔒</div>
-                      <p>{i18n.language === 'et' ? 'Turvaline tellimuse vormistamine' : 'Secure checkout'}</p>
+                      
+                      <div className="info-item">
+                        <span className="info-icon">🚚</span>
+                        <span>Tarne 2-4 tööpäeva jooksul</span>
+                      </div>
+                      
+                      <div className="info-item">
+                        <span className="info-icon">💌</span>
+                        <span>Iga tellimuse juurde käib isiklik märge</span>
+                      </div>
                     </div>
-                    <div className="info-item">
-                      <div className="info-icon">🚚</div>
-                      <p>{i18n.language === 'et' ? 'Tarne 2-4 tööpäeva jooksul' : 'Delivery within 2-4 business days'}</p>
-                    </div>
-                    <div className="info-item">
-                      <div className="info-icon">💌</div>
-                      <p>{i18n.language === 'et' ? 'Iga tellimuse juurde käib isiklik märge' : 'Each order includes a personal note'}</p>
+                    
+                    <div className="back-to-shop">
+                      <Link to="/epood" className="back-link">← Tagasi poodi</Link>
                     </div>
                   </div>
                 </div>
-              </FadeInSection>
-            </div>
+              </div>
+            </form>
           </div>
         </section>
       </main>
 
       <style jsx>{`
-        .checkout-header {
-          text-align: center;
-          margin-bottom: 48px;
+        .checkout-form {
+          margin-top: 48px;
         }
 
-        .checkout-header h1 {
-          color: var(--color-ultramarine);
-        }
-
-        .checkout-container {
+        .checkout-layout {
           display: grid;
-          grid-template-columns: 1fr 380px;
-          gap: 64px;
+          grid-template-columns: 1fr 320px;
+          gap: 48px;
           align-items: start;
         }
 
         .checkout-main {
-          min-height: 400px;
+          display: flex;
+          flex-direction: column;
+          gap: 48px;
         }
 
-        .checkout-form-container {
+        .checkout-section {
           background: white;
           border-radius: 8px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           padding: 32px;
         }
 
-        .error-message {
-          background-color: #fee;
-          color: #c33;
-          padding: 12px 16px;
-          border-radius: 4px;
-          border: 1px solid #fcc;
-          margin-bottom: 24px;
-          font-size: 0.9rem;
-        }
-
-        .field-error {
-          color: #c33;
-          font-size: 0.85rem;
-          margin-top: 8px;
-        }
-
-        .form-section {
-          margin-bottom: 40px;
-          padding-bottom: 40px;
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .form-section:last-child {
-          margin-bottom: 0;
-          padding-bottom: 0;
-          border-bottom: none;
-        }
-
-        .form-section h3 {
+        .section-title {
           font-family: var(--font-heading);
           font-size: 1.25rem;
           font-weight: 500;
-          margin-bottom: 24px;
           color: var(--color-ultramarine);
+          margin-bottom: 24px;
+          padding-bottom: 16px;
+          border-bottom: 1px solid #f0f0f0;
         }
 
-        .form-row {
-          margin-bottom: 16px;
-        }
-
-        .form-row:last-child {
-          margin-bottom: 0;
-        }
-
-        .form-row.two-columns {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 16px;
-        }
-
-        .form-group {
+        /* Order Items */
+        .order-items {
           display: flex;
           flex-direction: column;
-          gap: 8px;
-        }
-
-        .form-group label {
-          font-family: var(--font-heading);
-          font-weight: 500;
-          color: var(--color-text);
-          font-size: 0.9rem;
-        }
-
-        .form-input {
-          padding: 12px 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-size: 1rem;
-          transition: border-color 0.2s ease;
-          background-color: var(--color-background);
-        }
-
-        .form-input:focus {
-          outline: none;
-          border-color: var(--color-ultramarine);
-          box-shadow: 0 0 0 3px rgba(47, 62, 156, 0.1);
-        }
-
-        .form-input::placeholder {
-          color: #999;
-        }
-
-        textarea.form-input {
-          resize: vertical;
-          min-height: 80px;
-        }
-
-        .order-items {
-          margin-bottom: 16px;
+          gap: 24px;
         }
 
         .order-item {
           display: flex;
           gap: 16px;
-          padding: 16px 0;
-          border-bottom: 1px solid #f0f0f0;
-        }
-
-        .order-item:last-child {
-          border-bottom: none;
         }
 
         .item-image {
@@ -1168,81 +733,97 @@ const Checkout = () => {
           object-fit: cover;
         }
 
-        .no-image {
-          width: 100%;
-          height: 100%;
-          background-color: #f5f5f5;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: #999;
-          font-size: 1.5rem;
-        }
-
         .item-details {
           flex: 1;
           display: flex;
           flex-direction: column;
+          gap: 4px;
         }
 
         .item-title {
           font-family: var(--font-heading);
-          font-size: 1rem;
-          font-weight: 500;
-          margin-bottom: 8px;
+          font-size: 1.125rem;
+          font-weight: 400;
           color: var(--color-text);
+          margin: 0;
         }
 
         .item-meta {
           display: flex;
           flex-wrap: wrap;
           gap: 12px;
-          margin-bottom: 8px;
+          font-size: 0.875rem;
+          color: #666;
         }
 
         .item-category {
-          font-size: 0.8rem;
-          color: #666;
-          background-color: #f0f0f0;
-          padding: 2px 8px;
-          border-radius: 12px;
-        }
-
-        .item-dimensions {
-          font-size: 0.8rem;
-          color: #666;
-        }
-
-        .item-price-row {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: auto;
-        }
-
-        .item-quantity {
-          font-size: 0.9rem;
-          color: #666;
+          text-transform: capitalize;
         }
 
         .item-price {
           font-family: var(--font-heading);
           font-weight: 500;
           color: var(--color-ultramarine);
-          font-size: 1.125rem;
+          margin-top: 8px;
         }
 
-        .delivery-methods {
+        /* Form Styles */
+        .form-row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin-bottom: 16px;
+        }
+
+        .form-group {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+
+        .form-group:last-child {
+          margin-bottom: 0;
+        }
+
+        .form-group label {
+          font-family: var(--font-heading);
+          font-weight: 500;
+          font-size: 0.9rem;
+          color: var(--color-text);
+        }
+
+        .form-input {
+          padding: 12px 16px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          font-family: var(--font-body);
+          font-size: 1rem;
+          transition: border-color 0.2s ease;
+          background-color: var(--color-background);
+        }
+
+        .form-input:focus {
+          outline: none;
+          border-color: var(--color-ultramarine);
+        }
+
+        textarea.form-input {
+          resize: vertical;
+          min-height: 80px;
+        }
+
+        /* Delivery Options */
+        .delivery-options {
           display: flex;
           flex-direction: column;
           gap: 16px;
-          margin-bottom: 24px;
         }
 
-        .delivery-method {
+        .delivery-option {
           display: flex;
           align-items: flex-start;
-          gap: 16px;
+          gap: 12px;
           padding: 16px;
           border: 1px solid #ddd;
           border-radius: 8px;
@@ -1250,191 +831,130 @@ const Checkout = () => {
           transition: all 0.2s ease;
         }
 
-        .delivery-method:hover {
+        .delivery-option:hover {
+          border-color: var(--color-ultramarine);
+          background-color: rgba(47, 62, 156, 0.02);
+        }
+
+        .delivery-option input[type="radio"] {
+          margin-top: 4px;
+          accent-color: var(--color-ultramarine);
+        }
+
+        .delivery-option-content {
+          flex: 1;
+        }
+
+        .delivery-option-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+        }
+
+        .delivery-option-title {
+          font-weight: 500;
+          color: var(--color-text);
+        }
+
+        .delivery-option-price {
+          font-family: var(--font-heading);
+          font-weight: 500;
+          color: var(--color-ultramarine);
+        }
+
+        .delivery-option-description {
+          font-size: 0.9rem;
+          color: #666;
+          margin: 0;
+        }
+
+        .parcel-machine-selector {
+          margin-top: 16px;
+        }
+
+        .loading-text, .error-text, .info-text {
+          font-size: 0.9rem;
+          padding: 8px 0;
+          color: #666;
+        }
+
+        .error-text {
+          color: #c33;
+        }
+
+        /* Bank Selection */
+        .bank-country-options {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 16px;
+        }
+
+        .bank-country-option {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 8px 16px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+
+        .bank-country-option:hover {
+          border-color: var(--color-ultramarine);
+        }
+
+        .bank-country-option.active {
           border-color: var(--color-ultramarine);
           background-color: rgba(47, 62, 156, 0.05);
         }
 
-        .delivery-method.selected {
-          border-color: var(--color-ultramarine);
-          background-color: rgba(47, 62, 156, 0.1);
+        .bank-country-option input[type="radio"] {
+          display: none;
         }
 
-        .delivery-method-radio {
-          width: 24px;
-          height: 24px;
-          border: 2px solid #ddd;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
-          margin-top: 4px;
-          transition: all 0.2s ease;
-        }
-
-        .delivery-method.selected .delivery-method-radio {
-          border-color: var(--color-ultramarine);
-        }
-
-        .radio-indicator {
-          width: 12px;
-          height: 12px;
-          border-radius: 50%;
-          background-color: transparent;
-          transition: all 0.2s ease;
-        }
-
-        .radio-indicator.active {
-          background-color: var(--color-ultramarine);
-        }
-
-        .delivery-method-content {
-          flex: 1;
-        }
-
-        .delivery-method-content h4 {
-          font-family: var(--font-heading);
-          font-size: 1rem;
-          font-weight: 500;
-          margin-bottom: 4px;
-          color: var(--color-text);
-        }
-
-        .delivery-method-content p {
-          font-size: 0.9rem;
-          color: #666;
-          margin: 0;
-          margin-bottom: 4px;
-        }
-
-        .delivery-method-content p:last-child {
-          margin-bottom: 0;
-        }
-
-        .delivery-price {
-          font-weight: 500;
-          color: var(--color-ultramarine) !important;
-        }
-        
-        .parcel-machine-section {
-          margin-top: 24px;
-          padding: 16px;
-          background-color: #f8f9fa;
-          border-radius: 8px;
-          border: 1px solid #e9ecef;
-        }
-        
-        .loading-parcel-machines {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          padding: 12px;
-          background-color: white;
-          border-radius: 4px;
-          border: 1px solid #ddd;
-          color: #666;
-        }
-        
-        .loading-spinner-small {
-          width: 16px;
-          height: 16px;
-          border: 2px solid #f3f3f3;
-          border-top: 2px solid var(--color-ultramarine);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        .payment-section {
-          margin-bottom: 24px;
-        }
-
-        .payment-country-selector {
-          margin-bottom: 24px;
-        }
-
-        .payment-country-selector h4 {
-          font-family: var(--font-heading);
-          font-size: 1rem;
-          font-weight: 500;
-          margin-bottom: 16px;
-          color: var(--color-text);
-        }
-
-        .country-buttons {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 12px;
-        }
-
-        .country-button {
-          padding: 8px 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          background-color: white;
-          color: var(--color-text);
-          font-family: var(--font-body);
-          font-size: 0.9rem;
-          cursor: pointer;
-          transition: all 0.2s ease;
-        }
-
-        .country-button:hover {
-          border-color: var(--color-ultramarine);
-        }
-
-        .country-button.active {
-          border-color: var(--color-ultramarine);
-          background-color: var(--color-ultramarine);
-          color: white;
-        }
-
-        .bank-selection h4 {
-          font-family: var(--font-heading);
-          font-size: 1rem;
-          font-weight: 500;
-          margin-bottom: 16px;
-          color: var(--color-text);
-        }
-
-        .bank-grid {
+        .bank-options {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
           gap: 16px;
         }
 
         .bank-option {
-          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 8px;
           padding: 16px;
           border: 1px solid #ddd;
           border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s ease;
+          position: relative;
         }
 
         .bank-option:hover {
           border-color: var(--color-ultramarine);
+        }
+
+        .bank-option.active {
+          border-color: var(--color-ultramarine);
           background-color: rgba(47, 62, 156, 0.05);
         }
 
-        .bank-option.selected {
-          border-color: var(--color-ultramarine);
-          background-color: rgba(47, 62, 156, 0.1);
+        .bank-option input[type="radio"] {
+          display: none;
         }
 
-        .bank-logo {
-          height: 32px;
-          width: auto;
-          object-fit: contain;
+        .bank-option-content {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 8px;
         }
 
         .bank-name {
-          font-size: 0.8rem;
-          color: var(--color-text);
+          font-size: 0.9rem;
           text-align: center;
         }
 
@@ -1442,73 +962,39 @@ const Checkout = () => {
           position: absolute;
           top: 8px;
           right: 8px;
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
+          width: 16px;
+          height: 16px;
           background-color: var(--color-ultramarine);
           color: white;
+          border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
-          font-size: 0.8rem;
+          font-size: 0.7rem;
           opacity: 0;
-          transition: all 0.2s ease;
+          transition: opacity 0.2s ease;
         }
 
-        .bank-check.visible {
+        .bank-option.active .bank-check {
           opacity: 1;
         }
 
-        .card-payment-section {
-          margin: 24px 0;
-          padding: 20px;
-          border: 1px solid #e9ecef;
-          border-radius: 8px;
-          background: #fafbfc;
-        }
-
-        .card-payment-section h4 {
-          font-family: var(--font-heading);
-          color: var(--color-ultramarine);
-          margin-bottom: 16px;
-          font-size: 1rem;
-        }
-
-        .card-fields {
-          display: flex;
-          flex-direction: column;
-          gap: 16px;
-        }
-
-        .card-expiry-cvc {
-          display: grid;
-          grid-template-columns: 1fr 1fr 1fr;
-          gap: 12px;
-        }
-
-        .terms-agreement {
+        /* Terms Acceptance */
+        .terms-acceptance {
           margin: 24px 0;
         }
 
-        .terms-checkbox-label {
+        .terms-label {
           display: flex;
-          align-items: flex-start;
+          align-items: center;
           gap: 8px;
           cursor: pointer;
         }
 
-        .terms-checkbox {
-          margin-top: 3px;
-          width: 18px;
-          height: 18px;
+        .terms-label input[type="checkbox"] {
           accent-color: var(--color-ultramarine);
         }
 
-        .terms-text {
-          font-size: 0.95rem;
-          line-height: 1.4;
-        }
-
         .terms-link {
           color: var(--color-ultramarine);
           text-decoration: underline;
@@ -1519,34 +1005,34 @@ const Checkout = () => {
           opacity: 0.8;
         }
 
-        .terms-link {
-          color: var(--color-ultramarine);
-          text-decoration: underline;
-          transition: opacity 0.2s ease;
+        /* Error Message */
+        .error-message {
+          background-color: #fee;
+          color: #c33;
+          padding: 12px 16px;
+          border-radius: 4px;
+          margin: 16px 0;
+          font-size: 0.9rem;
         }
 
-        .terms-link:hover {
-          opacity: 0.8;
-        }
-
+        /* Checkout Button */
         .checkout-button {
           width: 100%;
-          padding: 16px 24px;
+          padding: 16px;
           background-color: var(--color-ultramarine);
           color: white;
           border: none;
           border-radius: 4px;
-          font-family: var(--font-heading);
+          font-family: var(--font-body);
           font-weight: 600;
-          font-size: 1.1rem;
+          font-size: 1rem;
           cursor: pointer;
-          transition: all 0.2s ease;
-          margin-top: 24px;
+          transition: opacity 0.2s ease;
+          margin-top: 16px;
         }
 
         .checkout-button:hover:not(:disabled) {
           opacity: 0.9;
-          transform: translateY(-1px);
         }
 
         .checkout-button:disabled {
@@ -1554,71 +1040,47 @@ const Checkout = () => {
           cursor: not-allowed;
         }
 
-        .checkout-summary {
-          background: white;
-          border-radius: 8px;
-          padding: 32px;
-          box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        /* Order Summary */
+        .checkout-sidebar {
           position: sticky;
           top: 32px;
         }
 
-        .checkout-summary h3 {
+        .order-summary {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          padding: 24px;
+        }
+
+        .summary-title {
           font-family: var(--font-heading);
-          font-size: 1.25rem;
+          font-size: 1.125rem;
           font-weight: 500;
-          margin-bottom: 24px;
           color: var(--color-ultramarine);
-        }
-
-        .summary-items {
           margin-bottom: 24px;
-        }
-
-        .summary-item {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 12px;
-        }
-
-        .summary-item-name {
-          font-size: 0.9rem;
-          color: var(--color-text);
-          max-width: 70%;
-        }
-
-        .summary-item-price {
-          font-family: var(--font-heading);
-          font-weight: 500;
-          color: var(--color-text);
-          font-size: 0.9rem;
-        }
-
-        .summary-divider {
-          height: 1px;
-          background-color: #f0f0f0;
-          margin: 16px 0;
+          padding-bottom: 16px;
+          border-bottom: 1px solid #f0f0f0;
         }
 
         .summary-row {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 12px;
-          font-size: 0.9rem;
-          color: #666;
+          padding: 12px 0;
+          border-bottom: 1px solid #f0f0f0;
+          font-size: 0.95rem;
         }
 
-        .summary-total {
-          display: flex;
-          justify-content: space-between;
-          margin: 24px 0;
+        .summary-row.total {
           font-family: var(--font-heading);
-          font-weight: 600;
+          font-weight: 500;
           font-size: 1.125rem;
-          color: var(--color-text);
+          color: var(--color-ultramarine);
+          border-bottom: none;
+          padding-top: 16px;
         }
 
-        .checkout-info {
+        .summary-info {
           margin-top: 24px;
           padding-top: 24px;
           border-top: 1px solid #f0f0f0;
@@ -1629,6 +1091,8 @@ const Checkout = () => {
           align-items: center;
           gap: 12px;
           margin-bottom: 12px;
+          font-size: 0.85rem;
+          color: #666;
         }
 
         .info-item:last-child {
@@ -1637,78 +1101,51 @@ const Checkout = () => {
 
         .info-icon {
           font-size: 1.25rem;
+        }
+
+        .back-to-shop {
+          margin-top: 24px;
+          padding-top: 24px;
+          border-top: 1px solid #f0f0f0;
+          text-align: center;
+        }
+
+        .back-link {
+          color: var(--color-text);
+          text-decoration: none;
+          font-size: 0.9rem;
+          transition: color 0.2s ease;
+        }
+
+        .back-link:hover {
           color: var(--color-ultramarine);
         }
 
-        .info-item p {
-          font-size: 0.85rem;
-          color: #666;
-          margin: 0;
-        }
-
         @media (max-width: 1024px) {
-          .checkout-container {
-            grid-template-columns: 1fr;
-            gap: 48px;
-          }
-
-          .checkout-sidebar {
-            order: -1;
-          }
-
-          .checkout-summary {
-            position: static;
+          .checkout-layout {
+            grid-template-columns: 1fr 280px;
+            gap: 32px;
           }
         }
 
         @media (max-width: 768px) {
-          .checkout-header {
+          .checkout-layout {
+            grid-template-columns: 1fr;
+          }
+
+          .checkout-sidebar {
+            position: static;
+            order: -1;
             margin-bottom: 32px;
           }
 
-          .checkout-form-container {
-            padding: 24px;
-          }
-
-          .form-row.two-columns {
+          .form-row {
             grid-template-columns: 1fr;
             gap: 16px;
           }
 
-          .order-item {
-            flex-direction: column;
-            gap: 12px;
-          }
-
-          .item-image {
-            width: 100%;
-            height: 160px;
-          }
-
-          .bank-grid {
+          .bank-options {
             grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            gap: 12px;
-          }
-
-          .bank-option {
-            padding: 12px;
-          }
-
-          .bank-logo {
-            height: 24px;
-          }
-
-          .bank-name {
-            font-size: 0.7rem;
-          }
-          
-          .card-expiry-cvc {
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-          }
-          
-          .card-expiry-cvc .form-group:last-child {
-            grid-column: span 2;
           }
         }
       `}</style>
