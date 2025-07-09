@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
+    mkdir($logDir, 0777, true);
 }
 $shipmentLogFile = $logDir . '/omniva_shipment.log';
 
@@ -171,7 +171,7 @@ function saveLabelPDF($barcode, $orderNumber) {
         // Create PDF labels directory if it doesn't exist
         $pdfDir = __DIR__ . '/../pdf_labels';
         if (!is_dir($pdfDir)) {
-            mkdir($pdfDir, 0755, true);
+            mkdir($pdfDir, 0777, true);
         }
         
         // Initialize Omniva label class
@@ -958,7 +958,7 @@ function sendAdminShipmentNotification($order, $barcode, $trackingUrl, $labelUrl
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'Leeeen484!'; // Updated with actual password
+        $mail->Password = 'Leeeen484!';
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';

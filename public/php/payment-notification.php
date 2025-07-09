@@ -6,7 +6,7 @@ ini_set('display_errors', 0);
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
+    mkdir($logDir, 0777, true);
 }
 $logFile = $logDir . '/payment_notification.log';
 
@@ -69,7 +69,7 @@ function sendEmail($to, $subject, $message, $replyTo = null) {
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'Leeeen484!'; // Updated with actual password
+        $mail->Password = 'Leeeen484!';
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
@@ -114,6 +114,7 @@ function processOrder($transactionData, $paymentData) {
         // Extract merchant data
         $merchantData = json_decode($transactionData->transaction->merchant_data ?? '{}', true);
         logMessage("Extracted merchant data", $merchantData);
+        logMessage("Transaction reference", $transactionData->transaction->reference ?? 'no reference');
         
         // Extract customer info
         $customerName = $merchantData['customer_name'] ?? '';
@@ -527,7 +528,7 @@ function sendEmail($to, $subject, $message, $replyTo = null, $attachments = []) 
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // Replace with actual password from env
+        $mail->Password = 'Leeeen484!';
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
@@ -594,7 +595,7 @@ function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $repl
         $mail->Host = 'smtp.zone.eu';
         $mail->SMTPAuth = true;
         $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'your_password_here'; // This should be loaded from environment variable
+        $mail->Password = 'Leeeen484!';
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
