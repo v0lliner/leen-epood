@@ -4,7 +4,6 @@ import AdminLayout from '../../components/Admin/AdminLayout'
 import { Link } from 'react-router-dom'
 import { maksekeskusConfigService } from '../../utils/supabase/maksekeskusConfig'
 import { shippingSettingsService } from '../../utils/supabase/shippingSettings'
-import { shippingSettingsService } from '../../utils/supabase/shippingSettings'
 
 const PaymentSettings = () => {
   const { t } = useTranslation()
