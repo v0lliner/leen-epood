@@ -206,7 +206,19 @@ try {
         // If still not set, log an error
         if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
             logMessage("Error: SUPABASE_SERVICE_ROLE_KEY environment variable not set");
-            throw new Exception("API credentials not configured");
+            // Try one more location as a fallback
+            if (file_exists(__DIR__ . '/../../.env')) {
+                $envFile = file_get_contents(__DIR__ . '/../../.env');
+                preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+                if (isset($matches[1])) {
+                    putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+                    logMessage("Loaded SUPABASE_SERVICE_ROLE_KEY from alternate location");
+                } else {
+                    throw new Exception("API credentials not configured");
+                }
+            } else {
+                throw new Exception("API credentials not configured");
+            }
         }
     }
     
