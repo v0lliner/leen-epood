@@ -88,13 +88,18 @@ try {
         $transaction = $MK->getTransaction($transactionId);
         logMessage("Tehingu detailid edukalt laaditud", $transaction);
         
+        // Extract merchant data
+        $merchantData = [];
+        if (isset($transaction->transaction->merchant_data)) {
+            $merchantData = json_decode($transaction->transaction->merchant_data, true);
+        } elseif (isset($data['merchant_data'])) {
+            $merchantData = json_decode($data['merchant_data'], true);
+        }
+        logMessage("Kaupmeheandmed", $merchantData);
+        
         // Process the order in database
         if ($status === 'COMPLETED') {
             logMessage("Makse on COMPLETED staatuses, töötleme tellimust");
-            
-            // Extract merchant data
-            $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
-            logMessage("Kaupmeheandmed", $merchantData);
             
             // Here you would update your database with the order status
             // For now, we'll just log the success
