@@ -399,6 +399,20 @@ try {
                 }
             }
         }
+    }
+    
+    // Return success response
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Payment notification received and processed successfully',
+        'transactionId' => $transactionId,
+        'reference' => $reference
+    ]);
+    
+} catch (\Exception $e) {
+    logMessage("Exception", $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => $e->getMessage()]);
     } else {
         logMessage("Payment status is not COMPLETED, no order processing needed");
         
