@@ -143,7 +143,7 @@ try {
     logMessage("MAC signature verified successfully");
     
     // Extract the notification data
-    $data = $MK->extractRequestData($request);
+    $data = $MK->extractRequestData($request, false);
     logMessage("Extracted data", $data);
     
     // Get the transaction ID and reference
