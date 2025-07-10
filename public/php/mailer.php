@@ -109,11 +109,11 @@ try {
     // Set up email headers
     $headers = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-    $headers .= "From: Leen.ee <noreply@leen.ee>\r\n";
+    $headers .= "From: Leen.ee <" . (getenv('SMTP_USERNAME') ?: 'noreply@leen.ee') . ">\r\n";
     $headers .= "Reply-To: $email\r\n";
     
     // Send email
-    $to = "leen@leen.ee";
+    $to = getenv('SMTP_USERNAME') ?: "leen@leen.ee";
     $subject = "[$serverName]: Kontaktivorm - $name";
     
     logMessage("Attempting to send email", [

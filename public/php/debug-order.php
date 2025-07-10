@@ -6,6 +6,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Load environment variables
+require_once __DIR__ . '/env-loader.php';
+
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
@@ -29,7 +32,7 @@ function debugLog($message, $data = null) {
 // Function to connect to Supabase via REST API
 function supabaseRequest($endpoint, $method = 'GET', $data = null) {
     $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
-    $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.wbsLJEL_U-EHNkDe4CFt6-dPNpWHe50WKCQqsoyYdLs';
+    $supabaseKey = getenv('SUPABASE_SERVICE_ROLE_KEY');
     
     $url = $supabaseUrl . $endpoint;
     
@@ -78,6 +81,25 @@ function supabaseRequest($endpoint, $method = 'GET', $data = null) {
 // Get order number from query parameter
 $orderNumber = $_GET['order_number'] ?? null;
 $reference = $_GET['reference'] ?? null;
+
+// Check if we have the required environment variables
+if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
+    // Try to load from .env file if it exists
+    if (file_exists(__DIR__ . '/../../.env')) {
+        $envFile = file_get_contents(__DIR__ . '/../../.env');
+        preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+        if (isset($matches[1])) {
+            putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+        }
+    }
+    
+    // If still not set, show an error
+    if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
+        echo "<h1>Configuration Error</h1>";
+        echo "<p>SUPABASE_SERVICE_ROLE_KEY environment variable not set</p>";
+        exit;
+    }
+}
 
 if (!$orderNumber && !$reference) {
     echo "<h1>Debug Order Retrieval</h1>";

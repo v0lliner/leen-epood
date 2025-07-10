@@ -6,6 +6,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
+// Load environment variables
+require_once __DIR__ . '/env-loader.php';
+
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
@@ -31,10 +34,10 @@ require __DIR__ . '/maksekeskus/vendor/autoload.php';
 use Maksekeskus\Maksekeskus;
 
 // Initialize Maksekeskus client with your credentials
-$shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
-$publicKey = 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
-$privateKey = 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
-$testMode = false; // Set to false for production
+$shopId = getenv('MAKSEKESKUS_SHOP_ID') ?: '4e2bed9a-aa24-4b87-801b-56c31c535d36';
+$publicKey = getenv('MAKSEKESKUS_PUBLIC_KEY') ?: 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
+$privateKey = getenv('MAKSEKESKUS_PRIVATE_KEY') ?: 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
+$testMode = getenv('MAKSEKESKUS_TEST_MODE') === 'true'; // Default to false for production
 
 $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
 

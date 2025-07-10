@@ -3,6 +3,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1); 
 
+// Load environment variables
+require_once __DIR__ . '/env-loader.php';
+
 // Require the Maksekeskus SDK at the top
 require __DIR__ . '/maksekeskus/vendor/autoload.php';
 use Maksekeskus\Maksekeskus;
@@ -55,6 +58,34 @@ try {
     // Parse the JSON request body
     $data = json_decode($requestData, true);
     
+    // Check if we have the required environment variables
+    if (!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) {
+        // Try to load from .env file if it exists
+        if (file_exists(__DIR__ . '/../../.env')) {
+            $envFile = file_get_contents(__DIR__ . '/../../.env');
+            
+            preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
+            if (isset($shopIdMatches[1])) {
+                putenv('MAKSEKESKUS_SHOP_ID=' . $shopIdMatches[1]);
+            }
+            
+            preg_match('/MAKSEKESKUS_PUBLIC_KEY=([^\n]+)/', $envFile, $publicKeyMatches);
+            if (isset($publicKeyMatches[1])) {
+                putenv('MAKSEKESKUS_PUBLIC_KEY=' . $publicKeyMatches[1]);
+            }
+            
+            preg_match('/MAKSEKESKUS_PRIVATE_KEY=([^\n]+)/', $envFile, $privateKeyMatches);
+            if (isset($privateKeyMatches[1])) {
+                putenv('MAKSEKESKUS_PRIVATE_KEY=' . $privateKeyMatches[1]);
+            }
+            
+            preg_match('/MAKSEKESKUS_TEST_MODE=([^\n]+)/', $envFile, $testModeMatches);
+            if (isset($testModeMatches[1])) {
+                putenv('MAKSEKESKUS_TEST_MODE=' . $testModeMatches[1]);
+            }
+        }
+    }
+    
     // Check for JSON parsing errors
     if (json_last_error() !== JSON_ERROR_NONE) {
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - JSON decode error: " . json_last_error_msg() . "\n", FILE_APPEND);
@@ -95,10 +126,10 @@ try {
     }
 
     // Initialize Maksekeskus client
-    $shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
-    $publicKey = 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
-    $privateKey = 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
-    $testMode = false; // Set to false for production
+    $shopId = getenv('MAKSEKESKUS_SHOP_ID') ?: '4e2bed9a-aa24-4b87-801b-56c31c535d36';
+    $publicKey = getenv('MAKSEKESKUS_PUBLIC_KEY') ?: 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
+    $privateKey = getenv('MAKSEKESKUS_PRIVATE_KEY') ?: 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
+    $testMode = getenv('MAKSEKESKUS_TEST_MODE') === 'true'; // Default to false for production
 
     $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
 

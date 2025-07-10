@@ -3,6 +3,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
+// Load environment variables
+require_once __DIR__ . '/env-loader.php';
+
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
@@ -598,9 +601,33 @@ try {
     }
     
     // Omniva API credentials
-    $customerCode = '247723'; // Replace with your actual customer code
-    $username = '247723';
-    $password = 'Ddg(8?e:$A'; 
+    // Check if we have the required environment variables
+    if (!getenv('OMNIVA_CUSTOMER_CODE') || !getenv('OMNIVA_USERNAME') || !getenv('OMNIVA_PASSWORD')) {
+        // Try to load from .env file if it exists
+        if (file_exists(__DIR__ . '/../../.env')) {
+            $envFile = file_get_contents(__DIR__ . '/../../.env');
+            
+            preg_match('/OMNIVA_CUSTOMER_CODE=([^\n]+)/', $envFile, $customerCodeMatches);
+            if (isset($customerCodeMatches[1])) {
+                putenv('OMNIVA_CUSTOMER_CODE=' . $customerCodeMatches[1]);
+            }
+            
+            preg_match('/OMNIVA_USERNAME=([^\n]+)/', $envFile, $usernameMatches);
+            if (isset($usernameMatches[1])) {
+                putenv('OMNIVA_USERNAME=' . $usernameMatches[1]);
+            }
+            
+            preg_match('/OMNIVA_PASSWORD=([^\n]+)/', $envFile, $passwordMatches);
+            if (isset($passwordMatches[1])) {
+                putenv('OMNIVA_PASSWORD=' . $passwordMatches[1]);
+            }
+        }
+    }
+    
+    $customerCode = getenv('OMNIVA_CUSTOMER_CODE') ?: '247723';
+    $username = getenv('OMNIVA_USERNAME') ?: '247723';
+    $password = getenv('OMNIVA_PASSWORD') ?: 'Ddg(8?e:$A';
+    
     shipmentLog("Omniva API credentials used", ['customerCode' => $customerCode, 'username' => $username]);
     
     // Calculate package measurements based on order items
