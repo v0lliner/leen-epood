@@ -40,49 +40,10 @@ logMessage("Payment notification received", [
 require __DIR__ . '/maksekeskus/vendor/autoload.php';
 use Maksekeskus\Maksekeskus;
 
-// Check if we have the required environment variables
-if (!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) {
-    // Try to load from .env file if it exists
-    if (file_exists(__DIR__ . '/../../../.env')) {
-        $envFile = file_get_contents(__DIR__ . '/../../../.env');
-        
-        preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
-        if (isset($shopIdMatches[1])) {
-            putenv('MAKSEKESKUS_SHOP_ID=' . $shopIdMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_PUBLIC_KEY=([^\n]+)/', $envFile, $publicKeyMatches);
-        if (isset($publicKeyMatches[1])) {
-            putenv('MAKSEKESKUS_PUBLIC_KEY=' . $publicKeyMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_PRIVATE_KEY=([^\n]+)/', $envFile, $privateKeyMatches);
-        if (isset($privateKeyMatches[1])) {
-            putenv('MAKSEKESKUS_PRIVATE_KEY=' . $privateKeyMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_TEST_MODE=([^\n]+)/', $envFile, $testModeMatches);
-        if (isset($testModeMatches[1])) {
-            putenv('MAKSEKESKUS_TEST_MODE=' . $testModeMatches[1]);
-        }
-    }
-    
-    // If still not set, try alternate location
-    if (!getenv('SUPABASE_SERVICE_ROLE_KEY') && file_exists(__DIR__ . '/../../.env')) {
-        $envFile = file_get_contents(__DIR__ . '/../../.env');
-        
-        preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
-        if (isset($matches[1])) {
-            putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
-            logMessage("Loaded SUPABASE_SERVICE_ROLE_KEY from alternate location");
-        }
-    }
-}
-
 // Function to connect to Supabase via REST API
 function supabaseRequest($endpoint, $method = 'GET', $data = null) {
     $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
-    $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.wbsLJEL_U-EHNkDe4CFt6-dPNpWHe50WKCQqsoyYdLs';
+    $supabaseKey = getenv('SUPABASE_SERVICE_ROLE_KEY');
     
     $url = $supabaseUrl . $endpoint;
     
@@ -126,6 +87,86 @@ function supabaseRequest($endpoint, $method = 'GET', $data = null) {
         'data' => json_decode($response, true),
         'status' => $statusCode
     ];
+}
+
+// Check if we have the required environment variables
+if (!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) {
+    // Try to load from .env file if it exists
+    if (file_exists(__DIR__ . '/../../../.env')) {
+        $envFile = file_get_contents(__DIR__ . '/../../../.env');
+        
+        preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
+        if (isset($shopIdMatches[1])) {
+            putenv('MAKSEKESKUS_SHOP_ID=' . $shopIdMatches[1]);
+        }
+        
+        preg_match('/MAKSEKESKUS_PUBLIC_KEY=([^\n]+)/', $envFile, $publicKeyMatches);
+        if (isset($publicKeyMatches[1])) {
+            putenv('MAKSEKESKUS_PUBLIC_KEY=' . $publicKeyMatches[1]);
+        }
+        
+        preg_match('/MAKSEKESKUS_PRIVATE_KEY=([^\n]+)/', $envFile, $privateKeyMatches);
+        if (isset($privateKeyMatches[1])) {
+            putenv('MAKSEKESKUS_PRIVATE_KEY=' . $privateKeyMatches[1]);
+        }
+        
+        preg_match('/MAKSEKESKUS_TEST_MODE=([^\n]+)/', $envFile, $testModeMatches);
+        if (isset($testModeMatches[1])) {
+            putenv('MAKSEKESKUS_TEST_MODE=' . $testModeMatches[1]);
+        }
+    }
+    
+    // If still not set, try alternate location
+    if ((!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) && 
+        file_exists(__DIR__ . '/../../.env')) {
+        $envFile = file_get_contents(__DIR__ . '/../../.env');
+        
+        preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
+        if (isset($shopIdMatches[1])) {
+            putenv('MAKSEKESKUS_SHOP_ID=' . $shopIdMatches[1]);
+        }
+        
+        preg_match('/MAKSEKESKUS_PUBLIC_KEY=([^\n]+)/', $envFile, $publicKeyMatches);
+        if (isset($publicKeyMatches[1])) {
+            putenv('MAKSEKESKUS_PUBLIC_KEY=' . $publicKeyMatches[1]);
+        }
+        
+        preg_match('/MAKSEKESKUS_PRIVATE_KEY=([^\n]+)/', $envFile, $privateKeyMatches);
+        if (isset($privateKeyMatches[1])) {
+            putenv('MAKSEKESKUS_PRIVATE_KEY=' . $privateKeyMatches[1]);
+        }
+        
+        preg_match('/MAKSEKESKUS_TEST_MODE=([^\n]+)/', $envFile, $testModeMatches);
+        if (isset($testModeMatches[1])) {
+            putenv('MAKSEKESKUS_TEST_MODE=' . $testModeMatches[1]);
+        }
+        
+        logMessage("Loaded Maksekeskus credentials from alternate location");
+    }
+}
+
+// Check if we have the required Supabase environment variables
+if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
+    // Try to load from .env file if it exists
+    if (file_exists(__DIR__ . '/../../../.env')) {
+        $envFile = file_get_contents(__DIR__ . '/../../../.env');
+        
+        preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+        if (isset($matches[1])) {
+            putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+        }
+    }
+    
+    // If still not set, try alternate location
+    if (!getenv('SUPABASE_SERVICE_ROLE_KEY') && file_exists(__DIR__ . '/../../.env')) {
+        $envFile = file_get_contents(__DIR__ . '/../../.env');
+        
+        preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+        if (isset($matches[1])) {
+            putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+            logMessage("Loaded SUPABASE_SERVICE_ROLE_KEY from alternate location");
+        }
+    }
 }
 
 // Main execution starts here
@@ -338,56 +379,6 @@ try {
                             logMessage("Payment record created successfully", $paymentResult['data'][0]['id']);
                         }
                     }
-                } else {
-                    $orderId = $orderResult['data'][0]['id'];
-                    logMessage("Order created successfully", $orderId);
-                
-                    // Add order items
-                    if (!empty($items)) {
-                        foreach ($items as $item) {
-                            $orderItemData = [
-                                'order_id' => $orderId,
-                                'product_id' => $item['id'],
-                                'product_title' => $item['title'],
-                                'quantity' => $item['quantity'] ?? 1,
-                                'price' => $item['price']
-                            ];
-                        
-                            $orderItemResult = supabaseRequest(
-                                "/rest/v1/order_items",
-                                'POST',
-                                $orderItemData
-                            );
-                        
-                            if ($orderItemResult['status'] !== 201 && $orderItemResult['status'] !== 200) {
-                                logMessage("Failed to create order item", $orderItemResult);
-                            } else {
-                                logMessage("Order item created successfully", $orderItemResult['data'][0]['id']);
-                            }
-                        }
-                    }
-                
-                    // Create payment record
-                    $paymentData = [
-                        'order_id' => $orderId,
-                        'transaction_id' => $transactionId,
-                        'payment_method' => isset($data['method']) ? $data['method'] : 'unknown',
-                        'amount' => $data['amount'],
-                        'currency' => $data['currency'],
-                        'status' => $status
-                    ];
-                
-                    $paymentResult = supabaseRequest(
-                        "/rest/v1/order_payments",
-                        'POST',
-                        $paymentData
-                    );
-                
-                    if ($paymentResult['status'] !== 201 && $paymentResult['status'] !== 200) {
-                        logMessage("Failed to create payment record", $paymentResult);
-                    } else {
-                        logMessage("Payment record created successfully", $paymentResult['data'][0]['id']);
-                    }
                 }
             } else {
                 logMessage("Error: No merchant data available to create order");
@@ -399,20 +390,6 @@ try {
                 }
             }
         }
-    }
-    
-    // Return success response
-    echo json_encode([
-        'status' => 'success',
-        'message' => 'Payment notification received and processed successfully',
-        'transactionId' => $transactionId,
-        'reference' => $reference
-    ]);
-    
-} catch (\Exception $e) {
-    logMessage("Exception", $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
     } else {
         logMessage("Payment status is not COMPLETED, no order processing needed");
         
@@ -457,3 +434,26 @@ try {
                         $paymentData
                     );
                 }
+                
+                if ($paymentResult['status'] !== 201 && $paymentResult['status'] !== 200 && $paymentResult['status'] !== 204) {
+                    logMessage("Failed to create/update payment record", $paymentResult);
+                } else {
+                    logMessage("Payment record created/updated successfully");
+                }
+            }
+        }
+    }
+    
+    // Return success response
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Payment notification received and processed successfully',
+        'transactionId' => $transactionId,
+        'reference' => $reference
+    ]);
+    
+} catch (\Exception $e) {
+    logMessage("Exception", $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => $e->getMessage()]);
+}
