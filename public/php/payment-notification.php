@@ -1,37 +1,9 @@
 <?php
-// Enable detailed error reporting for development
+// Enable error reporting for development
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
 
 // Set up logging
-$logDir = __DIR__ . '/../logs';
-if (!is_dir($logDir)) {
-        $mail = new PHPMailer(true);
-}
-$logFile = $logDir . '/payment_notification.log';
-
-// Set up logging
-$logDir = __DIR__ . '/../logs';
-if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
-}
-$logFile = $logDir . '/payment_notification_log.txt';
-
-// Require the Maksekeskus SDK
-require __DIR__ . '/maksekeskus/vendor/autoload.php';
-require __DIR__ . '/phpmailer/PHPMailer.php';
-require __DIR__ . '/phpmailer/SMTP.php';
-require __DIR__ . '/phpmailer/Exception.php';
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-
-use Maksekeskus\Maksekeskus;
-use Maksekeskus\MKException;
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-// Log file for debugging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
     mkdir($logDir, 0755, true);
@@ -51,52 +23,96 @@ function logMessage($message, $data = null) {
     file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
 }
 
-function sendEmail($to, $subject, $message, $replyTo = null) {
-    try {
-        // Load PHPMailer
-        require_once __DIR__ . '/phpmailer/PHPMailer.php';
-        require_once __DIR__ . '/phpmailer/SMTP.php';
-        require_once __DIR__ . '/phpmailer/Exception.php';
-        
-        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
-        
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host = 'smtp.zone.eu';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'Leeeen484!';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
-        $mail->CharSet = 'UTF-8';
-        
-        // Recipients
-        $mail->setFrom('leen@leen.ee', 'Leen.ee');
-        $mail->addAddress($to);
-        
-        if ($replyTo) {
-            $mail->addReplyTo($replyTo);
-        } else {
-            $mail->addReplyTo('leen@leen.ee', 'Leen Väränen');
-        }
-        
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body = $message;
-        
-        // Create plain text version by stripping HTML
-        $textBody = strip_tags(str_replace(['<br>', '<br/>', '<br />'], "\n", $message));
-        $mail->AltBody = $textBody;
-        
-        // Send email
-        $mail->send();
-        logMessage("Email sent successfully to $to with subject: $subject");
-        return true;
-    } catch (Exception $e) {
-        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $e->getMessage());
-        return false;
+// Require the Maksekeskus SDK
+require __DIR__ . '/maksekeskus/vendor/autoload.php';
+require __DIR__ . '/phpmailer/PHPMailer.php';
+require __DIR__ . '/phpmailer/SMTP.php';
+require __DIR__ . '/phpmailer/Exception.php';
+
+use Maksekeskus\Maksekeskus;
+use Maksekeskus\MKException;
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// Log the notification
+$requestData = file_get_contents('php://input');
+logMessage("Notification received (raw input)", $requestData);
+logMessage("REQUEST data", $_REQUEST);
+
+// Initialize Maksekeskus client
+$shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
+$publicKey = 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
+$privateKey = 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
+$testMode = false; // Set to false for production
+
+try {
+    $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
+    
+    // Verify the notification
+    $request = $_REQUEST;
+    $isValid = $MK->verifyMac($request);
+
+    if (!$isValid) {
+        logMessage("Invalid MAC signature", $request);
+        http_response_code(400);
+        echo json_encode(['error' => 'Invalid signature']);
+        exit();
     }
+    
+    logMessage("MAC signature verified successfully");
+    
+    // Extract the notification data
+    $data = $MK->extractRequestData($request);
+    logMessage("Extracted data", $data);
+    
+    // Get the transaction ID
+    $transactionId = isset($data->transaction) ? $data->transaction : null;
+    $reference = isset($data->reference) ? $data->reference : null;
+
+    if (!$transactionId) {
+        logMessage("No transaction ID in notification", $data);
+        http_response_code(400);
+        echo json_encode(['error' => 'Missing transaction ID']);
+        exit();
+    }
+    
+    logMessage("Transaction ID", $transactionId);
+    logMessage("Reference", $reference);
+    
+    // Fetch the full transaction details from Maksekeskus
+    try {
+        $transaction = $MK->getTransaction($transactionId);
+        logMessage("Transaction details fetched", $transaction);
+        
+        // Extract merchant data
+        $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
+        logMessage("Merchant data", $merchantData);
+        
+        // Process the order in our database
+        $success = processOrder($transaction, $data);
+
+        if ($success) {
+            logMessage("Order processed successfully");
+            echo json_encode(['status' => 'success']);
+        } else {
+            logMessage("Order processing failed");
+            http_response_code(500);
+            echo json_encode(['error' => 'Order processing failed']);
+        }
+    } catch (\Exception $e) {
+        logMessage("Error fetching transaction details", $e->getMessage());
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to fetch transaction details']);
+        exit();
+    }
+} catch (MKException $e) {
+    logMessage("Maksekeskus Exception", $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => $e->getMessage()]); 
+} catch (\Exception $e) {
+    logMessage("General Exception", $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => $e->getMessage()]);
 }
 
 // Function to create or update order in Supabase
@@ -354,29 +370,6 @@ function processOrder($transactionData, $paymentData) {
             logMessage("Sending confirmation email to customer", $customerEmail);
             $subject = "Teie tellimus #{$orderNumber} on kinnitatud - Leen.ee";
             
-            // Store the order reference in the merchant_data for later retrieval
-            if ($transactionData && isset($transactionData->transaction) && isset($transactionData->transaction->reference)) {
-                $merchantData = json_decode($transactionData->transaction->merchant_data ?? '{}', true);
-                $merchantData['order_reference'] = $orderReference;
-                
-                // Store delivery method information in merchant_data
-                if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine') {
-                    logMessage("Omniva delivery method detected", [
-                        'parcelMachineId' => $merchantData['omnivaParcelMachineId'] ?? 'not set',
-                        'parcelMachineName' => $merchantData['omnivaParcelMachineName'] ?? 'not set'
-                    ]);
-                }
-                
-                // Update the transaction with the new merchant_data
-                try {
-                    $MK->addTransactionMeta($transactionData->transaction->id, [
-                        'merchant_data' => json_encode($merchantData)
-                    ]);
-                } catch (Exception $e) {
-                    logMessage("Error updating transaction meta: " . $e->getMessage());
-                }
-            }
-            
             // Build a simple HTML email
             $message = "
             <html>
@@ -568,83 +561,4 @@ function sendEmail($to, $subject, $message, $replyTo = null, $attachments = []) 
         logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $mail->ErrorInfo);
         return false;
     }
-}
-
-/**
- * Send email using PHPMailer with SMTP
- * 
- * @param string $to Recipient email
- * @param string $subject Email subject
- * @param string $message Email body (HTML)
- * @param string $altMessage Plain text alternative
- * @param string $replyTo Reply-to email address
- * @return bool Success status
- */
-function sendEmailWithPHPMailer($to, $subject, $message, $altMessage = '', $replyTo = 'leen@leen.ee') {
-    global $logFile;
-    
-    try {
-        $mail = new PHPMailer(true);
-        
-        // Server settings
-        $mail->isSMTP();
-        $mail->Host = 'smtp.zone.eu';
-        $mail->SMTPAuth = true;
-        $mail->Username = 'leen@leen.ee';
-        $mail->Password = 'Leeeen484!';
-        $mail->SMTPSecure = 'tls';
-        $mail->Port = 587;
-        $mail->CharSet = 'UTF-8';
-        
-        // Recipients
-        $mail->setFrom('leen@leen.ee', 'Leen.ee');
-        $mail->addAddress($to);
-        $mail->addReplyTo($replyTo, 'Leen Väränen');
-        
-        // Content
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body = $message;
-        
-        if (!empty($altMessage)) {
-            $mail->AltBody = $altMessage;
-        } else {
-            // Generate plain text from HTML if not provided
-            $mail->AltBody = strip_tags(str_replace(['<br>', '</p>'], ["\n", "\n\n"], $message));
-        }
-        
-        $mail->send();
-        logMessage("Email sent successfully to $to with subject: $subject");
-        return true;
-    } catch (Exception $e) {
-        logMessage("Email sending failed", "To: $to, Subject: $subject, Error: " . $mail->ErrorInfo);
-        return false;
-    }
-}
-
-// Main execution starts here
-try {
-    // Log the notification
-    $requestData = file_get_contents('php://input');
-    logMessage("Notification received (raw input)", $requestData);
-
-    // Initialize Maksekeskus client
-    $shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
-    $publicKey = 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
-    $privateKey = 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
-    $testMode = false; // Set to false for production
-    
-    $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
-    
-    // Verify the notification
-    $request = $_REQUEST;
-    $isValid = $MK->verifyMac($request); 
-
-    if (!$isValid) {
-        logMessage("Invalid MAC signature");
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid signature']);
-    logMessage("General Exception", $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
 }
