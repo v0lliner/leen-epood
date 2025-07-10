@@ -6,7 +6,7 @@ ini_set('display_errors', 0); // Don't display errors to users, but log them
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
+    mkdir($logDir, 0777, true);
 }
 $logFile = $logDir . '/maksekeskus_teavitus.log';
 
@@ -20,7 +20,10 @@ function logMessage($message, $data = null) {
         $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
     }
     
-    file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+    $result = file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+    if ($result === false) {
+        error_log("Failed to write to log file: $logFile");
+    }
 }
 
 // Log all incoming data for debugging
@@ -63,9 +66,9 @@ try {
     logMessage("Andmed edukalt ekstraktitud", $data);
     
     // Get the transaction ID
-    $transactionId = isset($data->transaction) ? $data->transaction : null;
-    $reference = isset($data->reference) ? $data->reference : null;
-    $status = isset($data->status) ? $data->status : null;
+    $transactionId = isset($data['transaction']) ? $data['transaction'] : null;
+    $reference = isset($data['reference']) ? $data['reference'] : null;
+    $status = isset($data['status']) ? $data['status'] : null;
     
     logMessage("Tehingu andmed", [
         'transactionId' => $transactionId,
