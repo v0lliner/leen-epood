@@ -30,6 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 // Log request for debugging
 $logFile = __DIR__ . '/payment_log.txt';
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0777, true);
+}
+$processLogFile = $logDir . '/process_payment.log';
 $requestData = file_get_contents('php://input');
 
 // Test if log file is writable
@@ -49,6 +54,7 @@ if (!is_writable($logFile)) {
 // Log the request with error handling
 try {
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Request: " . $requestData . "\n", FILE_APPEND);
+    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Request: " . $requestData . "\n", FILE_APPEND);
 } catch (Exception $e) {
     echo json_encode(['error' => 'Failed to write to log file: ' . $e->getMessage()]);
     exit();
@@ -60,8 +66,51 @@ try {
     
     // Check if we have the required environment variables
     if (!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) {
-        // Try to load from .env file if it exists
-        if (file_exists(__DIR__ . '/../../.env')) {
+        // Try to load from multiple possible .env file locations
+        $envPaths = [
+            __DIR__ . '/../../../.env',  // One level up from project root
+            __DIR__ . '/../../.env',     // Project root
+            __DIR__ . '/../.env'         // PHP directory
+        ];
+        
+        $loaded = false;
+        foreach ($envPaths as $envPath) {
+            if (file_exists($envPath)) {
+                file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Loading env from: " . $envPath . "\n", FILE_APPEND);
+                $envFile = file_get_contents($envPath);
+                
+                preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
+                if (isset($shopIdMatches[1])) {
+                    putenv('MAKSEKESKUS_SHOP_ID=' . $shopIdMatches[1]);
+                    $loaded = true;
+                }
+                
+                preg_match('/MAKSEKESKUS_PUBLIC_KEY=([^\n]+)/', $envFile, $publicKeyMatches);
+                if (isset($publicKeyMatches[1])) {
+                    putenv('MAKSEKESKUS_PUBLIC_KEY=' . $publicKeyMatches[1]);
+                    $loaded = true;
+                }
+                
+                preg_match('/MAKSEKESKUS_PRIVATE_KEY=([^\n]+)/', $envFile, $privateKeyMatches);
+                if (isset($privateKeyMatches[1])) {
+                    putenv('MAKSEKESKUS_PRIVATE_KEY=' . $privateKeyMatches[1]);
+                    $loaded = true;
+                }
+                
+                preg_match('/MAKSEKESKUS_TEST_MODE=([^\n]+)/', $envFile, $testModeMatches);
+                if (isset($testModeMatches[1])) {
+                    putenv('MAKSEKESKUS_TEST_MODE=' . $testModeMatches[1]);
+                }
+                
+                if ($loaded) {
+                    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Successfully loaded env variables from: " . $envPath . "\n", FILE_APPEND);
+                    break;
+                }
+            }
+        }
+        
+        // If still not set, try the old way as fallback
+        if (!$loaded && file_exists(__DIR__ . '/../../.env')) {
             $envFile = file_get_contents(__DIR__ . '/../../.env');
             
             preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
@@ -96,6 +145,7 @@ try {
     
     // Log parsed data for debugging
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Parsed data: " . json_encode($data) . "\n", FILE_APPEND);
+    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Parsed data: " . json_encode($data) . "\n", FILE_APPEND);
 
    // Define proper country code mapping
    $countryCodeMap = [
@@ -108,12 +158,14 @@ try {
    // Get the correct country code from the map, default to 'ee' if not found
    $countryCode = $countryCodeMap[$data['country'] ?? 'Estonia'] ?? 'ee';
    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Country: " . ($data['country'] ?? 'Estonia') . ", Mapped country code: " . $countryCode . "\n", FILE_APPEND);
+   file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Country: " . ($data['country'] ?? 'Estonia') . ", Mapped country code: " . $countryCode . "\n", FILE_APPEND);
 
     // Validate required fields for all payment methods
     if (!isset($data['amount']) || !isset($data['reference']) || !isset($data['email']) || !isset($data['paymentMethod'])) {
         http_response_code(400);
         echo json_encode(['error' => 'Missing required fields']);
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: Missing required fields\n", FILE_APPEND);
+        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: Missing required fields: " . json_encode(array_keys($data)) . "\n", FILE_APPEND);
+        file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Error: Missing required fields: " . json_encode(array_keys($data)) . "\n", FILE_APPEND);
         exit();
     }
 
@@ -128,6 +180,7 @@ try {
             http_response_code(400);
             echo json_encode(['error' => 'Missing token for card payment']);
             file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: Missing token for card payment\n", FILE_APPEND);
+            file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Error: Missing token for card payment\n", FILE_APPEND);
             exit();
         }
     }
@@ -135,8 +188,14 @@ try {
     // Initialize Maksekeskus client
     $shopId = getenv('MAKSEKESKUS_SHOP_ID') ?: '4e2bed9a-aa24-4b87-801b-56c31c535d36';
     $publicKey = getenv('MAKSEKESKUS_PUBLIC_KEY') ?: 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
-    $privateKey = getenv('MAKSEKESKUS_PRIVATE_KEY') ?: 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
+    $privateKey = getenv('MAKSEKESKUS_PRIVATE_KEY') ?: 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ'; 
     $testMode = getenv('MAKSEKESKUS_TEST_MODE') === 'true'; // Default to false for production
+
+    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Maksekeskus credentials: " . 
+        "Shop ID: " . (empty($shopId) ? 'MISSING' : 'SET') . ", " .
+        "Public Key: " . (empty($publicKey) ? 'MISSING' : 'SET') . ", " .
+        "Private Key: " . (empty($privateKey) ? 'MISSING' : 'SET') . ", " .
+        "Test Mode: " . ($testMode ? 'true' : 'false') . "\n", FILE_APPEND);
 
     $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
 
@@ -164,7 +223,8 @@ try {
             'email' => $data['email'],
             'country' => $countryCode,
             'locale' => 'et'
-        ]
+        ],
+        'return_url' => 'https://leen.ee/checkout/success?reference=' . $data['reference']
     ];
 
     // If return_url is provided in the request, use it instead of the default
@@ -199,6 +259,7 @@ try {
     
     // Log the transaction response
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Transaction created: " . json_encode($transaction) . "\n", FILE_APPEND);
+    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Transaction created: " . json_encode($transaction) . "\n", FILE_APPEND);
 
     // Extract payment URL based on the selected payment method
     $paymentUrl = null;
@@ -209,13 +270,13 @@ try {
         // For test cards, we should have a direct URL in the transaction response
         if (isset($transaction->payment_url)) {
             $paymentUrl = $transaction->payment_url;
-            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Using direct payment URL for test card: " . $paymentUrl . "\n", FILE_APPEND);
+            file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Using direct payment URL for test card: " . $paymentUrl . "\n", FILE_APPEND);
         } else {
             // Fallback to redirect URL if available
             foreach ($transaction->payment_methods->other as $other) {
                 if ($other->name === 'redirect') {
                     $paymentUrl = $other->url;
-                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Using redirect URL for test card: " . $paymentUrl . "\n", FILE_APPEND);
+                    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Using redirect URL for test card: " . $paymentUrl . "\n", FILE_APPEND);
                     break;
                 }
             }
@@ -266,6 +327,7 @@ try {
     
     // Log the extracted payment URL
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Extracted payment URL: " . ($paymentUrl ?? 'Not found') . "\n", FILE_APPEND);
+    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Extracted payment URL: " . ($paymentUrl ?? 'Not found') . "\n", FILE_APPEND);
     
     // If no payment URL was found, return an error
     if (!$paymentUrl) {
@@ -275,19 +337,29 @@ try {
     // Return the transaction ID and payment URL
     echo json_encode([
         'transactionId' => $transaction->id,
-        'paymentUrl' => $paymentUrl
+        'paymentUrl' => $paymentUrl,
+        'reference' => $data['reference']
     ]);
+    
+    // Final log entry
+    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Payment processing completed successfully. Reference: " . $data['reference'] . "\n", FILE_APPEND);
     
 } catch (Exception $e) {
     // Log the error
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: " . $e->getMessage() . "\n", FILE_APPEND);
     file_put_contents($logFile, date('Y-m-d H:i:s') . " - Stack trace: " . $e->getTraceAsString() . "\n", FILE_APPEND);
+    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Error: " . $e->getMessage() . "\n", FILE_APPEND);
+    file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Stack trace: " . $e->getTraceAsString() . "\n", FILE_APPEND);
     // If it's a Maksekeskus exception, try to get more details
     if (method_exists($e, 'getRawContent')) {
         file_put_contents($logFile, date('Y-m-d H:i:s') . " - Raw content: " . $e->getRawContent() . "\n", FILE_APPEND);
+        file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Raw content: " . $e->getRawContent() . "\n", FILE_APPEND);
     }
     
     // Return error response
     http_response_code(500);
     echo json_encode(['error' => 'Payment processing failed: ' . $e->getMessage()]);
 }
+
+// Final log entry
+file_put_contents($processLogFile, date('Y-m-d H:i:s') . " - Script execution completed\n", FILE_APPEND);
