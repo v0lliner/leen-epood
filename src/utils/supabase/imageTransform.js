@@ -18,7 +18,12 @@
  */
 export const transformImage = (imageUrl, options = {}) => {
   // Return original URL if it's not a Supabase Storage URL
-  if (!imageUrl || !imageUrl.includes('supabase.co/storage/v1/object/public')) {
+  if (!imageUrl) {
+    return imageUrl;
+  }
+
+  // Check if it's a Supabase Storage URL
+  if (!imageUrl.includes('supabase.co/storage/v1/object/public')) {
     return imageUrl;
   }
 
@@ -53,6 +58,11 @@ export const transformImage = (imageUrl, options = {}) => {
     
     // Apply the transformation parameters to the URL
     url.search = params.toString();
+    
+    // Log the transformation in development mode
+    if (import.meta.env.DEV) {
+      console.log(`🖼️ Image transformed: ${imageUrl} → ${url.toString()}`);
+    }
     
     return url.toString();
   } catch (error) {

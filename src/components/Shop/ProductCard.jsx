@@ -31,8 +31,18 @@ const ProductCard = ({ product, priority = false }) => {
   // Optimize image loading with transformations
   const optimizedImageUrl = transformImage(
     product.image, 
-    getImageSizeForContext('card', window.innerWidth <= 768)
+    getImageSizeForContext('card', window.innerWidth <= 768) 
   );
+
+  // Fallback image in case the optimized one fails to load
+  const handleImageError = (e) => {
+    console.warn('Image failed to load:', product.image);
+    // Try loading the original image without transformations
+    if (e.target.src !== product.image && product.image) {
+      console.log('Falling back to original image:', product.image);
+      e.target.src = product.image;
+    }
+  };
 
   return (
     <Link 
@@ -45,6 +55,7 @@ const ProductCard = ({ product, priority = false }) => {
       <div className="product-image">
         <img 
           src={optimizedImageUrl} 
+          onError={handleImageError}
           alt={product.title} 
           loading={priority ? "eager" : "lazy"} 
         />

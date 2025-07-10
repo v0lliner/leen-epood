@@ -45,8 +45,10 @@ export const storageService = {
   async uploadImage(file, folder = '') {
     try {
       // Validate file first
+      console.log('Validating image file:', file.name, file.type, file.size);
       const validation = this.validateImage(file)
       if (!validation.valid) {
+        console.error('Image validation failed:', validation.error);
         return { data: null, error: { message: validation.error } }
       }
 
@@ -60,6 +62,7 @@ export const storageService = {
       const filePath = folder ? `${folder}/${fileName}` : fileName
 
       console.log('Uploading compressed image to:', filePath)
+      console.log('Using bucket: product-images')
 
       // Upload compressed file
       const { data, error } = await supabase.storage
@@ -71,6 +74,7 @@ export const storageService = {
 
       if (error) {
         console.error('Upload error:', error)
+        console.error('This could be an RLS policy issue or a storage bucket configuration problem')
         return { data: null, error }
       }
 
@@ -78,9 +82,18 @@ export const storageService = {
       const { data: urlData } = supabase.storage
         .from('product-images')
         .getPublicUrl(filePath)
+      
+      console.log('Public URL generated:', urlData.publicUrl)
+
+      // Test if the URL is accessible
+      try {
+        const testResponse = await fetch(urlData.publicUrl, { method: 'HEAD' });
+        console.log('URL accessibility test:', testResponse.ok ? 'Success' : 'Failed', testResponse.status);
+      } catch (testError) {
+        console.warn('URL accessibility test error:', testError);
+      }
 
       console.log('Upload successful:', urlData.publicUrl)
-
       return { 
         data: {
           path: filePath,

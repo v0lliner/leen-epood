@@ -375,6 +375,16 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   // Get optimized image URLs
   const mainImageUrl = getOptimizedImageUrl(primaryImage, 'gallery-main');
   
+  // Fallback handler for image loading errors
+  const handleImageError = (e) => {
+    console.warn('Gallery image failed to load:', e.target.src);
+    const originalUrl = e.target.dataset.originalUrl;
+    if (e.target.src !== originalUrl && originalUrl) {
+      console.log('Falling back to original image:', originalUrl);
+      e.target.src = originalUrl;
+    }
+  };
+  
   return (
     <>
       <div className="image-gallery">
@@ -387,6 +397,8 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
           >
             <img 
               src={mainImageUrl} 
+              data-original-url={primaryImage.image_url}
+              onError={handleImageError}
               alt={productTitle}
             />
           </div>
@@ -400,8 +412,10 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
                   className="additional-image clickable"
                   onClick={() => openModal(index + 1)}
                 >
-                  <img 
+                  <img
                     src={getOptimizedImageUrl(image, 'gallery-thumbnail')} 
+                    data-original-url={image.image_url}
+                    onError={handleImageError}
                     alt={`${productTitle} pilt ${index + 2}`}
                     loading="lazy"
                   />
@@ -430,8 +444,10 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
                   className="carousel-slide"
                   onClick={openMobileLightbox}
                 >
-                  <img 
+                  <img
                     src={getOptimizedImageUrl(image, 'gallery-main')} 
+                    data-original-url={image.image_url}
+                    onError={handleImageError}
                     alt={`${productTitle} pilt ${index + 1}`}
                     loading={index === 0 ? 'eager' : 'lazy'}
                   />

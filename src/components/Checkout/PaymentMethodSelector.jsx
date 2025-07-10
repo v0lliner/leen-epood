@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 
+// Test card image URL
+const TEST_CARD_IMAGE_URL = 'https://static.maksekeskus.ee/img/channel/lnd/card.png';
+
 // Bank logos URL format from Maksekeskus
 const BANK_LOGO_URL = 'https://static.maksekeskus.ee/img/channel/lnd/';
 
@@ -14,6 +17,9 @@ const PaymentMethodSelector = ({
   const [banks, setBanks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Check if test card option should be shown
+  const showTestCard = import.meta.env.VITE_SHOW_TEST_CARD === 'true';
 
   // Bank country options
   const bankCountries = [
@@ -150,6 +156,27 @@ const PaymentMethodSelector = ({
                 </div>
               </div>
             ))}
+            
+            {/* Test Card Option - only shown if enabled in environment */}
+            {showTestCard && (
+              <div 
+                className={`bank-option test-card ${formData.paymentMethod === 'test_card' ? 'selected' : ''}`}
+                onClick={() => handleBankSelection('test_card')}
+              >
+                <div className="bank-logo-container">
+                  <img 
+                    src={TEST_CARD_IMAGE_URL}
+                    alt="Test Card"
+                    className="bank-logo"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = '/assets/banks/placeholder.svg';
+                    }}
+                  />
+                </div>
+                <div className="test-card-label">Test Card</div>
+              </div>
+            )}
           </div>
         )}
         
@@ -273,6 +300,24 @@ const PaymentMethodSelector = ({
         .info-message {
           font-size: 0.85rem;
           color: #666;
+        }
+        
+        .test-card {
+          position: relative;
+          border: 2px dashed #f0ad4e;
+          background-color: rgba(240, 173, 78, 0.1);
+        }
+        
+        .test-card-label {
+          position: absolute;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background-color: #f0ad4e;
+          color: white;
+          font-size: 0.7rem;
+          text-align: center;
+          padding: 2px 0;
         }
         
         @media (max-width: 768px) {

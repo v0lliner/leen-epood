@@ -8,7 +8,8 @@ export const debugImageIssues = {
    */
   async testSupabaseConnection() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/products?select=id,title,image&limit=1`, {
+      console.log('Testing Supabase connection with URL:', import.meta.env.VITE_SUPABASE_URL);
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/rest/v1/products?select=id,title,image,slug&limit=1`, {
         headers: {
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY,
           'Content-Type': 'application/json'
@@ -29,7 +30,8 @@ export const debugImageIssues = {
    */
   async testStorageAccess() {
     try {
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/bucket/product-images`, {
+      console.log('Testing storage bucket access');
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/bucket/product-images/object/list`, {
         headers: {
           'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
         }
@@ -49,6 +51,7 @@ export const debugImageIssues = {
    */
   async testImageUrl(imageUrl) {
     try {
+      console.log('Testing image URL accessibility:', imageUrl);
       const response = await fetch(imageUrl, { method: 'HEAD' });
       console.log(`✅ Image URL test (${imageUrl}):`, { 
         status: response.status, 
@@ -66,6 +69,10 @@ export const debugImageIssues = {
    */
   async runDiagnostics() {
     console.log('🔍 Starting image display diagnostics...');
+    console.log('Environment variables:', {
+      VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL ? 'set' : 'missing',
+      VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? 'set' : 'missing'
+    });
     
     const results = {
       supabase: await this.testSupabaseConnection(),
@@ -99,7 +106,7 @@ export const debugImageIssues = {
    */
   checkEnvironment() {
     const env = {
-      VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL,
+      VITE_SUPABASE_URL: import.meta.env.VITE_SUPABASE_URL || 'Missing',
       VITE_SUPABASE_ANON_KEY: import.meta.env.VITE_SUPABASE_ANON_KEY ? '✅ Present' : '❌ Missing'
     };
     
@@ -202,8 +209,15 @@ export const debugImageIssues = {
 
 // Auto-run diagnostics in development
 if (import.meta.env.DEV) {
+  console.log('🛠️ Debug utilities loaded');
   window.debugImageIssues = debugImageIssues;
   console.log('🛠️ Debug utilities available at window.debugImageIssues');
   console.log('Run window.debugImageIssues.runDiagnostics() to test image loading');
-  console.log('Run window.debugImageIssues.testStripeCheckout() to test Stripe integration');
+  console.log('Run window.debugImageIssues.checkEnvironment() to check environment variables');
+  
+  // Auto-run diagnostics after a short delay
+  setTimeout(() => {
+    console.log('🔄 Auto-running diagnostics...');
+    debugImageIssues.runDiagnostics();
+  }, 2000);
 }

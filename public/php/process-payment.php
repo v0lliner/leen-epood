@@ -119,10 +119,17 @@ try {
 
     // Validate token for card payments
     if ($data['paymentMethod'] === 'card' && (!isset($data['token']) || empty($data['token']))) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Missing token for card payment']);
-        file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: Missing token for card payment\n", FILE_APPEND);
-        exit();
+        // Check if this is a test card payment
+        if ($data['paymentMethod'] === 'test_card') {
+            // For test card, we'll use a predefined token
+            $data['token'] = 'test_token_card_success';
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Using test card token\n", FILE_APPEND);
+        } else {
+            http_response_code(400);
+            echo json_encode(['error' => 'Missing token for card payment']);
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Error: Missing token for card payment\n", FILE_APPEND);
+            exit();
+        }
     }
 
     // Initialize Maksekeskus client
@@ -136,7 +143,7 @@ try {
     // Prepare transaction data
     $transactionData = [
         'transaction' => [
-            'amount' => $data['amount'],
+            'amount' => (float)$data['amount'],
             'currency' => 'EUR',
             'reference' => $data['reference'], // This will be used as order_number in the return URL
             'notification_url' => 'https://leen.ee/php/payment-notification.php', // Webhook URL for payment notifications
@@ -171,8 +178,15 @@ try {
     }
 
     // Add token for card payments if present
-    if ($data['paymentMethod'] === 'card' && isset($data['token'])) {
+    if (($data['paymentMethod'] === 'card' || $data['paymentMethod'] === 'test_card') && isset($data['token'])) {
         $transactionData['transaction']['token'] = $data['token'];
+        
+        // If this is a test card, set test mode to true
+        if ($data['paymentMethod'] === 'test_card') {
+            $testMode = true;
+            $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Switched to test mode for test card payment\n", FILE_APPEND);
+        }
     }
 
     // Add IP address if available
@@ -190,43 +204,62 @@ try {
     $paymentUrl = null;
     $paymentMethod = $data['paymentMethod'];
     
-    // Check if we have banklinks in the response
-    if (isset($transaction->payment_methods->banklinks) && is_array($transaction->payment_methods->banklinks)) {
-        // Look for the selected bank in banklinks
-        foreach ($transaction->payment_methods->banklinks as $banklink) {
-            if ($banklink->name === $paymentMethod) {
-                $paymentUrl = $banklink->url;
-                break;
+    // For test card, we need to handle it differently
+    if ($paymentMethod === 'test_card') {
+        // For test cards, we should have a direct URL in the transaction response
+        if (isset($transaction->payment_url)) {
+            $paymentUrl = $transaction->payment_url;
+            file_put_contents($logFile, date('Y-m-d H:i:s') . " - Using direct payment URL for test card: " . $paymentUrl . "\n", FILE_APPEND);
+        } else {
+            // Fallback to redirect URL if available
+            foreach ($transaction->payment_methods->other as $other) {
+                if ($other->name === 'redirect') {
+                    $paymentUrl = $other->url;
+                    file_put_contents($logFile, date('Y-m-d H:i:s') . " - Using redirect URL for test card: " . $paymentUrl . "\n", FILE_APPEND);
+                    break;
+                }
             }
         }
-    }
-    
-    // If not found in banklinks, check cards section
-    if (!$paymentUrl && isset($transaction->payment_methods->cards) && is_array($transaction->payment_methods->cards)) {
-        foreach ($transaction->payment_methods->cards as $card) {
-            if ($card->name === $paymentMethod) {
-                $paymentUrl = $card->url;
-                break;
+    } else {
+        // Normal payment method processing
+        // Check if we have banklinks in the response
+        if (isset($transaction->payment_methods->banklinks) && is_array($transaction->payment_methods->banklinks)) {
+            // Look for the selected bank in banklinks
+            foreach ($transaction->payment_methods->banklinks as $banklink) {
+                if ($banklink->name === $paymentMethod) {
+                    $paymentUrl = $banklink->url;
+                    break;
+                }
             }
         }
-    }
-    
-    // If still not found, check other payment methods
-    if (!$paymentUrl && isset($transaction->payment_methods->other) && is_array($transaction->payment_methods->other)) {
-        foreach ($transaction->payment_methods->other as $other) {
-            if ($other->name === $paymentMethod) {
-                $paymentUrl = $other->url;
-                break;
+        
+        // If not found in banklinks, check cards section
+        if (!$paymentUrl && isset($transaction->payment_methods->cards) && is_array($transaction->payment_methods->cards)) {
+            foreach ($transaction->payment_methods->cards as $card) {
+                if ($card->name === $paymentMethod) {
+                    $paymentUrl = $card->url;
+                    break;
+                }
             }
         }
-    }
-    
-    // Fallback to redirect URL if available
-    if (!$paymentUrl && isset($transaction->payment_methods->other) && is_array($transaction->payment_methods->other)) {
-        foreach ($transaction->payment_methods->other as $other) {
-            if ($other->name === 'redirect') {
-                $paymentUrl = $other->url;
-                break;
+        
+        // If still not found, check other payment methods
+        if (!$paymentUrl && isset($transaction->payment_methods->other) && is_array($transaction->payment_methods->other)) {
+            foreach ($transaction->payment_methods->other as $other) {
+                if ($other->name === $paymentMethod) {
+                    $paymentUrl = $other->url;
+                    break;
+                }
+            }
+        }
+        
+        // Fallback to redirect URL if available
+        if (!$paymentUrl && isset($transaction->payment_methods->other) && is_array($transaction->payment_methods->other)) {
+            foreach ($transaction->payment_methods->other as $other) {
+                if ($other->name === 'redirect') {
+                    $paymentUrl = $other->url;
+                    break;
+                }
             }
         }
     }
