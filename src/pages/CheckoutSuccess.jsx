@@ -34,12 +34,12 @@ const CheckoutSuccess = () => {
         // Log the reference for debugging
         console.log('Reference from URL:', reference);
         
-        // Try to get order details using the reference parameter
+        // Only try to get order details from URL reference parameter
         if (reference) {
           console.log('Fetching order details from server for reference:', reference);
           
           // Fetch order details from the backend using the reference
-          const response = await fetch(`/php/admin/orders.php?reference=${reference}`);
+          const response = await fetch(`/php/admin/orders.php?order_number=${reference}`);
           
           if (!response.ok) {
             console.warn(`Failed to fetch order details from server: ${response.status}`);

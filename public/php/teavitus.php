@@ -147,8 +147,8 @@ try {
     logMessage("Extracted data", $data);
     
     // Get the transaction ID and reference
-   $transactionId = $data['transaction'] ?? null;
-   $reference = $data['reference'] ?? null;
+    $transactionId = isset($data['transaction']) ? $data['transaction'] : null;
+    $reference = isset($data['reference']) ? $data['reference'] : null;
     $status = isset($data['status']) ? $data['status'] : null;
 
     if (!$transactionId && $reference) {
@@ -164,7 +164,7 @@ try {
     }
     
     logMessage("Transaction ID", $transactionId);
-   if ($data['status'] === 'COMPLETED') {
+    logMessage("Reference", $reference);
     logMessage("Status", $status);
     
     // Extract merchant data
@@ -211,12 +211,7 @@ try {
             logMessage("Creating new order from payment data");
             
             if ($merchantData) {
-           $merchantData = json_decode($data['merchant_data'] ?? '{}', true);
-           
-           if (json_last_error() !== JSON_ERROR_NONE) {
-               logMessage("Error decoding merchant data JSON", json_last_error_msg());
-               $merchantData = [];
-           }
+                // Extract customer data from merchant_data
                 $customerName = $merchantData['customer_name'] ?? '';
                 $customerEmail = $merchantData['customer_email'] ?? '';
                 $customerPhone = $merchantData['customer_phone'] ?? '';
@@ -289,10 +284,10 @@ try {
                     $paymentData = [
                         'order_id' => $orderId,
                         'transaction_id' => $transactionId,
-                       'payment_method' => $data['method'] ?? 'unknown',
-                       'amount' => $data['amount'],
-                       'currency' => $data['currency'],
-                       'status' => $data['status']
+                        'payment_method' => isset($data['method']) ? $data['method'] : 'unknown',
+                        'amount' => $data['amount'],
+                        'currency' => $data['currency'],
+                        'status' => $status
                     ];
                 
                     $paymentResult = supabaseRequest(
@@ -311,8 +306,8 @@ try {
                 logMessage("Error: No merchant data available to create order");
                 
                 // If Omniva delivery method, register shipment
-               'total_amount' => $data['amount'],
-               'currency' => $data['currency'],
+                if ($deliveryMethod === 'omniva-parcel-machine' && $omnivaParcelMachineId) {
+                    logMessage("Omniva delivery method detected, will register shipment later");
                     // Shipment registration is handled by a separate process
                 }
             }
@@ -339,10 +334,10 @@ try {
                 $paymentData = [
                     'order_id' => $orderId,
                     'transaction_id' => $transactionId,
-                   'payment_method' => $data['method'] ?? 'unknown',
-                   'amount' => $data['amount'],
-                   'currency' => $data['currency'],
-                   'status' => $data['status']
+                    'payment_method' => $data['method'] ?? 'unknown',
+                    'amount' => $data['amount'],
+                    'currency' => $data['currency'],
+                    'status' => $status
                 ];
                 
                 if ($existingPaymentResult['status'] === 200 && !empty($existingPaymentResult['data'])) {
@@ -370,7 +365,7 @@ try {
             }
         }
     }
-       logMessage("Payment status is not COMPLETED, no order processing needed", $data['status']);
+    
     // Return success response
     echo json_encode([
         'status' => 'success',
