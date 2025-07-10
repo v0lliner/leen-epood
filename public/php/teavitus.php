@@ -43,8 +43,8 @@ use Maksekeskus\Maksekeskus;
 // Check if we have the required environment variables
 if (!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) {
     // Try to load from .env file if it exists
-    if (file_exists(__DIR__ . '/../../.env')) {
-        $envFile = file_get_contents(__DIR__ . '/../../.env');
+    if (file_exists(__DIR__ . '/../../../.env')) {
+        $envFile = file_get_contents(__DIR__ . '/../../../.env');
         
         preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
         if (isset($shopIdMatches[1])) {
@@ -64,6 +64,17 @@ if (!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !gete
         preg_match('/MAKSEKESKUS_TEST_MODE=([^\n]+)/', $envFile, $testModeMatches);
         if (isset($testModeMatches[1])) {
             putenv('MAKSEKESKUS_TEST_MODE=' . $testModeMatches[1]);
+        }
+    }
+    
+    // If still not set, try alternate location
+    if (!getenv('SUPABASE_SERVICE_ROLE_KEY') && file_exists(__DIR__ . '/../../.env')) {
+        $envFile = file_get_contents(__DIR__ . '/../../.env');
+        
+        preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+        if (isset($matches[1])) {
+            putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+            logMessage("Loaded SUPABASE_SERVICE_ROLE_KEY from alternate location");
         }
     }
 }

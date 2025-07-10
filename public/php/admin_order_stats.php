@@ -93,11 +93,21 @@ try {
     // Check if we have the required environment variables
     if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
         // Try to load from .env file if it exists
-        if (file_exists(__DIR__ . '/../../.env')) {
+        if (file_exists(__DIR__ . '/../../../.env')) {
+            $envFile = file_get_contents(__DIR__ . '/../../../.env');
+            preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+            if (isset($matches[1])) {
+                putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+            }
+        }
+        
+        // If still not set, try alternate location
+        if (!getenv('SUPABASE_SERVICE_ROLE_KEY') && file_exists(__DIR__ . '/../../.env')) {
             $envFile = file_get_contents(__DIR__ . '/../../.env');
             preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
             if (isset($matches[1])) {
                 putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+                logMessage("Loaded SUPABASE_SERVICE_ROLE_KEY from alternate location");
             }
         }
         

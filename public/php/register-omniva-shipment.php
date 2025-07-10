@@ -604,7 +604,28 @@ try {
     // Check if we have the required environment variables
     if (!getenv('OMNIVA_CUSTOMER_CODE') || !getenv('OMNIVA_USERNAME') || !getenv('OMNIVA_PASSWORD')) {
         // Try to load from .env file if it exists
-        if (file_exists(__DIR__ . '/../../.env')) {
+        if (file_exists(__DIR__ . '/../../../.env')) {
+            $envFile = file_get_contents(__DIR__ . '/../../../.env');
+            
+            preg_match('/OMNIVA_CUSTOMER_CODE=([^\n]+)/', $envFile, $customerCodeMatches);
+            if (isset($customerCodeMatches[1])) {
+                putenv('OMNIVA_CUSTOMER_CODE=' . $customerCodeMatches[1]);
+            }
+            
+            preg_match('/OMNIVA_USERNAME=([^\n]+)/', $envFile, $usernameMatches);
+            if (isset($usernameMatches[1])) {
+                putenv('OMNIVA_USERNAME=' . $usernameMatches[1]);
+            }
+            
+            preg_match('/OMNIVA_PASSWORD=([^\n]+)/', $envFile, $passwordMatches);
+            if (isset($passwordMatches[1])) {
+                putenv('OMNIVA_PASSWORD=' . $passwordMatches[1]);
+            }
+        }
+        
+        // If still not set, try alternate location
+        if ((!getenv('OMNIVA_CUSTOMER_CODE') || !getenv('OMNIVA_USERNAME') || !getenv('OMNIVA_PASSWORD')) && 
+            file_exists(__DIR__ . '/../../.env')) {
             $envFile = file_get_contents(__DIR__ . '/../../.env');
             
             preg_match('/OMNIVA_CUSTOMER_CODE=([^\n]+)/', $envFile, $customerCodeMatches);
@@ -621,6 +642,8 @@ try {
             if (isset($passwordMatches[1])) {
                 putenv('OMNIVA_PASSWORD=' . $passwordMatches[1]);
             }
+            
+            shipmentLog("Loaded Omniva credentials from alternate location");
         }
     }
     
