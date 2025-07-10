@@ -9,7 +9,7 @@ require_once __DIR__ . '/env-loader.php';
 // Set up logging
 $logDir = __DIR__ . '/../../logs';
 if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
+    mkdir($logDir, 0777, true);
 }
 $logFile = $logDir . '/webhook_simulator.log';
 
@@ -91,6 +91,7 @@ $targetEndpoint = isset($_GET['target']) && $_GET['target'] === 'production'
 // Send the test notification to the target endpoint
 $ch = curl_init('http://' . $_SERVER['HTTP_HOST'] . $targetEndpoint);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_VERBOSE, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $testPayload);
 curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/x-www-form-urlencoded']);
@@ -122,8 +123,15 @@ if ($error) {
 
 // Show links to logs
 echo "<h2>Logs</h2>";
-echo "<p>Simulator log: $logFile</p>";
-echo "<p>Target endpoint log: " . $logDir . ($targetEndpoint === '/php/payment-notification.php' ? '/payment_notification.log' : '/maksekeskus_webhook_test.log') . "</p>";
+echo "<p>Simulator log: $logFile " . (file_exists($logFile) ? "(exists)" : "(missing)") . "</p>";
+
+$notificationLogFile = $logDir . '/payment_notification.log';
+echo "<p>Payment notification log: $notificationLogFile " . (file_exists($notificationLogFile) ? "(exists)" : "(missing)") . "</p>";
+
+if (file_exists($notificationLogFile)) {
+    echo "<p>Log file permissions: " . substr(sprintf('%o', fileperms($notificationLogFile)), -4) . "</p>";
+    echo "<p>Log directory permissions: " . substr(sprintf('%o', fileperms($logDir)), -4) . "</p>";
+}
 
 // Add links to test different endpoints
 echo "<h2>Test Options</h2>";

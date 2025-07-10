@@ -1,21 +1,28 @@
 <?php
 // Enable error reporting for development
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors to users, but log them
+ini_set('display_errors', 0);
 
 // Load environment variables
 require_once __DIR__ . '/env-loader.php';
 
-// Set up logging
-$logDir = __DIR__ . '/../logs';
-if (!is_dir($logDir)) {
-    mkdir($logDir, 0777, true);
-}
+// Set content type to JSON
+header('Content-Type: application/json');
+
+// Set up logging directory and file
+$logDir = dirname(__DIR__) . '/logs';
 $logFile = $logDir . '/payment_notification.log';
 
 // Function to log messages
 function logMessage($message, $data = null) {
     global $logFile;
+    global $logDir;
+    
+    // Create logs directory if it doesn't exist
+    if (!is_dir($logDir)) {
+        mkdir($logDir, 0777, true);
+    }
+    
     $timestamp = date('Y-m-d H:i:s');
     $logEntry = "$timestamp - $message";
     
@@ -24,6 +31,15 @@ function logMessage($message, $data = null) {
     }
     
     $result = file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+    
+    if ($result === false) {
+        error_log("Failed to write to log file: $logFile");
+        // Try to diagnose the issue
+        error_log("Log directory exists: " . (is_dir($logDir) ? 'Yes' : 'No'));
+        error_log("Log directory writable: " . (is_writable($logDir) ? 'Yes' : 'No'));
+        error_log("Log file exists: " . (file_exists($logFile) ? 'Yes' : 'No'));
+        error_log("Log file writable: " . (file_exists($logFile) && is_writable($logFile) ? 'Yes' : 'No'));
+    }
     if ($result === false) {
         error_log("Failed to write to log file: $logFile");
     }
@@ -40,10 +56,22 @@ logMessage("Payment notification received", [
 require __DIR__ . '/maksekeskus/vendor/autoload.php';
 use Maksekeskus\Maksekeskus;
 
+// Log the script execution path
+logMessage("Payment notification script started", [
+    'script_path' => __FILE__,
+    'log_file' => $logFile,
+    'log_dir' => $logDir
+]);
+
 // Function to connect to Supabase via REST API
 function supabaseRequest($endpoint, $method = 'GET', $data = null) {
     $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
     $supabaseKey = getenv('SUPABASE_SERVICE_ROLE_KEY');
+    
+    if (!$supabaseKey) {
+        logMessage("SUPABASE_SERVICE_ROLE_KEY not found in environment");
+        return ['error' => 'API credentials not configured', 'status' => 401];
+    }
     
     $url = $supabaseUrl . $endpoint;
     
@@ -171,6 +199,8 @@ if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
 
 // Main execution starts here
 try {
+    logMessage("Starting payment notification processing");
+    
     // Initialize Maksekeskus client with your credentials
     $shopId = getenv('MAKSEKESKUS_SHOP_ID') ?: '4e2bed9a-aa24-4b87-801b-56c31c535d36';
     $publicKey = getenv('MAKSEKESKUS_PUBLIC_KEY') ?: 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
@@ -182,30 +212,33 @@ try {
     // Verify the notification
     $request = $_REQUEST;
     logMessage("Verifying MAC signature", $request);
-    
-    $isValid = $MK->verifyMac($request);
-    
-    if (!$isValid) {
-        logMessage("Invalid MAC signature", $request);
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid signature']);
-        exit();
-    }
-    
-    logMessage("MAC signature verified successfully");
-    
-    // Extract the notification data
-    $data = $MK->extractRequestData($request, false);
-    logMessage("Extracted data", $data);
-    
-    // Get the transaction ID and reference
-    $transactionId = isset($data['transaction']) ? $data['transaction'] : null;
-    $reference = isset($data['reference']) ? $data['reference'] : null;
-    $status = isset($data['status']) ? $data['status'] : null;
-
-    if (!$transactionId && $reference) {
-        logMessage("Warning: No transaction ID in notification, using reference instead", $data);
-        $transactionId = $reference;
+        $envPaths = [
+            __DIR__ . '/../../../.env',
+            __DIR__ . '/../../.env',
+            __DIR__ . '/../.env'
+        ];
+        
+        $envLoaded = false;
+        foreach ($envPaths as $envPath) {
+            logMessage("Checking for .env file at: " . $envPath);
+            if (file_exists($envPath)) {
+                $envFile = file_get_contents($envPath);
+                logMessage("Found .env file at: " . $envPath);
+                
+                preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+                if (isset($matches[1])) {
+                    putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+                    logMessage("Loaded SUPABASE_SERVICE_ROLE_KEY from " . $envPath);
+                    $envLoaded = true;
+                    break;
+                }
+            }
+        }
+        
+        if (!$envLoaded) {
+            logMessage("Error: SUPABASE_SERVICE_ROLE_KEY environment variable not set and not found in any .env file");
+            throw new Exception("API credentials not configured");
+        }
     }
 
     if (!$transactionId) {
@@ -446,14 +479,31 @@ try {
     
     // Return success response
     echo json_encode([
-        'status' => 'success',
+        'success' => true,
         'message' => 'Payment notification received and processed successfully',
         'transactionId' => $transactionId,
         'reference' => $reference
     ]);
     
+    // Final log message to confirm successful processing
+    logMessage("Payment notification processed successfully", [
+        'transactionId' => $transactionId,
+        'reference' => $reference
+    ]);
+    
+    // Ensure all output is flushed
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+    
 } catch (\Exception $e) {
     logMessage("Exception", $e->getMessage());
+    logMessage("Stack trace", $e->getTraceAsString());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
+    
+    // Ensure all output is flushed
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
 }

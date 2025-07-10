@@ -9,6 +9,7 @@ header('Content-Type: text/html; charset=UTF-8');
 // Define log files to check
 $logFiles = [
     'payment_notification.log' => __DIR__ . '/../../logs/payment_notification.log',
+    'payment_redirect.log' => __DIR__ . '/../../logs/payment_redirect.log',
     'maksekeskus_webhook_test.log' => __DIR__ . '/../../logs/maksekeskus_webhook_test.log',
     'webhook_simulator.log' => __DIR__ . '/../../logs/webhook_simulator.log',
     'payment_log.txt' => __DIR__ . '/payment_log.txt'
@@ -156,8 +157,16 @@ echo "</div>";
 
 // Display log content
 foreach ($logFiles as $name => $path) {
+    $fileExists = file_exists($path);
+    $filePermissions = $fileExists ? substr(sprintf('%o', fileperms($path)), -4) : 'N/A';
+    $dirPermissions = $fileExists ? substr(sprintf('%o', fileperms(dirname($path))), -4) : 'N/A';
+    
     echo "<h2>$name</h2>";
-    if (file_exists($path)) {
+    echo "<p>File exists: " . ($fileExists ? "Yes" : "No") . "</p>";
+    echo "<p>File permissions: $filePermissions</p>";
+    echo "<p>Directory permissions: $dirPermissions</p>";
+    
+    if ($fileExists) {
         $logContent = tailFile($path);
         $references = extractReferences($logContent);
         
@@ -187,5 +196,34 @@ echo "<h2>Testimise tööriistad</h2>";
 echo "<p><a href='webhook-simulator.php'>Käivita webhook simulaator</a> - Saadab testpäringu maksekeskuse teavituse testimiseks</p>";
 echo "<p><a href='maksekeskus-test.php'>Testi maksekeskus-test.php endpointi</a> - Kontrollib, kas endpoint on kättesaadav</p>";
 echo "<p><a href='debug-notify.php'>Käivita debug-notify.php</a> - Simuleerib Maksekeskuse teavitust payment-notification.php skriptile</p>";
+
+// Add a button to create/fix log files
+echo "<h2>Log Files Maintenance</h2>";
+echo "<form method='post'>";
+echo "<button type='submit' name='fix_logs'>Create/Fix Log Files</button>";
+echo "</form>";
+
+// Handle log file creation/fixing
+if (isset($_POST['fix_logs'])) {
+    $logDir = __DIR__ . '/../../logs';
+    
+    if (!is_dir($logDir)) {
+        mkdir($logDir, 0777, true);
+        echo "<p>Created logs directory: $logDir</p>";
+    } else {
+        echo "<p>Logs directory already exists: $logDir</p>";
+    }
+    
+    foreach ($logFiles as $name => $path) {
+        if (!file_exists($path)) {
+            touch($path);
+            chmod($path, 0777);
+            echo "<p>Created log file: $path</p>";
+        } else {
+            chmod($path, 0777);
+            echo "<p>Updated permissions for: $path</p>";
+        }
+    }
+}
 
 echo "</body></html>";
