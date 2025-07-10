@@ -263,6 +263,82 @@ try {
                 if ($orderResult['status'] !== 201 && $orderResult['status'] !== 200) {
                     logMessage("Failed to create order", $orderResult);
                 } else {
+                    logMessage("Order created successfully");
+                    
+                    // Extract the order ID from the response
+                    $orderId = null;
+                    if (isset($orderResult['data'][0]['id'])) {
+                        $orderId = $orderResult['data'][0]['id'];
+                        logMessage("Order ID extracted from response", $orderId);
+                    }
+                    
+                    // If order ID is not in the response, fetch it using the reference
+                    if (!$orderId && $reference) {
+                        logMessage("Order ID not found in response, fetching by reference", $reference);
+                        $fetchOrderResult = supabaseRequest(
+                            "/rest/v1/orders?reference=eq.$reference",
+                            'GET'
+                        );
+                        
+                        if ($fetchOrderResult['status'] === 200 && !empty($fetchOrderResult['data'])) {
+                            $orderId = $fetchOrderResult['data'][0]['id'];
+                            logMessage("Successfully fetched order ID by reference", $orderId);
+                        } else {
+                            logMessage("Failed to fetch order ID by reference", $fetchOrderResult);
+                        }
+                    }
+                    
+                    if (!$orderId) {
+                        logMessage("Critical: Could not determine order ID after creation", $orderResult);
+                    } else {
+                        // Add order items
+                        if (!empty($items)) {
+                            foreach ($items as $item) {
+                                $orderItemData = [
+                                    'order_id' => $orderId,
+                                    'product_id' => $item['id'],
+                                    'product_title' => $item['title'],
+                                    'quantity' => $item['quantity'] ?? 1,
+                                    'price' => $item['price']
+                                ];
+                                
+                                $orderItemResult = supabaseRequest(
+                                    "/rest/v1/order_items",
+                                    'POST',
+                                    $orderItemData
+                                );
+                                
+                                if ($orderItemResult['status'] !== 201 && $orderItemResult['status'] !== 200) {
+                                    logMessage("Failed to create order item", $orderItemResult);
+                                } else {
+                                    logMessage("Order item created successfully", $orderItemResult['data'][0]['id']);
+                                }
+                            }
+                        }
+                        
+                        // Create payment record
+                        $paymentData = [
+                            'order_id' => $orderId,
+                            'transaction_id' => $transactionId,
+                            'payment_method' => isset($data['method']) ? $data['method'] : 'unknown',
+                            'amount' => $data['amount'],
+                            'currency' => $data['currency'],
+                            'status' => $status
+                        ];
+                        
+                        $paymentResult = supabaseRequest(
+                            "/rest/v1/order_payments",
+                            'POST',
+                            $paymentData
+                        );
+                        
+                        if ($paymentResult['status'] !== 201 && $paymentResult['status'] !== 200) {
+                            logMessage("Failed to create payment record", $paymentResult);
+                        } else {
+                            logMessage("Payment record created successfully", $paymentResult['data'][0]['id']);
+                        }
+                    }
+                } else {
                     $orderId = $orderResult['data'][0]['id'];
                     logMessage("Order created successfully", $orderId);
                 
@@ -367,26 +443,3 @@ try {
                         $paymentData
                     );
                 }
-                
-                if ($paymentResult['status'] !== 201 && $paymentResult['status'] !== 200 && $paymentResult['status'] !== 204) {
-                    logMessage("Failed to create/update payment record", $paymentResult);
-                } else {
-                    logMessage("Payment record created/updated successfully");
-                }
-            }
-        }
-    }
-    
-    // Return success response
-    echo json_encode([
-        'status' => 'success',
-        'message' => 'Payment notification received and processed successfully',
-        'transactionId' => $transactionId,
-        'reference' => $reference
-    ]);
-    
-} catch (\Exception $e) {
-    logMessage("Exception", $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
-}
