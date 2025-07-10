@@ -36,10 +36,10 @@ const CheckoutSuccess = () => {
         
         // Only try to get order details from URL reference parameter
         if (reference) {
-          console.log('Fetching order details from server for reference:', reference);
+          console.log('Fetching order details from server using reference parameter:', reference);
           
           // Fetch order details from the backend using the reference
-          const response = await fetch(`/php/admin/orders.php?order_number=${reference}`);
+          const response = await fetch(`/php/admin/orders.php?reference=${reference}`);
           
           if (!response.ok) {
             console.warn(`Failed to fetch order details from server: ${response.status}`);
@@ -77,7 +77,7 @@ const CheckoutSuccess = () => {
           throw new Error('Tellimuse viidet ei leitud. Palun võtke ühendust klienditoega.');
         }
       } catch (error) {
-        console.error('Error loading order details:', error);
+        console.error('Error loading order details from server:', error);
         setError(error.message || 'Tellimuse andmete laadimine ebaõnnestus');
         
         // If no order data is found, redirect to shop after a delay

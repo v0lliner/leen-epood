@@ -238,17 +238,17 @@ try {
                 // Create order in Supabase
                 $orderData = [
                     'customer_name' => $customerName,
-                    'customer_email' => $customerEmail,
-                    'customer_phone' => $customerPhone,
+                    'customer_email' => (string)$customerEmail,
+                    'customer_phone' => (string)$customerPhone,
                     'shipping_address' => $shippingAddress,
                     'shipping_city' => $shippingCity,
                     'shipping_postal_code' => $shippingPostalCode,
                     'shipping_country' => $shippingCountry,
-                    'total_amount' => $data['amount'],
+                    'total_amount' => (float)$data['amount'],
                     'currency' => $data['currency'],
                     'status' => 'PAID',
-                    'reference' => $reference,
-                    'omniva_parcel_machine_id' => $omnivaParcelMachineId,
+                    'reference' => (string)$reference,
+                    'omniva_parcel_machine_id' => $omnivaParcelMachineId ? (string)$omnivaParcelMachineId : null,
                     'omniva_parcel_machine_name' => $omnivaParcelMachineName
                 ];
             
