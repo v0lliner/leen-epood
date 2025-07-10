@@ -614,6 +614,138 @@ logMessage("Teavitus saabunud", [
 require __DIR__ . '/maksekeskus/vendor/autoload.php';
 use Maksekeskus\Maksekeskus;
 
+// Function to connect to Supabase via REST API
+function supabaseRequest($endpoint, $method = 'GET', $data = null) {
+    $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
+    $supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTExMzgwNCwiZXhwIjoyMDY2Njg5ODA0fQ.wbsLJEL_U-EHNkDe4CFt6-dPNpWHe50WKCQqsoyYdLs';
+    
+    $url = $supabaseUrl . $endpoint;
+    
+    $ch = curl_init($url);
+    
+    $headers = [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $supabaseKey,
+        'apikey: ' . $supabaseKey
+    ];
+    
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    
+    if ($method === 'POST') {
+        curl_setopt($ch, CURLOPT_POST, true);
+        if ($data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
+    } else if ($method === 'PATCH' || $method === 'PUT') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        if ($data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
+    } else if ($method === 'DELETE') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+    }
+    
+    $response = curl_exec($ch);
+    $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    
+    curl_close($ch);
+    
+    if ($error) {
+        logMessage("cURL Error", $error);
+        return ['error' => $error, 'status' => $statusCode];
+    }
+    
+    return [
+        'data' => json_decode($response, true),
+        'status' => $statusCode
+    ];
+}
+
+// Function to generate order number
+function generateOrderNumber() {
+    return 'ORD-' . date('Ymd') . '-' . mt_rand(1000, 9999);
+}
+
+// Function to create order in database
+function createOrder($orderData) {
+    logMessage("Creating order in database", $orderData);
+    
+    // Generate order number if not provided
+    if (empty($orderData['order_number'])) {
+        $orderData['order_number'] = generateOrderNumber();
+    }
+    
+    // Insert order into database
+    $result = supabaseRequest(
+        "/rest/v1/orders",
+        'POST',
+        $orderData
+    );
+    
+    if ($result['status'] !== 201) {
+        logMessage("Failed to create order", $result);
+        return false;
+    }
+    
+    logMessage("Order created successfully", $result['data']);
+    return $result['data'];
+}
+
+// Function to create order items
+function createOrderItems($orderId, $items) {
+    logMessage("Creating order items", ['order_id' => $orderId, 'items' => $items]);
+    
+    foreach ($items as $item) {
+        $orderItem = [
+            'order_id' => $orderId,
+            'product_id' => $item['id'],
+            'product_title' => $item['title'],
+            'quantity' => $item['quantity'] ?? 1,
+            'price' => $item['price']
+        ];
+        
+        $result = supabaseRequest(
+            "/rest/v1/order_items",
+            'POST',
+            $orderItem
+        );
+        
+        if ($result['status'] !== 201) {
+            logMessage("Failed to create order item", $result);
+        }
+    }
+}
+
+// Function to create payment record
+function createPaymentRecord($orderId, $paymentData) {
+    logMessage("Creating payment record", ['order_id' => $orderId, 'payment' => $paymentData]);
+    
+    $payment = [
+        'order_id' => $orderId,
+        'transaction_id' => $paymentData['transaction_id'],
+        'payment_method' => $paymentData['payment_method'],
+        'amount' => $paymentData['amount'],
+        'currency' => $paymentData['currency'],
+        'status' => $paymentData['status']
+    ];
+    
+    $result = supabaseRequest(
+        "/rest/v1/order_payments",
+        'POST',
+        $payment
+    );
+    
+    if ($result['status'] !== 201) {
+        logMessage("Failed to create payment record", $result);
+        return false;
+    }
+    
+    logMessage("Payment record created successfully", $result['data']);
+    return $result['data'];
+}
+
 // Initialize Maksekeskus client with your credentials
 $shopId = '4e2bed9a-aa24-4b87-801b-56c31c535d36';
 $publicKey = 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
@@ -670,17 +802,64 @@ try {
             logMessage("Makse on COMPLETED staatuses, töötleme tellimust");
             
             // Extract merchant data
-            $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
+            $merchantData = [];
+            if (isset($transaction->transaction->merchant_data)) {
+                $merchantData = json_decode($transaction->transaction->merchant_data, true);
+            }
             logMessage("Kaupmeheandmed", $merchantData);
             
-            if (empty($merchantData)) {
-                logMessage("Kaupmeheandmed on tühjad või vigased", $merchantDataString);
-                http_response_code(400);
-                echo json_encode(['error' => 'Invalid merchant data']);
-                exit();
+            // Process the order if merchant data is valid
+            if (!empty($merchantData)) {
+                // Create order data structure
+                $orderData = [
+                    'customer_name' => $merchantData['customer_name'] ?? '',
+                    'customer_email' => $merchantData['customer_email'] ?? '',
+                    'customer_phone' => $merchantData['customer_phone'] ?? '',
+                    'total_amount' => $data['amount'] ?? 0,
+                    'currency' => $data['currency'] ?? 'EUR',
+                    'status' => 'PAID', // Initial status after payment
+                    'reference' => $reference,
+                    'order_number' => generateOrderNumber(),
+                    'notes' => $merchantData['notes'] ?? ''
+                ];
+                
+                // Add shipping information if available
+                if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva') {
+                    $orderData['omniva_parcel_machine_id'] = $merchantData['omnivaParcelMachineId'] ?? '';
+                    $orderData['omniva_parcel_machine_name'] = $merchantData['omnivaParcelMachineName'] ?? '';
+                }
+                
+                // Create order in database
+                $order = createOrder($orderData);
+                
+                if ($order) {
+                    // Create order items
+                    if (isset($merchantData['items']) && is_array($merchantData['items'])) {
+                        createOrderItems($order['id'], $merchantData['items']);
+                    }
+                    
+                    // Create payment record
+                    $paymentData = [
+                        'transaction_id' => $transactionId,
+                        'payment_method' => $transaction->transaction->method ?? 'unknown',
+                        'amount' => $data['amount'] ?? 0,
+                        'currency' => $data['currency'] ?? 'EUR',
+                        'status' => $status
+                    ];
+                    
+                    createPaymentRecord($order['id'], $paymentData);
+                    
+                    // Log success
+                    logMessage("Tellimus edukalt töödeldud", [
+                        'reference' => $reference,
+                        'status' => $status,
+                        'amount' => $data['amount'] ?? null,
+                        'currency' => $data['currency'] ?? null
+                    ]);
+                }
+            } else {
+                logMessage("Kaupmeheandmed puuduvad või on vigased", $transaction->transaction->merchant_data ?? null);
             }
-            
-            // Prepare order data for Supabase
             $orderData = [
                 'reference' => $reference,
                 'customer_name' => $merchantData['customer_name'] ?? '',
