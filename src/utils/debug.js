@@ -1,8 +1,14 @@
+import { createClient } from '@supabase/supabase-js'
+
 /**
  * Debug utilities for troubleshooting image display issues
  */
 
-import { supabase } from './supabase/client.js';
+// Initialize Supabase client for storage operations
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+)
 
 export const debugImageIssues = {
   /**
@@ -36,7 +42,7 @@ export const debugImageIssues = {
       const { data, error } = await supabase.storage.from('product-images').list();
       
       if (error) {
-        console.error('❌ Storage bucket access failed:', error);
+        console.error('❌ Storage bucket test failed:', error);
         return { success: false, error: error.message };
       }
       
@@ -96,7 +102,7 @@ export const debugImageIssues = {
       }
     }
 
-    // Test CSP issues
+    // Check CSP configuration
     results.csp = this.checkCSP();
 
     console.log('📊 Diagnostics complete:', results);
@@ -117,21 +123,31 @@ export const debugImageIssues = {
   },
 
   /**
-   * Check for CSP issues
+   * Check for CSP configuration
    */
   checkCSP() {
     // Check if we're in a browser environment
     if (typeof document === 'undefined') return { checked: false };
-    
+
     // Check for CSP meta tag
     const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
     const cspContent = cspMeta ? cspMeta.getAttribute('content') : null;
+    
+    // Check if Supabase domain is allowed in CSP
+    let supabaseAllowed = true;
+    if (cspContent) {
+      const supabaseDomain = new URL(import.meta.env.VITE_SUPABASE_URL).hostname;
+      supabaseAllowed = cspContent.includes(supabaseDomain) || cspContent.includes('*');
+    }
     
     return {
       checked: true,
       hasCSPMetaTag: !!cspMeta,
       cspContent,
-      recommendation: 'CSP check completed - verify image loading manually if issues persist'
+      supabaseAllowed,
+      recommendation: !supabaseAllowed && cspContent ? 
+        `Add ${new URL(import.meta.env.VITE_SUPABASE_URL).hostname} to img-src directive in CSP` : 
+        'CSP configuration appears correct'
     };
   },
 
