@@ -1,7 +1,7 @@
 <?php
 // Enable error reporting for development
 error_reporting(E_ALL);
-ini_set('display_errors', 0);
+ini_set('display_errors', 0); // Don't display errors to users, but log them
 
 // Set up logging
 $logDir = __DIR__ . '/../logs';
@@ -12,15 +12,15 @@ $logFile = $logDir . '/maksekeskus_teavitus.log';
 
 // Function to log messages
 function logMessage($message, $data = null) {
-   global $logFile;
-   $timestamp = date('Y-m-d H:i:s');
-   $logEntry = "$timestamp - $message";
-   
-   if ($data !== null) {
-       $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
-   }
-   
-   file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+    global $logFile;
+    $timestamp = date('Y-m-d H:i:s');
+    $logEntry = "$timestamp - $message";
+    
+    if ($data !== null) {
+        $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
+    }
+    
+    $result = file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
     if ($result === false) {
         error_log("Failed to write to log file: $logFile");
     }
@@ -53,22 +53,16 @@ $testMode = false; // Set to false for production
 try {
     $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
 
-    // Verify the notification
-    $request = $_POST;
-
     // Check if required parameters exist
-    if (!isset($request['json']) || !isset($request['mac'])) {
-        logMessage("Puuduvad vajalikud parameetrid (json või mac)", $request);
+    if (!isset($_POST['json']) || !isset($_POST['mac'])) {
+        logMessage("Puuduvad vajalikud parameetrid (json või mac)", $_POST);
         http_response_code(400);
         echo json_encode(['error' => 'Missing required parameters']);
         exit();
     }
     
-    logMessage("MAC signatuur edukalt kontrollitud");
-    
-    // Extract the notification data
-    $data = $MK->extractRequestData($request);
-        exit();
+    // Verify the notification
+    $request = $_POST;
     logMessage("Kontrollime MAC signatuuri", $request);
     
     $isValid = $MK->verifyMac($request);
@@ -272,6 +266,22 @@ function processOrder($transactionData, $paymentData) {
             $orderStatus = 'CANCELLED';
         }
         
+        // Get amount and currency from the right place
+        $amount = null;
+        $currency = null;
+        
+        if (isset($transactionData->transaction->amount)) {
+            $amount = $transactionData->transaction->amount;
+        } elseif (isset($paymentData['amount'])) {
+            $amount = $paymentData['amount'];
+        }
+        
+        if (isset($transactionData->transaction->currency)) {
+            $currency = $transactionData->transaction->currency;
+        } elseif (isset($paymentData['currency'])) {
+            $currency = $paymentData['currency'];
+        }
+        
         // Prepare order data
         $orderData = [
             'customer_name' => $customerName,
@@ -281,8 +291,8 @@ function processOrder($transactionData, $paymentData) {
             'shipping_city' => $merchantData['shipping_city'] ?? '',
             'shipping_postal_code' => $merchantData['shipping_postal_code'] ?? '',
             'shipping_country' => $merchantData['shipping_country'] ?? 'Estonia',
-            'total_amount' => $transactionData->transaction->amount,
-            'currency' => $transactionData->transaction->currency,
+            'total_amount' => $amount,
+            'currency' => $currency,
             'status' => $orderStatus,
             'notes' => $merchantData['notes'] ?? '',
             'order_number' => $orderNumber,
@@ -290,6 +300,8 @@ function processOrder($transactionData, $paymentData) {
             'omniva_parcel_machine_name' => $merchantData['omnivaParcelMachineName'] ?? null,
             'reference' => $orderReference // Store the reference for future lookups
         ];
+        
+        logMessage("Order data prepared", $orderData);
         
         // If order exists, update it
         if ($orderExists && $orderId) {
@@ -398,13 +410,20 @@ function processOrder($transactionData, $paymentData) {
         
         // Record payment
         if ($orderId) {
+            $paymentMethod = '';
+            if (isset($transactionData->transaction->method)) {
+                $paymentMethod = $transactionData->transaction->method;
+            } elseif (isset($paymentData['method'])) {
+                $paymentMethod = $paymentData['method'];
+            }
+            
             $paymentData = [
                 'order_id' => $orderId,
-                'transaction_id' => $paymentData['transaction'] ?? $transactionId,
-                'payment_method' => $paymentData['method'] ?? $transactionData->transaction->method ?? 'unknown',
-                'amount' => $paymentData['amount'] ?? $transactionData->transaction->amount,
-                'currency' => $paymentData['currency'] ?? $transactionData->transaction->currency,
-                'status' => $paymentData['status'] ?? 'PENDING'
+                'transaction_id' => $transactionId,
+                'payment_method' => $paymentMethod,
+                'amount' => $amount,
+                'currency' => $currency,
+                'status' => $status
             ];
             
             logMessage("Creating payment record", $paymentData);
@@ -422,7 +441,7 @@ function processOrder($transactionData, $paymentData) {
         }
         
         // Send confirmation email if payment is completed
-        if ($paymentData['status'] === 'COMPLETED' && !empty($customerEmail)) {
+        if ($status === 'COMPLETED' && !empty($customerEmail)) {
             logMessage("Sending confirmation email to customer", $customerEmail);
             $subject = "Teie tellimus #{$orderNumber} on kinnitatud - Leen.ee";
             
@@ -452,7 +471,7 @@ function processOrder($transactionData, $paymentData) {
                         <p><strong>Nimi:</strong> {$customerName}</p>
                         <p><strong>E-post:</strong> {$customerEmail}</p>
                         <p><strong>Telefon:</strong> {$customerPhone}</p>
-                        <p><strong>Summa:</strong> {$transactionData->transaction->amount} {$transactionData->transaction->currency}</p>
+                        <p><strong>Summa:</strong> {$amount} {$currency}</p>
                         
                         <!-- Display Omniva parcel machine info if applicable -->";
             
@@ -478,7 +497,7 @@ function processOrder($transactionData, $paymentData) {
             }
             
             $message .= "
-                    <p class='total'>Kokku: {$transactionData->transaction->amount} {$transactionData->transaction->currency}</p>
+                    <p class='total'>Kokku: {$amount} {$currency}</p>
                     
                     <p>Täname, et valisite Leen.ee! Kui teil on küsimusi, võtke meiega ühendust aadressil leen@leen.ee.</p>
                     
@@ -502,7 +521,7 @@ function processOrder($transactionData, $paymentData) {
             sendEmail($adminEmail, $adminSubject, $message);
             
             // If this is an Omniva parcel machine order, register the shipment
-            if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva-parcel-machine' && 
+            if (isset($merchantData['deliveryMethod']) && $merchantData['deliveryMethod'] === 'omniva' && 
                 !empty($merchantData['omnivaParcelMachineId'])) {
                 
                 logMessage("Initiating Omniva shipment registration for order", $orderId);
