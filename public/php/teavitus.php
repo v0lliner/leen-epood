@@ -117,13 +117,14 @@ function supabaseRequest($endpoint, $method = 'GET', $data = null) {
     ];
 }
 
-// Initialize Maksekeskus client with your credentials
-$shopId = getenv('MAKSEKESKUS_SHOP_ID') ?: '4e2bed9a-aa24-4b87-801b-56c31c535d36';
-$publicKey = getenv('MAKSEKESKUS_PUBLIC_KEY') ?: 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
-$privateKey = getenv('MAKSEKESKUS_PRIVATE_KEY') ?: 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
-$testMode = getenv('MAKSEKESKUS_TEST_MODE') === 'true'; // Default to false for production
-
+// Main execution starts here
 try {
+    // Initialize Maksekeskus client with your credentials
+    $shopId = getenv('MAKSEKESKUS_SHOP_ID') ?: '4e2bed9a-aa24-4b87-801b-56c31c535d36';
+    $publicKey = getenv('MAKSEKESKUS_PUBLIC_KEY') ?: 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
+    $privateKey = getenv('MAKSEKESKUS_PRIVATE_KEY') ?: 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
+    $testMode = getenv('MAKSEKESKUS_TEST_MODE') === 'true'; // Default to false for production
+
     $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
     
     // Verify the notification
@@ -150,241 +151,230 @@ try {
     $reference = isset($data['reference']) ? $data['reference'] : null;
     $status = isset($data['status']) ? $data['status'] : null;
 
-    if (!$transactionId) {
+    if (!$transactionId && $reference) {
         logMessage("Warning: No transaction ID in notification, using reference instead", $data);
-        // Continue processing with reference if transaction ID is missing
-        // Continue processing with reference if transaction ID is missing
-    } else {
-        logMessage("Transaction ID", $transactionId);
+        $transactionId = $reference;
+    }
+
+    if (!$transactionId) {
+        logMessage("No transaction ID in notification", $data);
+        http_response_code(400);
+        echo json_encode(['error' => 'Missing transaction ID']);
+        exit();
     }
     
+    logMessage("Transaction ID", $transactionId);
     logMessage("Reference", $reference);
     logMessage("Status", $status);
     
-    // Fetch the full transaction details from Maksekeskus
+    // Extract merchant data
     try {
-        // Only try to fetch transaction details if we have a transaction ID
-        $transaction = null;
-        if ($transactionId) {
-            $transaction = $MK->getTransaction($transactionId);
-            logMessage("Transaction details fetched", $transaction);
+        $merchantData = json_decode($data['merchant_data'] ?? '{}', true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            logMessage("Error decoding merchant data: " . json_last_error_msg());
+            $merchantData = [];
         }
+    } catch (Exception $e) {
+        logMessage("Exception decoding merchant data: " . $e->getMessage());
+        $merchantData = [];
+    }
+    logMessage("Merchant data", $merchantData);
+    
+    // Process the order if status is COMPLETED
+    if ($status === 'COMPLETED' || $status === 'APPROVED') {
+        logMessage("Payment is COMPLETED, processing order");
         
-        // Extract merchant data
-        $merchantData = null;
-        if ($transaction) {
-            $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
+        // Check if order already exists by reference
+        $existingOrderResult = supabaseRequest(
+            "/rest/v1/orders?reference=eq.$reference",
+            'GET'
+        );
+        
+        if ($existingOrderResult['status'] === 200 && !empty($existingOrderResult['data'])) {
+            logMessage("Order already exists with reference", $reference);
+            
+            // Update existing order status to PAID
+            $orderId = $existingOrderResult['data'][0]['id'];
+            $updateResult = supabaseRequest(
+                "/rest/v1/orders?id=eq.$orderId",
+                'PATCH',
+                ['status' => 'PAID', 'reference' => $reference]
+            );
+            
+            if ($updateResult['status'] !== 204) {
+                logMessage("Failed to update order status", $updateResult);
+            } else {
+                logMessage("Order status updated to PAID", $orderId);
+            }
         } else {
-            // If no transaction details, use the merchant_data from the notification
-            $merchantData = json_decode($data['merchant_data'] ?? '{}', true);
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                logMessage("Error decoding merchant data: " . json_last_error_msg());
-                $merchantData = [];
+            // Create new order
+            logMessage("Creating new order from payment data");
+            
+            if ($merchantData) {
+                // Extract customer data from merchant_data
+                $customerName = $merchantData['customer_name'] ?? '';
+                $customerEmail = $merchantData['customer_email'] ?? '';
+                $customerPhone = $merchantData['customer_phone'] ?? '';
+                $shippingAddress = $merchantData['shipping_address'] ?? '';
+                $shippingCity = $merchantData['shipping_city'] ?? '';
+                $shippingPostalCode = $merchantData['shipping_postal_code'] ?? '';
+                $shippingCountry = $merchantData['shipping_country'] ?? '';
+                $items = $merchantData['items'] ?? [];
+                $deliveryMethod = $merchantData['deliveryMethod'] ?? null;
+                $omnivaParcelMachineId = $merchantData['omnivaParcelMachineId'] ?? null;
+                $omnivaParcelMachineName = $merchantData['omnivaParcelMachineName'] ?? null;
+            
+                // Create order in Supabase
+                $orderData = [
+                    'customer_name' => $customerName,
+                    'customer_email' => $customerEmail,
+                    'customer_phone' => $customerPhone,
+                    'shipping_address' => $shippingAddress,
+                    'shipping_city' => $shippingCity,
+                    'shipping_postal_code' => $shippingPostalCode,
+                    'shipping_country' => $shippingCountry,
+                    'total_amount' => $data['amount'],
+                    'currency' => $data['currency'],
+                    'status' => 'PAID',
+                    'reference' => $reference,
+                    'omniva_parcel_machine_id' => $omnivaParcelMachineId,
+                    'omniva_parcel_machine_name' => $omnivaParcelMachineName
+                ];
+            
+                logMessage("Creating order with data", $orderData);
+            
+                $orderResult = supabaseRequest(
+                    "/rest/v1/orders",
+                    'POST',
+                    $orderData
+                );
+            
+                if ($orderResult['status'] !== 201 && $orderResult['status'] !== 200) {
+                    logMessage("Failed to create order", $orderResult);
+                } else {
+                    $orderId = $orderResult['data'][0]['id'];
+                    logMessage("Order created successfully", $orderId);
+                
+                    // Add order items
+                    if (!empty($items)) {
+                        foreach ($items as $item) {
+                            $orderItemData = [
+                                'order_id' => $orderId,
+                                'product_id' => $item['id'],
+                                'product_title' => $item['title'],
+                                'quantity' => $item['quantity'] ?? 1,
+                                'price' => $item['price']
+                            ];
+                        
+                            $orderItemResult = supabaseRequest(
+                                "/rest/v1/order_items",
+                                'POST',
+                                $orderItemData
+                            );
+                        
+                            if ($orderItemResult['status'] !== 201 && $orderItemResult['status'] !== 200) {
+                                logMessage("Failed to create order item", $orderItemResult);
+                            } else {
+                                logMessage("Order item created successfully", $orderItemResult['data'][0]['id']);
+                            }
+                        }
+                    }
+                
+                    // Create payment record
+                    $paymentData = [
+                        'order_id' => $orderId,
+                        'transaction_id' => $transactionId,
+                        'payment_method' => isset($data['method']) ? $data['method'] : 'unknown',
+                        'amount' => $data['amount'],
+                        'currency' => $data['currency'],
+                        'status' => $status
+                    ];
+                
+                    $paymentResult = supabaseRequest(
+                        "/rest/v1/order_payments",
+                        'POST',
+                        $paymentData
+                    );
+                
+                    if ($paymentResult['status'] !== 201 && $paymentResult['status'] !== 200) {
+                        logMessage("Failed to create payment record", $paymentResult);
+                    } else {
+                        logMessage("Payment record created successfully", $paymentResult['data'][0]['id']);
+                    }
+                }
+            } else {
+                logMessage("Error: No merchant data available to create order");
+                
+                // If Omniva delivery method, register shipment
+                if ($deliveryMethod === 'omniva-parcel-machine' && $omnivaParcelMachineId) {
+                    logMessage("Omniva delivery method detected, will register shipment later");
+                    // Shipment registration is handled by a separate process
+                }
             }
         }
-        logMessage("Merchant data", $merchantData);
+    } else {
+        logMessage("Payment status is not COMPLETED, no order processing needed");
         
-        // Process the order if status is COMPLETED
-        if ($status === 'COMPLETED') {
-            logMessage("Payment is COMPLETED, processing order");
-            
-            // Check if order already exists by reference
+        // Update payment status if order exists
+        if ($reference) {
             $existingOrderResult = supabaseRequest(
                 "/rest/v1/orders?reference=eq.$reference",
                 'GET'
             );
             
             if ($existingOrderResult['status'] === 200 && !empty($existingOrderResult['data'])) {
-                logMessage("Order already exists with reference", $reference);
-                
-                // Update existing order status to PAID
                 $orderId = $existingOrderResult['data'][0]['id'];
-                $updateResult = supabaseRequest(
-                    "/rest/v1/orders?id=eq.$orderId",
-                    'PATCH',
-                    ['status' => 'PAID', 'reference' => $reference]
-                );
                 
-                if ($updateResult['status'] !== 204) {
-                    logMessage("Failed to update order status", $updateResult);
-                } else {
-                    logMessage("Order status updated to PAID", $orderId);
-                }
-            } else {
-                // Create new order
-                logMessage("Creating new order from payment data");
-                
-                if ($merchantData) {
-                    // Extract customer data from merchant_data
-                    $customerName = $merchantData['customer_name'] ?? '';
-                    $customerEmail = $merchantData['customer_email'] ?? '';
-                    $customerPhone = $merchantData['customer_phone'] ?? '';
-                    $shippingAddress = $merchantData['shipping_address'] ?? '';
-                    $shippingCity = $merchantData['shipping_city'] ?? '';
-                    $shippingPostalCode = $merchantData['shipping_postal_code'] ?? '';
-                    $shippingCountry = $merchantData['shipping_country'] ?? '';
-                    $items = $merchantData['items'] ?? [];
-                    $deliveryMethod = $merchantData['deliveryMethod'] ?? null;
-                    $omnivaParcelMachineId = $merchantData['omnivaParcelMachineId'] ?? null;
-                    $omnivaParcelMachineName = $merchantData['omnivaParcelMachineName'] ?? null;
-                
-                    // Create order in Supabase
-                    $orderData = [
-                        'customer_name' => $customerName,
-                        'customer_email' => $customerEmail,
-                        'customer_phone' => $customerPhone,
-                        'shipping_address' => $shippingAddress,
-                        'shipping_city' => $shippingCity,
-                        'shipping_postal_code' => $shippingPostalCode,
-                        'shipping_country' => $shippingCountry,
-                        'total_amount' => $data['amount'],
-                        'currency' => $data['currency'],
-                        'status' => 'PAID',
-                        'reference' => $reference,
-                        'omniva_parcel_machine_id' => $omnivaParcelMachineId,
-                        'omniva_parcel_machine_name' => $omnivaParcelMachineName
-                    ];
-                
-                    logMessage("Creating order with data", $orderData);
-                
-                    $orderResult = supabaseRequest(
-                        "/rest/v1/orders",
-                        'POST',
-                        $orderData
-                    );
-                
-                    if ($orderResult['status'] !== 201 && $orderResult['status'] !== 200) {
-                        logMessage("Failed to create order", $orderResult);
-                    } else {
-                        $orderId = $orderResult['data'][0]['id'];
-                        logMessage("Order created successfully", $orderId);
-                    
-                        // Add order items
-                        if (!empty($items)) {
-                            foreach ($items as $item) {
-                                $orderItemData = [
-                                    'order_id' => $orderId,
-                                    'product_id' => $item['id'],
-                                    'product_title' => $item['title'],
-                                    'quantity' => $item['quantity'] ?? 1,
-                                    'price' => $item['price']
-                                ];
-                            
-                                $orderItemResult = supabaseRequest(
-                                    "/rest/v1/order_items",
-                                    'POST',
-                                    $orderItemData
-                                );
-                            
-                                if ($orderItemResult['status'] !== 201 && $orderItemResult['status'] !== 200) {
-                                    logMessage("Failed to create order item", $orderItemResult);
-                                } else {
-                                    logMessage("Order item created successfully", $orderItemResult['data'][0]['id']);
-                                }
-                            }
-                        }
-                    
-                        // Create payment record
-                        $paymentData = [
-                            'order_id' => $orderId,
-                            'transaction_id' => $transactionId ?? $reference,
-                            'payment_method' => isset($data['method']) ? $data['method'] : 'unknown',
-                            'amount' => $data['amount'],
-                            'currency' => $data['currency'],
-                            'status' => $status
-                        ];
-                    
-                        $paymentResult = supabaseRequest(
-                            "/rest/v1/order_payments",
-                            'POST',
-                            $paymentData
-                        );
-                    
-                        if ($paymentResult['status'] !== 201 && $paymentResult['status'] !== 200) {
-                            logMessage("Failed to create payment record", $paymentResult);
-                        } else {
-                            logMessage("Payment record created successfully", $paymentResult['data'][0]['id']);
-                        }
-                    }
-                } else {
-                    logMessage("Error: No merchant data available to create order");
-                    
-                    // If Omniva delivery method, register shipment
-                    if ($deliveryMethod === 'omniva-parcel-machine' && $omnivaParcelMachineId) {
-                        logMessage("Omniva delivery method detected, will register shipment later");
-                        // Shipment registration is handled by a separate process
-                    }
-                }
-            }
-        } else {
-            logMessage("Payment status is not COMPLETED, no order processing needed", $status);
-            
-            // Update payment status if order exists
-            if ($reference) {
-                $existingOrderResult = supabaseRequest(
-                    "/rest/v1/orders?reference=eq.$reference",
+                // Create or update payment record
+                $existingPaymentResult = supabaseRequest(
+                    "/rest/v1/order_payments?order_id=eq.$orderId&transaction_id=eq.$transactionId",
                     'GET'
                 );
                 
-                if ($existingOrderResult['status'] === 200 && !empty($existingOrderResult['data'])) {
-                    $orderId = $existingOrderResult['data'][0]['id'];
-                    
-                    // Create or update payment record
-                    $existingPaymentResult = supabaseRequest(
-                        "/rest/v1/order_payments?order_id=eq.$orderId&transaction_id=eq.$transactionId",
-                        'GET' 
+                $paymentData = [
+                    'order_id' => $orderId,
+                    'transaction_id' => $transactionId,
+                    'payment_method' => $data['method'] ?? 'unknown',
+                    'amount' => $data['amount'],
+                    'currency' => $data['currency'],
+                    'status' => $status
+                ];
+                
+                if ($existingPaymentResult['status'] === 200 && !empty($existingPaymentResult['data'])) {
+                    // Update existing payment
+                    $paymentId = $existingPaymentResult['data'][0]['id'];
+                    $paymentResult = supabaseRequest(
+                        "/rest/v1/order_payments?id=eq.$paymentId",
+                        'PATCH',
+                        $paymentData
                     );
-                    
-                    $paymentData = [
-                        'order_id' => $orderId,
-                        'transaction_id' => $transactionId ?? $reference,
-                        'payment_method' => isset($data['method']) ? $data['method'] : 'unknown',
-                        'amount' => $data['amount'],
-                        'currency' => $data['currency'],
-                        'status' => $status
-                    ];
-                    
-                    if ($existingPaymentResult['status'] === 200 && !empty($existingPaymentResult['data'])) {
-                        // Update existing payment
-                        $paymentId = $existingPaymentResult['data'][0]['id'];
-                        $paymentResult = supabaseRequest(
-                            "/rest/v1/order_payments?id=eq.$paymentId",
-                            'PATCH',
-                            $paymentData
-                        );
-                    } else {
-                        // Create new payment record
-                        $paymentResult = supabaseRequest(
-                            "/rest/v1/order_payments",
-                            'POST',
-                            $paymentData
-                        );
-                    }
-                    
-                    if ($paymentResult['status'] !== 201 && $paymentResult['status'] !== 200 && $paymentResult['status'] !== 204) {
-                        logMessage("Failed to create/update payment record", $paymentResult);
-                    } else {
-                        logMessage("Payment record created/updated successfully");
-                    }
+                } else {
+                    // Create new payment record
+                    $paymentResult = supabaseRequest(
+                        "/rest/v1/order_payments",
+                        'POST',
+                        $paymentData
+                    );
+                }
+                
+                if ($paymentResult['status'] !== 201 && $paymentResult['status'] !== 200 && $paymentResult['status'] !== 204) {
+                    logMessage("Failed to create/update payment record", $paymentResult);
+                } else {
+                    logMessage("Payment record created/updated successfully");
                 }
             }
         }
-        
-        // Return success response
-        echo json_encode([
-            'status' => 'success',
-            'message' => 'Payment notification received and processed successfully: ' . $status,
-            'transactionId' => $transactionId,
-            'reference' => $reference
-        ]);
-        
-    } catch (Exception $e) {
-        logMessage("Error fetching transaction details", $e->getMessage());
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to fetch transaction details']);
-        exit();
     }
-} catch (Exception $e) {
+    
+    // Return success response
+    echo json_encode([
+        'status' => 'success',
+        'message' => 'Payment notification received and processed successfully',
+        'transactionId' => $transactionId,
+        'reference' => $reference
+    ]);
+    
+} catch (\Exception $e) {
     logMessage("Exception", $e->getMessage());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
