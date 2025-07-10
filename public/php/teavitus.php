@@ -20,10 +20,10 @@ function logMessage($message, $data = null) {
        $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
    }
    
-   $result = file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
-   if ($result === false) {
-       error_log("Failed to write to log file: $logFile");
-   }
+   file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+    if ($result === false) {
+        error_log("Failed to write to log file: $logFile");
+    }
 }
 
 // Log all incoming data for debugging
@@ -53,8 +53,10 @@ $testMode = false; // Set to false for production
 try {
     $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
 
-    // Check if required parameters exist
+    // Verify the notification
     $request = $_POST;
+
+    // Check if required parameters exist
     if (!isset($request['json']) || !isset($request['mac'])) {
         logMessage("Puuduvad vajalikud parameetrid (json või mac)", $request);
         http_response_code(400);
@@ -62,6 +64,11 @@ try {
         exit();
     }
     
+    logMessage("MAC signatuur edukalt kontrollitud");
+    
+    // Extract the notification data
+    $data = $MK->extractRequestData($request);
+        exit();
     logMessage("Kontrollime MAC signatuuri", $request);
     
     $isValid = $MK->verifyMac($request);
@@ -80,9 +87,9 @@ try {
     logMessage("Andmed edukalt ekstraktitud", $data);
     
     // Get the transaction ID
-    $transactionId = isset($data->transaction) ? $data->transaction : null;
-    $reference = isset($data->reference) ? $data->reference : null;
-    $status = isset($data->status) ? $data->status : null;
+    $transactionId = isset($data['transaction']) ? $data['transaction'] : null;
+    $reference = isset($data['reference']) ? $data['reference'] : null;
+    $status = isset($data['status']) ? $data['status'] : null;
     
     logMessage("Tehingu andmed", [
         'transactionId' => $transactionId,
@@ -102,58 +109,47 @@ try {
         $transaction = $MK->getTransaction($transactionId);
         logMessage("Tehingu detailid edukalt laaditud", $transaction);
         
-        try {
-            // Process the order in database
-            if ($status === 'COMPLETED') {
-                logMessage("Makse on COMPLETED staatuses, töötleme tellimust");
-                
-                // Extract merchant data
-                $merchantData = null;
-                if (isset($transaction->transaction->merchant_data)) {
-                    $merchantData = json_decode($transaction->transaction->merchant_data, true);
-                    if (json_last_error() !== JSON_ERROR_NONE) {
-                        logMessage("Merchant data JSON decode error", json_last_error_msg());
-                        $merchantData = [];
-                    }
-                } else {
+        // Process the order in database
+        if ($status === 'COMPLETED') {
+            logMessage("Makse on COMPLETED staatuses, töötleme tellimust");
+            
+            // Extract merchant data
+            $merchantData = null;
+            if (isset($transaction->transaction->merchant_data)) {
+                $merchantData = json_decode($transaction->transaction->merchant_data, true);
+                if (json_last_error() !== JSON_ERROR_NONE) {
+                    logMessage("Merchant data JSON decode error", json_last_error_msg());
                     $merchantData = [];
                 }
-                
-                logMessage("Kaupmeheandmed", $merchantData);
-                
-                // Process the order
-                $success = processOrder($transaction, $data);
-                
-                if ($success) {
-                    logMessage("Tellimus edukalt töödeldud", [
-                        'reference' => $reference,
-                        'status' => $status,
-                        'amount' => $data->amount ?? null,
-                        'currency' => $data->currency ?? null
-                    ]);
-                    echo json_encode(['success' => true, 'message' => 'Order processed successfully']);
-                } else {
-                    logMessage("Tellimuse töötlemine ebaõnnestus");
-                    http_response_code(500);
-                    echo json_encode(['error' => 'Order processing failed']);
-                }
             } else {
-                logMessage("Makse ei ole COMPLETED staatuses", [
-                    'status' => $status,
-                    'reference' => $reference
-                ]);
-                
-                // Return success response but note the status
-                echo json_encode([
-                    'status' => 'success',
-                    'message' => 'Payment notification received but status is not COMPLETED',
-                    'payment_status' => $status
-                ]);
+                $merchantData = [];
             }
-        } catch (Exception $e) {
-            logMessage("Viga tellimuse töötlemisel", $e->getMessage());
-            http_response_code(500);
-            echo json_encode(['error' => 'Error processing order: ' . $e->getMessage()]);
+            
+            logMessage("Kaupmeheandmed", $merchantData);
+            
+            // Process the order
+            $success = processOrder($transaction, $data);
+            
+            if ($success) {
+                logMessage("Tellimus edukalt töödeldud");
+                echo json_encode(['success' => true, 'message' => 'Order processed successfully']);
+            } else {
+                logMessage("Tellimuse töötlemine ebaõnnestus");
+                http_response_code(500);
+                echo json_encode(['error' => 'Order processing failed']);
+            }
+        } else {
+            logMessage("Makse ei ole COMPLETED staatuses", [
+                'status' => $status,
+                'reference' => $reference
+            ]);
+            
+            // Return success response but note the status
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Payment notification received but status is not COMPLETED',
+                'payment_status' => $status
+            ]);
         }
     } catch (\Exception $e) {
         logMessage("Viga tehingu detailide laadimisel", $e->getMessage());
@@ -177,7 +173,7 @@ function processOrder($transactionData, $paymentData) {
         
         // Extract merchant data
         $merchantData = [];
-        if (isset($transactionData->transaction) && isset($transactionData->transaction->merchant_data)) {
+        if (isset($transactionData->transaction->merchant_data)) {
             $merchantData = json_decode($transactionData->transaction->merchant_data, true);
             if (json_last_error() !== JSON_ERROR_NONE) {
                 logMessage("Error decoding merchant data", json_last_error_msg());
@@ -186,7 +182,7 @@ function processOrder($transactionData, $paymentData) {
         }
         
         logMessage("Extracted merchant data", $merchantData);
-        logMessage("Transaction reference", isset($transactionData->transaction) ? ($transactionData->transaction->reference ?? 'no reference') : 'no transaction data');
+        logMessage("Transaction reference", $transactionData->transaction->reference ?? 'no reference');
         
         // Extract customer info
         $customerName = $merchantData['customer_name'] ?? '';
@@ -200,8 +196,8 @@ function processOrder($transactionData, $paymentData) {
         $orderNumber = generateOrderNumber();
         logMessage("Generated order number", $orderNumber);
         
-        // Check if order already exists with this reference 
-        $orderReference = isset($transactionData->transaction) ? ($transactionData->transaction->reference ?? '') : ($paymentData['reference'] ?? '');
+        // Check if order already exists with this reference
+        $orderReference = $transactionData->transaction->reference ?? '';
         logMessage("Checking for existing order with reference", $orderReference);
 
         // Define supabaseRequest function
@@ -285,8 +281,8 @@ function processOrder($transactionData, $paymentData) {
             'shipping_city' => $merchantData['shipping_city'] ?? '',
             'shipping_postal_code' => $merchantData['shipping_postal_code'] ?? '',
             'shipping_country' => $merchantData['shipping_country'] ?? 'Estonia',
-            'total_amount' => isset($transactionData->transaction) ? $transactionData->transaction->amount : ($paymentData['amount'] ?? 0),
-            'currency' => isset($transactionData->transaction) ? $transactionData->transaction->currency : ($paymentData['currency'] ?? 'EUR'),
+            'total_amount' => $transactionData->transaction->amount,
+            'currency' => $transactionData->transaction->currency,
             'status' => $orderStatus,
             'notes' => $merchantData['notes'] ?? '',
             'order_number' => $orderNumber,
@@ -404,11 +400,11 @@ function processOrder($transactionData, $paymentData) {
         if ($orderId) {
             $paymentData = [
                 'order_id' => $orderId,
-                'transaction_id' => isset($paymentData['transaction']) ? $paymentData['transaction'] : $transactionId,
-                'payment_method' => isset($paymentData['method']) ? $paymentData['method'] : (isset($transactionData->transaction) ? $transactionData->transaction->method : 'unknown'),
-                'amount' => isset($paymentData['amount']) ? $paymentData['amount'] : (isset($transactionData->transaction) ? $transactionData->transaction->amount : 0),
-                'currency' => isset($paymentData['currency']) ? $paymentData['currency'] : (isset($transactionData->transaction) ? $transactionData->transaction->currency : 'EUR'),
-                'status' => isset($paymentData['status']) ? $paymentData['status'] : 'PENDING'
+                'transaction_id' => $paymentData['transaction'] ?? $transactionId,
+                'payment_method' => $paymentData['method'] ?? $transactionData->transaction->method ?? 'unknown',
+                'amount' => $paymentData['amount'] ?? $transactionData->transaction->amount,
+                'currency' => $paymentData['currency'] ?? $transactionData->transaction->currency,
+                'status' => $paymentData['status'] ?? 'PENDING'
             ];
             
             logMessage("Creating payment record", $paymentData);
@@ -426,7 +422,7 @@ function processOrder($transactionData, $paymentData) {
         }
         
         // Send confirmation email if payment is completed
-        if ((isset($paymentData['status']) && $paymentData['status'] === 'COMPLETED') && !empty($customerEmail)) {
+        if ($paymentData['status'] === 'COMPLETED' && !empty($customerEmail)) {
             logMessage("Sending confirmation email to customer", $customerEmail);
             $subject = "Teie tellimus #{$orderNumber} on kinnitatud - Leen.ee";
             
@@ -456,7 +452,7 @@ function processOrder($transactionData, $paymentData) {
                         <p><strong>Nimi:</strong> {$customerName}</p>
                         <p><strong>E-post:</strong> {$customerEmail}</p>
                         <p><strong>Telefon:</strong> {$customerPhone}</p>
-                        <p><strong>Summa:</strong> {$orderData['total_amount']} {$orderData['currency']}</p>
+                        <p><strong>Summa:</strong> {$transactionData->transaction->amount} {$transactionData->transaction->currency}</p>
                         
                         <!-- Display Omniva parcel machine info if applicable -->";
             
@@ -482,7 +478,7 @@ function processOrder($transactionData, $paymentData) {
             }
             
             $message .= "
-                    <p class='total'>Kokku: {$orderData['total_amount']} {$orderData['currency']}</p>
+                    <p class='total'>Kokku: {$transactionData->transaction->amount} {$transactionData->transaction->currency}</p>
                     
                     <p>Täname, et valisite Leen.ee! Kui teil on küsimusi, võtke meiega ühendust aadressil leen@leen.ee.</p>
                     
