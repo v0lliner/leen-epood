@@ -2,6 +2,8 @@
  * Debug utilities for troubleshooting image display issues
  */
 
+import { supabase } from './supabase/client.js';
+
 export const debugImageIssues = {
   /**
    * Test if Supabase connection works
@@ -31,14 +33,14 @@ export const debugImageIssues = {
   async testStorageAccess() {
     try {
       console.log('Testing storage bucket access');
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/storage/v1/bucket/product-images/object/list`, {
-        headers: {
-          'apikey': import.meta.env.VITE_SUPABASE_ANON_KEY
-        }
-      });
+      const { data, error } = await supabase.storage.from('product-images').list();
       
-      const data = await response.json();
-      console.log('✅ Storage bucket test:', { status: response.status, data });
+      if (error) {
+        console.error('❌ Storage bucket access failed:', error);
+        return { success: false, error: error.message };
+      }
+      
+      console.log('✅ Storage bucket test:', { success: true, data });
       return { success: true, data };
     } catch (error) {
       console.error('❌ Storage bucket access failed:', error);
@@ -120,27 +122,6 @@ export const debugImageIssues = {
   checkCSP() {
     // Check if we're in a browser environment
     if (typeof document === 'undefined') return { checked: false };
-
-    // Try to create a test image from Supabase
-    const testImg = document.createElement('img');
-    testImg.style.display = 'none';
-    testImg.src = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/test-image.jpg`;
-    
-    // Listen for errors
-    let hasError = false;
-    const errorHandler = () => {
-      hasError = true;
-      console.error('❌ CSP test image failed to load - likely CSP issue');
-    };
-    
-    testImg.addEventListener('error', errorHandler);
-    document.body.appendChild(testImg);
-    
-    // Clean up
-    setTimeout(() => {
-      testImg.removeEventListener('error', errorHandler);
-      document.body.removeChild(testImg);
-    }, 1000);
     
     // Check for CSP meta tag
     const cspMeta = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
@@ -150,8 +131,7 @@ export const debugImageIssues = {
       checked: true,
       hasCSPMetaTag: !!cspMeta,
       cspContent,
-      testImageError: hasError,
-      recommendation: hasError ? 'Add Supabase domain to img-src directive in CSP' : 'No CSP issues detected'
+      recommendation: 'CSP check completed - verify image loading manually if issues persist'
     };
   },
 
