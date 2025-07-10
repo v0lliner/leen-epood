@@ -9,6 +9,7 @@
 // Function to load environment variables from .env file
 function loadEnvFile($path) {
     if (!file_exists($path)) {
+        error_log("Warning: .env file not found at $path");
         return false;
     }
     
@@ -41,10 +42,31 @@ function loadEnvFile($path) {
 }
 
 // Try to load .env file from project root
-$envPath = __DIR__ . '/../../.env';
-$loaded = loadEnvFile($envPath);
+$envPaths = [
+    __DIR__ . '/../../../.env',  // One level up from project root
+    __DIR__ . '/../../.env',     // Project root
+    __DIR__ . '/../.env'         // PHP directory
+];
 
-if (!$loaded) {
-    // Log that .env file was not found
-    error_log("Warning: .env file not found at $envPath");
+$loaded = false;
+foreach ($envPaths as $envPath) {
+    if (loadEnvFile($envPath)) {
+        error_log("Successfully loaded environment variables from $envPath");
+        $loaded = true;
+        break;
+    }
+}
+
+// Check if critical environment variables are set
+$criticalVars = ['SUPABASE_SERVICE_ROLE_KEY', 'MAKSEKESKUS_SHOP_ID', 'MAKSEKESKUS_PUBLIC_KEY', 'MAKSEKESKUS_PRIVATE_KEY'];
+$missingVars = [];
+
+foreach ($criticalVars as $var) {
+    if (!getenv($var)) {
+        $missingVars[] = $var;
+    }
+}
+
+if (!empty($missingVars)) {
+    error_log("Warning: Missing critical environment variables: " . implode(', ', $missingVars));
 }

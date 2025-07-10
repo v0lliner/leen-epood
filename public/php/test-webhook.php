@@ -40,14 +40,14 @@ $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
 
 // Create test data
 $testReference = 'TEST-' . date('YmdHis');
-$testAmount = 99.99;
+$testAmount = 0.20; // Use a small amount for testing
 $testStatus = 'COMPLETED';
 
 // Create JSON data for the notification
 $jsonData = [
     'transaction' => $testReference,
     'status' => $testStatus,
-    'amount' => $testAmount,
+    'amount' => (string)$testAmount, // Convert to string to match real Maksekeskus format
     'currency' => 'EUR',
     'reference' => $testReference,
     'method' => 'card',
@@ -66,7 +66,7 @@ $jsonData = [
             [
                 'id' => '123e4567-e89b-12d3-a456-426614174000',
                 'title' => 'Test Product',
-                'price' => $testAmount,
+                'price' => (float)$testAmount, // Convert to float to match expected format
                 'quantity' => 1
             ]
         ]
@@ -86,6 +86,12 @@ logMessage("Starting webhook test", $testPayload);
 
 // Send the test notification to the payment-notification.php endpoint
 $ch = curl_init('http://' . $_SERVER['HTTP_HOST'] . '/php/payment-notification.php');
+
+// Set verbose mode for debugging
+$verbose = fopen('php://temp', 'w+');
+curl_setopt($ch, CURLOPT_VERBOSE, true);
+curl_setopt($ch, CURLOPT_STDERR, $verbose);
+
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $testPayload);
@@ -95,6 +101,12 @@ curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $error = curl_error($ch);
+
+// Get verbose information
+rewind($verbose);
+$verboseLog = stream_get_contents($verbose);
+fclose($verbose);
+logMessage("Verbose curl output", $verboseLog);
 
 curl_close($ch);
 
@@ -113,8 +125,16 @@ echo "<p>HTTP Code: $httpCode</p>";
 if ($error) {
     echo "<p>Error: $error</p>";
 } else {
-    echo "<pre>" . json_encode(json_decode($response), JSON_PRETTY_PRINT) . "</pre>";
+    echo "<pre>" . htmlspecialchars($response) . "</pre>";
+    echo "<h3>Parsed Response:</h3>";
+    echo "<pre>" . json_encode(json_decode($response, true), JSON_PRETTY_PRINT) . "</pre>";
 }
+
+echo "<h2>Check Logs</h2>";
+echo "<p>Check the following log files for detailed information:</p>";
+echo "<ul>";
+echo "<li><a href='/php/check-webhook-logs.php' target='_blank'>View all webhook logs</a></li>";
+echo "</ul>";
 echo "<h2>Logs</h2>";
 echo "<p>Test log: $logFile</p>";
 echo "<p>Payment notification log: " . $logDir . "/payment_notification.log</p>";

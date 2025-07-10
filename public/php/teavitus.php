@@ -397,13 +397,36 @@ try {
     // Return success response
     echo json_encode([
         'status' => 'success',
-        'message' => 'Payment notification received and processed successfully',
+        'message' => 'Payment notification received and processed successfully. Transaction ID: ' . $transactionId,
         'transactionId' => $transactionId,
         'reference' => $reference
     ]);
     
+    // Make sure logs are flushed before script ends
+    logMessage("Payment processing completed successfully for transaction: $transactionId, reference: $reference");
+    
+    // Force log file write by closing and reopening
+    if (defined('PHP_SAPI') && PHP_SAPI === 'fpm-fcgi') {
+        // For FastCGI, flush output buffer
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+    }
+    
 } catch (\Exception $e) {
     logMessage("Exception", $e->getMessage());
+    logMessage("Exception trace", $e->getTraceAsString());
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
+    
+    // Force log file write by closing and reopening
+    if (defined('PHP_SAPI') && PHP_SAPI === 'fpm-fcgi') {
+        // For FastCGI, flush output buffer
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        }
+    }
 }
+
+// Final log message to ensure logging completes
+logMessage("Script execution completed");
