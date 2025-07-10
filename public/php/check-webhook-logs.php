@@ -9,11 +9,9 @@ header('Content-Type: text/html; charset=UTF-8');
 // Define log files to check
 $logFiles = [
     'payment_notification.log' => __DIR__ . '/../../logs/payment_notification.log',
-    'payment_notification_redirect.log' => __DIR__ . '/../../logs/payment_notification_redirect.log',
     'maksekeskus_webhook_test.log' => __DIR__ . '/../../logs/maksekeskus_webhook_test.log',
     'webhook_simulator.log' => __DIR__ . '/../../logs/webhook_simulator.log',
-    'payment_log.txt' => __DIR__ . '/payment_log.txt',
-    'process_payment.log' => __DIR__ . '/../../logs/process_payment.log'
+    'payment_log.txt' => __DIR__ . '/payment_log.txt'
 ];
 
 // Function to read the last N lines of a file
@@ -186,60 +184,8 @@ foreach ($logFiles as $name => $path) {
 
 // Add links to test tools
 echo "<h2>Testimise tööriistad</h2>";
-echo "<p><a href='webhook-simulator.php' target='_blank'>Käivita webhook simulaator</a> - Saadab testpäringu maksekeskuse teavituse testimiseks</p>";
-echo "<p><a href='maksekeskus-test.php' target='_blank'>Testi maksekeskus-test.php endpointi</a> - Kontrollib, kas endpoint on kättesaadav</p>";
-echo "<p><a href='debug-notify.php' target='_blank'>Käivita debug-notify.php</a> - Simuleerib Maksekeskuse teavitust payment-notification.php skriptile</p>";
-echo "<p><a href='test-webhook.php' target='_blank'>Käivita test-webhook.php</a> - Teine simulaator maksekeskuse teavituse testimiseks</p>";
-echo "<p><a href='test-makse-tagastus.php' target='_blank'>Käivita test-makse-tagastus.php</a> - Simuleerib makse tagastust</p>";
-
-// Add file permissions check
-echo "<h2>Logifailide õigused</h2>";
-echo "<table border='1' cellpadding='5'>";
-echo "<tr><th>Fail</th><th>Eksisteerib</th><th>Kirjutatav</th><th>Õigused</th><th>Omanik</th></tr>";
-
-foreach ($logFiles as $name => $path) {
-    $exists = file_exists($path);
-    $writable = $exists ? is_writable($path) : false;
-    $perms = $exists ? substr(sprintf('%o', fileperms($path)), -4) : 'N/A';
-    $owner = $exists ? (function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($path))['name'] : fileowner($path)) : 'N/A';
-    
-    echo "<tr>";
-    echo "<td>$name</td>";
-    echo "<td>" . ($exists ? '✅' : '❌') . "</td>";
-    echo "<td>" . ($writable ? '✅' : '❌') . "</td>";
-    echo "<td>$perms</td>";
-    echo "<td>$owner</td>";
-    echo "</tr>";
-}
-
-echo "</table>";
-
-// Add directory permissions check
-echo "<h2>Kataloogide õigused</h2>";
-$directories = [
-    'logs' => __DIR__ . '/../../logs',
-    'php' => __DIR__ . '/..',
-    'project' => __DIR__ . '/../..'
-];
-
-echo "<table border='1' cellpadding='5'>";
-echo "<tr><th>Kataloog</th><th>Eksisteerib</th><th>Kirjutatav</th><th>Õigused</th><th>Omanik</th></tr>";
-
-foreach ($directories as $name => $path) {
-    $exists = is_dir($path);
-    $writable = $exists ? is_writable($path) : false;
-    $perms = $exists ? substr(sprintf('%o', fileperms($path)), -4) : 'N/A';
-    $owner = $exists ? (function_exists('posix_getpwuid') ? posix_getpwuid(fileowner($path))['name'] : fileowner($path)) : 'N/A';
-    
-    echo "<tr>";
-    echo "<td>$name</td>";
-    echo "<td>" . ($exists ? '✅' : '❌') . "</td>";
-    echo "<td>" . ($writable ? '✅' : '❌') . "</td>";
-    echo "<td>$perms</td>";
-    echo "<td>$owner</td>";
-    echo "</tr>";
-}
-
-echo "</table>";
+echo "<p><a href='webhook-simulator.php'>Käivita webhook simulaator</a> - Saadab testpäringu maksekeskuse teavituse testimiseks</p>";
+echo "<p><a href='maksekeskus-test.php'>Testi maksekeskus-test.php endpointi</a> - Kontrollib, kas endpoint on kättesaadav</p>";
+echo "<p><a href='debug-notify.php'>Käivita debug-notify.php</a> - Simuleerib Maksekeskuse teavitust payment-notification.php skriptile</p>";
 
 echo "</body></html>";

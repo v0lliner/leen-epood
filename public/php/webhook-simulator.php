@@ -32,7 +32,7 @@ use Maksekeskus\Maksekeskus;
 
 // Create a test notification payload
 $testReference = 'TEST-' . date('YmdHis');
-$testAmount = 0.20; // Use a small amount for testing
+$testAmount = 99.99;
 
 // Initialize Maksekeskus client for creating a valid MAC
 $shopId = getenv('MAKSEKESKUS_SHOP_ID') ?: '4e2bed9a-aa24-4b87-801b-56c31c535d36';
@@ -46,7 +46,7 @@ $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
 $jsonData = [
     'transaction' => $testReference,
     'status' => 'COMPLETED',
-    'amount' => (string)$testAmount, // Convert to string to match real Maksekeskus format
+    'amount' => $testAmount,
     'currency' => 'EUR',
     'reference' => $testReference,
     'method' => 'card',
@@ -65,7 +65,7 @@ $jsonData = [
             [
                 'id' => '123e4567-e89b-12d3-a456-426614174000',
                 'title' => 'Test Product',
-                'price' => (float)$testAmount, // Convert to float to match expected format
+                'price' => $testAmount,
                 'quantity' => 1
             ]
         ]
@@ -90,12 +90,6 @@ $targetEndpoint = isset($_GET['target']) && $_GET['target'] === 'production'
 
 // Send the test notification to the target endpoint
 $ch = curl_init('http://' . $_SERVER['HTTP_HOST'] . $targetEndpoint);
-
-// Set verbose mode for debugging
-$verbose = fopen('php://temp', 'w+');
-curl_setopt($ch, CURLOPT_VERBOSE, true);
-curl_setopt($ch, CURLOPT_STDERR, $verbose);
-
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_POST, true);
 curl_setopt($ch, CURLOPT_POSTFIELDS, $testPayload);
@@ -105,12 +99,6 @@ curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $error = curl_error($ch);
-
-// Get verbose information
-rewind($verbose);
-$verboseLog = stream_get_contents($verbose);
-fclose($verbose);
-simulatorLog("Verbose curl output", $verboseLog);
 
 curl_close($ch);
 
@@ -129,9 +117,7 @@ echo "<p>HTTP Code: $httpCode</p>";
 if ($error) {
     echo "<p>Error: $error</p>";
 } else {
-    echo "<pre>" . htmlspecialchars($response) . "</pre>";
-    echo "<h3>Parsed Response:</h3>";
-    echo "<pre>" . json_encode(json_decode($response, true), JSON_PRETTY_PRINT) . "</pre>";
+    echo "<pre>" . json_encode(json_decode($response), JSON_PRETTY_PRINT) . "</pre>";
 }
 
 // Show links to logs
@@ -140,12 +126,6 @@ echo "<p>Simulator log: $logFile</p>";
 echo "<p>Target endpoint log: " . $logDir . ($targetEndpoint === '/php/payment-notification.php' ? '/payment_notification.log' : '/maksekeskus_webhook_test.log') . "</p>";
 
 // Add links to test different endpoints
-echo "<h2>Check Logs</h2>";
-echo "<p>Check the following log files for detailed information:</p>";
-echo "<ul>";
-echo "<li><a href='/php/check-webhook-logs.php' target='_blank'>View all webhook logs</a></li>";
-echo "</ul>";
-
 echo "<h2>Test Options</h2>";
 echo "<p><a href='webhook-simulator.php?target=test'>Test maksekeskus-test.php endpoint</a></p>";
 echo "<p><a href='webhook-simulator.php?target=production'>Test payment-notification.php endpoint</a></p>";
