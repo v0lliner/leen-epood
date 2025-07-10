@@ -146,20 +146,19 @@ try {
     logMessage("Extracted data", $data);
     
     // Get the transaction ID and reference
-    $transactionId = isset($data->transaction) ? $data->transaction : null;
-    $reference = isset($data->reference) ? $data->reference : null;
-    $status = isset($data->status) ? $data->status : null;
-    $status = $data->status ?? null;
+    $transactionId = isset($data['transaction']) ? $data['transaction'] : null;
+    $reference = isset($data['reference']) ? $data['reference'] : null;
+    $status = isset($data['status']) ? $data['status'] : null;
 
     if (!$transactionId) {
         logMessage("Warning: No transaction ID in notification, using reference instead", $data);
+        // Continue processing with reference if transaction ID is missing
         // Continue processing with reference if transaction ID is missing
     } else {
         logMessage("Transaction ID", $transactionId);
     }
     
     logMessage("Reference", $reference);
-    logMessage("Status", $status);
     logMessage("Status", $status);
     
     // Fetch the full transaction details from Maksekeskus
@@ -177,12 +176,16 @@ try {
             $merchantData = json_decode($transaction->transaction->merchant_data ?? '{}', true);
         } else {
             // If no transaction details, use the merchant_data from the notification
-            $merchantData = json_decode($data->merchant_data ?? '{}', true);
+            $merchantData = json_decode($data['merchant_data'] ?? '{}', true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                logMessage("Error decoding merchant data: " . json_last_error_msg());
+                $merchantData = [];
+            }
         }
         logMessage("Merchant data", $merchantData);
         
         // Process the order if status is COMPLETED
-        if ($data->status === 'COMPLETED') {
+        if ($status === 'COMPLETED') {
             logMessage("Payment is COMPLETED, processing order");
             
             // Check if order already exists by reference
@@ -234,8 +237,8 @@ try {
                         'shipping_city' => $shippingCity,
                         'shipping_postal_code' => $shippingPostalCode,
                         'shipping_country' => $shippingCountry,
-                        'total_amount' => $data->amount,
-                        'currency' => $data->currency,
+                        'total_amount' => $data['amount'],
+                        'currency' => $data['currency'],
                         'status' => 'PAID',
                         'reference' => $reference,
                         'omniva_parcel_machine_id' => $omnivaParcelMachineId,
@@ -285,10 +288,10 @@ try {
                         $paymentData = [
                             'order_id' => $orderId,
                             'transaction_id' => $transactionId ?? $reference,
-                            'payment_method' => $data->method ?? 'unknown',
-                            'amount' => $data->amount,
-                            'currency' => $data->currency,
-                            'status' => $data->status
+                            'payment_method' => isset($data['method']) ? $data['method'] : 'unknown',
+                            'amount' => $data['amount'],
+                            'currency' => $data['currency'],
+                            'status' => $status
                         ];
                     
                         $paymentResult = supabaseRequest(
@@ -335,10 +338,10 @@ try {
                     $paymentData = [
                         'order_id' => $orderId,
                         'transaction_id' => $transactionId ?? $reference,
-                        'payment_method' => $data->method ?? 'unknown',
-                        'amount' => $data->amount,
-                        'currency' => $data->currency,
-                        'status' => $data->status
+                        'payment_method' => isset($data['method']) ? $data['method'] : 'unknown',
+                        'amount' => $data['amount'],
+                        'currency' => $data['currency'],
+                        'status' => $status
                     ];
                     
                     if ($existingPaymentResult['status'] === 200 && !empty($existingPaymentResult['data'])) {
@@ -370,7 +373,7 @@ try {
         // Return success response
         echo json_encode([
             'status' => 'success',
-            'message' => 'Payment notification received and processed successfully: ' . $data->status,
+            'message' => 'Payment notification received and processed successfully: ' . $status,
             'transactionId' => $transactionId,
             'reference' => $reference
         ]);
