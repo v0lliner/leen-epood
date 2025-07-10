@@ -6,6 +6,21 @@ ini_set('display_errors', 0); // Don't display errors to users, but log them
 // Load environment variables
 require_once __DIR__ . '/env-loader.php';
 
+// Immediately check for critical environment variables after loading
+if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
+    logMessage("CRITICAL ERROR: SUPABASE_SERVICE_ROLE_KEY is not set in environment");
+    http_response_code(500);
+    echo json_encode(['error' => 'Server configuration error: Missing API credentials']);
+    exit();
+}
+
+if (!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) {
+    logMessage("CRITICAL ERROR: Maksekeskus credentials are not set in environment");
+    http_response_code(500);
+    echo json_encode(['error' => 'Server configuration error: Missing payment credentials']);
+    exit();
+}
+
 // Set up logging
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) {
@@ -43,7 +58,12 @@ use Maksekeskus\Maksekeskus;
 // Function to connect to Supabase via REST API
 function supabaseRequest($endpoint, $method = 'GET', $data = null) {
     $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
-    $supabaseKey = getenv('SUPABASE_SERVICE_ROLE_KEY');
+    $supabaseKey = getenv('SUPABASE_SERVICE_ROLE_KEY'); 
+    
+    if (!$supabaseKey) {
+        logMessage("ERROR: SUPABASE_SERVICE_ROLE_KEY is empty when making API request");
+        throw new Exception("API credentials not configured properly");
+    }
     
     $url = $supabaseUrl . $endpoint;
     
@@ -90,91 +110,21 @@ function supabaseRequest($endpoint, $method = 'GET', $data = null) {
 }
 
 // Check if we have the required environment variables
-if (!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) {
-    // Try to load from .env file if it exists
-    if (file_exists(__DIR__ . '/../../../.env')) {
-        $envFile = file_get_contents(__DIR__ . '/../../../.env');
-        
-        preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
-        if (isset($shopIdMatches[1])) {
-            putenv('MAKSEKESKUS_SHOP_ID=' . $shopIdMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_PUBLIC_KEY=([^\n]+)/', $envFile, $publicKeyMatches);
-        if (isset($publicKeyMatches[1])) {
-            putenv('MAKSEKESKUS_PUBLIC_KEY=' . $publicKeyMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_PRIVATE_KEY=([^\n]+)/', $envFile, $privateKeyMatches);
-        if (isset($privateKeyMatches[1])) {
-            putenv('MAKSEKESKUS_PRIVATE_KEY=' . $privateKeyMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_TEST_MODE=([^\n]+)/', $envFile, $testModeMatches);
-        if (isset($testModeMatches[1])) {
-            putenv('MAKSEKESKUS_TEST_MODE=' . $testModeMatches[1]);
-        }
-    }
-    
-    // If still not set, try alternate location
-    if ((!getenv('MAKSEKESKUS_SHOP_ID') || !getenv('MAKSEKESKUS_PUBLIC_KEY') || !getenv('MAKSEKESKUS_PRIVATE_KEY')) && 
-        file_exists(__DIR__ . '/../../.env')) {
-        $envFile = file_get_contents(__DIR__ . '/../../.env');
-        
-        preg_match('/MAKSEKESKUS_SHOP_ID=([^\n]+)/', $envFile, $shopIdMatches);
-        if (isset($shopIdMatches[1])) {
-            putenv('MAKSEKESKUS_SHOP_ID=' . $shopIdMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_PUBLIC_KEY=([^\n]+)/', $envFile, $publicKeyMatches);
-        if (isset($publicKeyMatches[1])) {
-            putenv('MAKSEKESKUS_PUBLIC_KEY=' . $publicKeyMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_PRIVATE_KEY=([^\n]+)/', $envFile, $privateKeyMatches);
-        if (isset($privateKeyMatches[1])) {
-            putenv('MAKSEKESKUS_PRIVATE_KEY=' . $privateKeyMatches[1]);
-        }
-        
-        preg_match('/MAKSEKESKUS_TEST_MODE=([^\n]+)/', $envFile, $testModeMatches);
-        if (isset($testModeMatches[1])) {
-            putenv('MAKSEKESKUS_TEST_MODE=' . $testModeMatches[1]);
-        }
-        
-        logMessage("Loaded Maksekeskus credentials from alternate location");
-    }
-}
-
-// Check if we have the required Supabase environment variables
-if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
-    // Try to load from .env file if it exists
-    if (file_exists(__DIR__ . '/../../../.env')) {
-        $envFile = file_get_contents(__DIR__ . '/../../../.env');
-        
-        preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
-        if (isset($matches[1])) {
-            putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
-        }
-    }
-    
-    // If still not set, try alternate location
-    if (!getenv('SUPABASE_SERVICE_ROLE_KEY') && file_exists(__DIR__ . '/../../.env')) {
-        $envFile = file_get_contents(__DIR__ . '/../../.env');
-        
-        preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
-        if (isset($matches[1])) {
-            putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
-            logMessage("Loaded SUPABASE_SERVICE_ROLE_KEY from alternate location");
-        }
-    }
-}
+// Log the environment variables for debugging (masked for security)
+logMessage("Environment check", [
+    'SUPABASE_SERVICE_ROLE_KEY' => getenv('SUPABASE_SERVICE_ROLE_KEY') ? 'SET (length: ' . strlen(getenv('SUPABASE_SERVICE_ROLE_KEY')) . ')' : 'NOT SET',
+    'MAKSEKESKUS_SHOP_ID' => getenv('MAKSEKESKUS_SHOP_ID') ? 'SET' : 'NOT SET',
+    'MAKSEKESKUS_PUBLIC_KEY' => getenv('MAKSEKESKUS_PUBLIC_KEY') ? 'SET' : 'NOT SET',
+    'MAKSEKESKUS_PRIVATE_KEY' => getenv('MAKSEKESKUS_PRIVATE_KEY') ? 'SET' : 'NOT SET',
+    'MAKSEKESKUS_TEST_MODE' => getenv('MAKSEKESKUS_TEST_MODE')
+]);
 
 // Main execution starts here
 try {
     // Initialize Maksekeskus client with your credentials
     $shopId = getenv('MAKSEKESKUS_SHOP_ID') ?: '4e2bed9a-aa24-4b87-801b-56c31c535d36';
     $publicKey = getenv('MAKSEKESKUS_PUBLIC_KEY') ?: 'wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM';
-    $privateKey = getenv('MAKSEKESKUS_PRIVATE_KEY') ?: 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ';
+    $privateKey = getenv('MAKSEKESKUS_PRIVATE_KEY') ?: 'WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ'; 
     $testMode = getenv('MAKSEKESKUS_TEST_MODE') === 'true'; // Default to false for production
 
     $MK = new Maksekeskus($shopId, $publicKey, $privateKey, $testMode);
@@ -280,7 +230,7 @@ try {
                 $orderData = [
                     'customer_name' => $customerName,
                     'customer_email' => (string)$customerEmail,
-                    'customer_phone' => (string)$customerPhone,
+                    'customer_phone' => $customerPhone ? (string)$customerPhone : null,
                     'shipping_address' => $shippingAddress,
                     'shipping_city' => $shippingCity,
                     'shipping_postal_code' => $shippingPostalCode,
@@ -298,7 +248,7 @@ try {
                 $orderResult = supabaseRequest(
                     "/rest/v1/orders",
                     'POST',
-                    $orderData
+                    $orderData 
                 );
             
                 if ($orderResult['status'] !== 201 && $orderResult['status'] !== 200) {
