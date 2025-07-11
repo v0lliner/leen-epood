@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 const ShippingAddressForm = ({ 
@@ -12,21 +12,22 @@ const ShippingAddressForm = ({
   const { t } = useTranslation();
   const [parcelMachines, setParcelMachines] = useState([]);
   const [loadingParcelMachines, setLoadingParcelMachines] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [parcelMachineError, setParcelMachineError] = useState('');
+  const parcelMachinesCache = useRef({});
+  const cacheExpiry = useRef({});
+  const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
 
-  // Fetch parcel machines when country changes
+  // Preload parcel machines data when component mounts
   useEffect(() => {
-    if (formData.shippingMethod === 'omniva') {
-      fetchParcelMachines();
-    }
-  }, [formData.country, formData.shippingMethod]);
-
-  const fetchParcelMachines = async () => {
-    setLoadingParcelMachines(true);
-    setParcelMachineError('');
-    
-    try {
-      // Convert country name to country code for API
+    // Preload Estonia's parcel machines by default
+    fetchParcelMachines('ee', true);
+  }, []);
+  
+  // Fetch parcel machines when country changes or shipping method becomes omniva
+  useEffect(() => {
+    if (formData.shippingMethod === 'omniva' && !initialLoading) {
+      // Convert country name to country code
       const countryMap = {
         'Estonia': 'ee',
         'Finland': 'fi',
@@ -35,7 +36,32 @@ const ShippingAddressForm = ({
       };
       
       const countryCode = countryMap[formData.country] || 'ee';
-      
+      fetchParcelMachines(countryCode);
+    }
+  }, [formData.country, formData.shippingMethod, initialLoading]);
+
+  const fetchParcelMachines = async (countryCode, isPreload = false) => {
+    if (isPreload) {
+      setInitialLoading(true);
+    } else {
+      setLoadingParcelMachines(true);
+    }
+    setParcelMachineError('');
+    
+    // Check if we have cached data that's still valid
+    const now = Date.now();
+    if (
+      parcelMachinesCache.current[countryCode] && 
+      cacheExpiry.current[countryCode] && 
+      now < cacheExpiry.current[countryCode]
+    ) {
+      setParcelMachines(parcelMachinesCache.current[countryCode]);
+      setLoadingParcelMachines(false);
+      if (isPreload) setInitialLoading(false);
+      return;
+    }
+    
+    try {      
       const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
       
       if (!response.ok) {
@@ -45,7 +71,13 @@ const ShippingAddressForm = ({
       const data = await response.json();
       
       if (data.success) {
-        setParcelMachines(data.parcelMachines || []);
+        const machines = data.parcelMachines || [];
+        
+        // Cache the data
+        parcelMachinesCache.current[countryCode] = machines;
+        cacheExpiry.current[countryCode] = now + CACHE_DURATION;
+        
+        setParcelMachines(machines);
       } else {
         throw new Error(data.error || 'Failed to load parcel machines');
       }
@@ -54,6 +86,7 @@ const ShippingAddressForm = ({
       setParcelMachineError(t('checkout.shipping.omniva.fetch_error'));
     } finally {
       setLoadingParcelMachines(false);
+      if (isPreload) setInitialLoading(false);
     }
   };
 
@@ -145,19 +178,19 @@ const ShippingAddressForm = ({
                 value={formData.omnivaParcelMachineId}
                 onChange={handleParcelMachineChange}
                 className={`form-input ${validationErrors.omnivaParcelMachineId ? 'has-error' : ''}`}
-                disabled={loadingParcelMachines}
+                disabled={loadingParcelMachines || initialLoading}
               >
                 {!formData.omnivaParcelMachineId && (
                   <option value="">{t('checkout.shipping.omniva.select_placeholder')}</option>
                 )}
                 {parcelMachines.map(machine => (
                   <option key={machine.id} value={machine.id}>
-                    {machine.name}
+                    {machine.name.replace(/^1\. eelistus\/Picapac pakiautomaat/, '').trim()}
                   </option>
                 ))}
               </select>
               
-              {loadingParcelMachines && (
+              {(loadingParcelMachines || initialLoading) && (
                 <div className="loading-message">{t('checkout.shipping.omniva.loading')}</div>
               )}
               
@@ -171,6 +204,12 @@ const ShippingAddressForm = ({
               
               {validationErrors.omnivaParcelMachineId && (
                 <div className="error-message">{validationErrors.omnivaParcelMachineId}</div>
+              )}
+              
+              {!loadingParcelMachines && !initialLoading && parcelMachines.length > 0 && (
+                <div className="info-message">
+                  {parcelMachines.length} pakiautomaati leitud
+                </div>
               )}
             </div>
           </div>
@@ -313,7 +352,7 @@ const ShippingAddressForm = ({
         
         .info-message {
           font-size: 0.85rem;
-          color: #666;
+          color: #28a745;
           margin-top: 8px;
         }
         

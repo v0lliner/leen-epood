@@ -25,6 +25,7 @@ const Checkout = () => {
   const [error, setError] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [isPageLoading, setIsPageLoading] = useState(true);
   
   // Get cart total
   const cartTotal = getTotalPrice();
@@ -49,7 +50,10 @@ const Checkout = () => {
   // Redirect to shop if cart is empty
   useEffect(() => {
     if (cartItems.length === 0) {
-      navigate('/epood');
+      // Only redirect if not in payment success/cancel flow
+      if (!status) {
+        navigate('/epood');
+      }
     }
     
     // Handle payment status from URL
@@ -62,6 +66,12 @@ const Checkout = () => {
         setPaymentStatus('cancelled');
       }
     }
+    
+    // Set page as loaded after a short delay to allow components to initialize
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 500);
+    return () => clearTimeout(timer);
   }, [cartItems, navigate, status, clearCart]);
   
   // Handle form submission
@@ -138,10 +148,10 @@ const Checkout = () => {
       <main>
         <section className="section-large">
           <div className="container">
-            <div className="loading-container">
+            {isPageLoading ? <div className="loading-container">
               <div className="loading-spinner"></div>
               <p>{t('admin.loading')}</p>
-            </div>
+            </div> : null}
           </div>
         </section>
       </main>
