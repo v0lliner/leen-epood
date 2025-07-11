@@ -1,4 +1,11 @@
 <?php
+/**
+ * Webhook log checker
+ * 
+ * This utility script checks the webhook logs to help diagnose
+ * issues with payment notifications.
+ */
+
 // Enable error reporting for development
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
@@ -8,10 +15,11 @@ header('Content-Type: text/html; charset=UTF-8');
 
 // Define log files to check
 $logFiles = [
-    'payment_notification.log' => __DIR__ . '/../../logs/payment_notification.log',
-    'maksekeskus_webhook_test.log' => __DIR__ . '/../../logs/maksekeskus_webhook_test.log',
-    'webhook_simulator.log' => __DIR__ . '/../../logs/webhook_simulator.log',
-    'payment_log.txt' => __DIR__ . '/payment_log.txt'
+    'payment_notification.log' => dirname(__DIR__) . '/logs/payment_notification.log',
+    'payment_redirect.log' => dirname(__DIR__) . '/logs/payment_redirect.log',
+    'webhook_simulator.log' => dirname(__DIR__) . '/logs/webhook_simulator.log',
+    'env_loader.log' => dirname(__DIR__) . '/logs/env_loader.log',
+    'payment_processor.log' => dirname(__DIR__) . '/logs/payment_processor.log'
 ];
 
 // Function to read the last N lines of a file
@@ -47,7 +55,7 @@ function extractReferences($content) {
 
 // Function to check if webhook is working
 function checkWebhookStatus($logContent) {
-    if (strpos($logContent, 'Notification received') !== false) {
+    if (strpos($logContent, 'Payment notification received') !== false) {
         return true;
     }
     return false;
@@ -63,7 +71,7 @@ function checkSignatureValidation($logContent) {
 
 // Function to check if content reached logs
 function checkContentLogged($logContent) {
-    if (strpos($logContent, 'Extracted data') !== false || 
+    if (strpos($logContent, 'Payment data extracted successfully') !== false || 
         strpos($logContent, 'Transaction details fetched') !== false) {
         return true;
     }
@@ -76,8 +84,51 @@ function getLastReference($logContent) {
     return !empty($references) ? end($references) : 'None found';
 }
 
+// Function to create/fix log files
+function fixLogFiles() {
+    global $logFiles;
+    
+    $logDir = dirname(__DIR__) . '/logs';
+    
+    // Create logs directory if it doesn't exist
+    if (!is_dir($logDir)) {
+        if (mkdir($logDir, 0777, true)) {
+            echo "<div class='status success'>Created logs directory: $logDir</div>";
+        } else {
+            echo "<div class='status failure'>Failed to create logs directory: $logDir</div>";
+            return;
+        }
+    } else {
+        echo "<div class='status success'>Logs directory already exists: $logDir</div>";
+        // Ensure directory is writable
+        chmod($logDir, 0777);
+    }
+    
+    // Create/check each log file
+    foreach ($logFiles as $name => $path) {
+        if (!file_exists($path)) {
+            if (touch($path)) {
+                chmod($path, 0666);
+                echo "<div class='status success'>Created log file: $name</div>";
+            } else {
+                echo "<div class='status failure'>Failed to create log file: $name</div>";
+            }
+        } else {
+            echo "<div class='status success'>Log file already exists: $name</div>";
+            // Ensure file is writable
+            chmod($path, 0666);
+        }
+    }
+}
+
+// Check if maintenance action was requested
+if (isset($_GET['action']) && $_GET['action'] === 'fix_logs') {
+    fixLogFiles();
+}
+
 // HTML output
-echo "<!DOCTYPE html>
+?>
+<!DOCTYPE html>
 <html>
 <head>
     <title>Maksekeskus Webhook Log Check</title>
@@ -87,6 +138,7 @@ echo "<!DOCTYPE html>
         .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
         .success { background-color: #d4edda; color: #155724; }
         .failure { background-color: #f8d7da; color: #721c24; }
+        .warning { background-color: #fff3cd; color: #856404; }
         .log-container { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
         pre { white-space: pre-wrap; overflow-x: auto; }
         .summary { background: #e9ecef; padding: 20px; border-radius: 5px; margin: 20px 0; }
@@ -94,17 +146,27 @@ echo "<!DOCTYPE html>
         table, th, td { border: 1px solid #ddd; }
         th, td { padding: 12px; text-align: left; }
         th { background-color: #f2f2f2; }
+        .maintenance { margin: 20px 0; padding: 15px; background-color: #e9ecef; border-radius: 5px; }
+        .btn { display: inline-block; padding: 10px 15px; background-color: #2f3e9c; color: white; text-decoration: none; border-radius: 5px; }
+        .btn:hover { background-color: #232d75; }
     </style>
 </head>
 <body>
-    <h1>Maksekeskus Webhook Log Check</h1>";
+    <h1>Maksekeskus Webhook Log Check</h1>
+    
+    <div class="maintenance">
+        <h2>Maintenance</h2>
+        <p>If you're having issues with logs not appearing, click the button below to create/fix log files:</p>
+        <a href="?action=fix_logs" class="btn">Create/Fix Log Files</a>
+    </div>
 
-// Summary section
-echo "<div class='summary'>";
-echo "<h2>Webhook Status Summary</h2>";
-echo "<table>";
-echo "<tr><th>Check</th><th>Status</th><th>Details</th></tr>";
+    <!-- Summary section -->
+    <div class="summary">
+        <h2>Webhook Status Summary</h2>
+        <table>
+            <tr><th>Check</th><th>Status</th><th>Details</th></tr>
 
+<?php
 // Initialize variables for overall status
 $webhookWorks = false;
 $signatureValidated = false;
@@ -151,41 +213,73 @@ echo "<tr><td>Sisu jõudis logidesse?</td><td class='" . ($contentLogged ? "succ
      ($contentLogged ? "Teavituse sisu on logitud" : "Teavituse sisu ei leitud logidest") . "</td></tr>";
 
 echo "<tr><td>Viimane reference</td><td colspan='2'><strong>$lastReference</strong></td></tr>";
-echo "</table>";
-echo "</div>";
+?>
+        </table>
+    </div>
 
-// Display log content
-foreach ($logFiles as $name => $path) {
-    echo "<h2>$name</h2>";
-    if (file_exists($path)) {
-        $logContent = tailFile($path);
-        $references = extractReferences($logContent);
-        
-        echo "<div class='log-container'>";
-        echo "<h3>Viimased kirjed</h3>";
-        echo "<pre>" . htmlspecialchars($logContent) . "</pre>";
-        
-        if (!empty($references)) {
-            echo "<h3>Leitud reference väärtused:</h3>";
-            echo "<ul>";
-            foreach ($references as $ref) {
-                echo "<li>" . htmlspecialchars($ref) . "</li>";
-            }
-            echo "</ul>";
-        } else {
-            echo "<p>Logist ei leitud ühtegi reference väärtust.</p>";
-        }
-        
-        echo "</div>";
-    } else {
-        echo "<div class='status failure'>Logifaili ei leitud: $path</div>";
-    }
-}
+    <!-- Directory and file status -->
+    <div class="summary">
+        <h2>Directory and File Status</h2>
+        <table>
+            <tr>
+                <th>Path</th>
+                <th>Exists</th>
+                <th>Permissions</th>
+                <th>Size</th>
+                <th>Last Modified</th>
+            </tr>
+            <tr>
+                <td><?php echo dirname(__DIR__) . '/logs'; ?></td>
+                <td><?php echo is_dir(dirname(__DIR__) . '/logs') ? '✅' : '❌'; ?></td>
+                <td><?php echo is_dir(dirname(__DIR__) . '/logs') ? substr(sprintf('%o', fileperms(dirname(__DIR__) . '/logs')), -4) : 'N/A'; ?></td>
+                <td>Directory</td>
+                <td><?php echo is_dir(dirname(__DIR__) . '/logs') ? date('Y-m-d H:i:s', filemtime(dirname(__DIR__) . '/logs')) : 'N/A'; ?></td>
+            </tr>
+            <?php foreach ($logFiles as $name => $path): ?>
+            <tr>
+                <td><?php echo $path; ?></td>
+                <td><?php echo file_exists($path) ? '✅' : '❌'; ?></td>
+                <td><?php echo file_exists($path) ? substr(sprintf('%o', fileperms($path)), -4) : 'N/A'; ?></td>
+                <td><?php echo file_exists($path) ? filesize($path) . ' bytes' : 'N/A'; ?></td>
+                <td><?php echo file_exists($path) ? date('Y-m-d H:i:s', filemtime($path)) : 'N/A'; ?></td>
+            </tr>
+            <?php endforeach; ?>
+        </table>
+    </div>
 
-// Add links to test tools
-echo "<h2>Testimise tööriistad</h2>";
-echo "<p><a href='webhook-simulator.php'>Käivita webhook simulaator</a> - Saadab testpäringu maksekeskuse teavituse testimiseks</p>";
-echo "<p><a href='maksekeskus-test.php'>Testi maksekeskus-test.php endpointi</a> - Kontrollib, kas endpoint on kättesaadav</p>";
-echo "<p><a href='debug-notify.php'>Käivita debug-notify.php</a> - Simuleerib Maksekeskuse teavitust payment-notification.php skriptile</p>";
+    <!-- Display log content -->
+    <?php foreach ($logFiles as $name => $path): ?>
+    <h2><?php echo $name; ?></h2>
+    <?php if (file_exists($path)): ?>
+        <div class="log-container">
+            <h3>Last 50 log entries</h3>
+            <pre><?php echo htmlspecialchars(tailFile($path)); ?></pre>
+            
+            <?php
+            $references = extractReferences(tailFile($path));
+            if (!empty($references)):
+            ?>
+            <h3>Found references:</h3>
+            <ul>
+                <?php foreach ($references as $ref): ?>
+                <li><?php echo htmlspecialchars($ref); ?></li>
+                <?php endforeach; ?>
+            </ul>
+            <?php else: ?>
+            <p>No references found in this log.</p>
+            <?php endif; ?>
+        </div>
+    <?php else: ?>
+        <div class="status failure">Log file not found: <?php echo $path; ?></div>
+    <?php endif; ?>
+    <?php endforeach; ?>
 
-echo "</body></html>";
+    <!-- Testing tools -->
+    <h2>Testing Tools</h2>
+    <ul>
+        <li><a href="webhook-simulator.php">Run webhook simulator</a> - Sends a test webhook notification</li>
+        <li><a href="webhook-simulator.php?target=production">Test production endpoint</a> - Tests the payment-notification.php endpoint</li>
+        <li><a href="test-webhook.php">Run test-webhook.php</a> - Simulates a Maksekeskus webhook with real API credentials</li>
+    </ul>
+</body>
+</html>
