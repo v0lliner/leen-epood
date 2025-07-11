@@ -35,7 +35,7 @@ try {
     $supabaseKey = getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');
     
     if (!$supabaseUrl || !$supabaseKey) {
-        throw new Exception('Missing Supabase credentials');
+        throw new Exception('Missing Supabase credentials. Please check your .env file.');
     }
     
     // Get active Maksekeskus configuration
@@ -75,7 +75,7 @@ try {
     $transactionData = [
         'amount' => $data['amount'],
         'currency' => 'EUR',
-        'reference' => uniqid('order_'),
+        'reference' => $data['reference'] ?? uniqid('order_'),
         'merchant_data' => json_encode([
             'customer_email' => $data['email'],
             'customer_name' => $data['firstName'] . ' ' . $data['lastName'],
@@ -86,13 +86,13 @@ try {
             'notes' => $data['notes'] ?? null
         ]),
         'return_url' => [
-            'url' => $data['success_url'] ?? 'https://leen.ee/checkout/success'
+            'url' => $data['success_url'] ?? 'https://leen.ee/makse/korras'
         ],
         'cancel_url' => [
-            'url' => $data['cancel_url'] ?? 'https://leen.ee/checkout'
+            'url' => $data['cancel_url'] ?? 'https://leen.ee/makse/katkestatud'
         ],
         'notification_url' => [
-            'url' => 'https://leen.ee/php/payment-notification'
+            'url' => 'https://leen.ee/php/teavitus'
         ]
     ];
     

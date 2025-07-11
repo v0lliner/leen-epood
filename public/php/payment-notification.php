@@ -2,7 +2,7 @@
 /**
  * Payment notification webhook
  * 
- * This endpoint receives payment notifications from Maksekeskus.
+ * This endpoint receives payment notifications from Maksekeskus and processes them.
  */
 
 // Set headers
@@ -64,6 +64,23 @@ try {
     
     // Log the notification
     error_log('Payment notification received: ' . json_encode($data));
+    
+    // Send notification email to admin
+    if ($data['status'] === 'COMPLETED') {
+        $to = 'leen@leen.ee';
+        $subject = 'Uus tellimus - ' . $data['transaction'];
+        $message = "Uus tellimus on edukalt makstud!\n\n";
+        $message .= "Tellimuse ID: " . $data['transaction'] . "\n";
+        $message .= "Summa: " . $data['amount'] . " " . $data['currency'] . "\n";
+        $message .= "Aeg: " . date('Y-m-d H:i:s') . "\n\n";
+        $message .= "Vaata tellimust administreerimisliideses.";
+        
+        $headers = 'From: noreply@leen.ee' . "\r\n" .
+            'Reply-To: noreply@leen.ee' . "\r\n" .
+            'X-Mailer: PHP/' . phpversion();
+        
+        mail($to, $subject, $message, $headers);
+    }
     
     // Process the notification based on status
     if ($data['status'] === 'COMPLETED') {

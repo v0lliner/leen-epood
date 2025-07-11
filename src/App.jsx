@@ -267,7 +267,7 @@ function App() {
                     <Footer />
                   </div>
                 } />
-              </Routes>
+                <Route path="/makse/:status" element={
               </Suspense>
             </Router>
           </CartProvider>

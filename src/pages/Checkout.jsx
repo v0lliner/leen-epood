@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
@@ -20,9 +20,11 @@ import TermsAndConditionsCheckbox from '../components/Checkout/TermsAndCondition
 const Checkout = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { status } = useParams();
   const { items: cartItems, getTotalPrice, clearCart } = useCart();
   const [error, setError] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(null);
   
   // Get cart total
   const cartTotal = getTotalPrice();
@@ -49,7 +51,18 @@ const Checkout = () => {
     if (cartItems.length === 0) {
       navigate('/epood');
     }
-  }, [cartItems, navigate]);
+    
+    // Handle payment status from URL
+    if (status) {
+      if (status === 'korras') {
+        setPaymentStatus('success');
+        // Clear cart on successful payment
+        clearCart();
+      } else if (status === 'katkestatud') {
+        setPaymentStatus('cancelled');
+      }
+    }
+  }, [cartItems, navigate, status, clearCart]);
   
   // Handle form submission
   const handleSubmit = async (e) => {
@@ -132,6 +145,159 @@ const Checkout = () => {
           </div>
         </section>
       </main>
+    );
+  }
+
+  // Show success message if payment was successful
+  if (paymentStatus === 'success') {
+    return (
+      <>
+        <SEOHead page="shop" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <FadeInSection>
+                <div className="payment-success">
+                  <div className="success-icon">✅</div>
+                  <h1>{t('checkout.thank_you.title')}</h1>
+                  <p>{t('checkout.thank_you.message')}</p>
+                  <button 
+                    onClick={() => navigate('/epood')}
+                    className="back-to-shop-btn"
+                  >
+                    {t('checkout.thank_you.back_to_shop')}
+                  </button>
+                </div>
+              </FadeInSection>
+            </div>
+          </section>
+        </main>
+        
+        <style jsx>{`
+          .payment-success {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 48px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+          }
+          
+          .success-icon {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            color: #28a745;
+          }
+          
+          .payment-success h1 {
+            color: var(--color-ultramarine);
+            margin-bottom: 24px;
+          }
+          
+          .payment-success p {
+            margin-bottom: 32px;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            color: #666;
+          }
+          
+          .back-to-shop-btn {
+            background-color: var(--color-ultramarine);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+          }
+          
+          .back-to-shop-btn:hover {
+            opacity: 0.9;
+          }
+        `}</style>
+      </>
+    );
+  }
+  
+  // Show cancelled message if payment was cancelled
+  if (paymentStatus === 'cancelled') {
+    return (
+      <>
+        <SEOHead page="shop" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <FadeInSection>
+                <div className="payment-cancelled">
+                  <div className="cancelled-icon">❌</div>
+                  <h1>{t('checkout.payment.cancelled_title')}</h1>
+                  <p>{t('checkout.payment.cancelled_by_user')}</p>
+                  <button 
+                    onClick={() => {
+                      setPaymentStatus(null);
+                      navigate('/checkout');
+                    }}
+                    className="try-again-btn"
+                  >
+                    {t('checkout.payment.try_again')}
+                  </button>
+                </div>
+              </FadeInSection>
+            </div>
+          </section>
+        </main>
+        
+        <style jsx>{`
+          .payment-cancelled {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 48px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+          }
+          
+          .cancelled-icon {
+            font-size: 4rem;
+            margin-bottom: 24px;
+            color: #dc3545;
+          }
+          
+          .payment-cancelled h1 {
+            color: var(--color-ultramarine);
+            margin-bottom: 24px;
+          }
+          
+          .payment-cancelled p {
+            margin-bottom: 32px;
+            font-size: 1.125rem;
+            line-height: 1.6;
+            color: #666;
+          }
+          
+          .try-again-btn {
+            background-color: var(--color-ultramarine);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+          }
+          
+          .try-again-btn:hover {
+            opacity: 0.9;
+          }
+        `}</style>
+      </>
     );
   }
 

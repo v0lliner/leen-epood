@@ -168,7 +168,7 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
   // Prepare data for submission
   const getPayloadForSubmission = () => {
     // Create reference for the order
-    const reference = `leen-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const reference = `leen-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     
     // Format items for Maksekeskus
     const items = cartItems.map(item => ({
@@ -184,6 +184,8 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     return {
       amount: calculateTotal().toFixed(2),
       reference,
+      success_url: 'https://leen.ee/makse/korras',
+      cancel_url: 'https://leen.ee/makse/katkestatud',
       email: formData.email,
       firstName: formData.firstName,
       lastName: formData.lastName,
