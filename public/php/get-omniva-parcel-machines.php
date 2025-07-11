@@ -17,8 +17,8 @@ error_log('Omniva endpoint called with country: ' . ($_GET['country'] ?? 'ee'));
 $country = $_GET['country'] ?? 'ee';
 
 try {
-    // Use the new endpoint for full location data
-    $locationsUrl = 'https://www.omniva.ee/locationsfull.json';
+    // Use the locations API directly - no need for SDK
+    $locationsUrl = 'https://www.omniva.ee/locations.json';
     
     $response = false;
     $error_message = '';
@@ -35,7 +35,7 @@ try {
         $response = @file_get_contents($locationsUrl, false, $context);
         
         if ($response === false) {
-            $error_message = 'file_get_contents failed: ' . error_get_last()['message'] ?? 'Unknown error';
+            $error_message = 'file_get_contents failed: ' . (error_get_last()['message'] ?? 'Unknown error');
             error_log($error_message);
         }
     } else {
