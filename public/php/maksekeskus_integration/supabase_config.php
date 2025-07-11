@@ -1,13 +1,22 @@
 <?php
 // Shared Supabase configuration helper for Maksekeskus integration
 
-// Enable error logging
-if (!is_dir(__DIR__ . '/../../../logs')) {
-    mkdir(__DIR__ . '/../../../logs', 0755, true);
+// Enable direct error display for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Try to create logs directory but don't fail if it can't be created
+$logDir = __DIR__ . '/../../../logs';
+if (!is_dir($logDir)) {
+    @mkdir($logDir, 0755, true);
+    if (!is_dir($logDir)) {
+        echo "WARNING: Could not create logs directory at $logDir\n";
+    }
 }
-ini_set('log_errors', 1);
-ini_set('error_log', __DIR__ . '/../../../logs/php_errors.log');
-error_log('========== SUPABASE CONFIG LOADING ==========');
+
+// Output directly to stderr for immediate visibility
+echo "========== SUPABASE CONFIG LOADING ==========\n";
 
 // Function to get Maksekeskus configuration from Supabase
 function getMaksekeskusConfig() {
@@ -15,16 +24,16 @@ function getMaksekeskusConfig() {
     $env_file = __DIR__ . '/../../../.env';
     
     // Debug log
-    error_log('Looking for .env file at: ' . $env_file);
-    error_log('File exists: ' . (file_exists($env_file) ? 'YES' : 'NO'));
+    echo 'Looking for .env file at: ' . $env_file . "\n";
+    echo 'File exists: ' . (file_exists($env_file) ? 'YES' : 'NO') . "\n";
     
     if (file_exists($env_file)) {
         $env_content = @file_get_contents($env_file);
-        error_log('File content read: ' . ($env_content !== false ? 'SUCCESS' : 'FAILED'));
-        error_log('File content length: ' . (strlen($env_content ?? '')));
+        echo 'File content read: ' . ($env_content !== false ? 'SUCCESS' : 'FAILED') . "\n";
+        echo 'File content length: ' . (strlen($env_content ?? '')) . "\n";
         
         // More robust parsing of .env file
-        error_log('Parsing .env file content...');
+        echo "Parsing .env file content...\n";
         preg_match_all('/^\s*([\w.-]+)\s*=\s*([^\r\n]*?)(?:\s*(?:#|$))/m', $env_content, $matches, PREG_SET_ORDER);
         
         $found_vars = [];
@@ -44,7 +53,7 @@ function getMaksekeskusConfig() {
                 putenv("$key=$value"); // Also set in environment for getenv()
             }
         }
-        error_log('Found variables in .env: ' . implode(', ', $found_vars));
+        echo 'Found variables in .env: ' . implode(', ', $found_vars) . "\n";
     }
     
     // Get Supabase credentials
@@ -56,26 +65,35 @@ function getMaksekeskusConfig() {
     if (empty($supabase_key)) $supabase_key = getenv('VITE_SUPABASE_SERVICE_ROLE_KEY') ?: '';
     
     // Debug log
-    error_log('Supabase URL: ' . (empty($supabase_url) ? 'MISSING' : 'Found (length: ' . strlen($supabase_url) . ')'));
-    error_log('Supabase Key: ' . (empty($supabase_key) ? 'MISSING' : 'Found (length: ' . strlen($supabase_key) . ')'));
+    echo 'Supabase URL: ' . (empty($supabase_url) ? 'MISSING' : 'Found (length: ' . strlen($supabase_url) . ')') . "\n";
+    echo 'Supabase Key: ' . (empty($supabase_key) ? 'MISSING' : 'Found (length: ' . strlen($supabase_key) . ')') . "\n";
     
     // Try direct environment variables as a fallback
     if (empty($supabase_url) || empty($supabase_key)) {
-        error_log('Trying to read environment variables directly...');
+        echo "Trying to read environment variables directly...\n";
         // Read all environment variables
         $env_vars = getenv();
-        error_log('All environment variables: ' . implode(', ', array_keys($env_vars)));
+        echo 'All environment variables: ' . implode(', ', array_keys($env_vars)) . "\n";
     }
     
     if (!$supabase_url || !$supabase_key) {
-        error_log('ERROR: Supabase configuration is missing. URL or key not found in .env file.');
-        error_log('Current working directory: ' . getcwd());
-        error_log('PHP version: ' . phpversion());
-        error_log('Server software: ' . ($_SERVER['SERVER_SOFTWARE'] ?? 'unknown'));
+        echo "ERROR: Supabase configuration is missing. URL or key not found in .env file.\n";
+        echo 'Current working directory: ' . getcwd() . "\n";
+        echo 'PHP version: ' . phpversion() . "\n";
+        echo 'Server software: ' . ($_SERVER['SERVER_SOFTWARE'] ?? 'unknown') . "\n";
+        
+        // Dump all environment variables for debugging
+        echo "All environment variables:\n";
+        foreach ($_ENV as $key => $value) {
+            if (strpos($key, 'SUPABASE') !== false || strpos($key, 'VITE') !== false) {
+                echo "$key: " . (strlen($value) > 0 ? "[SET]" : "[EMPTY]") . "\n";
+            }
+        }
+        
         throw new Exception('Supabase configuration is missing');
     }
     
-    error_log('Preparing to query Supabase API...');
+    echo "Preparing to query Supabase API...\n";
     
     // Query Supabase for active Maksekeskus configuration
     $ch = curl_init();
@@ -84,6 +102,10 @@ function getMaksekeskusConfig() {
     curl_setopt($ch, CURLOPT_VERBOSE, true);
     $verbose = fopen('php://temp', 'w+');
     curl_setopt($ch, CURLOPT_STDERR, $verbose);
+    
+    // Print the URL we're connecting to
+    echo "Connecting to: " . $supabase_url . "/rest/v1/maksekeskus_config?active=eq.true&select=*&limit=1\n";
+    
     curl_setopt($ch, CURLOPT_HTTPHEADER, [
         'apikey: ' . $supabase_key,
         'Authorization: Bearer ' . $supabase_key,
@@ -99,41 +121,41 @@ function getMaksekeskusConfig() {
     // Get verbose information
     rewind($verbose);
     $verboseLog = stream_get_contents($verbose);
-    error_log('cURL verbose log: ' . $verboseLog);
+    echo "cURL verbose log: " . $verboseLog . "\n";
     
     curl_close($ch);
 
     // Debug log
-    error_log('Supabase API response status: ' . $status_code . ' (curl_errno: ' . $curl_errno . ')');
+    echo 'Supabase API response status: ' . $status_code . ' (curl_errno: ' . $curl_errno . ")\n";
     if ($curl_errno) {
-        error_log('cURL error: ' . $curl_error);
+        echo 'cURL error: ' . $curl_error . "\n";
     }
-    error_log('Response body length: ' . strlen($response));
-    error_log('Response body preview: ' . substr($response, 0, 100) . (strlen($response) > 100 ? '...' : ''));
+    echo 'Response body length: ' . strlen($response) . "\n";
+    echo 'Response body preview: ' . substr($response, 0, 100) . (strlen($response) > 100 ? '...' : '') . "\n";
     
     if ($status_code !== 200) {
-        error_log('ERROR: Failed to fetch Maksekeskus configuration. Status code: ' . $status_code);
-        error_log('Response: ' . $response);
+        echo 'ERROR: Failed to fetch Maksekeskus configuration. Status code: ' . $status_code . "\n";
+        echo 'Response: ' . $response . "\n";
         throw new Exception('Failed to fetch Maksekeskus configuration from Supabase');
     }
     
     $config = json_decode($response, true);
     
-    error_log('JSON decode result: ' . (json_last_error() === JSON_ERROR_NONE ? 'SUCCESS' : 'FAILED - ' . json_last_error_msg()));
-    error_log('Config array: ' . (is_array($config) ? 'YES' : 'NO'));
-    error_log('Config count: ' . (is_array($config) ? count($config) : 'N/A'));
+    echo 'JSON decode result: ' . (json_last_error() === JSON_ERROR_NONE ? 'SUCCESS' : 'FAILED - ' . json_last_error_msg()) . "\n";
+    echo 'Config array: ' . (is_array($config) ? 'YES' : 'NO') . "\n";
+    echo 'Config count: ' . (is_array($config) ? count($config) : 'N/A') . "\n";
     
     if (empty($config) || !is_array($config) || count($config) === 0) {
-        error_log('ERROR: No active Maksekeskus configuration found in Supabase');
+        echo "ERROR: No active Maksekeskus configuration found in Supabase\n";
         throw new Exception('No active Maksekeskus configuration found');
     }
     
     // Debug log
-    error_log('Maksekeskus config loaded successfully.');
-    error_log('Shop ID: ' . ($config[0]['shop_id'] ?? 'N/A'));
-    error_log('Test mode: ' . (isset($config[0]['test_mode']) && $config[0]['test_mode'] ? 'true' : 'false'));
-    error_log('API keys present: ' . (isset($config[0]['api_secret_key']) && !empty($config[0]['api_secret_key']) ? 'YES' : 'NO'));
-    error_log('========== SUPABASE CONFIG LOADING COMPLETE ==========');
+    echo "Maksekeskus config loaded successfully.\n";
+    echo 'Shop ID: ' . ($config[0]['shop_id'] ?? 'N/A') . "\n";
+    echo 'Test mode: ' . (isset($config[0]['test_mode']) && $config[0]['test_mode'] ? 'true' : 'false') . "\n";
+    echo 'API keys present: ' . (isset($config[0]['api_secret_key']) && !empty($config[0]['api_secret_key']) ? 'YES' : 'NO') . "\n";
+    echo "========== SUPABASE CONFIG LOADING COMPLETE ==========\n";
     
     return $config[0];
 }
