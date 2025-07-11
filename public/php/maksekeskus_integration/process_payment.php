@@ -2,16 +2,15 @@
 // public/php/maksekeskus_integration/process_payment.php
 
 // Set headers for JSON response
-// Set headers for JSON response
 header('Content-Type: application/json');
 
 // Enable error reporting for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// ini_set('display_errors', 1);
+// ini_set('display_startup_errors', 1);
+// error_reporting(E_ALL);
 
 // Capture all output for debugging
-ob_start();
+// ob_start();
 
 // Load Supabase configuration helper
 require_once __DIR__ . '/supabase_config.php';
@@ -21,7 +20,7 @@ require_once __DIR__ . '/../maksekeskus/lib/Maksekeskus.php';
 require_once __DIR__ . '/../maksekeskus/vendor/autoload.php';
 
 // Get debug output so far
-$debug_output = ob_get_clean();
+// $debug_output = ob_get_clean();
 
 // Get request data
 $requestData = json_decode(file_get_contents('php://input'), true);
@@ -35,7 +34,7 @@ if (!$requestData) {
 
 try {
     // Log the start of payment processing
-    echo "Starting payment processing...\n";
+    // echo "Starting payment processing...\n";
     
     // Get Maksekeskus configuration from Supabase
     $config = getMaksekeskusConfig();
@@ -50,10 +49,10 @@ try {
     }
     
     // Log configuration for debugging
-    error_log('Maksekeskus config: ' . json_encode([
-        'shopId' => $shopId,
-        'testMode' => $testMode ? 'true' : 'false'
-    ]));
+    // error_log('Maksekeskus config: ' . json_encode([
+    //     'shopId' => $shopId,
+    //     'testMode' => $testMode ? 'true' : 'false'
+    // ]));
     
     $client = new \Maksekeskus\Maksekeskus($shopId, $publishableKey, $secretKey, $testMode);
     
@@ -128,12 +127,4 @@ try {
     echo json_encode([
         'error' => 'Payment processing failed: ' . $e->getMessage()
     ]);
-    
-    // For debugging, include the captured output
-    if (!empty($debug_output)) {
-        echo json_encode([
-            'error' => 'Payment processing failed: ' . $e->getMessage(),
-            'debug' => $debug_output
-        ]);
-    }
 }

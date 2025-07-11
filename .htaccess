@@ -1,6 +1,11 @@
 # Enable Apache rewrite engine
 RewriteEngine On
 
+# Set Supabase environment variables for PHP
+SetEnv VITE_SUPABASE_URL "https://epcenpirjkfkgdgxktrm.supabase.co"
+SetEnv VITE_SUPABASE_SERVICE_ROLE_KEY "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcxNzE2NTc3NywiZXhwIjoyMDMyNzQxNzc3fQ.Yd-Yk-Wd-Yd-Yk-Wd-Yd-Yk-Wd-Yd-Yk-Wd"
+SetEnv TEST_ENV_VAR "HTACCESS_WORKING"
+
 # Route all requests for /php/ to the PHP router (index.php) and pass the path info
 # This ensures all API calls go through the single entry point and PATH_INFO is set
 RewriteRule ^php/(.*)$ php/index.php?path=$1 [QSA,L]
