@@ -1,0 +1,439 @@
+<?php
+// Enable error reporting for development
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+// Load environment variables
+require_once __DIR__ . '/../env-loader.php';
+
+// Set content type to JSON
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, PUT, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+
+// Handle preflight requests
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
+// Log file for debugging
+$logDir = __DIR__ . '/../../logs';
+if (!is_dir($logDir)) {
+    mkdir($logDir, 0755, true);
+}
+$logFile = $logDir . '/admin_orders.log';
+
+// Function to log messages
+function logMessage($message, $data = null) {
+    global $logFile;
+    $timestamp = date('Y-m-d H:i:s');
+    $logEntry = "$timestamp - $message";
+    
+    if ($data !== null) {
+        $logEntry .= ": " . (is_string($data) ? $data : json_encode($data));
+    }
+    
+    file_put_contents($logFile, $logEntry . "\n", FILE_APPEND);
+}
+
+// Function to connect to Supabase via REST API
+function supabaseRequest($endpoint, $method = 'GET', $data = null) {
+    $supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
+    $supabaseKey = getenv('SUPABASE_SERVICE_ROLE_KEY');
+    
+    $url = $supabaseUrl . $endpoint;
+    
+    $ch = curl_init($url);
+    
+    $headers = [
+        'Content-Type: application/json',
+        'Authorization: Bearer ' . $supabaseKey,
+        'apikey: ' . $supabaseKey
+    ];
+    
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    
+    if ($method === 'POST') {
+        curl_setopt($ch, CURLOPT_POST, true);
+        if ($data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
+    } else if ($method === 'PATCH' || $method === 'PUT') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+        if ($data) {
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        }
+    } else if ($method === 'DELETE') {
+        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+    }
+    
+    $response = curl_exec($ch);
+    $statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    
+    curl_close($ch);
+    
+    if ($error) {
+        logMessage("cURL Error", $error);
+        return ['error' => $error, 'status' => $statusCode];
+    }
+    
+    return [
+        'data' => json_decode($response, true),
+        'status' => $statusCode
+    ];
+}
+
+// Get order details by ID
+function getOrderDetailsByID($orderId) {
+    // Get order basic info
+    $orderResult = supabaseRequest(
+        "/rest/v1/orders?id=eq.$orderId&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at",
+        'GET'
+    );
+    
+    if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+        return null;
+    }
+    
+    $order = $orderResult['data'][0];
+    
+    // Get order items
+    $itemsResult = supabaseRequest(
+        "/rest/v1/order_items?order_id=eq.$orderId&select=*",
+        'GET'
+    );
+    
+    if ($itemsResult['status'] === 200) {
+        $order['items'] = $itemsResult['data'];
+    } else {
+        $order['items'] = [];
+    }
+    
+    // Get payment info
+    $paymentsResult = supabaseRequest(
+        "/rest/v1/order_payments?order_id=eq.$orderId&select=*",
+        'GET'
+    );
+    
+    if ($paymentsResult['status'] === 200) {
+        $order['payments'] = $paymentsResult['data'];
+    } else {
+        $order['payments'] = [];
+    }
+    
+    return $order;
+}
+
+// Function to get order details by reference
+function getOrderDetailsByReference($reference) {
+    // Get order basic info
+    logMessage("Fetching order details for reference", $reference);
+    $orderResult = supabaseRequest(
+        "/rest/v1/orders?reference=eq.$reference&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at,reference",
+        'GET'
+    );
+    
+    if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+        logMessage("Order not found for reference", $reference);
+        return null;
+    }
+    
+    $order = $orderResult['data'][0];
+    $orderId = $order['id'];
+    
+    // Get order items
+    logMessage("Fetching order items for order", $orderId);
+    $itemsResult = supabaseRequest(
+        "/rest/v1/order_items?order_id=eq.$orderId&select=*",
+        'GET'
+    );
+    
+    if ($itemsResult['status'] === 200) {
+        $order['items'] = $itemsResult['data'];
+    } else {
+        $order['items'] = [];
+    }
+    
+    // Get payment info
+    logMessage("Fetching payment info for order", $orderId);
+    $paymentsResult = supabaseRequest(
+        "/rest/v1/order_payments?order_id=eq.$orderId&select=*",
+        'GET'
+    );
+    
+    if ($paymentsResult['status'] === 200) {
+        $order['payments'] = $paymentsResult['data'];
+    } else {
+        $order['payments'] = [];
+    }
+    
+    return $order;
+}
+
+// Function to get order details by order number
+function getOrderDetailsByOrderNumber($orderNumber) {
+    // Get order basic info
+    logMessage("Fetching order details for order number", $orderNumber);
+    $orderResult = supabaseRequest(
+        "/rest/v1/orders?order_number=eq.$orderNumber&select=*,omniva_parcel_machine_id,omniva_parcel_machine_name,omniva_barcode,tracking_url,label_url,shipment_registered_at,reference",
+        'GET'
+    );
+    
+    if ($orderResult['status'] !== 200 || empty($orderResult['data'])) {
+        logMessage("Order not found for order number", $orderNumber);
+        logMessage("Order not found for order number", $orderNumber);
+        return null;
+    }
+    
+    $order = $orderResult['data'][0];
+    $orderId = $order['id'];
+    
+    // Get order items
+    logMessage("Fetching order items for order", $orderId);
+    logMessage("Fetching order items for order", $orderId);
+    $itemsResult = supabaseRequest(
+        "/rest/v1/order_items?order_id=eq.$orderId&select=*",
+        'GET'
+    );
+    
+    if ($itemsResult['status'] === 200) {
+        $order['items'] = $itemsResult['data'];
+    } else {
+        $order['items'] = [];
+    }
+    
+    // Get payment info
+    logMessage("Fetching payment info for order", $orderId);
+    logMessage("Fetching payment info for order", $orderId);
+    $paymentsResult = supabaseRequest(
+        "/rest/v1/order_payments?order_id=eq.$orderId&select=*",
+        'GET'
+    );
+    
+    if ($paymentsResult['status'] === 200) {
+        $order['payments'] = $paymentsResult['data'];
+    } else {
+        $order['payments'] = [];
+    }
+    
+    return $order;
+}
+
+// Update order status
+function updateOrderStatus($orderId, $newStatus) {
+    $updateResult = supabaseRequest(
+        "/rest/v1/orders?id=eq.$orderId",
+        'PATCH',
+        ['status' => $newStatus]
+    );
+    
+    return $updateResult['status'] === 204;
+}
+
+// Main execution starts here
+try {
+    // Basic authentication check
+    $authorized = false;
+    
+    // Check if this is a local request (for development)
+    if ($_SERVER['REMOTE_ADDR'] === '127.0.0.1' || $_SERVER['REMOTE_ADDR'] === '::1') {
+        $authorized = true;
+    }
+    
+    // Check if this is a request from the same server (for production)
+    if (isset($_SERVER['HTTP_REFERER']) && strpos($_SERVER['HTTP_REFERER'], $_SERVER['HTTP_HOST']) !== false) {
+        $authorized = true;
+    }
+    
+    // For checkout success page, allow access when reference parameter is provided
+    if (isset($_GET['reference']) && !empty($_GET['reference'])) {
+        $authorized = true;
+    }
+    
+    // If not authorized, return 401 Unauthorized
+    if (!$authorized) {
+        http_response_code(401);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Unauthorized access'
+        ]);
+        exit();
+    }
+    
+    logMessage("Received request", ['method' => $_SERVER['REQUEST_METHOD'], 'uri' => $_SERVER['REQUEST_URI'], 'get' => $_GET]);
+    
+    // Check if we have the required environment variables
+    if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
+        // Try to load from .env file if it exists
+        if (file_exists(__DIR__ . '/../../../.env')) {
+            $envFile = file_get_contents(__DIR__ . '/../../../.env');
+            preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+            if (isset($matches[1])) {
+                putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+            }
+        }
+        
+        // If still not set, log an error
+        if (!getenv('SUPABASE_SERVICE_ROLE_KEY')) {
+            logMessage("Error: SUPABASE_SERVICE_ROLE_KEY environment variable not set");
+            // Try one more location as a fallback
+            if (file_exists(__DIR__ . '/../../.env')) {
+                $envFile = file_get_contents(__DIR__ . '/../../.env');
+                preg_match('/SUPABASE_SERVICE_ROLE_KEY=([^\n]+)/', $envFile, $matches);
+                if (isset($matches[1])) {
+                    putenv('SUPABASE_SERVICE_ROLE_KEY=' . $matches[1]);
+                    logMessage("Loaded SUPABASE_SERVICE_ROLE_KEY from alternate location");
+                } else {
+                    throw new Exception("API credentials not configured");
+                }
+            } else {
+                throw new Exception("API credentials not configured");
+            }
+        }
+    }
+    
+    // Parse the URL to get the order ID if present
+    $requestUri = $_SERVER['REQUEST_URI'];
+    $orderId = null;
+    $reference = null;
+    $orderNumber = null;
+    $action = null;
+    
+    // Extract order ID and action from URL
+    if (preg_match('/\/orders\/([^\/]+)(?:\/([^\/]+))?/', $requestUri, $matches)) {
+        $orderId = $matches[1];
+        $action = $matches[2] ?? null;
+    }
+    
+    // Check if order_number is provided in query string
+    if (isset($_GET['order_number'])) {
+        $orderNumber = $_GET['order_number'];
+    } else if (isset($_GET['reference'])) {
+        $reference = $_GET['reference'];
+    }
+    
+    // Handle different request types
+    if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+        // If order ID is provided, get specific order details
+        if ($orderId) {
+            logMessage("Fetching order details for ID", $orderId);
+            $order = getOrderDetailsByID($orderId);
+            
+            if ($order) {
+                echo json_encode([
+                    'success' => true,
+                    'order' => $order
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Order not found'
+                ]);
+            }
+        } 
+        // If reference is provided, get order details by reference
+        else if ($reference) {
+            logMessage("Fetching order details for reference", $reference);
+            $order = getOrderDetailsByReference($reference);
+            
+            if ($order) {
+                echo json_encode([
+                    'success' => true,
+                    'order' => $order
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Order not found'
+                ]);
+            }
+        } 
+        // If order number is provided, get order details by order number
+        else if ($orderNumber) {
+            logMessage("Fetching order details for order number", $orderNumber);
+            $order = getOrderDetailsByOrderNumber($orderNumber);
+            
+            if ($order) {
+                echo json_encode([
+                    'success' => true,
+                    'order' => $order
+                ]);
+            } else {
+                http_response_code(404);
+                echo json_encode([
+                    'success' => false,
+                    'error' => 'Order not found'
+                ]);
+            }
+        } 
+        // Otherwise, get all orders
+        else {
+            // Query the admin_orders_view
+            logMessage("Fetching all orders from admin_orders_view");
+            $ordersResult = supabaseRequest(
+                "/rest/v1/admin_orders_view?select=*&order=created_at.desc",
+                'GET'
+            );
+            
+            if ($ordersResult['status'] !== 200) {
+                throw new Exception("Failed to fetch orders");
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'orders' => $ordersResult['data']
+            ]);
+        }
+    } 
+    // Handle PUT requests for updating order status
+    else if ($_SERVER['REQUEST_METHOD'] === 'PUT' && $orderId && $action === 'status') {
+        $requestData = json_decode(file_get_contents('php://input'), true);
+        
+        if (!isset($requestData['status'])) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Status is required'
+            ]);
+            exit();
+        }
+        
+        $newStatus = $requestData['status'];
+        $success = updateOrderStatus($orderId, $newStatus);
+        
+        if ($success) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Order status updated successfully'
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode([
+                'success' => false,
+                'error' => 'Failed to update order status'
+            ]);
+        }
+    } 
+    // Handle unsupported methods
+    else {
+        http_response_code(405);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Method not allowed'
+        ]);
+    }
+} catch (Exception $e) {
+    logMessage("Exception", $e->getMessage());
+    
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+}
