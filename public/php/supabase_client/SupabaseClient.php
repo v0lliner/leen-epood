@@ -31,6 +31,7 @@ class SupabaseClient {
 
     private function request($path, $method, $data = null) {
         $url = $this->baseUrl . $path;
+        error_log("Supabase request: " . $method . " " . $url);
         
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -44,6 +45,8 @@ class SupabaseClient {
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
+        error_log("Supabase response code: " . $httpCode);
+        
         // Log raw response and HTTP code for debugging
         if (function_exists('safeLog')) {
             safeLog('supabase_raw_responses.log', "Path: {$path}, Method: {$method}, HTTP Code: {$httpCode}, Response: " . $response);
@@ -52,12 +55,17 @@ class SupabaseClient {
         }
 
         if (curl_errno($ch)) {
+            error_log("Curl error: " . curl_error($ch));
             throw new Exception('Curl error: ' . curl_error($ch));
         }
 
         curl_close($ch);
 
         $decoded = json_decode($response);
+        
+        if ($httpCode >= 400) {
+            error_log("Supabase API error (" . $httpCode . "): " . $response);
+        }
 
         if ($httpCode >= 400) {
             throw new Exception("Supabase API error ({$httpCode}): " . json_encode($decoded));

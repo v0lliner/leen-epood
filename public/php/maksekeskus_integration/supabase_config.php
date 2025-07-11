@@ -3,8 +3,10 @@
 
 // Load environment variables
 $dotenv_path = __DIR__ . '/../../../.env';
+error_log("Looking for .env file at: " . $dotenv_path . " - exists: " . (file_exists($dotenv_path) ? "YES" : "NO"));
 if (file_exists($dotenv_path)) {
     $lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    error_log("Found " . count($lines) . " lines in .env file");
     foreach ($lines as $line) {
         if (strpos(trim($line), '#') === 0) {
             continue;
@@ -15,11 +17,14 @@ if (file_exists($dotenv_path)) {
         $value = trim($value);
         
         if (!empty($name)) {
+            error_log("Setting env variable: " . $name);
             putenv("$name=$value");
             $_ENV[$name] = $value;
             $_SERVER[$name] = $value;
         }
     }
+} else {
+    error_log("ERROR: .env file not found at " . $dotenv_path);
 }
 
 /**

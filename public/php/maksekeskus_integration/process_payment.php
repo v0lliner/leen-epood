@@ -96,6 +96,8 @@ try {
     }
     
     // Initialize Supabase client
+    error_log("SUPABASE_URL = " . $supabaseUrl);
+    error_log("SUPABASE_SERVICE_ROLE_KEY = " . ($supabaseKey ? "EXISTS (length: " . strlen($supabaseKey) . ")" : "MISSING"));
     $supabase = new SupabaseClient($supabaseUrl, $supabaseKey);
     
     // Insert order into database
