@@ -10,6 +10,20 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 0); // Don't display errors to users, but log them
 
+// Check if Composer autoloader exists and load it
+$composerAutoloadPaths = [
+    __DIR__ . '/maksekeskus/vendor/autoload.php',
+    __DIR__ . '/vendor/autoload.php',
+    __DIR__ . '/../vendor/autoload.php'
+];
+
+foreach ($composerAutoloadPaths as $autoloadPath) {
+    if (file_exists($autoloadPath)) {
+        require_once $autoloadPath;
+        break;
+    }
+}
+
 // Load utilities
 require_once __DIR__ . '/Utils/Logger.php';
 require_once __DIR__ . '/Utils/EnvLoader.php';
@@ -21,6 +35,12 @@ $logger->info("Request received", [
     'method' => $_SERVER['REQUEST_METHOD'] ?? 'unknown',
     'remote_addr' => $_SERVER['REMOTE_ADDR'] ?? 'unknown'
 ]);
+
+// Ensure Httpful is loaded if needed
+if (!class_exists('\\Httpful\\Request') && file_exists(__DIR__ . '/maksekeskus/vendor/nategood/httpful/bootstrap.php')) {
+    $logger->info("Loading Httpful bootstrap");
+    require_once __DIR__ . '/maksekeskus/vendor/nategood/httpful/bootstrap.php';
+}
 
 // Set default content type to JSON
 header('Content-Type: application/json');
