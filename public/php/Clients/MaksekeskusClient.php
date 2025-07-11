@@ -1,11 +1,7 @@
 <?php
 namespace Clients;
-require_once __DIR__ . '/../maksekeskus/vendor/autoload.php';
 
-// Ensure Httpful is loaded correctly
-if (!class_exists('\\Httpful\\Request')) {
-    require_once __DIR__ . '/../maksekeskus/vendor/nategood/httpful/bootstrap.php';
-}
+require_once __DIR__ . '/../maksekeskus/vendor/autoload.php';
 
 use Maksekeskus\Maksekeskus;
 use Maksekeskus\MKException;
@@ -28,18 +24,6 @@ class MaksekeskusClient {
      * @param \Utils\Logger $logger Logger instance
      */
     public function __construct($shopId, $publicKey, $privateKey, $testMode, $logger) {
-        // Ensure Httpful is loaded
-        if (!class_exists('\\Httpful\\Request')) {
-            $logger->warning("Httpful\\Request class not found, attempting to load bootstrap");
-            require_once __DIR__ . '/../maksekeskus/vendor/nategood/httpful/bootstrap.php';
-            
-            if (!class_exists('\\Httpful\\Request')) {
-                $logger->error("Failed to load Httpful\\Request class even after bootstrap");
-            } else {
-                $logger->info("Successfully loaded Httpful\\Request class after bootstrap");
-            }
-        }
-        
         $this->logger = $logger;
         $this->testMode = $testMode;
         
