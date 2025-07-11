@@ -78,10 +78,8 @@ const Checkout = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Clear previous errors
     setError('');
     
-    // Validate form
     if (!validateForm()) {
       // Scroll to first error
       const firstErrorElement = document.querySelector('.has-error');
@@ -91,23 +89,34 @@ const Checkout = () => {
       return;
     }
     
-    // Set loading state
     setIsSubmitting(true);
     setProcessingPayment(true);
     
     try {
-      // Payment integration is currently disabled
-      setError('Payment processing is temporarily unavailable. Please try again later or contact us directly to place your order.');
+      // Prepare payload for submission
+      const payload = getPayloadForSubmission();
       
-      // For demonstration purposes only - in a real implementation, this would be replaced with actual payment processing
-      console.log('Order details:', getPayloadForSubmission());
-      console.log('This would normally send a request to the payment processor');
+      // Send request to payment processor
+      const response = await fetch('/php/maksekeskus_integration/process_payment.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
       
-      // Simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const data = await response.json();
       
-      // Show a message to the user
-      alert('Payment processing is currently being updated. Please contact us directly to complete your order.');
+      if (!response.ok) {
+        throw new Error(data.error || 'Payment processing failed');
+      }
+      
+      if (data.paymentUrl) {
+        // Redirect to payment page
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error('No payment URL received');
+      }
     } catch (err) {
       console.error('Payment processing error:', err);
       setError(err.message || t('checkout.error.session_failed'));

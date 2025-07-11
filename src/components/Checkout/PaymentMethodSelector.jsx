@@ -102,7 +102,7 @@ const PaymentMethodSelector = ({
 
   return (
     <div className="payment-method-selector">
-      <h3 className="section-title">{t('checkout.payment.title')} <span className="payment-disabled">(Temporarily Disabled)</span></h3>
+      <h3 className="section-title">{t('checkout.payment.title')}</h3>
       
       <div className="form-group">
         <label htmlFor="bankCountry">Vali panga riik</label>
@@ -112,7 +112,7 @@ const PaymentMethodSelector = ({
           value={formData.bankCountry}
           onChange={handleBankCountryChange}
           className="form-input"
-          disabled={true}
+          disabled={false}
         >
           {bankCountries.map(country => (
             <option key={country.code} value={country.code}>
@@ -134,7 +134,8 @@ const PaymentMethodSelector = ({
             {banks.map(bank => (
               <div 
                 key={bank.id} 
-                className={`bank-option disabled ${formData.paymentMethod === bank.id ? 'selected' : ''}`}
+                className={`bank-option ${formData.paymentMethod === bank.id ? 'selected' : ''}`}
+                onClick={() => handleBankSelection(bank.id)}
               >
                 <div className="bank-logo-container">
                   <img 
@@ -151,10 +152,6 @@ const PaymentMethodSelector = ({
             ))}
           </div>
         )}
-        
-        <div className="payment-notice">
-          Payment processing is temporarily unavailable. Please contact us directly to place your order.
-        </div>
         
         {validationErrors.paymentMethod && (
           <div className="error-message">{validationErrors.paymentMethod}</div>

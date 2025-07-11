@@ -167,7 +167,6 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
   
   // Prepare data for submission - placeholder for future implementation
   const getPayloadForSubmission = () => {
-    // This function will be implemented when a new payment processor is integrated
     return {
       // Basic order information
       amount: calculateTotal().toFixed(2),
@@ -182,9 +181,16 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
       shippingMethod: formData.shippingMethod,
       omnivaParcelMachineId: formData.omnivaParcelMachineId,
       omnivaParcelMachineName: formData.omnivaParcelMachineName,
+      shippingCost: getShippingCost(),
+      
+      // Payment information
+      paymentMethod: formData.paymentMethod,
       
       // Additional information
-      notes: formData.notes
+      notes: formData.notes,
+      
+      // Cart items
+      items: cartItems
     };
   };
   
