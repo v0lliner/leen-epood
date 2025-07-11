@@ -12,12 +12,26 @@ header('Content-Type: application/json');
 $country = $_GET['country'] ?? 'ee';
 
 try {
-    // Initialize Omniva PickupPoints
-    require_once __DIR__ . '/omniva/vendor/autoload.php';
-    $pickupPoints = new \Mijora\Omniva\Locations\PickupPoints();
+    // Use the new endpoint for full location data
+    $locationsUrl = 'https://www.omniva.ee/locationsfull.json';
     
-    // Get parcel machines for the specified country
-    $parcelMachines = $pickupPoints->getFilteredLocations($country, 0);
+    // Fetch data from Omniva API
+    $response = file_get_contents($locationsUrl);
+    
+    if ($response === false) {
+        throw new Exception('Failed to fetch data from Omniva API');
+    }
+    
+    $allLocations = json_decode($response, true);
+    
+    if (!$allLocations || !is_array($allLocations)) {
+        throw new Exception('Invalid response format from Omniva API');
+    }
+    
+    // Filter locations by country and type (0 = parcel machines)
+    $parcelMachines = array_filter($allLocations, function($location) use ($country) {
+        return strtolower($location['A0_NAME']) === strtolower($country) && $location['TYPE'] === '0';
+    });
     
     // Format the response
     $formattedMachines = [];
