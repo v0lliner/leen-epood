@@ -3,9 +3,9 @@ RewriteEngine On
 # Set the base URL for rewrite rules
 RewriteBase /
 
-# Route all requests for /php/ to the PHP router (index.php)
-# This ensures all API calls go through the single entry point
-RewriteRule ^php/(.*)$ php/index.php [QSA,L]
+# Route all requests for /php/ to the PHP router (index.php) and pass the path info
+# This ensures all API calls go through the single entry point and PATH_INFO is set
+RewriteRule ^php/(.*)$ php/index.php/$1 [QSA,L]
 
 # Redirect all requests to index.html for SPA routing
 RewriteRule ^index\.html$ - [L]
