@@ -16,7 +16,6 @@ const Portfolio = lazy(() => import('./pages/Portfolio'));
 const Shop = lazy(() => import('./pages/Shop'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const Checkout = lazy(() => import('./pages/Checkout'));
-const CheckoutSuccess = lazy(() => import('./pages/CheckoutSuccess'));
 const Contact = lazy(() => import('./pages/Contact'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const Muugitingimused = lazy(() => import('./pages/Muugitingimused'));
@@ -116,20 +115,6 @@ function App() {
                     <div className="app">
                       <Navigation />
                       <Checkout />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/checkout/success" element={
-                    <div className="app">
-                      <Navigation />
-                      <CheckoutSuccess />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/makse/korras" element={
-                    <div className="app">
-                      <Navigation />
-                      <CheckoutSuccess />
                       <Footer />
                     </div>
                   } />
