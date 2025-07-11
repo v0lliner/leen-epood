@@ -8,7 +8,7 @@
 
 // Initialize error reporting
 error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors to users, but log them
+ini_set('display_errors', 1); // Don't display errors to users, but log them
 
 // Load utilities
 require_once __DIR__ . '/Utils/Logger.php';
