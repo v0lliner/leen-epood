@@ -9,10 +9,6 @@
 header('Content-Type: application/json');
 
 try {
-    // Load Maksekeskus SDK
-    require_once __DIR__ . '/maksekeskus/lib/Maksekeskus.php';
-    require_once __DIR__ . '/maksekeskus/vendor/autoload.php';
-    
     // Get Maksekeskus configuration from database
     $supabaseUrl = getenv('VITE_SUPABASE_URL');
     $supabaseKey = getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');

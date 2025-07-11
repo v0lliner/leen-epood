@@ -35,26 +35,38 @@ if (file_exists($env_file)) {
 $path = $_SERVER['PATH_INFO'] ?? '';
 $path = trim($path, '/');
 
+// Flag to track if a handler was found
+$handlerFound = false;
+
 // Handle different API endpoints
 if (strpos($path, 'get-omniva-parcel-machines') === 0) {
     // Omniva parcel machines endpoint
+    require_once __DIR__ . '/omniva/vendor/autoload.php'; // Load Omniva autoloader
     require_once __DIR__ . '/get-omniva-parcel-machines.php';
-    exit;
+    $handlerFound = true;
 } else if (strpos($path, 'process-payment') === 0) {
     // Payment processing endpoint
+    require_once __DIR__ . '/maksekeskus/lib/Maksekeskus.php'; // Load Maksekeskus SDK
+    require_once __DIR__ . '/maksekeskus/vendor/autoload.php'; // Load Maksekeskus autoloader
     require_once __DIR__ . '/process-payment.php';
-    exit;
+    $handlerFound = true;
 } else if (strpos($path, 'payment-notification') === 0) {
     // Payment notification webhook
+    require_once __DIR__ . '/maksekeskus/lib/Maksekeskus.php'; // Load Maksekeskus SDK
+    require_once __DIR__ . '/maksekeskus/vendor/autoload.php'; // Load Maksekeskus autoloader
     require_once __DIR__ . '/payment-notification.php';
-    exit;
+    $handlerFound = true;
 } else if (strpos($path, 'teavitus') === 0) {
     // Maksekeskus notification webhook (Estonian naming convention)
     define('ROUTER_INCLUDED', true);
+    require_once __DIR__ . '/maksekeskus/lib/Maksekeskus.php'; // Load Maksekeskus SDK
+    require_once __DIR__ . '/maksekeskus/vendor/autoload.php'; // Load Maksekeskus autoloader
     require_once __DIR__ . '/teavitus.php';
-    exit;
-} else {
-    // Default response for unknown paths
+    $handlerFound = true;
+}
+
+// If no handler was found, return 404
+if (!$handlerFound) {
     header('Content-Type: application/json');
     http_response_code(404);
     echo json_encode(['error' => 'Endpoint not found']);
