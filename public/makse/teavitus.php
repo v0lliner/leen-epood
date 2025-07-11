@@ -44,6 +44,9 @@ try {
 
     // Load Maksekeskus SDK
     require_once __DIR__ . '/../php/maksekeskus/lib/Maksekeskus.php';
+    
+    // Load SupabaseClient
+    require_once __DIR__ . '/../php/supabase_client/SupabaseClient.php';
 
     // Get Maksekeskus configuration
     $config = getMaksekeskusConfig();
@@ -104,14 +107,8 @@ try {
         }
         
         try {
-            // Load PHPSupabase classes
-            require_once __DIR__ . '/../php/phpsupabase/src/Service.php';
-            require_once __DIR__ . '/../php/phpsupabase/src/Auth.php';
-            require_once __DIR__ . '/../php/phpsupabase/src/Database.php';
-            require_once __DIR__ . '/../php/phpsupabase/src/QueryBuilder.php';
-            
-            $supabaseService = new \PHPSupabase\Service($supabase_key, $supabase_url);
-            $ordersDb = $supabaseService->initializeDatabase('orders', 'id');
+            // Initialize SupabaseClient
+            $supabase = new SupabaseClient($supabase_url, $supabase_key);
             
             // Map Maksekeskus status to our order status
             $orderStatus = 'PENDING';
@@ -139,19 +136,16 @@ try {
                 'updated_at' => date('c')
             ];
             
-            $ordersDb->update($orderId, $updateData);
-            
-            if ($ordersDb->getError()) {
-                throw new Exception('Failed to update order: ' . $ordersDb->getError());
-            }
+            $supabase->update('orders', $orderId, $updateData);
             
             // Send email notification for completed payments
             if ($status === 'COMPLETED') {
                 // Get order details
-                $ordersDb->findBy('id', $orderId);
-                $order = $ordersDb->getFirstResult();
+                $orderResult = $supabase->getById('orders', $orderId);
                 
-                if ($order && isset($order->customer_email)) {
+                if ($orderResult && isset($orderResult[0]->customer_email)) {
+                    $order = $orderResult[0];
+                    
                     // Send email to customer
                     $to = $order->customer_email;
                     $subject = 'Teie tellimus on kinnitatud - Leen.ee';

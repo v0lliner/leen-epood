@@ -31,6 +31,9 @@ try {
 
     // Load Maksekeskus SDK
     require_once __DIR__ . '/../php/maksekeskus/lib/Maksekeskus.php';
+    
+    // Load SupabaseClient
+    require_once __DIR__ . '/../php/supabase_client/SupabaseClient.php';
 
     // Get Maksekeskus configuration
     $config = getMaksekeskusConfig();
@@ -79,17 +82,11 @@ try {
         
         if ($supabase_url && $supabase_key) {
             try {
-                // Load PHPSupabase classes
-                require_once __DIR__ . '/../php/phpsupabase/src/Service.php';
-                require_once __DIR__ . '/../php/phpsupabase/src/Auth.php';
-                require_once __DIR__ . '/../php/phpsupabase/src/Database.php';
-                require_once __DIR__ . '/../php/phpsupabase/src/QueryBuilder.php';
-                
-                $supabaseService = new \PHPSupabase\Service($supabase_key, $supabase_url);
-                $ordersDb = $supabaseService->initializeDatabase('orders', 'id');
+                // Initialize SupabaseClient
+                $supabase = new SupabaseClient($supabase_url, $supabase_key);
                 
                 // Update order status to CANCELLED
-                $ordersDb->update($orderId, [
+                $supabase->update('orders', $orderId, [
                     'status' => 'CANCELLED',
                     'payment_status' => 'CANCELLED',
                     'updated_at' => date('c')

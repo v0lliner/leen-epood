@@ -31,6 +31,9 @@ try {
 
     // Load Maksekeskus SDK
     require_once __DIR__ . '/../php/maksekeskus/lib/Maksekeskus.php';
+    
+    // Load SupabaseClient
+    require_once __DIR__ . '/../php/supabase_client/SupabaseClient.php';
 
     // Get Maksekeskus configuration
     $config = getMaksekeskusConfig();
@@ -68,6 +71,31 @@ try {
     
     // Log the success callback
     safeLog('payment_success.log', 'Success: ' . json_encode($messageData));
+    
+    // Update order status if order_id is available
+    if (isset($messageData['merchant_data']['order_id'])) {
+        $orderId = $messageData['merchant_data']['order_id'];
+        
+        // Connect to Supabase
+        $supabase_url = $_ENV['VITE_SUPABASE_URL'] ?? getenv('VITE_SUPABASE_URL');
+        $supabase_key = $_ENV['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');
+        
+        if ($supabase_url && $supabase_key) {
+            try {
+                // Initialize SupabaseClient
+                $supabase = new SupabaseClient($supabase_url, $supabase_key);
+                
+                // Update order status to PAID
+                $supabase->update('orders', $orderId, [
+                    'status' => 'PAID',
+                    'payment_status' => 'COMPLETED',
+                    'updated_at' => date('c')
+                ]);
+            } catch (Exception $dbEx) {
+                safeLog('payment_errors.log', 'Database error in success handler: ' . $dbEx->getMessage());
+            }
+        }
+    }
     
     // Clean output buffer
     ob_end_clean();

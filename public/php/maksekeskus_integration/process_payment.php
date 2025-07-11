@@ -52,8 +52,11 @@ try {
     // Load Supabase configuration
     require_once __DIR__ . '/supabase_config.php';
 
-    // Load Maksekeskus SDK directly
+    // Load Maksekeskus SDK
     require_once __DIR__ . '/../maksekeskus/lib/Maksekeskus.php';
+    
+    // Load SupabaseClient
+    require_once __DIR__ . '/../supabase_client/SupabaseClient.php';
 
     // Get request body
     $requestBody = file_get_contents('php://input');
@@ -117,14 +120,8 @@ try {
             throw new Exception('Supabase configuration is missing');
         }
         
-        // Load PHPSupabase classes
-        require_once __DIR__ . '/../phpsupabase/src/Service.php';
-        require_once __DIR__ . '/../phpsupabase/src/Auth.php';
-        require_once __DIR__ . '/../phpsupabase/src/Database.php';
-        require_once __DIR__ . '/../phpsupabase/src/QueryBuilder.php';
-        
-        $supabaseService = new \PHPSupabase\Service($supabase_key, $supabase_url);
-        $ordersDb = $supabaseService->initializeDatabase('orders', 'id');
+        // Initialize SupabaseClient
+        $supabase = new SupabaseClient($supabase_url, $supabase_key);
         
         // Prepare order data
         $orderData = [
@@ -149,13 +146,13 @@ try {
         ];
         
         // Insert order into database
-        $result = $ordersDb->insert($orderData);
+        $result = $supabase->insert('orders', $orderData);
         
-        if ($ordersDb->getError()) {
-            throw new Exception('Failed to create order: ' . $ordersDb->getError());
+        if (!$result || !isset($result[0]->id)) {
+            throw new Exception('Failed to create order in Supabase');
         }
         
-        $orderId = $result->id;
+        $orderId = $result[0]->id;
         safeLog('payment_orders.log', 'Created order: ' . $orderId);
         
     } catch (Exception $e) {
@@ -234,7 +231,7 @@ try {
         // Update order status to FAILED
         if ($orderId) {
             try {
-                $ordersDb->update($orderId, [
+                $supabase->update('orders', $orderId, [
                     'status' => 'CANCELLED',
                     'payment_status' => 'FAILED',
                     'updated_at' => date('c')
@@ -252,7 +249,7 @@ try {
         // Update order status to FAILED
         if ($orderId) {
             try {
-                $ordersDb->update($orderId, [
+                $supabase->update('orders', $orderId, [
                     'status' => 'CANCELLED',
                     'payment_status' => 'FAILED',
                     'updated_at' => date('c')
