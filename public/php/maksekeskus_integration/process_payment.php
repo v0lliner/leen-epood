@@ -88,8 +88,8 @@ try {
     safeLog('order_data.log', "Order data prepared: " . json_encode($orderData));
     
     // Get Supabase configuration
-    $supabaseUrl = $_ENV['VITE_SUPABASE_URL'] ?? getenv('VITE_SUPABASE_URL');
-    $supabaseKey = $_ENV['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');
+    $supabaseUrl = $_SERVER['VITE_SUPABASE_URL'] ?? $_ENV['VITE_SUPABASE_URL'] ?? getenv('VITE_SUPABASE_URL');
+    $supabaseKey = $_SERVER['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? $_ENV['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');
     
     if (!$supabaseUrl || !$supabaseKey) {
         throw new Exception("Supabase configuration missing");
@@ -98,6 +98,7 @@ try {
     // Initialize Supabase client
     error_log("SUPABASE_URL = " . $supabaseUrl);
     error_log("SUPABASE_SERVICE_ROLE_KEY = " . ($supabaseKey ? "EXISTS (length: " . strlen($supabaseKey) . ")" : "MISSING"));
+    error_log("SERVER variables: " . print_r($_SERVER, true));
     $supabase = new SupabaseClient($supabaseUrl, $supabaseKey);
     
     // Insert order into database

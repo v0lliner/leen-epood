@@ -4,28 +4,9 @@
 // Load environment variables
 $dotenv_path = __DIR__ . '/../../../.env';
 error_log("Looking for .env file at: " . $dotenv_path . " - exists: " . (file_exists($dotenv_path) ? "YES" : "NO"));
-if (file_exists($dotenv_path)) {
-    $lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    error_log("Found " . count($lines) . " lines in .env file");
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) {
-            continue;
-        }
-        
-        list($name, $value) = explode('=', $line, 2);
-        $name = trim($name);
-        $value = trim($value);
-        
-        if (!empty($name)) {
-            error_log("Setting env variable: " . $name);
-            putenv("$name=$value");
-            $_ENV[$name] = $value;
-            $_SERVER[$name] = $value;
-        }
-    }
-} else {
-    error_log("ERROR: .env file not found at " . $dotenv_path);
-}
+// We don't need to read .env file because Apache sets environment variables via .htaccess
+// Just log what we have in $_SERVER
+error_log("Available in _SERVER: " . implode(", ", array_keys($_SERVER)));
 
 /**
  * Get Maksekeskus configuration from environment variables or fallback to test credentials
@@ -35,10 +16,10 @@ if (file_exists($dotenv_path)) {
 function getMaksekeskusConfig() {
     try {
         // First try to get from environment variables
-        $shop_id = $_ENV['MAKSEKESKUS_SHOP_ID'] ?? getenv('MAKSEKESKUS_SHOP_ID');
-        $secret_key = $_ENV['MAKSEKESKUS_SECRET_KEY'] ?? getenv('MAKSEKESKUS_SECRET_KEY');
-        $publishable_key = $_ENV['MAKSEKESKUS_PUBLISHABLE_KEY'] ?? getenv('MAKSEKESKUS_PUBLISHABLE_KEY');
-        $test_mode_env = $_ENV['MAKSEKESKUS_TEST_MODE'] ?? getenv('MAKSEKESKUS_TEST_MODE');
+        $shop_id = $_SERVER['MAKSEKESKUS_SHOP_ID'] ?? $_ENV['MAKSEKESKUS_SHOP_ID'] ?? getenv('MAKSEKESKUS_SHOP_ID');
+        $secret_key = $_SERVER['MAKSEKESKUS_SECRET_KEY'] ?? $_ENV['MAKSEKESKUS_SECRET_KEY'] ?? getenv('MAKSEKESKUS_SECRET_KEY');
+        $publishable_key = $_SERVER['MAKSEKESKUS_PUBLISHABLE_KEY'] ?? $_ENV['MAKSEKESKUS_PUBLISHABLE_KEY'] ?? getenv('MAKSEKESKUS_PUBLISHABLE_KEY');
+        $test_mode_env = $_SERVER['MAKSEKESKUS_TEST_MODE'] ?? $_ENV['MAKSEKESKUS_TEST_MODE'] ?? getenv('MAKSEKESKUS_TEST_MODE');
         
         // If environment variables are set, use them
         if ($shop_id && $secret_key && $publishable_key) {

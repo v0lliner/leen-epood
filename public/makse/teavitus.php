@@ -56,8 +56,8 @@ try {
     }
     
     // Get Supabase configuration
-    $supabaseUrl = $_ENV['VITE_SUPABASE_URL'] ?? getenv('VITE_SUPABASE_URL');
-    $supabaseKey = $_ENV['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');
+    $supabaseUrl = $_SERVER['VITE_SUPABASE_URL'] ?? $_ENV['VITE_SUPABASE_URL'] ?? getenv('VITE_SUPABASE_URL');
+    $supabaseKey = $_SERVER['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? $_ENV['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');
     
     if (!$supabaseUrl || !$supabaseKey) {
         throw new Exception("Supabase configuration missing");

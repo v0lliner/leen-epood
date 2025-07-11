@@ -32,6 +32,7 @@ class SupabaseClient {
     private function request($path, $method, $data = null) {
         $url = $this->baseUrl . $path;
         error_log("Supabase request: " . $method . " " . $url);
+        error_log("Supabase headers: " . print_r($this->headers, true));
         
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
