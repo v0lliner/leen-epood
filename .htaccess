@@ -1,24 +1,22 @@
 # Enable Apache rewrite engine
 RewriteEngine On
+# Set the base URL for rewrite rules
+RewriteBase /
 
-# Allow direct access to PHP files in the php directory
-RewriteRule ^php/(.*)$ php/$1 [L]
-
-# Allow direct access to PHP files in the php directory
-RewriteRule ^php/(.*)$ php/$1 [L]
+# Route all requests for /php/ to the PHP router (index.php)
+# This ensures all API calls go through the single entry point
+RewriteRule ^php/(.*)$ php/index.php [QSA,L]
 
 # Redirect all requests to index.html for SPA routing
-RewriteBase /
 RewriteRule ^index\.html$ - [L]
 # Exclude robots.txt from rewrite rules
 RewriteCond %{REQUEST_URI} !^/robots\.txt$ [NC]
-# Exclude PHP files from rewrite rules
-RewriteCond %{REQUEST_URI} !^/php/ [NC]
-# Exclude PHP files from rewrite rules
-RewriteCond %{REQUEST_URI} !^/php/ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.html [L]
+
+# Set default character set for the server
+AddDefaultCharset UTF-8
 
 # Set Content Security Policy
 Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.google-analytics.com https://www.googletagmanager.com https://maps.googleapis.com https://payment.maksekeskus.ee; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https://*.supabase.co https://fonts.gstatic.com https://images.pexels.com https://*.maksekeskus.ee https://maps.googleapis.com https://maps.gstatic.com https://static.maksekeskus.ee; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://www.google-analytics.com https://*.maksekeskus.ee https://maps.googleapis.com; frame-src 'self' https://www.google.com https://*.maksekeskus.ee https://payment.maksekeskus.ee https://www.google.com/maps/; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests"
