@@ -2,13 +2,8 @@
 // Start output buffering to prevent any unwanted output
 ob_start();
 
-// Set headers for JSON response
+// Set headers for JSON response (although this script redirects, it's good practice)
 header('Content-Type: application/json');
-
-// Load dependencies
-require_once __DIR__ . '/../php/maksekeskus_integration/supabase_config.php';
-require_once __DIR__ . '/../php/maksekeskus/lib/Maksekeskus.php';
-require_once __DIR__ . '/../php/maksekeskus/vendor/autoload.php';
 
 // Define log directory in /tmp which is writable in most hosting environments
 $logDir = '/tmp/leen_payment_logs';
@@ -31,6 +26,15 @@ function safeLog($logFile, $message) {
 }
 
 try {
+    // Load Supabase configuration
+    require_once __DIR__ . '/../php/maksekeskus_integration/supabase_config.php';
+
+    // Load Httpful library (required by Maksekeskus SDK)
+    require_once __DIR__ . '/../php/httpful/bootstrap.php';
+
+    // Load Maksekeskus SDK
+    require_once __DIR__ . '/../php/maksekeskus/lib/Maksekeskus.php';
+
     // Get Maksekeskus configuration
     $config = getMaksekeskusConfig();
     

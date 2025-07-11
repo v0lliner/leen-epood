@@ -48,14 +48,16 @@ function returnJsonResponse($data, $statusCode = 200) {
     exit;
 }
 
-// Load Supabase configuration
-require_once __DIR__ . '/supabase_config.php';
-
-// Load Maksekeskus SDK
-require_once __DIR__ . '/../maksekeskus/lib/Maksekeskus.php';
-require_once __DIR__ . '/../maksekeskus/vendor/autoload.php';
-
 try {
+    // Load Supabase configuration
+    require_once __DIR__ . '/supabase_config.php';
+
+    // Load Httpful library (required by Maksekeskus SDK)
+    require_once __DIR__ . '/../httpful/bootstrap.php';
+
+    // Load Maksekeskus SDK
+    require_once __DIR__ . '/../maksekeskus/lib/Maksekeskus.php';
+
     // Get request body
     $requestBody = file_get_contents('php://input');
     $requestData = json_decode($requestBody, true);
@@ -117,6 +119,12 @@ try {
         if (!$supabase_url || !$supabase_key) {
             throw new Exception('Supabase configuration is missing');
         }
+        
+        // Load PHPSupabase classes
+        require_once __DIR__ . '/../phpsupabase/src/Service.php';
+        require_once __DIR__ . '/../phpsupabase/src/Auth.php';
+        require_once __DIR__ . '/../phpsupabase/src/Database.php';
+        require_once __DIR__ . '/../phpsupabase/src/QueryBuilder.php';
         
         $supabaseService = new \PHPSupabase\Service($supabase_key, $supabase_url);
         $ordersDb = $supabaseService->initializeDatabase('orders', 'id');
