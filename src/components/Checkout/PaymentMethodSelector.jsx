@@ -12,7 +12,7 @@ const PaymentMethodSelector = ({
 }) => {
   const { t } = useTranslation();
   const [banks, setBanks] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(''); 
 
   // Bank country options
@@ -80,6 +80,7 @@ const PaymentMethodSelector = ({
   // Update available banks when bank country changes
   useEffect(() => {
     setBanks(banksByCountry[formData.bankCountry] || []);
+    setLoading(false);
   }, [formData.bankCountry]);
 
   const handleBankCountryChange = (e) => {
@@ -101,7 +102,7 @@ const PaymentMethodSelector = ({
 
   return (
     <div className="payment-method-selector">
-      <h3 className="section-title">{t('checkout.payment.title')}</h3>
+      <h3 className="section-title">{t('checkout.payment.title')} <span className="payment-disabled">(Temporarily Disabled)</span></h3>
       
       <div className="form-group">
         <label htmlFor="bankCountry">Vali panga riik</label>
@@ -111,6 +112,7 @@ const PaymentMethodSelector = ({
           value={formData.bankCountry}
           onChange={handleBankCountryChange}
           className="form-input"
+          disabled={true}
         >
           {bankCountries.map(country => (
             <option key={country.code} value={country.code}>
@@ -127,15 +129,12 @@ const PaymentMethodSelector = ({
           <div className="loading-message">{t('checkout.payment.loading_methods')}</div>
         ) : error ? (
           <div className="error-message">{error}</div>
-        ) : banks.length === 0 ? (
-          <div className="info-message">{t('checkout.payment.no_methods')}</div>
         ) : (
           <div className={`banks-grid banks-${formData.bankCountry}`}>
             {banks.map(bank => (
               <div 
                 key={bank.id} 
-                className={`bank-option ${formData.paymentMethod === bank.id ? 'selected' : ''}`}
-                onClick={() => handleBankSelection(bank.id)}
+                className={`bank-option disabled ${formData.paymentMethod === bank.id ? 'selected' : ''}`}
               >
                 <div className="bank-logo-container">
                   <img 
@@ -153,6 +152,10 @@ const PaymentMethodSelector = ({
           </div>
         )}
         
+        <div className="payment-notice">
+          Payment processing is temporarily unavailable. Please contact us directly to place your order.
+        </div>
+        
         {validationErrors.paymentMethod && (
           <div className="error-message">{validationErrors.paymentMethod}</div>
         )}
@@ -169,6 +172,12 @@ const PaymentMethodSelector = ({
           font-weight: 500;
           margin-bottom: 24px;
           color: var(--color-ultramarine);
+        }
+        
+        .payment-disabled {
+          color: #dc3545;
+          font-size: 0.9rem;
+          font-weight: normal;
         }
         
         .form-group {
@@ -234,6 +243,12 @@ const PaymentMethodSelector = ({
           height: 80px;
         }
         
+        .bank-option.disabled {
+          opacity: 0.5;
+          cursor: not-allowed;
+          pointer-events: none;
+        }
+        
         .bank-option:hover {
           background-color: rgba(47, 62, 156, 0.05);
         }
@@ -273,6 +288,16 @@ const PaymentMethodSelector = ({
         .info-message {
           font-size: 0.85rem;
           color: #666;
+        }
+        
+        .payment-notice {
+          background-color: #f8d7da;
+          color: #721c24;
+          padding: 12px 16px;
+          border-radius: 4px;
+          font-size: 0.9rem;
+          text-align: center;
+          margin-top: 16px;
         }
         
         .test-card {

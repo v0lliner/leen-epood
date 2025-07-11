@@ -165,42 +165,26 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     return Object.keys(errors).length === 0;
   };
   
-  // Prepare data for submission
+  // Prepare data for submission - placeholder for future implementation
   const getPayloadForSubmission = () => {
-    // Create reference for the order
-    const reference = `leen-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-    
-    // Format items for Maksekeskus
-    const items = cartItems.map(item => ({
-      id: item.id,
-      title: item.title,
-      price: parseFloat(item.price.replace('€', '').trim()).toFixed(2),
-      quantity: 1
-    }));
-    
-    // Construct customer name
-    const customerName = `${formData.firstName} ${formData.lastName}`;
-    
+    // This function will be implemented when a new payment processor is integrated
     return {
+      // Basic order information
       amount: calculateTotal().toFixed(2),
-      reference,
-      success_url: window.location.origin + '/makse/korras',
-      cancel_url: window.location.origin + '/makse/katkestatud',
       email: formData.email,
       firstName: formData.firstName,
       lastName: formData.lastName,
       phone: formData.phone,
       companyName: formData.companyName,
       country: formData.country,
-      paymentMethod: formData.paymentMethod,
-      items,
-      deliveryMethod: formData.shippingMethod,
+      
+      // Shipping information
+      shippingMethod: formData.shippingMethod,
       omnivaParcelMachineId: formData.omnivaParcelMachineId,
       omnivaParcelMachineName: formData.omnivaParcelMachineName,
-      notes: formData.notes,
-      // Additional fields for payment processing
-      customerName,
-      bankCountry: formData.bankCountry
+      
+      // Additional information
+      notes: formData.notes
     };
   };
   

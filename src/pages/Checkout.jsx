@@ -96,38 +96,18 @@ const Checkout = () => {
     setProcessingPayment(true);
     
     try {
-      // Get payload for submission
-      const payload = getPayloadForSubmission();
+      // Payment integration is currently disabled
+      setError('Payment processing is temporarily unavailable. Please try again later or contact us directly to place your order.');
       
-      // Send request to payment processing endpoint
-      const response = await fetch('/php/maksekeskus_integration/process_payment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+      // For demonstration purposes only - in a real implementation, this would be replaced with actual payment processing
+      console.log('Order details:', getPayloadForSubmission());
+      console.log('This would normally send a request to the payment processor');
       
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`);
-      }
+      // Simulate a delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      const data = await response.json();
-      
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      
-      // If successful, redirect to payment URL
-      if (data.paymentUrl) {
-        // Clear cart before redirecting
-        clearCart();
-        
-        // Redirect to payment provider
-        window.location.href = data.paymentUrl;
-      } else {
-        throw new Error('No payment URL returned from server');
-      }
+      // Show a message to the user
+      alert('Payment processing is currently being updated. Please contact us directly to complete your order.');
     } catch (err) {
       console.error('Payment processing error:', err);
       setError(err.message || t('checkout.error.session_failed'));
