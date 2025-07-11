@@ -100,7 +100,7 @@ const Checkout = () => {
       const payload = getPayloadForSubmission();
       
       // Send request to payment processing endpoint
-      const response = await fetch('/php/process-payment.php', {
+      const response = await fetch('/php/maksekeskus_integration/process_payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

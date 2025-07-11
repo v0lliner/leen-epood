@@ -174,7 +174,7 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     const items = cartItems.map(item => ({
       id: item.id,
       title: item.title,
-      price: parseFloat(item.price.replace('€', '').trim()),
+      price: parseFloat(item.price.replace('€', '').trim()).toFixed(2),
       quantity: 1
     }));
     
@@ -184,8 +184,8 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     return {
       amount: calculateTotal().toFixed(2),
       reference,
-      success_url: 'https://leen.ee/makse/korras',
-      cancel_url: 'https://leen.ee/makse/katkestatud',
+      success_url: window.location.origin + '/makse/korras',
+      cancel_url: window.location.origin + '/makse/katkestatud',
       email: formData.email,
       firstName: formData.firstName,
       lastName: formData.lastName,
