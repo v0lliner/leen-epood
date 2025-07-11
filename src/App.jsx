@@ -268,6 +268,13 @@ function App() {
                   </div>
                 } />
                 <Route path="/makse/:status" element={
+                  <div className="app">
+                    <Navigation />
+                    <Checkout />
+                    <Footer />
+                  </div>
+                } />
+                </Routes>
               </Suspense>
             </Router>
           </CartProvider>
