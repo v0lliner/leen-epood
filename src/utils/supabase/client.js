@@ -4,11 +4,11 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY 
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase environment variables:', {
+  console.warn('Missing Supabase environment variables:', {
     url: supabaseUrl ? 'present' : 'missing',
     key: supabaseAnonKey ? 'present' : 'missing'
   })
-  console.warn('⚠️ Missing Supabase environment variables - some features may not work correctly')
+  console.warn('⚠️ Missing Supabase environment variables - some features may not work correctly. Check your .env file.')
 }
 
 // Only log in development mode
