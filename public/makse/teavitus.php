@@ -32,6 +32,19 @@ function safeLog($filename, $message) {
     }
 }
 
+// Load Composer autoloader
+require_once __DIR__ . '/../php/vendor/autoload.php';
+
+// Load Dotenv
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+try {
+    $dotenv->load();
+    safeLog('env_loading.log', "Dotenv loaded successfully");
+} catch (Exception $e) {
+    safeLog('env_loading.log', "Failed to load Dotenv: " . $e->getMessage());
+    error_log("Failed to load Dotenv: " . $e->getMessage());
+}
+
 // Load Supabase client
 require_once __DIR__ . '/../php/supabase_client/SupabaseClient.php';
 
@@ -56,10 +69,12 @@ try {
     }
     
     // Get Supabase configuration
-    $supabaseUrl = $_SERVER['VITE_SUPABASE_URL'] ?? $_ENV['VITE_SUPABASE_URL'] ?? getenv('VITE_SUPABASE_URL');
-    $supabaseKey = $_SERVER['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? $_ENV['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');
+    $supabaseUrl = $_ENV['SUPABASE_URL'] ?? null;
+    $supabaseKey = $_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? null;
     
     if (!$supabaseUrl || !$supabaseKey) {
+        safeLog('env_error.log', "Supabase configuration missing. ENV dump: " . json_encode($_ENV));
+        safeLog('env_error.log', "SERVER dump: " . json_encode($_SERVER));
         throw new Exception("Supabase configuration missing");
     }
     

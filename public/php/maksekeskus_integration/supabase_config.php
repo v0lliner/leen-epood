@@ -1,12 +1,10 @@
 <?php
 // public/php/maksekeskus_integration/supabase_config.php
 
-// Load environment variables
-$dotenv_path = __DIR__ . '/../../../.env';
-error_log("Looking for .env file at: " . $dotenv_path . " - exists: " . (file_exists($dotenv_path) ? "YES" : "NO"));
-// We don't need to read .env file because Apache sets environment variables via .htaccess
-// Just log what we have in $_SERVER
-error_log("Available in _SERVER: " . implode(", ", array_keys($_SERVER)));
+// Log environment variables for debugging
+error_log("Looking for .env variables");
+error_log("SUPABASE_URL exists: " . (isset($_ENV['SUPABASE_URL']) ? "YES" : "NO"));
+error_log("SUPABASE_SERVICE_ROLE_KEY exists: " . (isset($_ENV['SUPABASE_SERVICE_ROLE_KEY']) ? "YES" : "NO"));
 
 /**
  * Get Maksekeskus configuration from environment variables or fallback to test credentials
@@ -16,10 +14,10 @@ error_log("Available in _SERVER: " . implode(", ", array_keys($_SERVER)));
 function getMaksekeskusConfig() {
     try {
         // First try to get from environment variables
-        $shop_id = $_SERVER['MAKSEKESKUS_SHOP_ID'] ?? $_ENV['MAKSEKESKUS_SHOP_ID'] ?? getenv('MAKSEKESKUS_SHOP_ID');
-        $secret_key = $_SERVER['MAKSEKESKUS_SECRET_KEY'] ?? $_ENV['MAKSEKESKUS_SECRET_KEY'] ?? getenv('MAKSEKESKUS_SECRET_KEY');
-        $publishable_key = $_SERVER['MAKSEKESKUS_PUBLISHABLE_KEY'] ?? $_ENV['MAKSEKESKUS_PUBLISHABLE_KEY'] ?? getenv('MAKSEKESKUS_PUBLISHABLE_KEY');
-        $test_mode_env = $_SERVER['MAKSEKESKUS_TEST_MODE'] ?? $_ENV['MAKSEKESKUS_TEST_MODE'] ?? getenv('MAKSEKESKUS_TEST_MODE');
+        $shop_id = $_ENV['MAKSEKESKUS_SHOP_ID'] ?? null;
+        $secret_key = $_ENV['MAKSEKESKUS_SECRET_KEY'] ?? null;
+        $publishable_key = $_ENV['MAKSEKESKUS_PUBLISHABLE_KEY'] ?? null;
+        $test_mode_env = $_ENV['MAKSEKESKUS_TEST_MODE'] ?? null;
         
         // If environment variables are set, use them
         if ($shop_id && $secret_key && $publishable_key) {

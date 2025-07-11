@@ -35,6 +35,19 @@ function safeLog($filename, $message) {
     }
 }
 
+// Load Composer autoloader
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+// Load Dotenv
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../../');
+try {
+    $dotenv->load();
+    safeLog('env_loading.log', "Dotenv loaded successfully");
+} catch (Exception $e) {
+    safeLog('env_loading.log', "Failed to load Dotenv: " . $e->getMessage());
+    error_log("Failed to load Dotenv: " . $e->getMessage());
+}
+
 // Load Supabase client
 require_once __DIR__ . '/../supabase_client/SupabaseClient.php';
 
@@ -88,28 +101,40 @@ try {
     safeLog('order_data.log', "Order data prepared: " . json_encode($orderData));
     
     // Get Supabase configuration
-    $supabaseUrl = $_SERVER['VITE_SUPABASE_URL'] ?? $_ENV['VITE_SUPABASE_URL'] ?? getenv('VITE_SUPABASE_URL');
-    $supabaseKey = $_SERVER['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? $_ENV['VITE_SUPABASE_SERVICE_ROLE_KEY'] ?? getenv('VITE_SUPABASE_SERVICE_ROLE_KEY');
+    $supabaseUrl = $_ENV['SUPABASE_URL'] ?? null;
+    $supabaseKey = $_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? null;
     
     if (!$supabaseUrl || !$supabaseKey) {
+        safeLog('env_error.log', "Supabase configuration missing. ENV dump: " . json_encode($_ENV));
+        safeLog('env_error.log', "SERVER dump: " . json_encode($_SERVER));
         throw new Exception("Supabase configuration missing");
     }
     
+    // Validate that we're using a service_role key
+    if (strpos($supabaseKey, 'eyJ') !== 0 || strpos($supabaseKey, 'service_role') === false) {
+        safeLog('key_validation.log', "Key validation failed. Key starts with: " . substr($supabaseKey, 0, 10) . "..., length: " . strlen($supabaseKey) . ", md5: " . md5($supabaseKey));
+        throw new Exception("Invalid Supabase key type. Must be a service_role key.");
+    }
+    
     // Initialize Supabase client
-    error_log("SUPABASE_URL = " . $supabaseUrl);
-    error_log("SUPABASE_SERVICE_ROLE_KEY = " . ($supabaseKey ? "EXISTS (length: " . strlen($supabaseKey) . ")" : "MISSING"));
-    error_log("SERVER variables: " . print_r($_SERVER, true));
+    safeLog('supabase_init.log', "Initializing Supabase client with URL: {$supabaseUrl}, Key length: " . strlen($supabaseKey) . ", Key hash: " . md5($supabaseKey));
     $supabase = new SupabaseClient($supabaseUrl, $supabaseKey);
     
     // Insert order into database
     safeLog('supabase_requests.log', "Inserting order into Supabase: " . json_encode($orderData));
-    $order = $supabase->insert('orders', $orderData);
-    
-    if (!$order || !isset($order->id)) {
-        throw new Exception("Failed to create order record");
+    try {
+        $order = $supabase->insert('orders', $orderData);
+        
+        if (!$order || !isset($order->id)) {
+            safeLog('order_error.log', "Failed to create order record. Response: " . json_encode($order));
+            throw new Exception("Failed to create order record");
+        }
+        
+        safeLog('order_created.log', "Order created with ID: " . $order->id);
+    } catch (Exception $e) {
+        safeLog('supabase_error.log', "Supabase insert error: " . $e->getMessage());
+        throw new Exception("Database error: " . $e->getMessage());
     }
-    
-    safeLog('order_created.log', "Order created with ID: " . $order->id);
     
     // Get Maksekeskus configuration
     $mkConfig = getMaksekeskusConfig();
@@ -158,27 +183,33 @@ try {
     safeLog('transaction_data.log', "Transaction data prepared: " . json_encode($transactionData));
     
     // Create transaction
-    $transaction = $mk->createTransaction($transactionData);
-    
-    if (!$transaction || !isset($transaction->payment_url)) {
-        throw new Exception("Failed to create payment transaction");
+    try {
+        $transaction = $mk->createTransaction($transactionData);
+        
+        if (!$transaction || !isset($transaction->payment_url)) {
+            safeLog('transaction_error.log', "Failed to create payment transaction. Response: " . json_encode($transaction));
+            throw new Exception("Failed to create payment transaction");
+        }
+        
+        safeLog('transaction_created.log', "Transaction created with payment URL: " . $transaction->payment_url);
+        
+        // Update order with transaction ID
+        $updateData = [
+            'payment_reference' => $transaction->id
+        ];
+        
+        $supabase->update('orders', $order->id, $updateData);
+        
+        // Return success response with payment URL
+        echo json_encode([
+            'success' => true,
+            'paymentUrl' => $transaction->payment_url,
+            'orderId' => $order->id
+        ]);
+    } catch (Exception $e) {
+        safeLog('maksekeskus_error.log', "Maksekeskus error: " . $e->getMessage());
+        throw new Exception("Payment gateway error: " . $e->getMessage());
     }
-    
-    safeLog('transaction_created.log', "Transaction created with payment URL: " . $transaction->payment_url);
-    
-    // Update order with transaction ID
-    $updateData = [
-        'payment_reference' => $transaction->id
-    ];
-    
-    $supabase->update('orders', $order->id, $updateData);
-    
-    // Return success response with payment URL
-    echo json_encode([
-        'success' => true,
-        'paymentUrl' => $transaction->payment_url,
-        'orderId' => $order->id
-    ]);
     
 } catch (Exception $e) {
     // Log error

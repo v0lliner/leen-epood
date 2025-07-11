@@ -14,6 +14,8 @@ class SupabaseClient {
             "Authorization: Bearer {$this->apiKey}",
             "Content-Type: application/json"
         ];
+        
+        error_log("SupabaseClient initialized with URL: {$baseUrl}, Key length: " . strlen($apiKey));
     }
 
     public function insert($table, $data) {
