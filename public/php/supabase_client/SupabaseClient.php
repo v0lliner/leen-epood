@@ -1,4 +1,3 @@
-```php
 <?php
 // public/php/supabase_client/SupabaseClient.php
 
@@ -46,7 +45,6 @@ class SupabaseClient {
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
         // Log raw response and HTTP code for debugging
-        // Ensure safeLog function is available (e.g., by including supabase_config.php or defining it here)
         if (function_exists('safeLog')) {
             safeLog('supabase_raw_responses.log', "Path: {$path}, Method: {$method}, HTTP Code: {$httpCode}, Response: " . $response);
         } else {
@@ -68,4 +66,3 @@ class SupabaseClient {
         return $decoded;
     }
 }
-```

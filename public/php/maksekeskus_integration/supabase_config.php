@@ -1,6 +1,8 @@
 <?php
+// public/php/maksekeskus_integration/supabase_config.php
+
 // Load environment variables
-$dotenv_path = __DIR__ . '/../../../.env'; // Liigub 3 taset üles htdocs/ kausta
+$dotenv_path = __DIR__ . '/../../../.env';
 if (file_exists($dotenv_path)) {
     $lines = file($dotenv_path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     foreach ($lines as $line) {
