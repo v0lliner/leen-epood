@@ -29,9 +29,6 @@ try {
     // Load Supabase configuration
     require_once __DIR__ . '/../php/maksekeskus_integration/supabase_config.php';
 
-    // Load Httpful library (required by Maksekeskus SDK)
-    require_once __DIR__ . '/../php/httpful/bootstrap.php';
-
     // Load Maksekeskus SDK
     require_once __DIR__ . '/../php/maksekeskus/lib/Maksekeskus.php';
 

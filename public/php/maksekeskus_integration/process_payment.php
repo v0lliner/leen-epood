@@ -52,10 +52,7 @@ try {
     // Load Supabase configuration
     require_once __DIR__ . '/supabase_config.php';
 
-    // Load Httpful library (required by Maksekeskus SDK)
-    require_once __DIR__ . '/../httpful/bootstrap.php';
-
-    // Load Maksekeskus SDK
+    // Load Maksekeskus SDK directly
     require_once __DIR__ . '/../maksekeskus/lib/Maksekeskus.php';
 
     // Get request body
