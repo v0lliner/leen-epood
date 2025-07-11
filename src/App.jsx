@@ -276,13 +276,6 @@ function App() {
                 } />
                 </Routes>
               </Suspense>
-                    <Navigation />
-                    <Checkout />
-                    <Footer />
-                  </div>
-                } />
-                </Routes>
-              </Suspense>
             </Router>
           </CartProvider>
         </AuthProvider>
