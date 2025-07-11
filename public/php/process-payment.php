@@ -166,12 +166,22 @@ try {
     ]);
     
     // Create transaction
-    $transaction = $paymentProcessor->maksekeskus->createTransaction($transactionData);
-    
-    // Log the transaction response
-    $logger->info("Transaction created", [
-        'transaction_id' => $transaction->id ?? 'unknown'
-    ]);
+    try {
+        $transaction = $paymentProcessor->maksekeskus->createTransaction($transactionData);
+        
+        // Log the full transaction response for debugging
+        $logger->info("Transaction created successfully", [
+            'transaction_id' => $transaction->id ?? 'unknown',
+            'transaction_data' => json_encode($transaction)
+        ]);
+    } catch (\Exception $e) {
+        $logger->error("Failed to create transaction in Maksekeskus", [
+            'error_message' => $e->getMessage(),
+            'error_code' => $e->getCode(),
+            'transaction_data' => json_encode($transactionData)
+        ]);
+        throw $e; // Re-throw to maintain original error handling
+    }
     
     // Extract payment URL based on the selected payment method
     $paymentUrl = null;
@@ -179,25 +189,41 @@ try {
     
     // For test card, we need to handle it differently
     if ($paymentMethod === 'test_card') {
+        $logger->info("Processing test_card payment method");
         // For test cards, we should have a direct URL in the transaction response
         if (isset($transaction->payment_url)) {
+            $logger->info("Found direct payment_url for test_card", [
+                'payment_url' => $transaction->payment_url
+            ]);
             $paymentUrl = $transaction->payment_url;
         } else {
+            $logger->info("No direct payment_url found for test_card, checking redirect URL");
             // Fallback to redirect URL if available
             foreach ($transaction->payment_methods->other as $other) {
                 if ($other->name === 'redirect') {
+                    $logger->info("Found redirect URL for test_card", [
+                        'redirect_url' => $other->url
+                    ]);
                     $paymentUrl = $other->url;
                     break;
                 }
             }
         }
     } else {
+        $logger->info("Processing regular payment method: " . $paymentMethod);
         // Normal payment method processing
         // Check if we have banklinks in the response
         if (isset($transaction->payment_methods->banklinks) && is_array($transaction->payment_methods->banklinks)) {
+            $logger->info("Checking banklinks for payment method", [
+                'available_banklinks' => json_encode(array_map(function($b) { return $b->name; }, $transaction->payment_methods->banklinks))
+            ]);
             // Look for the selected bank in banklinks
             foreach ($transaction->payment_methods->banklinks as $banklink) {
                 if ($banklink->name === $paymentMethod) {
+                    $logger->info("Found matching banklink", [
+                        'bank' => $banklink->name,
+                        'url' => $banklink->url
+                    ]);
                     $paymentUrl = $banklink->url;
                     break;
                 }
@@ -206,8 +232,15 @@ try {
         
         // If not found in banklinks, check cards section
         if (!$paymentUrl && isset($transaction->payment_methods->cards) && is_array($transaction->payment_methods->cards)) {
+            $logger->info("Checking cards for payment method", [
+                'available_cards' => json_encode(array_map(function($c) { return $c->name; }, $transaction->payment_methods->cards))
+            ]);
             foreach ($transaction->payment_methods->cards as $card) {
                 if ($card->name === $paymentMethod) {
+                    $logger->info("Found matching card", [
+                        'card' => $card->name,
+                        'url' => $card->url
+                    ]);
                     $paymentUrl = $card->url;
                     break;
                 }
@@ -216,8 +249,15 @@ try {
         
         // If still not found, check other payment methods
         if (!$paymentUrl && isset($transaction->payment_methods->other) && is_array($transaction->payment_methods->other)) {
+            $logger->info("Checking other payment methods", [
+                'available_methods' => json_encode(array_map(function($o) { return $o->name; }, $transaction->payment_methods->other))
+            ]);
             foreach ($transaction->payment_methods->other as $other) {
                 if ($other->name === $paymentMethod) {
+                    $logger->info("Found matching other payment method", [
+                        'method' => $other->name,
+                        'url' => $other->url
+                    ]);
                     $paymentUrl = $other->url;
                     break;
                 }
@@ -226,8 +266,12 @@ try {
         
         // Fallback to redirect URL if available
         if (!$paymentUrl && isset($transaction->payment_methods->other) && is_array($transaction->payment_methods->other)) {
+            $logger->info("No specific payment method found, looking for redirect URL");
             foreach ($transaction->payment_methods->other as $other) {
                 if ($other->name === 'redirect') {
+                    $logger->info("Found redirect URL as fallback", [
+                        'url' => $other->url
+                    ]);
                     $paymentUrl = $other->url;
                     break;
                 }
@@ -237,6 +281,11 @@ try {
     
     // If no payment URL was found, return an error
     if (!$paymentUrl) {
+        $logger->error("No payment URL found for the selected payment method", [
+            'payment_method' => $paymentMethod,
+            'transaction_id' => $transaction->id ?? 'unknown',
+            'available_methods' => json_encode($transaction)
+        ]);
         throw new Exception('Payment URL not found for the selected payment method: ' . $paymentMethod);
     }
     
