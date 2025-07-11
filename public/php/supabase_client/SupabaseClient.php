@@ -1,3 +1,4 @@
+```php
 <?php
 // public/php/supabase_client/SupabaseClient.php
 
@@ -29,10 +30,6 @@ class SupabaseClient {
         return $this->request($url, 'GET');
     }
 
-    public function getById($table, $id) {
-        return $this->request("/rest/v1/{$table}?id=eq.{$id}&limit=1", 'GET');
-    }
-
     private function request($path, $method, $data = null) {
         $url = $this->baseUrl . $path;
         
@@ -48,6 +45,14 @@ class SupabaseClient {
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
+        // Log raw response and HTTP code for debugging
+        // Ensure safeLog function is available (e.g., by including supabase_config.php or defining it here)
+        if (function_exists('safeLog')) {
+            safeLog('supabase_raw_responses.log', "Path: {$path}, Method: {$method}, HTTP Code: {$httpCode}, Response: " . $response);
+        } else {
+            error_log("SupabaseClient: safeLog not found. Path: {$path}, Method: {$method}, HTTP Code: {$httpCode}, Response: " . $response);
+        }
+
         if (curl_errno($ch)) {
             throw new Exception('Curl error: ' . curl_error($ch));
         }
@@ -57,9 +62,10 @@ class SupabaseClient {
         $decoded = json_decode($response);
 
         if ($httpCode >= 400) {
-            throw new Exception("Supabase API error ({$httpCode}): " . $response);
+            throw new Exception("Supabase API error ({$httpCode}): " . json_encode($decoded));
         }
 
         return $decoded;
     }
 }
+```
