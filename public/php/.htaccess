@@ -1,0 +1,33 @@
+# Redirect all requests to index.php
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /php/
+    
+    # Allow direct access to specific legacy endpoints for backward compatibility
+    RewriteRule ^process-payment\.php$ process-payment.php [L]
+    RewriteRule ^payment-notification\.php$ payment-notification.php [L]
+    RewriteRule ^teavitus\.php$ teavitus.php [L]
+    RewriteRule ^get-omniva-parcel-machines\.php$ get-omniva-parcel-machines.php [L]
+    RewriteRule ^register-omniva-shipment\.php$ register-omniva-shipment.php [L]
+    
+    # Redirect all other requests to index.php
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [QSA,L]
+</IfModule>
+
+# Set default character set
+AddDefaultCharset UTF-8
+
+# Disable directory listing
+Options -Indexes
+
+# Set default content type
+DefaultType application/json
+
+# Enable CORS
+<IfModule mod_headers.c>
+    Header set Access-Control-Allow-Origin "*"
+    Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header set Access-Control-Allow-Headers "Content-Type, Authorization"
+</IfModule>
