@@ -62,7 +62,7 @@ const ShippingAddressForm = ({
     }
     
     try {      
-      const response = await fetch(`/php/get-omniva-parcel-machines.php?country=${countryCode}`);
+      const response = await fetch(`/php/get-omniva-parcel-machines?country=${countryCode}`);
       
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${await response.text()}`);
