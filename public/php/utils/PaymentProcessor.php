@@ -16,6 +16,7 @@ class PaymentProcessor {
     private $supabase;
     private $logger;
     
+    
     /**
      * Create a new payment processor
      * 
@@ -299,6 +300,25 @@ class PaymentProcessor {
         ]);
         
         return true;
+    }
+    
+    /**
+     * Create a new transaction in Maksekeskus.
+     *
+     * @param array $transactionData Transaction data for Maksekeskus.
+     * @return object Maksekeskus transaction object.
+     * @throws Exception if transaction creation fails.
+     */
+    public function createMaksekeskusTransaction($transactionData) {
+        try {
+            $this->logger->info("Calling Maksekeskus createTransaction", ['reference' => $transactionData['transaction']['reference'] ?? 'N/A']);
+            $transaction = $this->maksekeskus->createTransaction($transactionData);
+            $this->logger->info("Maksekeskus createTransaction response", ['transaction_id' => $transaction->id ?? 'N/A', 'status' => $transaction->status ?? 'N/A']);
+            return $transaction;
+        } catch (\Exception $e) {
+            $this->logger->exception($e, "Failed to create transaction in Maksekeskus via public method");
+            throw $e;
+        }
     }
     
     /**

@@ -167,7 +167,7 @@ try {
     
     // Create transaction
     try {
-        $transaction = $paymentProcessor->maksekeskus->createTransaction($transactionData);
+        $transaction = $paymentProcessor->createMaksekeskusTransaction($transactionData);
         
         // Log the full transaction response for debugging
         $logger->info("Transaction created successfully", [
