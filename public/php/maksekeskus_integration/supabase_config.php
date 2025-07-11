@@ -1,15 +1,11 @@
 <?php
-// Load PHPSupabase SDK
-require_once __DIR__ . '/../phpsupabase/src/Service.php';
-require_once __DIR__ . '/../phpsupabase/src/Database.php';
-require_once __DIR__ . '/../phpsupabase/src/Auth.php';
-require_once __DIR__ . '/../phpsupabase/src/QueryBuilder.php';
+// Load PHPSupabase SDK with Composer autoloader
+require_once __DIR__ . '/../phpsupabase/vendor/autoload.php';
 
 /**
  * Get Maksekeskus configuration from Supabase
  * 
  * @return array Configuration array with shop_id, api_secret_key, api_open_key, test_mode
- * @throws Exception If configuration cannot be retrieved
  */
 function getMaksekeskusConfig() {
     // Load environment variables

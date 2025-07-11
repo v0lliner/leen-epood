@@ -1,4 +1,7 @@
 <?php
+// Start output buffering to prevent any unwanted output
+ob_start();
+
 // Set headers for JSON response
 header('Content-Type: application/json');
 
@@ -7,10 +10,37 @@ require_once __DIR__ . '/../php/maksekeskus_integration/supabase_config.php';
 require_once __DIR__ . '/../php/maksekeskus/lib/Maksekeskus.php';
 require_once __DIR__ . '/../php/maksekeskus/vendor/autoload.php';
 
-// Create log directory if it doesn't exist
-$logDir = __DIR__ . '/../../logs';
-if (!is_dir($logDir)) {
-    mkdir($logDir, 0755, true);
+// Define log directory in /tmp which is writable in most hosting environments
+$logDir = '/tmp/leen_payment_logs';
+
+// Safe logging function that falls back to error_log if file writing fails
+function safeLog($logFile, $message) {
+    global $logDir;
+    $logPath = $logDir . '/' . $logFile;
+    
+    try {
+        if (is_dir($logDir) && (is_writable($logDir) || is_writable($logPath))) {
+            file_put_contents($logPath, date('Y-m-d H:i:s') . ' - ' . $message . PHP_EOL, FILE_APPEND);
+        } else {
+            // Fallback to PHP's error_log
+            error_log('Payment log: ' . $message);
+        }
+    } catch (Exception $e) {
+        error_log('Exception in safeLog: ' . $e->getMessage() . ' - Original message: ' . $message);
+    }
+}
+
+// Function to return JSON response and end script execution
+function returnJsonResponse($data, $statusCode = 200) {
+    // Clean any output that might have been generated
+    if (ob_get_length()) ob_clean();
+    
+    // Set status code
+    http_response_code($statusCode);
+    
+    // Return JSON response
+    echo json_encode($data);
+    exit;
 }
 
 try {
@@ -34,9 +64,7 @@ try {
     
     // Verify the notification signature
     if (!$client->verifyMac($requestData)) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Invalid signature']);
-        exit;
+        returnJsonResponse(['error' => 'Invalid signature'], 400);
     }
     
     // Extract message data
@@ -59,7 +87,7 @@ try {
         $safeData['customer']['phone'] = substr($phone, 0, 4) . str_repeat('*', strlen($phone) - 6) . substr($phone, -2);
     }
     
-    file_put_contents($logDir . '/payment_notifications.log', date('Y-m-d H:i:s') . ' - ' . json_encode($safeData) . PHP_EOL, FILE_APPEND);
+    safeLog('payment_notifications.log', json_encode($safeData));
     
     // Update order status in Supabase
     if (isset($messageData['merchant_data']['order_id']) && isset($messageData['status'])) {
@@ -74,91 +102,103 @@ try {
             throw new Exception('Supabase configuration is missing');
         }
         
-        $supabaseService = new \PHPSupabase\Service($supabase_key, $supabase_url);
-        $ordersDb = $supabaseService->initializeDatabase('orders', 'id');
-        
-        // Map Maksekeskus status to our order status
-        $orderStatus = 'PENDING';
-        $paymentStatus = $status;
-        
-        switch ($status) {
-            case 'COMPLETED':
-                $orderStatus = 'PAID';
-                break;
-            case 'CANCELLED':
-                $orderStatus = 'CANCELLED';
-                break;
-            case 'EXPIRED':
-                $orderStatus = 'CANCELLED';
-                break;
-            case 'REFUNDED':
-                $orderStatus = 'REFUNDED';
-                break;
-        }
-        
-        // Update order
-        $updateData = [
-            'status' => $orderStatus,
-            'payment_status' => $paymentStatus,
-            'updated_at' => date('c')
-        ];
-        
-        $ordersDb->update($orderId, $updateData);
-        
-        if ($ordersDb->getError()) {
-            throw new Exception('Failed to update order: ' . $ordersDb->getError());
-        }
-        
-        // Send email notification for completed payments
-        if ($status === 'COMPLETED') {
-            // Get order details
-            $ordersDb->findBy('id', $orderId);
-            $order = $ordersDb->getFirstResult();
+        try {
+            $supabaseService = new \PHPSupabase\Service($supabase_key, $supabase_url);
+            $ordersDb = $supabaseService->initializeDatabase('orders', 'id');
             
-            if ($order && isset($order->customer_email)) {
-                // Send email to customer
-                $to = $order->customer_email;
-                $subject = 'Teie tellimus on kinnitatud - Leen.ee';
-                $message = "Tere, {$order->customer_name}!\n\n";
-                $message .= "Teie tellimus on edukalt kinnitatud ja makse on laekunud.\n\n";
-                $message .= "Tellimuse number: {$order->id}\n";
-                $message .= "Summa: {$order->total_amount}€\n\n";
-                $message .= "Täname teid ostu eest!\n\n";
-                $message .= "Parimate soovidega,\nLeen.ee meeskond";
-                
-                $headers = 'From: leen@leen.ee' . "\r\n" .
-                           'Reply-To: leen@leen.ee' . "\r\n" .
-                           'X-Mailer: PHP/' . phpversion();
-                
-                mail($to, $subject, $message, $headers);
-                
-                // Send notification to admin
-                $adminEmail = 'leen@leen.ee';
-                $adminSubject = 'Uus tellimus - Leen.ee';
-                $adminMessage = "Uus tellimus on laekunud:\n\n";
-                $adminMessage .= "Tellimuse number: {$order->id}\n";
-                $adminMessage .= "Klient: {$order->customer_name}\n";
-                $adminMessage .= "E-post: {$order->customer_email}\n";
-                $adminMessage .= "Telefon: {$order->customer_phone}\n";
-                $adminMessage .= "Summa: {$order->total_amount}€\n\n";
-                $adminMessage .= "Vaata tellimust administreerimisliideses.";
-                
-                mail($adminEmail, $adminSubject, $adminMessage, $headers);
+            // Map Maksekeskus status to our order status
+            $orderStatus = 'PENDING';
+            $paymentStatus = $status;
+            
+            switch ($status) {
+                case 'COMPLETED':
+                    $orderStatus = 'PAID';
+                    break;
+                case 'CANCELLED':
+                    $orderStatus = 'CANCELLED';
+                    break;
+                case 'EXPIRED':
+                    $orderStatus = 'CANCELLED';
+                    break;
+                case 'REFUNDED':
+                    $orderStatus = 'REFUNDED';
+                    break;
             }
+            
+            // Update order
+            $updateData = [
+                'status' => $orderStatus,
+                'payment_status' => $paymentStatus,
+                'updated_at' => date('c')
+            ];
+            
+            $ordersDb->update($orderId, $updateData);
+            
+            if ($ordersDb->getError()) {
+                throw new Exception('Failed to update order: ' . $ordersDb->getError());
+            }
+            
+            // Send email notification for completed payments
+            if ($status === 'COMPLETED') {
+                // Get order details
+                $ordersDb->findBy('id', $orderId);
+                $order = $ordersDb->getFirstResult();
+                
+                if ($order && isset($order->customer_email)) {
+                    // Send email to customer
+                    $to = $order->customer_email;
+                    $subject = 'Teie tellimus on kinnitatud - Leen.ee';
+                    $message = "Tere, {$order->customer_name}!\n\n";
+                    $message .= "Teie tellimus on edukalt kinnitatud ja makse on laekunud.\n\n";
+                    $message .= "Tellimuse number: {$order->id}\n";
+                    $message .= "Summa: {$order->total_amount}€\n\n";
+                    $message .= "Täname teid ostu eest!\n\n";
+                    $message .= "Parimate soovidega,\nLeen.ee meeskond";
+                    
+                    $headers = 'From: leen@leen.ee' . "\r\n" .
+                               'Reply-To: leen@leen.ee' . "\r\n" .
+                               'X-Mailer: PHP/' . phpversion();
+                    
+                    try {
+                        mail($to, $subject, $message, $headers);
+                    } catch (Exception $mailEx) {
+                        safeLog('payment_errors.log', 'Email sending error: ' . $mailEx->getMessage());
+                    }
+                    
+                    // Send notification to admin
+                    $adminEmail = 'leen@leen.ee';
+                    $adminSubject = 'Uus tellimus - Leen.ee';
+                    $adminMessage = "Uus tellimus on laekunud:\n\n";
+                    $adminMessage .= "Tellimuse number: {$order->id}\n";
+                    $adminMessage .= "Klient: {$order->customer_name}\n";
+                    $adminMessage .= "E-post: {$order->customer_email}\n";
+                    $adminMessage .= "Telefon: {$order->customer_phone}\n";
+                    $adminMessage .= "Summa: {$order->total_amount}€\n\n";
+                    $adminMessage .= "Vaata tellimust administreerimisliideses.";
+                    
+                    try {
+                        mail($adminEmail, $adminSubject, $adminMessage, $headers);
+                    } catch (Exception $mailEx) {
+                        safeLog('payment_errors.log', 'Admin email sending error: ' . $mailEx->getMessage());
+                    }
+                }
+            }
+        } catch (Exception $dbEx) {
+            safeLog('payment_errors.log', 'Database error in notification handler: ' . $dbEx->getMessage());
+            returnJsonResponse(['error' => 'Database error'], 500);
         }
     }
     
     // Return success response
-    echo json_encode(['success' => true]);
+    returnJsonResponse(['success' => true]);
     
 } catch (Exception $e) {
     // Log the error
-    file_put_contents($logDir . '/payment_errors.log', date('Y-m-d H:i:s') . ' - Notification error: ' . $e->getMessage() . PHP_EOL, FILE_APPEND);
+    safeLog('payment_errors.log', 'Notification error: ' . $e->getMessage());
     
     // Always return 200 OK to Maksekeskus to prevent retries
-    http_response_code(200);
-    echo json_encode([
+    returnJsonResponse([
         'success' => false,
         'error' => 'Notification processing failed'
-    ]);
+    ], 200);
 }
