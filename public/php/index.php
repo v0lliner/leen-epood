@@ -1,5 +1,5 @@
 @@ .. @@
- $handlerFound = false;
+$path = isset($_GET['path']) ? trim($_GET['path'], '/') : '';
  
  // Handle different API endpoints
 -if (strpos($path, 'get-omniva-parcel-machines') === 0) {

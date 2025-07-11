@@ -1,24 +1,18 @@
 # Enable Apache rewrite engine
 RewriteEngine On
-RewriteBase /
 
 # Route all requests for /php/ to the PHP router (index.php) and pass the path info
 # This ensures all API calls go through the single entry point and PATH_INFO is set
-RewriteRule ^php/(.*)$ php/index.php/$1 [QSA,L]
+RewriteRule ^php/(.*)$ php/index.php?path=$1 [QSA,L]
 
 # Exclude robots.txt from rewrite rules
 RewriteCond %{REQUEST_URI} !^/robots\.txt$ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule . /index.html [L]
+RewriteRule ^(.*)$ index.html [L]
 
 # Set default character set for the server
 AddDefaultCharset UTF-8
-
-# Enable PHP error logging
-php_flag display_errors on
-php_flag log_errors on
-php_value error_log error_log
 
 # Set proper MIME types
 AddType application/javascript .js
@@ -26,9 +20,3 @@ AddType text/css .css
 
 # Prevent directory listing
 Options -Indexes
-
-# Prevent access to hidden files
-<FilesMatch "^\.">
-  Order allow,deny
-  Deny from all
-</FilesMatch>
