@@ -1,25 +1,13 @@
 {
-    "name": "leen/payment-backend",
-    "description": "PHP backend for Leen.ee payment processing",
-    "type": "project",
     "require": {
-        "php": ">=8.1",
-        "guzzlehttp/guzzle": "^7.0",
-        "nategood/httpful": "^0.3.2",
-        "vlucas/phpdotenv": "^5.5"
+        "vlucas/phpdotenv": "5.5.*",
+        "maksekeskus/maksekeskus-php-sdk": "1.2.*",
+        "ext-json": "*",
+        "ext-curl": "*"
     },
     "autoload": {
         "psr-4": {
-            "PHPSupabase\\": "public/php/phpsupabase/src/",
-            "Maksekeskus\\": "public/php/maksekeskus/lib/"
-        },
-        "files": [
-            "public/php/maksekeskus/lib/Maksekeskus.php"
-        ]
-    },
-    "config": {
-        "allow-plugins": {
-            "php-http/discovery": true
+            "App\\": "src/"
         }
     }
 }

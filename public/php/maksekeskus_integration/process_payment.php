@@ -38,8 +38,8 @@ function safeLog($filename, $message) {
 // Log the start of the script
 safeLog('payment_process.log', "Payment processing started");
 
-// Check if Composer autoloader exists
-$autoloaderPath = __DIR__ . '/../../vendor/autoload.php';
+// Check for Composer autoloader in project root
+$autoloaderPath = __DIR__ . '/../../../vendor/autoload.php';
 if (!file_exists($autoloaderPath)) {
     safeLog('error.log', "Composer autoloader not found at: {$autoloaderPath}");
     http_response_code(500);
@@ -53,6 +53,19 @@ if (!file_exists($autoloaderPath)) {
 // Load Composer autoloader
 require_once $autoloaderPath;
 
+// Load environment variables using Dotenv
+use Dotenv\Dotenv;
+
+try {
+    // Initialize Dotenv from project root
+    $dotenv = Dotenv::createImmutable(__DIR__ . '/../../../');
+    $dotenv->load();
+    safeLog('env_loading.log', "Dotenv loaded successfully");
+} catch (Exception $e) {
+    safeLog('env_loading.log', "Failed to load Dotenv: " . $e->getMessage());
+    error_log("Failed to load Dotenv: " . $e->getMessage());
+}
+
 // Check for required PHP extensions
 if (!extension_loaded('curl')) {
     safeLog('error.log', "Required PHP extension 'curl' is not loaded");
@@ -64,20 +77,28 @@ if (!extension_loaded('curl')) {
     exit;
 }
 
-// Load environment variables directly
-$supabaseUrl = 'https://epcenpirjkfkgdgxktrm.supabase.co';
-$supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY4OTI0NzI1MCwiZXhwIjoyMDA0ODIzMjUwfQ.7gFtK-Kx0PT5fXwuNFiJXgNqgG_FnuDnzImj9oavs-c';
+// Get Supabase credentials from environment variables
+$supabaseUrl = $_ENV['SUPABASE_URL'] ?? null;
+$supabaseKey = $_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? null;
 
 // Log environment info (without exposing full keys)
-safeLog('env_info.log', "Supabase URL: {$supabaseUrl}");
-safeLog('env_info.log', "Supabase Key length: " . strlen($supabaseKey));
-safeLog('env_info.log', "Supabase Key hash: " . md5($supabaseKey));
+safeLog('env_info.log', "Supabase URL: " . ($supabaseUrl ? $supabaseUrl : 'Not set'));
+safeLog('env_info.log', "Supabase Key length: " . ($supabaseKey ? strlen($supabaseKey) : 'Not set'));
+safeLog('env_info.log', "Supabase Key hash: " . ($supabaseKey ? md5($supabaseKey) : 'Not set'));
+
+// Check if Supabase credentials are set
+if (!$supabaseUrl || !$supabaseKey) {
+    safeLog('error.log', "Supabase credentials not found in environment variables");
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => 'Server configuration error: Missing Supabase credentials'
+    ]);
+    exit;
+}
 
 // Load Supabase client
 require_once __DIR__ . '/../supabase_client/SupabaseClient.php';
-
-// Load Maksekeskus SDK
-require_once __DIR__ . '/../maksekeskus/lib/Maksekeskus.php';
 
 // Get raw input
 $input = file_get_contents('php://input');
@@ -148,13 +169,26 @@ try {
         throw new Exception("Database error: " . $e->getMessage());
     }
     
-    // Maksekeskus configuration
+    // Get Maksekeskus configuration from environment variables
     $mkConfig = [
-        'shop_id' => 'f7741ab2-7445-45f9-9af4-0d0408ef1e4c',
-        'api_secret_key' => 'pfOsGD9oPaFEILwqFLHEHkPf7vZz4j3t36nAcufP1abqT9l99koyuC1IWAOcBeqt',
-        'api_open_key' => 'zPA6jCTIvGKYqrXxlgkXLzv3F82Mjv2E',
-        'test_mode' => true
+        'shop_id' => $_ENV['MAKSEKESKUS_SHOP_ID'] ?? null,
+        'api_secret_key' => $_ENV['MAKSEKESKUS_SECRET_KEY'] ?? null,
+        'api_open_key' => $_ENV['MAKSEKESKUS_PUBLISHABLE_KEY'] ?? null,
+        'test_mode' => ($_ENV['MAKSEKESKUS_TEST_MODE'] ?? 'true') === 'true'
     ];
+    
+    // Check if Maksekeskus credentials are set
+    if (!$mkConfig['shop_id'] || !$mkConfig['api_secret_key'] || !$mkConfig['api_open_key']) {
+        safeLog('error.log', "Maksekeskus credentials not found in environment variables");
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'error' => 'Server configuration error: Missing Maksekeskus credentials'
+        ]);
+        exit;
+    }
+    
+    safeLog('maksekeskus_info.log', "Using Maksekeskus shop ID: " . $mkConfig['shop_id'] . ", Test mode: " . ($mkConfig['test_mode'] ? 'true' : 'false'));
     
     // Initialize Maksekeskus SDK
     try {
