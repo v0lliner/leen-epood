@@ -169,10 +169,9 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
   const getPayloadForSubmission = () => {
     return {
       // Basic order information
-      amount: calculateTotal().toFixed(2),
+      total_amount: calculateTotal().toFixed(2),
       email: formData.email,
-      firstName: formData.firstName,
-      lastName: formData.lastName,
+      customer_name: `${formData.firstName} ${formData.lastName}`,
       phone: formData.phone,
       companyName: formData.companyName,
       country: formData.country,
@@ -181,7 +180,8 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
       shippingMethod: formData.shippingMethod,
       omnivaParcelMachineId: formData.omnivaParcelMachineId,
       omnivaParcelMachineName: formData.omnivaParcelMachineName,
-      shippingCost: getShippingCost(),
+      shipping_cost: getShippingCost(),
+      subtotal: cartTotal,
       
       // Payment information
       paymentMethod: formData.paymentMethod,
@@ -190,7 +190,19 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
       notes: formData.notes,
       
       // Cart items
-      items: cartItems
+      items: cartItems,
+      
+      // Shipping address as JSON
+      shipping_address: {
+        country: formData.country,
+        parcel_machine_id: formData.omnivaParcelMachineId,
+        parcel_machine_name: formData.omnivaParcelMachineName
+      },
+      
+      // Billing address (same as shipping for now)
+      billing_address: {
+        country: formData.country
+      }
     };
   };
   

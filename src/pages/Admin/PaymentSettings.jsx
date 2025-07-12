@@ -2,12 +2,10 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import AdminLayout from '../../components/Admin/AdminLayout'
 import { Link } from 'react-router-dom'
-import { maksekeskusConfigService } from '../../utils/supabase/maksekeskusConfig'
 import { shippingSettingsService } from '../../utils/supabase/shippingSettings'
 
 const PaymentSettings = () => {
   const { t } = useTranslation()
-  const [config, setConfig] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -17,15 +15,6 @@ const PaymentSettings = () => {
   const [omnivaShippingSettings, setOmnivaShippingSettings] = useState(null)
   const [shippingPrice, setShippingPrice] = useState('3.99')
   
-  // Form state for new values
-  const [maksekeskusFormData, setMaksekeskusFormData] = useState({
-    shop_id: '',
-    api_secret_key: '',
-    api_open_key: '',
-    test_mode: false,
-    active: true
-  })
-
   // Form state for Omniva settings
   const [omnivaFormData, setOmnivaFormData] = useState({
     customer_code: '',
@@ -33,13 +22,6 @@ const PaymentSettings = () => {
     password: '',
     test_mode: false,
     active: true
-  })
-  
-  // Track which fields have been modified
-  const [maksekeskusModifiedFields, setMaksekeskusModifiedFields] = useState({
-    shop_id: false,
-    api_secret_key: false,
-    api_open_key: false
   })
   
   // Track which Omniva fields have been modified
@@ -50,53 +32,11 @@ const PaymentSettings = () => {
   })
 
   // Active tab state
-  const [activeTab, setActiveTab] = useState('maksekeskus')
+  const [activeTab, setActiveTab] = useState('omniva')
 
   useEffect(() => {
-    loadConfig()
     loadOmnivaShippingSettings()
   }, [])
-
-  const loadConfig = async () => {
-    setLoading(true)
-    setError('')
-    
-    try {
-      // Get masked config for display
-      const { data: maskedData, error: maskedError } = await maksekeskusConfigService.getMaskedConfig()
-      
-      if (maskedError) {
-        console.error('Error loading masked config:', maskedError)
-        // If no config exists, that's okay - we'll show the form to create one
-        if (maskedError.code !== 'PGRST116') {
-          setError('Maksekeskuse konfiguratsiooni laadimine ebaõnnestus')
-        }
-        return
-      }
-      
-      setConfig(maskedData)
-      
-      // Initialize form with masked data
-      if (maskedData) {
-        setMaksekeskusFormData({
-          id: maskedData.id,
-          shop_id: maskedData.shop_id || '',
-          api_secret_key: '', // Don't show actual key, just placeholder
-          api_open_key: '', // Don't show actual key, just placeholder
-          test_mode: maskedData.test_mode || false,
-          active: maskedData.active || true
-        })
-      }
-
-      // Load Omniva settings
-      loadOmnivaSettings()
-    } catch (err) {
-      console.error('Error in loadConfig:', err)
-      setError('Võrguühenduse viga')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const loadOmnivaSettings = async () => {
     try {
@@ -133,28 +73,6 @@ const PaymentSettings = () => {
     }
   }
 
-  const handleMaksekeskusInputChange = (e) => {
-    const { name, value, type, checked } = e.target
-    const newValue = type === 'checkbox' ? checked : value
-    
-    setMaksekeskusFormData(prev => ({
-      ...prev,
-      [name]: newValue
-    }))
-    
-    // Track modified fields for text inputs
-    if (type !== 'checkbox' && ['shop_id', 'api_secret_key', 'api_open_key'].includes(name)) {
-      setMaksekeskusModifiedFields(prev => ({
-        ...prev,
-        [name]: true
-      }))
-    }
-    
-    // Clear messages when user starts typing
-    if (error) setError('')
-    if (success) setSuccess('')
-  }
-
   const handleOmnivaInputChange = (e) => {
     const { name, value, type, checked } = e.target
     const newValue = type === 'checkbox' ? checked : value
@@ -175,75 +93,6 @@ const PaymentSettings = () => {
     // Clear messages when user starts typing
     if (error) setError('')
     if (success) setSuccess('')
-  }
-
-  const handleMaksekeskusSubmit = async (e) => {
-    e.preventDefault()
-    setSaving(true)
-    setError('')
-    setSuccess('')
-
-    try {
-      // Prepare data for update, only including modified fields
-      const updateData = {
-        id: maksekeskusFormData.id,
-        test_mode: maksekeskusFormData.test_mode,
-        active: maksekeskusFormData.active
-      }
-      
-      // Only include text fields that have been modified
-      if (maksekeskusModifiedFields.shop_id) {
-        updateData.shop_id = maksekeskusFormData.shop_id
-      }
-      
-      if (maksekeskusModifiedFields.api_secret_key && maksekeskusFormData.api_secret_key) {
-        updateData.api_secret_key = maksekeskusFormData.api_secret_key
-      }
-      
-      if (maksekeskusModifiedFields.api_open_key && maksekeskusFormData.api_open_key) {
-        updateData.api_open_key = maksekeskusFormData.api_open_key
-      }
-      
-      // If this is a new config (no ID), include all required fields
-      if (!maksekeskusFormData.id) {
-        if (!maksekeskusFormData.shop_id || !maksekeskusFormData.api_secret_key || !maksekeskusFormData.api_open_key) {
-          setError('Kõik väljad on kohustuslikud uue konfiguratsiooni loomisel')
-          setSaving(false)
-          return
-        }
-        
-        // For new configs, include all required fields
-        updateData.shop_id = maksekeskusFormData.shop_id
-        updateData.api_secret_key = maksekeskusFormData.api_secret_key
-        updateData.api_open_key = maksekeskusFormData.api_open_key
-      }
-      
-      const { data, error } = await maksekeskusConfigService.upsertMaksekeskusConfig(updateData)
-      
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess('Maksekeskuse seaded edukalt salvestatud!')
-        
-        // Reset modified fields tracking
-        setMaksekeskusModifiedFields({
-          shop_id: false,
-          api_secret_key: false, 
-          api_open_key: false
-        })
-        
-        // Reload config to get updated masked values
-        await loadConfig()
-        
-        // Clear success message after 3 seconds
-        setTimeout(() => setSuccess(''), 3000)
-      }
-    } catch (err) {
-      console.error('Error saving config:', err)
-      setError('Võrguühenduse viga')
-    } finally {
-      setSaving(false)
-    }
   }
 
   const handleOmnivaSubmit = async (e) => {
@@ -323,57 +172,6 @@ const PaymentSettings = () => {
     }
   }
 
-  const handleToggleTestMode = async () => {
-    if (!config?.id) return
-    
-    setSaving(true)
-    setError('')
-    
-    try {
-      const { error } = await maksekeskusConfigService.toggleTestMode(
-        config.id, 
-        !config.test_mode
-      )
-      
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess('Testrežiim edukalt muudetud!')
-        await loadConfig()
-        setTimeout(() => setSuccess(''), 3000)
-      }
-    } catch (err) {
-      setError('Võrguühenduse viga')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleToggleActive = async () => {
-    if (!config?.id) return
-    
-    setSaving(true)
-    setError('')
-    
-    try {
-      const { error } = await maksekeskusConfigService.toggleActive(
-        config.id, 
-        !config.active
-      )
-      
-      if (error) {
-        setError(error.message)
-      } else {
-        setSuccess('Aktiivne olek edukalt muudetud!')
-        await loadConfig()
-        setTimeout(() => setSuccess(''), 3000)
-      }
-    } catch (err) {
-      setError('Võrguühenduse viga')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -422,13 +220,6 @@ const PaymentSettings = () => {
         {/* Tabs navigation */}
         <div className="settings-tabs">
           <button 
-            className={`tab-button ${activeTab === 'maksekeskus' ? 'active' : ''}`}
-            onClick={() => setActiveTab('maksekeskus')}
-          >
-            <span className="tab-icon">💳</span>
-            <span>Maksekeskus</span>
-          </button>
-          <button 
             className={`tab-button ${activeTab === 'omniva' ? 'active' : ''}`}
             onClick={() => setActiveTab('omniva')}
           >
@@ -438,270 +229,6 @@ const PaymentSettings = () => {
         </div>
 
         <div className="settings-content">
-          {/* Maksekeskus Settings */}
-          <div 
-            className={`settings-card ${activeTab === 'maksekeskus' ? '' : 'hidden'}`}
-          >
-            <h2>Maksekeskuse API seaded</h2>
-            
-            {config ? (
-              <>
-                <div className="config-summary">
-                  <div className="config-status-card">
-                    <div className="status-header">
-                      <h3>Maksekeskuse staatus</h3>
-                      <span className={`status-badge ${config.active ? 'status-active' : 'status-inactive'}`}>
-                        {config.active ? 'Aktiivne' : 'Mitteaktiivne'}
-                      </span>
-                    </div>
-                    <div className="status-body">
-                      <div className="status-row">
-                        <span className="status-label">Testrežiim:</span>
-                        <span className={`status-indicator ${config.test_mode ? 'status-test' : 'status-live'}`}>
-                          {config.test_mode ? 'Sees (Testimine)' : 'Väljas (Live)'}
-                        </span>
-                      </div>
-                      <div className="status-row">
-                        <span className="status-label">Viimati uuendatud:</span>
-                        <span className="status-value">
-                          {new Date(config.updated_at).toLocaleString('et-EE')}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="status-actions">
-                      <button 
-                        onClick={handleToggleActive}
-                        disabled={saving}
-                        className="btn btn-secondary"
-                      >
-                        {config.active ? 'Deaktiveeri' : 'Aktiveeri'}
-                      </button>
-                      <button 
-                        onClick={handleToggleTestMode}
-                        disabled={saving}
-                        className={`btn ${config.test_mode ? 'btn-warning' : 'btn-success'}`}
-                      >
-                        {config.test_mode ? 'Lülita testrežiim välja' : 'Lülita testrežiim sisse'}
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="config-details-card">
-                    <h3>API seaded</h3>
-                    <div className="details-body">
-                      <div className="details-row">
-                        <span className="details-label">Shop ID:</span>
-                        <span className="details-value">{config.shop_id}</span>
-                      </div>
-                      
-                      <div className="details-row">
-                        <span className="details-label">API Secret Key:</span>
-                        <span className="details-value masked-value">{config.api_secret_key_masked}</span>
-                      </div>
-                      
-                      <div className="details-row">
-                        <span className="details-label">API Open Key:</span>
-                        <span className="details-value masked-value">{config.api_open_key_masked}</span>
-                      </div>
-                    </div>
-                </div>
-              </div>
-              </>
-            ) : (
-              <div className="no-config-card">
-                <div className="no-config-icon">🔑</div>
-                <h3>Maksekeskuse seaded puuduvad</h3>
-                <p>Maksekeskuse konfiguratsiooni ei leitud. Palun lisage uus konfiguratsioon alloleva vormi abil.</p>
-              </div>
-            )}
-            
-            <div className="config-form-section">
-              <h3 className="form-section-title">{config ? 'Muuda konfiguratsiooni' : 'Lisa uus konfiguratsioon'}</h3>
-              
-              <form onSubmit={handleMaksekeskusSubmit} className="config-form">
-                <div className="form-group">
-                  <label htmlFor="shop_id">Shop ID</label>
-                  <input
-                    type="text"
-                    id="shop_id"
-                    name="shop_id"
-                    value={maksekeskusFormData.shop_id}
-                    onChange={handleMaksekeskusInputChange}
-                    className="form-input"
-                    placeholder={config ? "Jäta tühjaks, et mitte muuta" : "Sisesta Shop ID"}
-                    required={!config}
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="api_secret_key">API Secret Key</label>
-                  <input
-                    type="password"
-                    id="api_secret_key"
-                    name="api_secret_key"
-                    value={maksekeskusFormData.api_secret_key}
-                    onChange={handleMaksekeskusInputChange}
-                    className="form-input"
-                    placeholder={config ? "Jäta tühjaks, et mitte muuta" : "Sisesta API Secret Key"}
-                    required={!config}
-                  />
-                </div>
-                
-                <div className="form-group">
-                  <label htmlFor="api_open_key">API Open Key</label>
-                  <input
-                    type="password"
-                    id="api_open_key"
-                    name="api_open_key"
-                    value={maksekeskusFormData.api_open_key}
-                    onChange={handleMaksekeskusInputChange}
-                    className="form-input"
-                    placeholder={config ? "Jäta tühjaks, et mitte muuta" : "Sisesta API Open Key"}
-                    required={!config}
-                  />
-                </div>
-                
-                <div className="form-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="test_mode"
-                      checked={maksekeskusFormData.test_mode}
-                      onChange={handleMaksekeskusInputChange}
-                      className="form-checkbox"
-                    />
-                    <span>Testrežiim</span>
-                  </label>
-                  <small className="form-hint">
-                    Testrežiimis ei toimu päris makseid. Kasutage seda ainult testimiseks.
-                  </small>
-                </div>
-                
-                <div className="form-group checkbox-group">
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      name="active"
-                      checked={maksekeskusFormData.active}
-                      onChange={handleMaksekeskusInputChange}
-                      className="form-checkbox"
-                    />
-                    <span>Aktiivne</span>
-                  </label>
-                  <small className="form-hint">
-                    Ainult üks konfiguratsioon saab olla korraga aktiivne.
-                  </small>
-                </div>
-                
-                <div className="form-actions">
-                  {config && (
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        setMaksekeskusFormData({
-                          id: config.id,
-                          shop_id: config.shop_id || '',
-                          api_secret_key: '',
-                          api_open_key: '',
-                          test_mode: config.test_mode || false,
-                          active: config.active || true
-                        });
-                        setMaksekeskusModifiedFields({
-                          shop_id: false,
-                          api_secret_key: false,
-                          api_open_key: false
-                        });
-                      }}
-                      className="btn btn-secondary"
-                    >
-                      Tühista
-                    </button>
-                  )}
-                  <button 
-                    type="submit"
-                    disabled={saving}
-                    className="btn btn-primary"
-                  >
-                    {saving ? 'Salvestamine...' : (config ? 'Uuenda seadeid' : 'Lisa konfiguratsioon')}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-          
-          <div className={`settings-card ${activeTab === 'maksekeskus' ? '' : 'hidden'}`}>
-            <h2>Maksekeskuse info</h2>
-            
-            <div className="info-cards">
-              <div className="info-card">
-                <div className="info-card-header">
-                  <div className="info-card-icon">💳</div>
-                  <h3>Kuidas Maksekeskus töötab?</h3>
-                </div>
-                <div className="info-card-body">
-                  <p>Maksekeskus on Eesti maksevahendaja, mis võimaldab teie e-poes vastu võtta erinevaid makseid, sealhulgas pangalingid, krediitkaardid ja muud makseviisid.</p>
-                  <a href="https://maksekeskus.ee" target="_blank" rel="noopener noreferrer" className="info-link">
-                    Külasta Maksekeskuse veebilehte →
-                  </a>
-                </div>
-              </div>
-              
-              <div className="info-card">
-                <div className="info-card-header">
-                  <div className="info-card-icon">🔧</div>
-                  <h3>Seadistamine</h3>
-                </div>
-                <div className="info-card-body">
-                  <ol className="numbered-list">
-                    <li>Looge konto <a href="https://maksekeskus.ee" target="_blank" rel="noopener noreferrer">Maksekeskuse veebilehel</a>.</li>
-                    <li>Saage oma Shop ID, API Secret Key ja API Open Key.</li>
-                    <li>Sisestage need võtmed ülaltoodud vormis.</li>
-                    <li>Testige makset testrežiimis.</li>
-                    <li>Kui kõik töötab, lülitage testrežiim välja ja aktiveerige konfiguratsioon.</li>
-                  </ol>
-                </div>
-              </div>
-              
-              <div className="info-card">
-                <div className="info-card-header">
-                  <div className="info-card-icon">🧪</div>
-                  <h3>Testimine</h3>
-                </div>
-                <div className="info-card-body">
-                  <p>Testrežiimis saate kasutada järgmisi testkaardiandmeid:</p>
-                  <div className="test-card-info">
-                    <div className="test-card-row">
-                      <span className="test-card-label">Kaardi number:</span>
-                      <code className="test-card-value">4111 1111 1111 1111</code>
-                    </div>
-                    <div className="test-card-row">
-                      <span className="test-card-label">Kehtivusaeg:</span>
-                      <span className="test-card-value">Suvaline tuleviku kuupäev</span>
-                    </div>
-                    <div className="test-card-row">
-                      <span className="test-card-label">CVC:</span>
-                      <span className="test-card-value">Suvaline 3-kohaline number</span>
-                    </div>
-                    <div className="test-card-row">
-                      <span className="test-card-label">Kaardi omanik:</span>
-                      <span className="test-card-value">Suvaline nimi</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="info-card warning">
-                <div className="info-card-header">
-                  <div className="info-card-icon">⚠️</div>
-                  <h3>Tähelepanu</h3>
-                </div>
-                <div className="info-card-body">
-                  <p>API võtmed on tundlikud andmed. Ärge jagage neid kellegi teisega.</p>
-                  <p>Kui kahtlustate, et teie võtmed on lekkinud, looge Maksekeskuse kontol uued võtmed ja uuendage need siin.</p>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Omniva Settings */}
           <div className={`settings-card ${activeTab === 'omniva' ? '' : 'hidden'}`}>

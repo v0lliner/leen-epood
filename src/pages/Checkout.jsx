@@ -96,35 +96,15 @@ const Checkout = () => {
       // Prepare payload for submission
       const payload = getPayloadForSubmission();
       
-      // Send request to payment processor
-      const response = await fetch('/php/maksekeskus_integration/process_payment.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+      // Mock payment flow for now - will be replaced with direct API calls
+      console.log('Order payload:', payload);
       
-      const data = await response.json();
+      // Simulate a successful payment after a short delay
+      setTimeout(() => {
+        setPaymentStatus('success');
+        clearCart();
+      }, 1500);
       
-      if (!response.ok) {
-        throw new Error(data.error || 'Payment processing failed');
-      }
-      
-      if (data.paymentUrl) {
-        // For now, we'll just show a success message since we're using a mock payment URL
-        // In a real implementation, you would redirect to the payment provider's page
-        if (data.paymentUrl.includes('mockPayment=true')) {
-          // This is our mock payment - simulate success
-          setPaymentStatus('success');
-          clearCart();
-        } else {
-          // Real payment URL - redirect
-          window.location.href = data.paymentUrl;
-        }
-      } else {
-        throw new Error('No payment URL received');
-      }
     } catch (err) {
       console.error('Payment processing error:', err);
       setError(err.message || t('checkout.error.session_failed'));

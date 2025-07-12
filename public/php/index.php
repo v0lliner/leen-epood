@@ -14,14 +14,6 @@ if (strpos($path, 'omniva_integration/get_locations.php') === 0) {
     // New modular Omniva parcel machines endpoint
     require_once __DIR__ . '/omniva_integration/get_locations.php';
     $handlerFound = true;
-} else if (strpos($path, 'maksekeskus_integration/process_payment') === 0) {
-    // Maksekeskus payment processing endpoint
-    require_once __DIR__ . '/maksekeskus_integration/process_payment.php';
-    $handlerFound = true;
-} else if (strpos($path, 'process-payment') === 0) {
-    // Legacy payment processing endpoint - redirect to new endpoint
-    require_once __DIR__ . '/maksekeskus_integration/process_payment.php';
-    $handlerFound = true;
 } else if (strpos($path, 'register-omniva-shipment') === 0) {
     // Omniva shipment registration endpoint
     require_once __DIR__ . '/register-omniva-shipment.php';
