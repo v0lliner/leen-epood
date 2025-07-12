@@ -1,93 +1,63 @@
-# Leen.ee - Ceramics and Clothing Design Website
+# Leen.ee E-commerce Website
 
-This is the source code for Leen Väränen's e-commerce website, featuring ceramics and clothing design products.
+This is the source code for the Leen.ee e-commerce website.
 
-## Environment Setup
+## Environment Variables
 
-The application requires several environment variables to function properly. Create a `.env` file in the project root with the following variables:
+This project uses direct environment variables instead of a `.env` file. For production deployment, set the following environment variables in your hosting environment:
 
 ```
+SUPABASE_URL=https://epcenpirjkfkgdgxktrm.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+SUPABASE_ANON_KEY=your-anon-key-here
 VITE_SUPABASE_URL=https://epcenpirjkfkgdgxktrm.supabase.co
-VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key-here
+MAKSEKESKUS_TEST_MODE=true  # Set to false for production
+MAKSEKESKUS_TEST_SHOP_ID=f7741ab2-7445-45f9-9af4-0d0408ef1e4c
+MAKSEKESKUS_TEST_PUBLISHABLE_KEY=zPA6jCTIvGKYqrXxlgkXLzv3F82Mjv2E
+MAKSEKESKUS_TEST_SECRET_KEY=pfOsGD9oPaFEILwqFLHEHkPf7vZz4j3t36nAcufP1abqT9l99koyuC1IWAOcBeqt
+MAKSEKESKUS_LIVE_SHOP_ID=4e2bed9a-aa24-4b87-801b-56c31c535d36
+MAKSEKESKUS_LIVE_PUBLISHABLE_KEY=wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM
+MAKSEKESKUS_LIVE_SECRET_KEY=WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ
+```
 
-# Supabase Service Role Key - Used in PHP backend
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+### For Local Development
 
-# Maksekeskus API Credentials
-MAKSEKESKUS_SHOP_ID=your_shop_id
-MAKSEKESKUS_PUBLIC_KEY=your_public_key
-MAKSEKESKUS_PRIVATE_KEY=your_private_key
-MAKSEKESKUS_TEST_MODE=false
+For local development, you can set these variables in your shell before starting the development server:
 
-# Omniva API Credentials
-OMNIVA_CUSTOMER_CODE=your_customer_code
-OMNIVA_USERNAME=your_username
-OMNIVA_PASSWORD=your_password
+```bash
+# Bash/Zsh
+export SUPABASE_URL=https://epcenpirjkfkgdgxktrm.supabase.co
+export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+# ... and so on for all variables
 
-# Google Maps API Key
-GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-
-# SMTP Settings
-SMTP_HOST=smtp.your-provider.com
-SMTP_USERNAME=your_email@example.com
-SMTP_PASSWORD=your_password
-SMTP_PORT=587
-SMTP_SECURE=tls
-
-# Base URL for the application
-APP_URL=https://leen.ee
+# Then start the development server
+npm run dev
 ```
 
 ## Development
 
-To start the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
 ```
 
-For PHP backend, start a PHP server in the public directory:
+## Deployment
 
-```bash
-php -S localhost:8000 -t public
-```
+The project is built using Vite and can be deployed to any static hosting service. The PHP backend requires a PHP-enabled server.
 
-## Data Flow
+## Features
 
-### Frontend to Backend Communication
-
-1. **React Frontend** - Makes API calls to:
-   - Supabase directly for database operations (products, categories, etc.)
-   - PHP backend for payment processing and order management
-
-2. **PHP Backend** - Handles:
-   - Payment processing via Maksekeskus
-   - Order management
-   - Shipping via Omniva
-   - Email notifications
-
-### Payment Flow
-
-1. User adds products to cart and proceeds to checkout
-2. Frontend collects shipping and contact information
-3. Frontend sends payment request to `/php/process-payment.php`
-4. PHP backend creates payment transaction via Maksekeskus API
-5. User is redirected to payment provider
-6. After payment, Maksekeskus sends webhook notification to `/php/payment-notification.php`
-7. PHP backend processes the notification and updates order status
-8. User is redirected to success page
-
-### Shipping Flow
-
-1. Admin views orders in admin panel
-2. Admin initiates shipping via Omniva
-3. PHP backend registers shipment with Omniva API
-4. Tracking information is added to the order
-5. Email notification with tracking info is sent to customer
-
-## Security Considerations
-
-- All sensitive credentials are stored in environment variables
-- Supabase RLS policies control data access
-- HTTPS is enforced for all connections
-- API keys are never exposed to the frontend
+- Product catalog with categories and filtering
+- Shopping cart functionality
+- Checkout with Maksekeskus payment integration
+- Admin panel for managing products, orders, and content
+- Multilingual support (Estonian and English)
+- Responsive design for all devices
