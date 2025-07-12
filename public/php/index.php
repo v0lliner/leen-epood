@@ -18,18 +18,6 @@ if (strpos($path, 'omniva_integration/get_locations.php') === 0) {
     // Maksekeskus payment processing endpoint
     require_once __DIR__ . '/maksekeskus_integration/process_payment.php';
     $handlerFound = true;
-} else if (strpos($path, 'maksekeskus_integration/notification') === 0) {
-    // Maksekeskus notification endpoint
-    require_once __DIR__ . '/maksekeskus_integration/notification.php';
-    $handlerFound = true;
-} else if (strpos($path, 'maksekeskus_integration/success') === 0) {
-    // Maksekeskus success endpoint
-    require_once __DIR__ . '/maksekeskus_integration/success.php';
-    $handlerFound = true;
-} else if (strpos($path, 'maksekeskus_integration/cancel') === 0) {
-    // Maksekeskus cancel endpoint
-    require_once __DIR__ . '/maksekeskus_integration/cancel.php';
-    $handlerFound = true;
 } else if (strpos($path, 'process-payment') === 0) {
     // Legacy payment processing endpoint - redirect to new endpoint
     require_once __DIR__ . '/maksekeskus_integration/process_payment.php';

@@ -51,9 +51,6 @@ try {
 // Load Supabase client
 require_once __DIR__ . '/../supabase_client/SupabaseClient.php';
 
-// Load Maksekeskus SDK
-require_once __DIR__ . '/../maksekeskus/lib/Maksekeskus.php';
-
 // Load configuration
 require_once __DIR__ . '/supabase_config.php';
 
@@ -136,80 +133,44 @@ try {
         throw new Exception("Database error: " . $e->getMessage());
     }
     
-    // Get Maksekeskus configuration
-    $mkConfig = getMaksekeskusConfig();
+    // Now we'll implement a direct REST API call to payment provider instead of using SDK
+    // This is a placeholder - you'll need to implement the actual API call to your payment provider
     
-    // Initialize Maksekeskus SDK
-    $mk = new \Maksekeskus\Maksekeskus(
-        $mkConfig['shop_id'],
-        $mkConfig['api_open_key'],
-        $mkConfig['api_secret_key'],
-        $mkConfig['test_mode']
-    );
-    
-    // Prepare transaction data
-    $transactionData = [
+    // Example of a direct REST API call to a payment provider
+    $paymentData = [
         'amount' => $data->amount,
         'currency' => 'EUR',
         'reference' => $order->id,
-        'merchant_data' => json_encode([
-            'order_id' => $order->id
-        ]),
-        'return_url' => [
-            'url' => 'https://leen.ee/makse/korras.php',
-            'method' => 'POST'
-        ],
-        'cancel_url' => [
-            'url' => 'https://leen.ee/makse/katkestatud.php',
-            'method' => 'POST'
-        ],
-        'notification_url' => [
-            'url' => 'https://leen.ee/makse/teavitus.php',
-            'method' => 'POST'
-        ],
         'customer' => [
             'email' => $data->email,
-            'name' => $data->firstName . ' ' . $data->lastName,
-            'phone' => $data->phone ?? '',
-            'country' => substr($data->country ?? 'Estonia', 0, 2)
+            'firstName' => $data->firstName,
+            'lastName' => $data->lastName,
+            'phone' => $data->phone ?? ''
         ],
-        'transaction_url' => [
-            'return_url' => 'https://leen.ee/makse/korras',
-            'cancel_url' => 'https://leen.ee/makse/katkestatud',
-            'notification_url' => 'https://leen.ee/makse/teavitus'
-        ]
+        'returnUrl' => 'https://leen.ee/makse/korras',
+        'cancelUrl' => 'https://leen.ee/makse/katkestatud',
+        'notificationUrl' => 'https://leen.ee/makse/teavitus'
     ];
     
-    safeLog('transaction_data.log', "Transaction data prepared: " . json_encode($transactionData));
+    safeLog('payment_data.log', "Payment data prepared: " . json_encode($paymentData));
     
-    // Create transaction
-    try {
-        $transaction = $mk->createTransaction($transactionData);
-        
-        if (!$transaction || !isset($transaction->payment_url)) {
-            safeLog('transaction_error.log', "Failed to create payment transaction. Response: " . json_encode($transaction));
-            throw new Exception("Failed to create payment transaction");
-        }
-        
-        safeLog('transaction_created.log', "Transaction created with payment URL: " . $transaction->payment_url);
-        
-        // Update order with transaction ID
-        $updateData = [
-            'payment_reference' => $transaction->id
-        ];
-        
-        $supabase->update('orders', $order->id, $updateData);
-        
-        // Return success response with payment URL
-        echo json_encode([
-            'success' => true,
-            'paymentUrl' => $transaction->payment_url,
-            'orderId' => $order->id
-        ]);
-    } catch (Exception $e) {
-        safeLog('maksekeskus_error.log', "Maksekeskus error: " . $e->getMessage());
-        throw new Exception("Payment gateway error: " . $e->getMessage());
-    }
+    // For now, we'll just return a success response with a mock payment URL
+    // In a real implementation, you would make an API call to your payment provider
+    // and get the actual payment URL from their response
+    
+    // Update order with payment reference (mock)
+    $updateData = [
+        'payment_reference' => 'DIRECT-' . time()
+    ];
+    
+    $supabase->update('orders', $order->id, $updateData);
+    
+    // Return success response with mock payment URL
+    echo json_encode([
+        'success' => true,
+        'paymentUrl' => 'https://leen.ee/checkout?mockPayment=true&orderId=' . $order->id,
+        'orderId' => $order->id
+    ]);
     
 } catch (Exception $e) {
     // Log error

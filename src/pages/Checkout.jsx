@@ -112,8 +112,16 @@ const Checkout = () => {
       }
       
       if (data.paymentUrl) {
-        // Redirect to payment page
-        window.location.href = data.paymentUrl;
+        // For now, we'll just show a success message since we're using a mock payment URL
+        // In a real implementation, you would redirect to the payment provider's page
+        if (data.paymentUrl.includes('mockPayment=true')) {
+          // This is our mock payment - simulate success
+          setPaymentStatus('success');
+          clearCart();
+        } else {
+          // Real payment URL - redirect
+          window.location.href = data.paymentUrl;
+        }
       } else {
         throw new Error('No payment URL received');
       }
