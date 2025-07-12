@@ -18,7 +18,7 @@ if (import.meta.env.DEV) {
 
 // Add fallback values for development to prevent crashes
 const url = supabaseUrl || 'https://epcenpirjkfkgdgxktrm.supabase.co'
-const key = supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkyNDcyNTgsImV4cCI6MjAwNDgyMzI1OH0.sMCXnPUQJiYzJdaMZTxEVDcgdZl2hi1j9-XfOuZe-Yk'
+const key = supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU5MjU4NjIsImV4cCI6MjA1MTUwMTg2Mn0.Wd0JvQDHHEVxKoL1gVQzZ_UwVF-_tx-g_vdAf-HSsSI'
 
 export const supabase = createClient(url, key, {
   auth: {
