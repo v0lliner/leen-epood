@@ -14,6 +14,7 @@ if (!file_exists($logDir)) {
 
 // Load custom DotEnv class
 require_once __DIR__ . '/../php/payment/DotEnv.php';
+require_once __DIR__ . '/../php/supabase_client/SupabaseClient.php';
 
 /**
  * Safe logging function that writes to a file and falls back to error_log if file writing fails
@@ -47,35 +48,17 @@ if ($transactionReference) {
         // Get Supabase configuration
         $supabaseUrl = DotEnv::get('SUPABASE_URL', 'https://epcenpirjkfkgdgxktrm.supabase.co');
         $supabaseKey = DotEnv::get('SUPABASE_SERVICE_ROLE_KEY', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTY4OTI0NzI1OCwiZXhwIjoyMDA0ODIzMjU4fQ.Wd0JvQDHHEVxKoL1gVQzZ_UwVF-_tx-g_vdAf-HSsSI');
-        
-        if (!$supabaseUrl || !$supabaseKey) {
-            safeLog('error.log', "Using fallback Supabase configuration");
-        }
-        
+
+        // Initialize Supabase client with service_role key
+        $supabase = new SupabaseClient($supabaseUrl, $supabaseKey, true);
+
         // Update order status to CANCELLED
-        $ch = curl_init($supabaseUrl . '/rest/v1/orders?id=eq.' . $transactionReference);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+        $result = $supabase->update('orders', $transactionReference, [
             'status' => 'CANCELLED',
             'payment_status' => 'CANCELLED'
-        ]));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'apikey: ' . $supabaseKey,
-            'Authorization: Bearer ' . $supabaseKey,
-            'Content-Type: application/json',
-            'Prefer: return=representation'
         ]);
-        
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode !== 200) {
-            safeLog('error.log', "Failed to update order status. HTTP code: {$httpCode}, Response: {$response}");
-        } else {
-            safeLog('payment_cancel.log', "Order {$transactionReference} status updated to CANCELLED");
-        }
+
+        safeLog('payment_cancel.log', "Order {$transactionReference} status updated to CANCELLED");
     } catch (Exception $e) {
         safeLog('error.log', "Error updating order status: " . $e->getMessage());
     }

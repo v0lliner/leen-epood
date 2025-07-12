@@ -16,6 +16,7 @@ if (!file_exists($logDir)) {
 
 // Load custom DotEnv class
 require_once __DIR__ . '/DotEnv.php';
+require_once __DIR__ . '/../supabase_client/SupabaseClient.php';
 
 // Headers for JSON response
 header('Content-Type: application/json');
@@ -197,6 +198,17 @@ function createOrder($orderData) {
     try {
         $supabaseConfig = getSupabaseConfig();
         
+        // Initialize Supabase client with service_role key
+        $supabase = new SupabaseClient(
+            $supabaseConfig['url'],
+            $supabaseConfig['key'],
+            true // Explicitly mark as service_role key
+        );
+        
+        // Check if RLS is enabled on orders table
+        $isRlsEnabled = $supabase->isRlsEnabled('orders');
+        safeLog('orders.log', "Orders table RLS status: " . ($isRlsEnabled ? "Enabled" : "Disabled"));
+        
         // Prepare order data for insertion
         $orderInsertData = [
             'customer_email' => $orderData['email'],
@@ -223,37 +235,16 @@ function createOrder($orderData) {
         $logOrderData['customer_phone'] = $logOrderData['customer_phone'] ? '***' . substr($logOrderData['customer_phone'], -4) : null;
         safeLog('orders.log', "Creating new order: " . json_encode($logOrderData));
         
-        // Insert order into Supabase
-        $ch = curl_init($supabaseConfig['url'] . '/rest/v1/orders');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($orderInsertData));
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            'apikey: ' . $supabaseConfig['key'],
-            'Authorization: Bearer ' . $supabaseConfig['key'],
-            'Content-Type: application/json',
-            'Prefer: return=representation'
-        ]);
+        // Insert order using SupabaseClient
+        $result = $supabase->insert('orders', $orderInsertData);
         
-        $response = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($httpCode !== 201) {
-            safeLog('error.log', "Failed to create order. HTTP code: {$httpCode}, Response: {$response}");
-            throw new Exception("Failed to create order");
-        }
-        
-        $data = json_decode($response, true);
-        
-        if (empty($data) || !isset($data[0]['id'])) {
-            safeLog('error.log', "Invalid order creation response: " . json_encode($data));
+        if (!$result || empty($result)) {
             throw new Exception("Invalid order creation response");
         }
         
-        safeLog('orders.log', "Order created successfully with ID: " . $data[0]['id']);
+        safeLog('orders.log', "Order created successfully with ID: " . $result[0]->id);
         
-        return $data[0];
+        return (array)$result[0];
     } catch (Exception $e) {
         safeLog('error.log', "Error creating order: " . $e->getMessage());
         throw $e;
