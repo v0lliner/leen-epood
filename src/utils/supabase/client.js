@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY 
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Missing Supabase environment variables:', {
@@ -16,7 +16,11 @@ if (import.meta.env.DEV) {
   console.log('🔌 Supabase client initialized with URL:', supabaseUrl)
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+// Add fallback values for development to prevent crashes
+const url = supabaseUrl || 'https://epcenpirjkfkgdgxktrm.supabase.co'
+const key = supabaseAnonKey || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVwY2VucGlyamtma2dkZ3hrdHJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE2ODkyNDcyNTgsImV4cCI6MjAwNDgyMzI1OH0.sMCXnPUQJiYzJdaMZTxEVDcgdZl2hi1j9-XfOuZe-Yk'
+
+export const supabase = createClient(url, key, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
