@@ -35,30 +35,12 @@ function safeLog($filename, $message) {
     }
 }
 
-// Log the start of the script
-safeLog('payment_process.log', "Payment processing started");
-
-// Check for Composer autoloader in project root
-$autoloaderPath = __DIR__ . '/../../../vendor/autoload.php';
-if (!file_exists($autoloaderPath)) {
-    safeLog('error.log', "Composer autoloader not found at: {$autoloaderPath}");
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Server configuration error: Composer dependencies not installed'
-    ]);
-    exit;
-}
-
 // Load Composer autoloader
-require_once $autoloaderPath;
+require_once __DIR__ . '/../../vendor/autoload.php';
 
-// Load environment variables using Dotenv
-use Dotenv\Dotenv;
-
+// Load Dotenv
+$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../../');
 try {
-    // Initialize Dotenv from project root
-    $dotenv = Dotenv::createImmutable(__DIR__ . '/../../../');
     $dotenv->load();
     safeLog('env_loading.log', "Dotenv loaded successfully");
 } catch (Exception $e) {
@@ -66,39 +48,14 @@ try {
     error_log("Failed to load Dotenv: " . $e->getMessage());
 }
 
-// Check for required PHP extensions
-if (!extension_loaded('curl')) {
-    safeLog('error.log', "Required PHP extension 'curl' is not loaded");
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Server configuration error: Required PHP extension not available'
-    ]);
-    exit;
-}
-
-// Get Supabase credentials from environment variables
-$supabaseUrl = $_ENV['SUPABASE_URL'] ?? null;
-$supabaseKey = $_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? null;
-
-// Log environment info (without exposing full keys)
-safeLog('env_info.log', "Supabase URL: " . ($supabaseUrl ? $supabaseUrl : 'Not set'));
-safeLog('env_info.log', "Supabase Key length: " . ($supabaseKey ? strlen($supabaseKey) : 'Not set'));
-safeLog('env_info.log', "Supabase Key hash: " . ($supabaseKey ? md5($supabaseKey) : 'Not set'));
-
-// Check if Supabase credentials are set
-if (!$supabaseUrl || !$supabaseKey) {
-    safeLog('error.log', "Supabase credentials not found in environment variables");
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'error' => 'Server configuration error: Missing Supabase credentials'
-    ]);
-    exit;
-}
-
 // Load Supabase client
 require_once __DIR__ . '/../supabase_client/SupabaseClient.php';
+
+// Load Maksekeskus SDK
+require_once __DIR__ . '/../maksekeskus/lib/Maksekeskus.php';
+
+// Load configuration
+require_once __DIR__ . '/supabase_config.php';
 
 // Get raw input
 $input = file_get_contents('php://input');
@@ -143,6 +100,16 @@ try {
     
     safeLog('order_data.log', "Order data prepared: " . json_encode($orderData));
     
+    // Get Supabase configuration
+    $supabaseUrl = $_ENV['SUPABASE_URL'] ?? null;
+    $supabaseKey = $_ENV['SUPABASE_SERVICE_ROLE_KEY'] ?? null;
+    
+    if (!$supabaseUrl || !$supabaseKey) {
+        safeLog('env_error.log', "Supabase configuration missing. ENV dump: " . json_encode($_ENV));
+        safeLog('env_error.log', "SERVER dump: " . json_encode($_SERVER));
+        throw new Exception("Supabase configuration missing");
+    }
+    
     // Validate that we're using a service_role key
     if (strpos($supabaseKey, 'eyJ') !== 0 || strpos($supabaseKey, 'service_role') === false) {
         safeLog('key_validation.log', "Key validation failed. Key starts with: " . substr($supabaseKey, 0, 10) . "..., length: " . strlen($supabaseKey) . ", md5: " . md5($supabaseKey));
@@ -169,72 +136,54 @@ try {
         throw new Exception("Database error: " . $e->getMessage());
     }
     
-    // Get Maksekeskus configuration from environment variables
-    $mkConfig = [
-        'shop_id' => $_ENV['MAKSEKESKUS_SHOP_ID'] ?? null,
-        'api_secret_key' => $_ENV['MAKSEKESKUS_SECRET_KEY'] ?? null,
-        'api_open_key' => $_ENV['MAKSEKESKUS_PUBLISHABLE_KEY'] ?? null,
-        'test_mode' => ($_ENV['MAKSEKESKUS_TEST_MODE'] ?? 'true') === 'true'
-    ];
-    
-    // Check if Maksekeskus credentials are set
-    if (!$mkConfig['shop_id'] || !$mkConfig['api_secret_key'] || !$mkConfig['api_open_key']) {
-        safeLog('error.log', "Maksekeskus credentials not found in environment variables");
-        http_response_code(500);
-        echo json_encode([
-            'success' => false,
-            'error' => 'Server configuration error: Missing Maksekeskus credentials'
-        ]);
-        exit;
-    }
-    
-    safeLog('maksekeskus_info.log', "Using Maksekeskus shop ID: " . $mkConfig['shop_id'] . ", Test mode: " . ($mkConfig['test_mode'] ? 'true' : 'false'));
+    // Get Maksekeskus configuration
+    $mkConfig = getMaksekeskusConfig();
     
     // Initialize Maksekeskus SDK
+    $mk = new \Maksekeskus\Maksekeskus(
+        $mkConfig['shop_id'],
+        $mkConfig['api_open_key'],
+        $mkConfig['api_secret_key'],
+        $mkConfig['test_mode']
+    );
+    
+    // Prepare transaction data
+    $transactionData = [
+        'amount' => $data->amount,
+        'currency' => 'EUR',
+        'reference' => $order->id,
+        'merchant_data' => json_encode([
+            'order_id' => $order->id
+        ]),
+        'return_url' => [
+            'url' => 'https://leen.ee/makse/korras.php',
+            'method' => 'POST'
+        ],
+        'cancel_url' => [
+            'url' => 'https://leen.ee/makse/katkestatud.php',
+            'method' => 'POST'
+        ],
+        'notification_url' => [
+            'url' => 'https://leen.ee/makse/teavitus.php',
+            'method' => 'POST'
+        ],
+        'customer' => [
+            'email' => $data->email,
+            'name' => $data->firstName . ' ' . $data->lastName,
+            'phone' => $data->phone ?? '',
+            'country' => substr($data->country ?? 'Estonia', 0, 2)
+        ],
+        'transaction_url' => [
+            'return_url' => 'https://leen.ee/makse/korras',
+            'cancel_url' => 'https://leen.ee/makse/katkestatud',
+            'notification_url' => 'https://leen.ee/makse/teavitus'
+        ]
+    ];
+    
+    safeLog('transaction_data.log', "Transaction data prepared: " . json_encode($transactionData));
+    
+    // Create transaction
     try {
-        $mk = new \Maksekeskus\Maksekeskus(
-            $mkConfig['shop_id'],
-            $mkConfig['api_open_key'],
-            $mkConfig['api_secret_key'],
-            $mkConfig['test_mode']
-        );
-        
-        // Prepare transaction data
-        $transactionData = [
-            'amount' => $data->amount,
-            'currency' => 'EUR',
-            'reference' => $order->id,
-            'merchant_data' => json_encode([
-                'order_id' => $order->id
-            ]),
-            'return_url' => [
-                'url' => 'https://leen.ee/makse/korras.php',
-                'method' => 'POST'
-            ],
-            'cancel_url' => [
-                'url' => 'https://leen.ee/makse/katkestatud.php',
-                'method' => 'POST'
-            ],
-            'notification_url' => [
-                'url' => 'https://leen.ee/makse/teavitus.php',
-                'method' => 'POST'
-            ],
-            'customer' => [
-                'email' => $data->email,
-                'name' => $data->firstName . ' ' . $data->lastName,
-                'phone' => $data->phone ?? '',
-                'country' => substr($data->country ?? 'Estonia', 0, 2)
-            ],
-            'transaction_url' => [
-                'return_url' => 'https://leen.ee/makse/korras',
-                'cancel_url' => 'https://leen.ee/makse/katkestatud',
-                'notification_url' => 'https://leen.ee/makse/teavitus'
-            ]
-        ];
-        
-        safeLog('transaction_data.log', "Transaction data prepared: " . json_encode($transactionData));
-        
-        // Create transaction
         $transaction = $mk->createTransaction($transactionData);
         
         if (!$transaction || !isset($transaction->payment_url)) {
