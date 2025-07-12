@@ -27,6 +27,10 @@ if (strpos($path, 'omniva_integration/get_locations.php') === 0) {
     // Admin orders endpoint
     require_once __DIR__ . '/admin/orders.php';
     $handlerFound = true;
+} else if (strpos($path, 'payment/process') === 0) {
+    // Payment processing endpoint
+    require_once __DIR__ . '/payment/process.php';
+    $handlerFound = true;
 }
 
 // If no handler was found, return 404

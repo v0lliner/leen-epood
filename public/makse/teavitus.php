@@ -7,7 +7,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // Create logs directory if it doesn't exist
-$logDir = __DIR__ . '/../../logs/leen_payment_logs';
+$logDir = __DIR__ . '/../php/payment/logs';
 if (!file_exists($logDir)) {
     mkdir($logDir, 0775, true);
 }
@@ -32,25 +32,24 @@ function safeLog($filename, $message) {
     }
 }
 
-// Load Composer autoloader
-require_once __DIR__ . '/../php/vendor/autoload.php';
-
-// Load Dotenv
-$dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
-try {
-    $dotenv->load();
-    safeLog('env_loading.log', "Dotenv loaded successfully");
-} catch (Exception $e) {
-    safeLog('env_loading.log', "Failed to load Dotenv: " . $e->getMessage());
-    error_log("Failed to load Dotenv: " . $e->getMessage());
-}
-
-// Load Supabase client
-require_once __DIR__ . '/../php/supabase_client/SupabaseClient.php';
-
 // Get raw input
 $input = file_get_contents('php://input');
 safeLog('payment_notifications.log', "Received notification: " . $input);
+
+// Load Composer autoloader if it exists
+$autoloadPath = __DIR__ . '/../../vendor/autoload.php';
+if (file_exists($autoloadPath)) {
+    require_once $autoloadPath;
+    
+    // Load environment variables using Dotenv
+    $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/../../');
+    try {
+        $dotenv->load();
+        safeLog('env_loading.log', "Dotenv loaded successfully");
+    } catch (Exception $e) {
+        safeLog('env_loading.log', "Failed to load Dotenv: " . $e->getMessage());
+    }
+}
 
 try {
     // Decode JSON input
@@ -74,12 +73,8 @@ try {
     
     if (!$supabaseUrl || !$supabaseKey) {
         safeLog('env_error.log', "Supabase configuration missing. ENV dump: " . json_encode($_ENV));
-        safeLog('env_error.log', "SERVER dump: " . json_encode($_SERVER));
         throw new Exception("Supabase configuration missing");
     }
-    
-    // Initialize Supabase client
-    $supabase = new SupabaseClient($supabaseUrl, $supabaseKey);
     
     // Update order status
     $updateData = [
@@ -87,11 +82,30 @@ try {
         'status' => ($data->status === 'COMPLETED') ? 'PAID' : 'PENDING'
     ];
     
-    $supabase->update('orders', $orderId, $updateData);
+    $ch = curl_init($supabaseUrl . '/rest/v1/orders?id=eq.' . $orderId);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PATCH');
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($updateData));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, [
+        'apikey: ' . $supabaseKey,
+        'Authorization: Bearer ' . $supabaseKey,
+        'Content-Type: application/json',
+        'Prefer: return=representation'
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode !== 200) {
+        safeLog('error.log', "Failed to update order status. HTTP code: {$httpCode}, Response: {$response}");
+        throw new Exception("Failed to update order status");
+    }
     
     safeLog('payment_notifications.log', "Order {$orderId} updated with status: {$data->status}");
     
     // Return success response
+    header('Content-Type: application/json');
     echo json_encode(['success' => true]);
     
 } catch (Exception $e) {
@@ -100,6 +114,7 @@ try {
     
     // Return error response
     http_response_code(500);
+    header('Content-Type: application/json');
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage()

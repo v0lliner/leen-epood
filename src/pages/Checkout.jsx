@@ -96,14 +96,27 @@ const Checkout = () => {
       // Prepare payload for submission
       const payload = getPayloadForSubmission();
       
-      // Mock payment flow for now - will be replaced with direct API calls
-      console.log('Order payload:', payload);
+      // Send payment request to backend
+      const response = await fetch('/php/payment/process', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
       
-      // Simulate a successful payment after a short delay
-      setTimeout(() => {
-        setPaymentStatus('success');
-        clearCart();
-      }, 1500);
+      const data = await response.json();
+      
+      if (!response.ok || !data.success) {
+        throw new Error(data.error || 'Payment processing failed');
+      }
+      
+      // Redirect to payment provider
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else {
+        throw new Error('No payment URL received');
+      }
       
     } catch (err) {
       console.error('Payment processing error:', err);
