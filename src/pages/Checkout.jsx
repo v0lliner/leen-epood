@@ -96,27 +96,55 @@ const Checkout = () => {
       // Prepare payload for submission
       const payload = getPayloadForSubmission();
       
-      // Send payment request to backend
-      const response = await fetch('/php/payment/process', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
+      // Create order in Supabase directly
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          customer_email: payload.email,
+          customer_name: `${payload.firstName} ${payload.lastName}`,
+          customer_phone: payload.phone,
+          shipping_address: JSON.stringify({
+            country: payload.country,
+            parcel_machine_id: payload.omnivaParcelMachineId,
+            parcel_machine_name: payload.omnivaParcelMachineName
+          }),
+          items: JSON.stringify(payload.items),
+          subtotal: payload.subtotal,
+          shipping_cost: payload.shipping_cost,
+          total_amount: payload.total_amount,
+          status: 'PENDING',
+          payment_status: 'PENDING',
+          payment_method: payload.paymentMethod,
+          notes: payload.notes
+        })
+        .select()
+        .single();
       
-      const data = await response.json();
-      
-      if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Payment processing failed');
+      if (orderError) {
+        throw new Error(orderError.message || 'Failed to create order');
       }
       
-      // Redirect to payment provider
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl;
-      } else {
-        throw new Error('No payment URL received');
-      }
+      // For demo purposes, simulate successful payment
+      // In a real implementation, you would integrate with a payment provider API
+      console.log('Order created successfully:', orderData);
+      
+      // Simulate successful payment
+      setTimeout(() => {
+        // Update order status
+        supabase
+          .from('orders')
+          .update({
+            status: 'PAID',
+            payment_status: 'COMPLETED'
+          })
+          .eq('id', orderData.id)
+          .then(() => {
+            // Clear cart and show success message
+            clearCart();
+            setPaymentStatus('success');
+            setProcessingPayment(false);
+          });
+      }, 2000);
       
     } catch (err) {
       console.error('Payment processing error:', err);

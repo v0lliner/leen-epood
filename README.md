@@ -1,42 +1,47 @@
-# Leen.ee E-commerce Website
+# Leen Portfolio and E-Shop
 
-This is the source code for the Leen.ee e-commerce website.
+This is a React-based portfolio and e-shop website for Leen Väränen, a ceramicist and clothing designer.
 
-## Environment Variables
+## Features
 
-This project uses direct environment variables instead of a `.env` file. For production deployment, set the following environment variables in your hosting environment:
+- Responsive design for all devices
+- Multi-language support (Estonian and English)
+- Product catalog with filtering and sorting
+- Shopping cart functionality
+- Portfolio/gallery section
+- Contact form
+- Admin dashboard for content management
+- Integration with Supabase for data storage and authentication
 
-```
-SUPABASE_URL=https://epcenpirjkfkgdgxktrm.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
-SUPABASE_ANON_KEY=your-anon-key-here
-VITE_SUPABASE_URL=https://epcenpirjkfkgdgxktrm.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key-here
-VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key-here
-MAKSEKESKUS_TEST_MODE=true  # Set to false for production
-MAKSEKESKUS_TEST_SHOP_ID=f7741ab2-7445-45f9-9af4-0d0408ef1e4c
-MAKSEKESKUS_TEST_PUBLISHABLE_KEY=zPA6jCTIvGKYqrXxlgkXLzv3F82Mjv2E
-MAKSEKESKUS_TEST_SECRET_KEY=pfOsGD9oPaFEILwqFLHEHkPf7vZz4j3t36nAcufP1abqT9l99koyuC1IWAOcBeqt
-MAKSEKESKUS_LIVE_SHOP_ID=4e2bed9a-aa24-4b87-801b-56c31c535d36
-MAKSEKESKUS_LIVE_PUBLISHABLE_KEY=wjoNf3DtQe11pIDHI8sPnJAcDT2AxSwM
-MAKSEKESKUS_LIVE_SECRET_KEY=WzFqjdK9Ksh9L77hv3I0XRzM8IcnSBHwulDvKI8yVCjVVbQxDBiutOocEACFCTmZ
-```
+## Tech Stack
 
-### For Local Development
-
-For local development, you can set these variables in your shell before starting the development server:
-
-```bash
-# Bash/Zsh
-export SUPABASE_URL=https://epcenpirjkfkgdgxktrm.supabase.co
-export SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
-# ... and so on for all variables
-
-# Then start the development server
-npm run dev
-```
+- React 18
+- Vite
+- React Router
+- i18next for translations
+- Supabase for backend and authentication
 
 ## Development
+
+### Prerequisites
+
+- Node.js 16+
+- npm or yarn
+
+### Environment Variables
+
+This project uses environment variables for configuration. You need to set the following environment variables in your shell before starting the development server:
+
+```bash
+# Supabase Configuration
+export VITE_SUPABASE_URL=https://your-project-id.supabase.co
+export VITE_SUPABASE_ANON_KEY=your-anon-key-here
+
+# Google Maps API Key (for Contact page)
+export VITE_GOOGLE_MAPS_API_KEY=your-google-maps-api-key-here
+```
+
+### Installation
 
 ```bash
 # Install dependencies
@@ -44,20 +49,47 @@ npm install
 
 # Start development server
 npm run dev
+```
 
-# Build for production
+### Building for Production
+
+```bash
+# Build the project
 npm run build
+
+# Preview the production build
+npm run preview
 ```
 
 ## Deployment
 
-The project is built using Vite and can be deployed to any static hosting service. The PHP backend requires a PHP-enabled server.
+The project can be deployed to any static hosting service like Netlify, Vercel, or GitHub Pages.
 
-## Features
+### Netlify Deployment
 
-- Product catalog with categories and filtering
-- Shopping cart functionality
-- Checkout with Maksekeskus payment integration
-- Admin panel for managing products, orders, and content
-- Multilingual support (Estonian and English)
-- Responsive design for all devices
+1. Push your code to a Git repository
+2. Connect your repository to Netlify
+3. Set the build command to `npm run build`
+4. Set the publish directory to `dist`
+5. Add the required environment variables in the Netlify dashboard
+
+## Project Structure
+
+- `src/` - Source code
+  - `components/` - React components
+  - `context/` - React context providers
+  - `hooks/` - Custom React hooks
+  - `pages/` - Page components
+  - `styles/` - Global styles
+  - `utils/` - Utility functions
+  - `i18n/` - Internationalization setup
+- `public/` - Static assets
+- `translations/` - Translation files
+
+## License
+
+This project is proprietary and not open for redistribution or use without explicit permission.
+
+## Contact
+
+For any inquiries, please contact Leen Väränen at leen@leen.ee.

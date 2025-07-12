@@ -62,25 +62,29 @@ const ShippingAddressForm = ({
     }
     
     try {      
-      const response = await fetch(`/php/omniva_integration/get_locations.php?country=${countryCode}`);
+      // Replace PHP endpoint with direct API call to Omniva
+      const response = await fetch(`https://omniva.ee/locationsfull.json`);
       
       if (!response.ok) {
         throw new Error(`Error ${response.status}: ${await response.text()}`);
       }
       
-      const data = await response.json();
+      const allLocations = await response.json();
       
-      if (data.success) {
-        const machines = data.parcelMachines || [];
-        
-        // Cache the data
-        parcelMachinesCache.current[countryCode] = machines;
-        cacheExpiry.current[countryCode] = now + CACHE_DURATION;
-        
-        setParcelMachines(machines);
-      } else {
-        throw new Error(data.error || 'Failed to load parcel machines');
-      }
+      // Filter locations by country code
+      const filteredLocations = allLocations
+        .filter(location => location.A0_NAME === countryCode.toUpperCase())
+        .map(location => ({
+          id: location.ZIP,
+          name: location.NAME
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      
+      // Cache the data
+      parcelMachinesCache.current[countryCode] = filteredLocations;
+      cacheExpiry.current[countryCode] = now + CACHE_DURATION;
+      
+      setParcelMachines(filteredLocations);
     } catch (err) {
       console.error('Error fetching parcel machines:', err);
       setParcelMachineError(t('checkout.shipping.omniva.fetch_error'));

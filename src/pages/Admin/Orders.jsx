@@ -21,19 +21,17 @@ const AdminOrders = () => {
   const loadOrders = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/php/admin/orders.php')
-      
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`)
+      // Fetch orders directly from Supabase
+      const { data, error } = await supabase
+        .from('admin_orders_view')
+        .select('*')
+        .order('created_at', { ascending: false })
+        
+      if (error) {
+        throw new Error(error.message)
       }
       
-      const data = await response.json()
-      
-      if (data.success) {
-        setOrders(data.orders || [])
-      } else {
-        setError(data.error || 'Failed to load orders')
-      }
+      setOrders(data || [])
     } catch (err) {
       console.error('Error loading orders:', err)
       setError('Tellimuste laadimine ebaõnnestus')
@@ -47,19 +45,18 @@ const AdminOrders = () => {
     
     setDetailsLoading(true) 
     try {
-      const response = await fetch(`/php/admin/orders.php/${orderId}`)
-      
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`)
+      // Fetch order details directly from Supabase
+      const { data, error } = await supabase
+        .from('admin_orders_view')
+        .select('*')
+        .eq('id', orderId)
+        .single()
+        
+      if (error) {
+        throw new Error(error.message)
       }
       
-      const data = await response.json()
-      
-      if (data.success) {
-        setOrderDetails(data.order || null)
-      } else {
-        setError(data.error || 'Failed to load order details')
-      }
+      setOrderDetails(data || null)
     } catch (err) {
       console.error('Error loading order details:', err)
       setError('Tellimuse detailide laadimine ebaõnnestus')
@@ -80,37 +77,29 @@ const AdminOrders = () => {
 
   const handleUpdateStatus = async (orderId, newStatus) => {
     try {
-      const response = await fetch(`/php/admin/orders.php/${orderId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ status: newStatus })
-      })
-      
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${await response.text()}`)
+      // Update order status directly in Supabase
+      const { error } = await supabase
+        .from('orders')
+        .update({ status: newStatus })
+        .eq('id', orderId)
+        
+      if (error) {
+        throw new Error(error.message)
       }
       
-      const data = await response.json()
+      // Update orders list
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
+      ))
       
-      if (data.success) {
-        // Update orders list
-        setOrders(orders.map(order => 
-          order.id === orderId ? { ...order, status: newStatus } : order
-        ))
-        
-        // Update selected order if it's the one being updated
-        if (selectedOrder && selectedOrder.id === orderId) {
-          setSelectedOrder({ ...selectedOrder, status: newStatus })
-        }
-        
-        // Update order details if loaded
-        if (orderDetails && orderDetails.id === orderId) {
-          setOrderDetails({ ...orderDetails, status: newStatus })
-        }
-      } else {
-        setError(data.error || 'Failed to update order status')
+      // Update selected order if it's the one being updated
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder({ ...selectedOrder, status: newStatus })
+      }
+      
+      // Update order details if loaded
+      if (orderDetails && orderDetails.id === orderId) {
+        setOrderDetails({ ...orderDetails, status: newStatus })
       }
     } catch (err) {
       console.error('Error updating order status:', err)

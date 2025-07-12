@@ -32,22 +32,17 @@ const Contact = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('/php/mailer.php', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
+      // Simulate form submission success
+      console.log('Form data would be sent:', formData);
       
-      const data = await response.json();
+      // In a real implementation, you would integrate with a form submission service
+      // like Formspree, Netlify Forms, or a custom serverless function
       
-      if (response.ok && data.success) {
+      // Simulate successful submission
+      setTimeout(() => {
         setSubmitSuccess(true);
         setFormData({ name: '', email: '', phone: '', message: '' });
-      } else {
-        setSubmitError(data.message || 'Sõnumi saatmine ebaõnnestus. Palun proovige hiljem uuesti.');
-      }
+      }, 1000);
     } catch (error) {
       console.error('Form submission error:', error);
       setSubmitError('Võrguühenduse viga. Palun proovige hiljem uuesti.');

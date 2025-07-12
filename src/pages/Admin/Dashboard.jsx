@@ -45,14 +45,17 @@ const AdminDashboard = () => {
 
       // Load order statistics
       try {
-        const orderStatsResult = await orderService.getOrderStats()
-        console.log('📊 Dashboard: Order stats result:', orderStatsResult)
-        
-        if (orderStatsResult.error) {
-          console.error('❌ Dashboard: Order stats error:', orderStatsResult.error)
+        // Fetch order stats directly from Supabase
+        const { data, error } = await supabase
+          .from('admin_order_stats')
+          .select('*')
+          .single()
+          
+        if (error) {
+          console.error('❌ Dashboard: Order stats error:', error)
         } else {
-          setOrderStats(orderStatsResult.data)
-          console.log('📊 Dashboard: Order stats loaded:', orderStatsResult.data)
+          setOrderStats(data)
+          console.log('📊 Dashboard: Order stats loaded:', data)
         }
       } catch (orderError) {
         console.error('Error loading order stats:', orderError)

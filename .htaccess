@@ -1,11 +1,3 @@
-# Enable Apache rewrite engine
-RewriteEngine On
-
-# Route all requests for /php/ to the PHP router (index.php) and pass the path info
-# This ensures all API calls go through the single entry point and PATH_INFO is set
-RewriteRule ^php/(.*)$ php/index.php?path=$1 [QSA,L]
-
-# Exclude robots.txt from rewrite rules
 RewriteCond %{REQUEST_URI} !^/robots\.txt$ [NC]
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
