@@ -7,10 +7,14 @@ import { CartProvider } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Navigation from './components/Layout/Navigation';
+import Login from './pages/Auth/Login';
+import Signup from './pages/Auth/Signup';
 import Footer from './components/Layout/Footer';
 import ProtectedRoute from './components/Admin/ProtectedRoute';
 import CookieConsentBanner from './components/UI/CookieConsentBanner';
 import Home from './pages/Home';
+import CheckoutSuccess from './pages/Checkout/Success';
+import CheckoutCancel from './pages/Checkout/Cancel';
 
 // Lazy load pages
 const About = lazy(() => import('./pages/About'));
@@ -117,6 +121,34 @@ function App() {
                     <div className="app">
                       <Navigation />
                       <Checkout />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/checkout/success" element={
+                    <div className="app">
+                      <Navigation />
+                      <CheckoutSuccess />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/checkout/cancel" element={
+                    <div className="app">
+                      <Navigation />
+                      <CheckoutCancel />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/login" element={
+                    <div className="app">
+                      <Navigation />
+                      <Login />
+                      <Footer />
+                    </div>
+                  } />
+                  <Route path="/signup" element={
+                    <div className="app">
+                      <Navigation />
+                      <Signup />
                       <Footer />
                     </div>
                   } />

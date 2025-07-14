@@ -28,6 +28,32 @@ export const authService = {
   },
 
   /**
+   * Sign up with email and password
+   * @param {string} email - User email
+   * @param {string} password - User password
+   * @returns {Promise<{data: object, error: object|null}>}
+   */
+  async signUp(email, password) {
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        }
+      })
+      
+      if (error) {
+        return { data: null, error }
+      }
+      
+      return { data, error: null }
+    } catch (error) {
+      return { data: null, error: { message: 'Network error occurred' } }
+    }
+  },
+
+  /**
    * Sign out current user
    * @returns {Promise<{error: object|null}>}
    */

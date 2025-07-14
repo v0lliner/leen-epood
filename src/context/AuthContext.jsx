@@ -7,6 +7,7 @@ const AuthContext = createContext({
   loading: true,
   error: null,
   signIn: async () => ({ data: null, error: null }),
+  signUp: async () => ({ data: null, error: null }),
   signOut: async () => ({ error: null }),
 })
 
@@ -77,6 +78,21 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  const signUp = async (email, password) => {
+    try {
+      setError(null)
+      const result = await authService.signUp(email, password)
+      if (result.error) {
+        setError(result.error.message)
+      }
+      return result
+    } catch (err) {
+      console.error('Sign up error:', err)
+      setError('Failed to sign up')
+      return { data: null, error: err }
+    }
+  }
+
   const signOut = async () => {
     try {
       setError(null)
@@ -98,6 +114,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     error,
     signIn,
+    signUp,
     signOut,
   }
 
