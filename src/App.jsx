@@ -275,8 +275,6 @@ function App() {
                     <Elements stripe={stripePromise}>
                       <Checkout />
                     </Elements>
-                      <Checkout />
-                    </Elements>
                     <Footer />
                   </div>
                 } />
