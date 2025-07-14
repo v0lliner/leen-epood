@@ -168,6 +168,7 @@ const StripeWrapper = ({
         <Elements stripe={stripePromise} options={options}>
           <StripePaymentForm 
             clientSecret={clientSecret}
+            customerEmail={customerEmail}
             onPaymentSuccess={onPaymentSuccess}
             onPaymentError={onPaymentError}
           />

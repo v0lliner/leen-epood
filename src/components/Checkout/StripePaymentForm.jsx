@@ -8,11 +8,16 @@ import {
   AddressElement
 } from '@stripe/react-stripe-js';
 
-const StripePaymentForm = ({ clientSecret, onPaymentSuccess, onPaymentError }) => {
+const StripePaymentForm = ({ 
+  clientSecret, 
+  onPaymentSuccess, 
+  onPaymentError,
+  customerEmail
+}) => {
   const { t } = useTranslation();
   const stripe = useStripe();
   const elements = useElements();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(customerEmail || '');
   const [message, setMessage] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -88,12 +93,6 @@ const StripePaymentForm = ({ clientSecret, onPaymentSuccess, onPaymentError }) =
 
   return (
     <form id="payment-form" onSubmit={handleSubmit}>
-      <LinkAuthenticationElement
-        id="link-authentication-element"
-        onChange={(e) => setEmail(e.value.email)}
-        className="stripe-element"
-      />
-      
       <PaymentElement id="payment-element" options={paymentElementOptions} />
       
       <button 
