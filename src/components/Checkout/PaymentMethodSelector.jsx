@@ -53,7 +53,7 @@ const PaymentMethodSelector = ({
       <h3 className="section-title">{t('checkout.payment.title')}</h3>
       
       <div className="payment-selection">
-        <label className="payment-label">Makseviis</label>
+        <label htmlFor="paymentMethod" className="payment-label">Makseviis</label>
         
         {loading ? (
           <div className="loading-message">{t('checkout.payment.loading_methods')}</div>
@@ -64,7 +64,7 @@ const PaymentMethodSelector = ({
             {paymentMethods.map(method => (
               <div 
                 key={method.id} 
-                className={`payment-method-option ${formData.paymentMethod === method.id ? 'selected' : ''}`}
+                className={`payment-method-option ${formData.paymentMethod === method.id ? 'selected' : ''} ${method.id === 'card' ? 'card-method' : ''}`}
                 onClick={() => handlePaymentMethodSelection(method.id)}
               >
                 <div className="payment-method-content">
@@ -98,7 +98,7 @@ const PaymentMethodSelector = ({
       {showCardFields && (
         <div className="card-payment-fields">
           <div className="card-element-container">
-            <label htmlFor="card-element">Kaardi andmed</label>
+            <label htmlFor="card-element" className="payment-label">Kaardi andmed</label>
             <div className="card-element-wrapper">
               {/* This is a placeholder for the Stripe CardElement */}
               <div className="card-element-placeholder">
@@ -156,8 +156,8 @@ const PaymentMethodSelector = ({
         }
         
         .payment-method-option {
-          border: 1px solid #e0e0e0;
-          border-radius: 8px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
           padding: 16px;
           cursor: pointer;
           transition: all 0.2s ease;
@@ -165,7 +165,7 @@ const PaymentMethodSelector = ({
           align-items: center;
           justify-content: center;
           height: 80px;
-          background-color: #f8f9fa;
+          background-color: white;
         }
         
         .payment-method-option.disabled {
@@ -175,12 +175,11 @@ const PaymentMethodSelector = ({
         }
         
         .payment-method-option:hover {
-          background-color: rgba(47, 62, 156, 0.05);
-          border-color: #d0d0d0;
+          border-color: var(--color-ultramarine);
         }
         
         .payment-method-option.selected {
-          border: 2px solid var(--color-ultramarine);
+          border-color: var(--color-ultramarine);
           background-color: rgba(47, 62, 156, 0.05);
         }
         
@@ -224,21 +223,13 @@ const PaymentMethodSelector = ({
         /* Card payment fields */
         .card-payment-fields {
           margin-top: 24px;
-          padding-top: 24px;
-          border-top: 1px solid #f0f0f0;
+          padding: 16px 0;
         }
         
         .card-element-container {
           display: flex;
           flex-direction: column;
           gap: 8px;
-        }
-        
-        .card-element-container label {
-          font-family: var(--font-heading);
-          font-weight: 500;
-          font-size: 0.9rem;
-          color: var(--color-text);
         }
         
         .card-element-wrapper {
@@ -251,14 +242,12 @@ const PaymentMethodSelector = ({
         
         .card-element-wrapper:focus-within {
           border-color: var(--color-ultramarine);
-          box-shadow: 0 0 0 1px rgba(47, 62, 156, 0.2);
         }
         
         .card-element-info {
           font-size: 0.8rem;
           color: #666;
           margin-top: 8px;
-          text-align: center;
         }
         
         /* Placeholder for Stripe CardElement */
@@ -272,8 +261,9 @@ const PaymentMethodSelector = ({
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 8px 12px;
-          background-color: #f8f9fa;
+          padding: 12px 16px;
+          background-color: white;
+          border: 1px solid #ddd;
           border-radius: 4px;
           color: #aaa;
           font-size: 0.9rem;
