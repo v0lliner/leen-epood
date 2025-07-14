@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { Elements } from '@stripe/react-stripe-js';
+import stripePromise from '../utils/stripe';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
@@ -27,6 +29,10 @@ const Checkout = () => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
   
+  // Stripe state
+  const [stripeError, setStripeError] = useState(null);
+  const [stripeElementsComplete, setStripeElementsComplete] = useState(false);
+  
   // Get cart total
   const cartTotal = getTotalPrice();
   
@@ -46,6 +52,12 @@ const Checkout = () => {
     isSubmitting,
     setIsSubmitting
   } = useCheckoutForm(cartItems, cartTotal);
+  
+  // Handle Stripe element change
+  const handleStripeElementChange = (event) => {
+    setStripeError(event.error ? event.error.message : null);
+    setStripeElementsComplete(event.complete);
+  };
   
   // Redirect to shop if cart is empty
   useEffect(() => {
@@ -91,74 +103,149 @@ const Checkout = () => {
     
     setIsSubmitting(true);
     setProcessingPayment(true);
+    setError('');
     
     try {
-      // Prepare payload for submission
-      const payload = getPayloadForSubmission();
-      
-      // Create order in Supabase directly
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          customer_email: payload.email,
-          customer_name: `${payload.firstName} ${payload.lastName}`,
-          customer_phone: payload.phone,
-          shipping_address: JSON.stringify({
-            country: payload.country,
-            parcel_machine_id: payload.omnivaParcelMachineId,
-            parcel_machine_name: payload.omnivaParcelMachineName
-          }),
-          items: JSON.stringify(payload.items),
-          subtotal: payload.subtotal,
-          shipping_cost: payload.shipping_cost,
-          total_amount: payload.total_amount,
-          status: 'PENDING',
-          payment_status: 'PENDING',
-          payment_method: payload.paymentMethod,
-          notes: payload.notes
-        })
-        .select()
-        .single();
-      
-      if (orderError) {
-        throw new Error(orderError.message || 'Failed to create order');
-      }
-      
-      // For demo purposes, simulate successful payment
-      // In a real implementation, you would integrate with a payment provider API
-      console.log('Order created successfully:', orderData);
-      
-      // Simulate successful payment
-      setTimeout(() => {
+      if (formData.paymentMethod === 'card') {
+        // For card payments, we need to use Stripe
+        if (!stripe || !elements) {
+          setError('Stripe has not been properly initialized');
+          setProcessingPayment(false);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        if (!stripeElementsComplete) {
+          setError('Please enter complete card information');
+          setProcessingPayment(false);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        // Prepare payload for submission
+        const payload = getPayloadForSubmission();
+        
+        // Create order in Supabase
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            customer_email: payload.email,
+            customer_name: `${payload.firstName} ${payload.lastName}`,
+            customer_phone: payload.phone,
+            shipping_address: JSON.stringify({
+              country: payload.country,
+              parcel_machine_id: payload.omnivaParcelMachineId,
+              parcel_machine_name: payload.omnivaParcelMachineName
+            }),
+            items: JSON.stringify(payload.items),
+            subtotal: payload.subtotal,
+            shipping_cost: payload.shipping_cost,
+            total_amount: payload.total_amount,
+            status: 'PENDING',
+            payment_status: 'PENDING',
+            payment_method: payload.paymentMethod,
+            notes: payload.notes
+          })
+          .select()
+          .single();
+        
+        if (orderError) {
+          throw new Error(orderError.message || 'Failed to create order');
+        }
+        
+        // Process payment with Stripe
+        const cardElement = elements.getElement(CardElement);
+        
+        const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
+          type: 'card',
+          card: cardElement,
+          billing_details: {
+            name: `${payload.firstName} ${payload.lastName}`,
+            email: payload.email,
+            phone: payload.phone
+          }
+        });
+        
+        if (stripeError) {
+          throw new Error(stripeError.message || 'Payment processing failed');
+        }
+        
+        // In a real implementation, you would now:
+        // 1. Call a serverless function to create a payment intent
+        // 2. Confirm the payment with the client
+        // 3. Update the order status based on the payment result
+        
+        // For now, we'll simulate a successful payment
+        console.log('Payment method created:', paymentMethod.id);
+        
         // Update order status
-        supabase
+        await supabase
           .from('orders')
           .update({
             status: 'PAID',
-            payment_status: 'COMPLETED'
+            payment_status: 'COMPLETED',
+            payment_reference: paymentMethod.id
           })
-          .eq('id', orderData.id)
-          .then(() => {
-            // Clear cart and show success message
-            clearCart();
-            setPaymentStatus('success');
-            setProcessingPayment(false);
-          });
-      }, 2000);
-      
+          .eq('id', orderData.id);
+        
+        // Clear cart and show success
+        clearCart();
+        setPaymentStatus('success');
+      } else if (formData.paymentMethod === 'google_pay' || formData.paymentMethod === 'apple_pay') {
+        // For Google Pay and Apple Pay, we would integrate with their respective APIs
+        // For now, we'll simulate the process
+        
+        // Prepare payload for submission
+        const payload = getPayloadForSubmission();
+        
+        // Create order in Supabase
+        const { data: orderData, error: orderError } = await supabase
+          .from('orders')
+          .insert({
+            customer_email: payload.email,
+            customer_name: `${payload.firstName} ${payload.lastName}`,
+            customer_phone: payload.phone,
+            shipping_address: JSON.stringify({
+              country: payload.country,
+              parcel_machine_id: payload.omnivaParcelMachineId,
+              parcel_machine_name: payload.omnivaParcelMachineName
+            }),
+            items: JSON.stringify(payload.items),
+            subtotal: payload.subtotal,
+            shipping_cost: payload.shipping_cost,
+            total_amount: payload.total_amount,
+            status: 'PENDING',
+            payment_status: 'PENDING',
+            payment_method: payload.paymentMethod,
+            notes: payload.notes
+          })
+          .select()
+          .single();
+        
+        if (orderError) {
+          throw new Error(orderError.message || 'Failed to create order');
+        }
+        
+        // Simulate successful payment
+        await supabase
+          .from('orders')
+          .update({
+            status: 'PAID',
+            payment_status: 'COMPLETED',
+            payment_reference: `sim_${formData.paymentMethod}_${Date.now()}`
+          })
+          .eq('id', orderData.id);
+        
+        // Clear cart and show success
+        clearCart();
+        setPaymentStatus('success');
+      }
     } catch (err) {
       console.error('Payment processing error:', err);
       setError(err.message || t('checkout.error.session_failed'));
-      setProcessingPayment(false);
-      
-      // Scroll to error message
-      const errorElement = document.querySelector('.checkout-error');
-      if (errorElement) {
-        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
     } finally {
+      setProcessingPayment(false);
       setIsSubmitting(false);
-    }
   };
   
   if (cartItems.length === 0) {
@@ -334,98 +421,101 @@ const Checkout = () => {
       <SEOHead page="shop" />
       <main>
         <section className="section-large">
-          <div className="container">
-            <FadeInSection>
-              <h1 className="text-center">{t('checkout.title')}</h1>
-            </FadeInSection>
-            
-            <div className="checkout-layout">
-              <div className="checkout-main">
-                <form onSubmit={handleSubmit} className="checkout-form">
-                  {/* Error message */}
-                  {error && (
-                    <div className="checkout-error">
-                      <div className="error-icon">⚠️</div>
-                      <div className="error-message">{error}</div>
-                    </div>
-                  )}
-                  
-                  {/* Cart Summary */}
-                  <div className="checkout-section">
-                    <CartSummaryDisplay cartItems={cartItems} />
-                  </div>
-                  
-                  {/* Shipping Method */}
-                  <div className="checkout-section">
-                    <ShippingAddressForm
-                      formData={formData}
-                      onChange={handleInputChange}
-                      validationErrors={validationErrors}
-                      onShippingMethodChange={handleShippingMethodChange}
-                      onParcelMachineSelect={handleParcelMachineSelect}
-                      omnivaShippingPrice={omnivaShippingPrice}
-                    />
-                  </div>
-                  
-                  {/* Contact Information */}
-                  <div className="checkout-section">
-                    <ContactInfoForm
-                      formData={formData}
-                      onChange={handleInputChange}
-                      validationErrors={validationErrors}
-                    />
-                  </div>
-                  
-                  {/* Order Notes */}
-                  <div className="checkout-section">
-                    <OrderNotesForm
-                      formData={formData}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  {/* Payment Method */}
-                  <div className="checkout-section">
-                    <PaymentMethodSelector
-                      formData={formData}
-                      onChange={handleInputChange}
-                      validationErrors={validationErrors}
-                      onPaymentMethodChange={handlePaymentMethodChange}
-                    />
-                  </div>
-                  
-                  {/* Terms and Conditions */}
-                  <div className="checkout-section">
-                    <div className="terms-and-submit">
-                      <TermsAndConditionsCheckbox
-                        checked={formData.termsAccepted}
-                        onChange={handleInputChange}
-                        validationError={validationErrors.termsAccepted}
-                      />
-                      
-                      <button 
-                        type="submit"
-                        className="checkout-button"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? t('checkout.summary.processing') : 'VORMISTA OST'}
-                      </button>
-                    </div>
-                  </div>
-                </form>
-              </div>
+          <Elements stripe={stripePromise}>
+            <div className="container">
+              <FadeInSection>
+                <h1 className="text-center">{t('checkout.title')}</h1>
+              </FadeInSection>
               
-              <div className="checkout-sidebar">
-                <OrderSummaryDisplay
-                  itemSubtotal={cartTotal}
-                  deliveryCost={getShippingCost()}
-                  totalAmount={calculateTotal()}
-                  isSubmitting={isSubmitting}
-                  onSubmit={handleSubmit}
-                />
+              <div className="checkout-layout">
+                <div className="checkout-main">
+                  <form onSubmit={handleSubmit} className="checkout-form">
+                    {/* Error message */}
+                    {(error || stripeError) && (
+                      <div className="checkout-error">
+                        <div className="error-icon">⚠️</div>
+                        <div className="error-message">{error || stripeError}</div>
+                      </div>
+                    )}
+                    
+                    {/* Cart Summary */}
+                    <div className="checkout-section">
+                      <CartSummaryDisplay cartItems={cartItems} />
+                    </div>
+                    
+                    {/* Shipping Method */}
+                    <div className="checkout-section">
+                      <ShippingAddressForm
+                        formData={formData}
+                        onChange={handleInputChange}
+                        validationErrors={validationErrors}
+                        onShippingMethodChange={handleShippingMethodChange}
+                        onParcelMachineSelect={handleParcelMachineSelect}
+                        omnivaShippingPrice={omnivaShippingPrice}
+                      />
+                    </div>
+                    
+                    {/* Contact Information */}
+                    <div className="checkout-section">
+                      <ContactInfoForm
+                        formData={formData}
+                        onChange={handleInputChange}
+                        validationErrors={validationErrors}
+                      />
+                    </div>
+                    
+                    {/* Order Notes */}
+                    <div className="checkout-section">
+                      <OrderNotesForm
+                        formData={formData}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    
+                    {/* Payment Method */}
+                    <div className="checkout-section">
+                      <PaymentMethodSelector
+                        formData={formData}
+                        onChange={handleInputChange}
+                        validationErrors={validationErrors}
+                        onPaymentMethodChange={handlePaymentMethodChange}
+                        onStripeElementChange={handleStripeElementChange}
+                      />
+                    </div>
+                    
+                    {/* Terms and Conditions */}
+                    <div className="checkout-section">
+                      <div className="terms-and-submit">
+                        <TermsAndConditionsCheckbox
+                          checked={formData.termsAccepted}
+                          onChange={handleInputChange}
+                          validationError={validationErrors.termsAccepted}
+                        />
+                        
+                        <button 
+                          type="submit"
+                          className="checkout-button"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? t('checkout.summary.processing') : 'VORMISTA OST'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+                
+                <div className="checkout-sidebar">
+                  <OrderSummaryDisplay
+                    itemSubtotal={cartTotal}
+                    deliveryCost={getShippingCost()}
+                    totalAmount={calculateTotal()}
+                    isSubmitting={isSubmitting}
+                    onSubmit={handleSubmit}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          </Elements>
         </section>
       </main>
       

@@ -300,6 +300,7 @@
       "loading_methods": "Laadin maksevõimalusi...",
       "methods_error": "Maksevõimaluste laadimine ebaõnnestus",
       "retry": "Proovi uuesti",
+      "loading_stripe": "Laadin Stripe'i maksevõimalusi...",
       "no_methods": "Maksevõimalusi ei leitud",
       "method_required": "Palun valige makseviis",
      "card": "Krediit-/deebetkaart",

@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CardElement } from '@stripe/react-stripe-js';
+import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import StripeCardElement from './StripeCardElement';
 
 const PaymentMethodSelector = ({ 
   formData, 
   onChange, 
   validationErrors,
-  onPaymentMethodChange
+  onPaymentMethodChange,
+  onStripeElementChange
 }) => {
   const { t } = useTranslation();
+  const stripe = useStripe();
+  const elements = useElements();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(''); 
   const [showCardFields, setShowCardFields] = useState(false);
@@ -46,6 +50,12 @@ const PaymentMethodSelector = ({
 
   const handlePaymentMethodSelection = (methodId) => {
     onPaymentMethodChange(methodId);
+  };
+
+  const handleCardElementChange = (event) => {
+    if (onStripeElementChange) {
+      onStripeElementChange(event);
+    }
   };
 
   return (
@@ -99,22 +109,11 @@ const PaymentMethodSelector = ({
         <div className="card-payment-fields">
           <div className="card-element-container">
             <label htmlFor="card-element" className="payment-label">Kaardi andmed</label>
-            <div className="card-element-wrapper">
-              {/* This is a placeholder for the Stripe CardElement */}
-              <div className="card-element-placeholder">
-                <div className="card-field-placeholder">
-                  <span>Kaardi number</span>
-                  <div className="card-icons">
-                    <img src="/assets/payment/visa.png" alt="Visa" className="card-brand-icon" />
-                    <img src="/assets/payment/mastercard.png" alt="Mastercard" className="card-brand-icon" />
-                  </div>
-                </div>
-                <div className="card-field-row">
-                  <div className="card-field-placeholder small">Aegumiskuupäev</div>
-                  <div className="card-field-placeholder small">CVC</div>
-                </div>
-              </div>
-            </div>
+            {stripe && elements ? (
+              <StripeCardElement onChange={handleCardElementChange} />
+            ) : (
+              <div className="loading-message">{t('checkout.payment.loading_stripe')}</div>
+            )}
             <div className="card-element-info">
               Maksed töödeldakse turvaliselt Stripe'i kaudu
             </div>
@@ -229,54 +228,13 @@ const PaymentMethodSelector = ({
         .card-element-container {
           display: flex;
           flex-direction: column;
-          gap: 8px;
-        }
-        
-        .card-element-wrapper {
-          border: 1px solid #ddd;
-          border-radius: 8px;
-          padding: 16px;
-          background-color: white;
-          transition: border-color 0.2s ease;
-        }
-        
-        .card-element-wrapper:focus-within {
-          border-color: var(--color-ultramarine);
+          gap: 12px;
         }
         
         .card-element-info {
           font-size: 0.8rem;
           color: #666;
           margin-top: 8px;
-        }
-        
-        /* Placeholder for Stripe CardElement */
-        .card-element-placeholder {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-        
-        .card-field-placeholder {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 12px 16px;
-          background-color: white;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          color: #aaa;
-          font-size: 0.9rem;
-        }
-        
-        .card-field-placeholder.small {
-          width: 48%;
-        }
-        
-        .card-field-row {
-          display: flex;
-          justify-content: space-between;
-          gap: 12px;
         }
         
         .card-icons {

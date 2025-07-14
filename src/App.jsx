@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { lazy, Suspense } from 'react';
+import { Elements } from '@stripe/react-stripe-js';
+import stripePromise from './utils/stripe';
 import { CartProvider } from './context/CartContext'; 
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -270,7 +272,11 @@ function App() {
                 <Route path="/makse/:status" element={
                   <div className="app">
                     <Navigation />
-                    <Checkout />
+                    <Elements stripe={stripePromise}>
+                      <Checkout />
+                    </Elements>
+                      <Checkout />
+                    </Elements>
                     <Footer />
                   </div>
                 } />

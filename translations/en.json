@@ -300,6 +300,7 @@
       "loading_methods": "Loading payment methods...",
       "methods_error": "Failed to load payment methods",
       "retry": "Try again",
+      "loading_stripe": "Loading Stripe payment options...",
       "no_methods": "No payment methods found",
       "method_required": "Please select a payment method",
      "card": "Credit/Debit Card",
