@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useCart } from '../context/CartContext';
+import { supabase } from '../utils/supabase/client';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 
@@ -13,7 +14,7 @@ import CartSummaryDisplay from '../components/Checkout/CartSummaryDisplay';
 import ContactInfoForm from '../components/Checkout/ContactInfoForm';
 import ShippingAddressForm from '../components/Checkout/ShippingAddressForm';
 import OrderNotesForm from '../components/Checkout/OrderNotesForm';
-import PaymentMethodSelector from '../components/Checkout/PaymentMethodSelector';
+import StripeWrapper from '../components/Checkout/StripeWrapper';
 import OrderSummaryDisplay from '../components/Checkout/OrderSummaryDisplay';
 import TermsAndConditionsCheckbox from '../components/Checkout/TermsAndConditionsCheckbox';
 
@@ -26,6 +27,9 @@ const Checkout = () => {
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  
+  // State for Stripe payment
+  const [paymentStep, setPaymentStep] = useState(false);
   
   // Get cart total
   const cartTotal = getTotalPrice();
@@ -89,14 +93,17 @@ const Checkout = () => {
       return;
     }
     
-    setIsSubmitting(true);
-    setProcessingPayment(true);
-    
+    // Move to payment step
+    setPaymentStep(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  
+  // Handle payment success
+  const handlePaymentSuccess = async (paymentIntent) => {
     try {
-      // Prepare payload for submission
+      // Create order in Supabase
       const payload = getPayloadForSubmission();
       
-      // Create order in Supabase directly
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -112,53 +119,39 @@ const Checkout = () => {
           subtotal: payload.subtotal,
           shipping_cost: payload.shipping_cost,
           total_amount: payload.total_amount,
-          status: 'PENDING',
-          payment_status: 'PENDING',
-          payment_method: payload.paymentMethod,
+          status: 'PAID',
+          payment_status: 'COMPLETED',
+          payment_method: 'stripe',
+          payment_reference: paymentIntent?.id || 'unknown',
           notes: payload.notes
         })
         .select()
         .single();
       
       if (orderError) {
-        throw new Error(orderError.message || 'Failed to create order');
+        console.error('Error creating order:', orderError);
+        setError(orderError.message || 'Failed to create order');
+        return;
       }
       
-      // For demo purposes, simulate successful payment
-      // In a real implementation, you would integrate with a payment provider API
-      console.log('Order created successfully:', orderData);
-      
-      // Simulate successful payment
-      setTimeout(() => {
-        // Update order status
-        supabase
-          .from('orders')
-          .update({
-            status: 'PAID',
-            payment_status: 'COMPLETED'
-          })
-          .eq('id', orderData.id)
-          .then(() => {
-            // Clear cart and show success message
-            clearCart();
-            setPaymentStatus('success');
-            setProcessingPayment(false);
-          });
-      }, 2000);
-      
+      // Clear cart and show success message
+      clearCart();
+      setPaymentStatus('success');
     } catch (err) {
-      console.error('Payment processing error:', err);
-      setError(err.message || t('checkout.error.session_failed'));
-      setProcessingPayment(false);
-      
-      // Scroll to error message
-      const errorElement = document.querySelector('.checkout-error');
-      if (errorElement) {
-        errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    } finally {
-      setIsSubmitting(false);
+      console.error('Error handling payment success:', err);
+      setError(err.message || 'Failed to process order');
     }
+  };
+  
+  // Handle payment error
+  const handlePaymentError = (error) => {
+    console.error('Payment error:', error);
+    setError(error.message || 'Payment failed');
+  };
+  
+  // Go back to shipping info
+  const handleBackToShipping = () => {
+    setPaymentStep(false);
   };
   
   if (cartItems.length === 0) {
@@ -329,6 +322,160 @@ const Checkout = () => {
     );
   }
 
+  // Show payment step
+  if (paymentStep) {
+    return (
+      <>
+        <SEOHead page="shop" />
+        <main>
+          <section className="section-large">
+            <div className="container">
+              <FadeInSection>
+                <h1 className="text-center">{t('checkout.payment.title')}</h1>
+              </FadeInSection>
+              
+              <div className="checkout-layout">
+                <div className="checkout-main">
+                  {error && (
+                    <div className="checkout-error">
+                      <div className="error-icon">⚠️</div>
+                      <div className="error-message">{error}</div>
+                    </div>
+                  )}
+                  
+                  <div className="payment-container">
+                    <button 
+                      onClick={handleBackToShipping}
+                      className="back-button"
+                    >
+                      ← Tagasi tarneinfo juurde
+                    </button>
+                    
+                    <StripeWrapper
+                      amount={calculateTotal() * 100} // Stripe expects amount in cents
+                      currency="eur"
+                      customerEmail={formData.email}
+                      customerName={`${formData.firstName} ${formData.lastName}`}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentError={handlePaymentError}
+                    />
+                  </div>
+                </div>
+                
+                <div className="checkout-sidebar">
+                  <OrderSummaryDisplay
+                    itemSubtotal={cartTotal}
+                    deliveryCost={getShippingCost()}
+                    totalAmount={calculateTotal()}
+                    isSubmitting={isSubmitting}
+                    onSubmit={handleSubmit}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+        
+        <style jsx>{`
+          .checkout-layout {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 48px;
+            margin-top: 48px;
+          }
+          
+          .checkout-main {
+            flex: 1;
+          }
+          
+          .checkout-sidebar {
+            position: sticky;
+            top: 100px;
+            height: fit-content;
+          }
+          
+          .checkout-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 16px;
+            border-radius: 4px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+          }
+          
+          .error-icon {
+            font-size: 1.25rem;
+          }
+          
+          .error-message {
+            flex: 1;
+          }
+          
+          .payment-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            padding: 32px;
+          }
+          
+          .back-button {
+            background: none;
+            border: none;
+            color: var(--color-ultramarine);
+            font-family: var(--font-body);
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 24px;
+            display: inline-flex;
+            align-items: center;
+            transition: opacity 0.2s ease;
+          }
+          
+          .back-button:hover {
+            opacity: 0.8;
+          }
+          
+          @media (max-width: 992px) {
+            .checkout-layout {
+              grid-template-columns: 1fr;
+              gap: 48px;
+            }
+            
+            .checkout-sidebar {
+              position: static;
+              order: -1;
+            }
+          }
+          
+          @media (max-width: 768px) {
+            .checkout-layout {
+              margin-top: 32px;
+            }
+            
+            .payment-container {
+              padding: 24px;
+            }
+          }
+          
+          @media (max-width: 480px) {
+            .checkout-layout {
+              margin-top: 24px;
+              gap: 32px;
+            }
+            
+            .payment-container {
+              padding: 16px;
+            }
+          }
+        `}</style>
+      </>
+    );
+  }
+
   return (
     <>
       <SEOHead page="shop" />
@@ -384,16 +531,6 @@ const Checkout = () => {
                     />
                   </div>
                   
-                  {/* Payment Method */}
-                  <div className="checkout-section">
-                    <PaymentMethodSelector
-                      formData={formData}
-                      onChange={handleInputChange}
-                      validationErrors={validationErrors}
-                      onPaymentMethodChange={handlePaymentMethodChange}
-                    />
-                  </div>
-                  
                   {/* Terms and Conditions */}
                   <div className="checkout-section">
                     <div className="terms-and-submit">
@@ -408,7 +545,7 @@ const Checkout = () => {
                         className="checkout-button"
                         disabled={isSubmitting}
                       >
-                        {isSubmitting ? t('checkout.summary.processing') : 'VORMISTA OST'}
+                        {isSubmitting ? t('checkout.summary.processing') : 'JÄTKA MAKSEGA'}
                       </button>
                     </div>
                   </div>
@@ -429,16 +566,6 @@ const Checkout = () => {
         </section>
       </main>
       
-      {/* Payment Processing Overlay */}
-      {processingPayment && (
-        <div className="payment-overlay">
-          <div className="payment-processing">
-            <div className="processing-spinner"></div>
-            <p>{t('checkout.summary.processing')}</p>
-          </div>
-        </div>
-      )}
-
       <style jsx>{`
         .checkout-layout {
           display: grid;
@@ -514,42 +641,6 @@ const Checkout = () => {
           flex: 1;
         }
         
-        .payment-overlay {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background-color: rgba(255, 255, 255, 0.9);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 1000;
-        }
-        
-        .payment-processing {
-          background: white;
-          padding: 32px;
-          border-radius: 8px;
-          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-          text-align: center;
-        }
-        
-        .processing-spinner {
-          width: 40px;
-          height: 40px;
-          border: 3px solid #f3f3f3;
-          border-top: 3px solid var(--color-ultramarine);
-          border-radius: 50%;
-          margin: 0 auto 16px;
-          animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-        
         .loading-container {
           display: flex;
           flex-direction: column;
@@ -566,6 +657,11 @@ const Checkout = () => {
           border-top: 3px solid var(--color-ultramarine);
           border-radius: 50%;
           animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
         
         @media (max-width: 992px) {
