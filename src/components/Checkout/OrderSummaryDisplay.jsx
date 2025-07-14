@@ -5,8 +5,7 @@ const OrderSummaryDisplay = ({
   deliveryCost, 
   totalAmount,
   isSubmitting,
-  onSubmit,
-  showPayButton = true
+  onSubmit
 }) => {
   const { t } = useTranslation();
 
@@ -47,15 +46,7 @@ const OrderSummaryDisplay = ({
           <span className="info-text">{t('checkout.summary.info.personal')}</span>
         </div>
       </div>
-      {showPayButton && (
-        <button 
-          onClick={onSubmit} 
-          disabled={isSubmitting}
-          className="checkout-button"
-        >
-          {isSubmitting ? t('checkout.summary.processing') : t('checkout.continue')}
-        </button>
-      )}
+      
 
       <style jsx>{`
         .order-summary {
@@ -162,7 +153,6 @@ const OrderSummaryDisplay = ({
           font-size: 1rem;
           cursor: pointer;
           transition: opacity 0.2s ease;
-          margin-top: 24px;
         }
         
         .checkout-button:hover:not(:disabled) {
