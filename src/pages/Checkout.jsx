@@ -28,8 +28,8 @@ const Checkout = () => {
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
   
-  // State for Stripe payment
-  const [paymentStep, setPaymentStep] = useState(false);
+  // State for showing Stripe payment
+  const [showStripePayment, setShowStripePayment] = useState(false);
   
   // Get cart total
   const cartTotal = getTotalPrice();
@@ -41,7 +41,6 @@ const Checkout = () => {
     handleInputChange,
     handleShippingMethodChange,
     handleParcelMachineSelect,
-    handlePaymentMethodChange,
     validateForm,
     getPayloadForSubmission,
     getShippingCost,
@@ -93,8 +92,8 @@ const Checkout = () => {
       return;
     }
     
-    // Move to payment step
-    setPaymentStep(true);
+    // Show Stripe payment form
+    setShowStripePayment(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   
@@ -147,13 +146,9 @@ const Checkout = () => {
   const handlePaymentError = (error) => {
     console.error('Payment error:', error);
     setError(error.message || 'Payment failed');
+    setShowStripePayment(false);
   };
-  
-  // Go back to shipping info
-  const handleBackToShipping = () => {
-    setPaymentStep(false);
-  };
-  
+
   if (cartItems.length === 0) {
     return (
       <main>
@@ -322,160 +317,6 @@ const Checkout = () => {
     );
   }
 
-  // Show payment step
-  if (paymentStep) {
-    return (
-      <>
-        <SEOHead page="shop" />
-        <main>
-          <section className="section-large">
-            <div className="container">
-              <FadeInSection>
-                <h1 className="text-center">{t('checkout.payment.title')}</h1>
-              </FadeInSection>
-              
-              <div className="checkout-layout">
-                <div className="checkout-main">
-                  {error && (
-                    <div className="checkout-error">
-                      <div className="error-icon">⚠️</div>
-                      <div className="error-message">{error}</div>
-                    </div>
-                  )}
-                  
-                  <div className="payment-container">
-                    <button 
-                      onClick={handleBackToShipping}
-                      className="back-button"
-                    >
-                      ← Tagasi tarneinfo juurde
-                    </button>
-                    
-                    <StripeWrapper
-                      amount={calculateTotal() * 100} // Stripe expects amount in cents
-                      currency="eur"
-                      customerEmail={formData.email}
-                      customerName={`${formData.firstName} ${formData.lastName}`}
-                      onPaymentSuccess={handlePaymentSuccess}
-                      onPaymentError={handlePaymentError}
-                    />
-                  </div>
-                </div>
-                
-                <div className="checkout-sidebar">
-                  <OrderSummaryDisplay
-                    itemSubtotal={cartTotal}
-                    deliveryCost={getShippingCost()}
-                    totalAmount={calculateTotal()}
-                    isSubmitting={isSubmitting}
-                    onSubmit={handleSubmit}
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
-        </main>
-        
-        <style jsx>{`
-          .checkout-layout {
-            display: grid;
-            grid-template-columns: 1fr 350px;
-            gap: 48px;
-            margin-top: 48px;
-          }
-          
-          .checkout-main {
-            flex: 1;
-          }
-          
-          .checkout-sidebar {
-            position: sticky;
-            top: 100px;
-            height: fit-content;
-          }
-          
-          .checkout-error {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 16px;
-            border-radius: 4px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-          }
-          
-          .error-icon {
-            font-size: 1.25rem;
-          }
-          
-          .error-message {
-            flex: 1;
-          }
-          
-          .payment-container {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            padding: 32px;
-          }
-          
-          .back-button {
-            background: none;
-            border: none;
-            color: var(--color-ultramarine);
-            font-family: var(--font-body);
-            font-weight: 500;
-            font-size: 1rem;
-            cursor: pointer;
-            padding: 0;
-            margin-bottom: 24px;
-            display: inline-flex;
-            align-items: center;
-            transition: opacity 0.2s ease;
-          }
-          
-          .back-button:hover {
-            opacity: 0.8;
-          }
-          
-          @media (max-width: 992px) {
-            .checkout-layout {
-              grid-template-columns: 1fr;
-              gap: 48px;
-            }
-            
-            .checkout-sidebar {
-              position: static;
-              order: -1;
-            }
-          }
-          
-          @media (max-width: 768px) {
-            .checkout-layout {
-              margin-top: 32px;
-            }
-            
-            .payment-container {
-              padding: 24px;
-            }
-          }
-          
-          @media (max-width: 480px) {
-            .checkout-layout {
-              margin-top: 24px;
-              gap: 32px;
-            }
-            
-            .payment-container {
-              padding: 16px;
-            }
-          }
-        `}</style>
-      </>
-    );
-  }
-
   return (
     <>
       <SEOHead page="shop" />
@@ -486,70 +327,92 @@ const Checkout = () => {
               <h1 className="text-center">{t('checkout.title')}</h1>
             </FadeInSection>
             
-            <div className="checkout-layout">
+            <div className={`checkout-layout ${showStripePayment ? 'payment-active' : ''}`}>
               <div className="checkout-main">
-                <form onSubmit={handleSubmit} className="checkout-form">
-                  {/* Error message */}
-                  {error && (
-                    <div className="checkout-error">
-                      <div className="error-icon">⚠️</div>
-                      <div className="error-message">{error}</div>
+                {/* Error message */}
+                {error && (
+                  <div className="checkout-error">
+                    <div className="error-icon">⚠️</div>
+                    <div className="error-message">{error}</div>
+                  </div>
+                )}
+                
+                {showStripePayment ? (
+                  <div className="payment-container">
+                    <button 
+                      onClick={() => setShowStripePayment(false)}
+                      className="back-button"
+                    >
+                      ← Tagasi tarneinfo juurde
+                    </button>
+                    
+                    <h3 className="payment-title">{t('checkout.payment.title')}</h3>
+                    
+                    <StripeWrapper
+                      amount={calculateTotal() * 100} // Stripe expects amount in cents
+                      currency="eur"
+                      customerEmail={formData.email}
+                      customerName={`${formData.firstName} ${formData.lastName}`}
+                      onPaymentSuccess={handlePaymentSuccess}
+                      onPaymentError={handlePaymentError}
+                    />
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="checkout-form">
+                    {/* Cart Summary */}
+                    <div className="checkout-section">
+                      <CartSummaryDisplay cartItems={cartItems} />
                     </div>
-                  )}
-                  
-                  {/* Cart Summary */}
-                  <div className="checkout-section">
-                    <CartSummaryDisplay cartItems={cartItems} />
-                  </div>
-                  
-                  {/* Shipping Method */}
-                  <div className="checkout-section">
-                    <ShippingAddressForm
-                      formData={formData}
-                      onChange={handleInputChange}
-                      validationErrors={validationErrors}
-                      onShippingMethodChange={handleShippingMethodChange}
-                      onParcelMachineSelect={handleParcelMachineSelect}
-                      omnivaShippingPrice={omnivaShippingPrice}
-                    />
-                  </div>
-                  
-                  {/* Contact Information */}
-                  <div className="checkout-section">
-                    <ContactInfoForm
-                      formData={formData}
-                      onChange={handleInputChange}
-                      validationErrors={validationErrors}
-                    />
-                  </div>
-                  
-                  {/* Order Notes */}
-                  <div className="checkout-section">
-                    <OrderNotesForm
-                      formData={formData}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  
-                  {/* Terms and Conditions */}
-                  <div className="checkout-section">
-                    <div className="terms-and-submit">
-                      <TermsAndConditionsCheckbox
-                        checked={formData.termsAccepted}
+                    
+                    {/* Shipping Method */}
+                    <div className="checkout-section">
+                      <ShippingAddressForm
+                        formData={formData}
                         onChange={handleInputChange}
-                        validationError={validationErrors.termsAccepted}
+                        validationErrors={validationErrors}
+                        onShippingMethodChange={handleShippingMethodChange}
+                        onParcelMachineSelect={handleParcelMachineSelect}
+                        omnivaShippingPrice={omnivaShippingPrice}
                       />
-                      
-                      <button 
-                        type="submit"
-                        className="checkout-button"
-                        disabled={isSubmitting}
-                      >
-                        {isSubmitting ? t('checkout.summary.processing') : 'JÄTKA MAKSEGA'}
-                      </button>
                     </div>
-                  </div>
-                </form>
+                    
+                    {/* Contact Information */}
+                    <div className="checkout-section">
+                      <ContactInfoForm
+                        formData={formData}
+                        onChange={handleInputChange}
+                        validationErrors={validationErrors}
+                      />
+                    </div>
+                    
+                    {/* Order Notes */}
+                    <div className="checkout-section">
+                      <OrderNotesForm
+                        formData={formData}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    
+                    {/* Terms and Conditions */}
+                    <div className="checkout-section">
+                      <div className="terms-and-submit">
+                        <TermsAndConditionsCheckbox
+                          checked={formData.termsAccepted}
+                          onChange={handleInputChange}
+                          validationError={validationErrors.termsAccepted}
+                        />
+                        
+                        <button 
+                          type="submit"
+                          className="checkout-button"
+                          disabled={isSubmitting}
+                        >
+                          {isSubmitting ? t('checkout.summary.processing') : 'JÄTKA MAKSEGA'}
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                )}
               </div>
               
               <div className="checkout-sidebar">
@@ -570,8 +433,16 @@ const Checkout = () => {
         .checkout-layout {
           display: grid;
           grid-template-columns: 1fr 350px;
-          gap: 48px;
+          gap: 32px;
           margin-top: 48px;
+        }
+        
+        .checkout-layout.payment-active .checkout-sidebar {
+          display: none;
+        }
+        
+        .checkout-layout.payment-active {
+          grid-template-columns: 1fr;
         }
         
         .checkout-main {
@@ -622,6 +493,40 @@ const Checkout = () => {
           cursor: not-allowed;
         }
         
+        .payment-container {
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          padding: 32px;
+        }
+        
+        .payment-title {
+          font-family: var(--font-heading);
+          font-size: 1.25rem;
+          font-weight: 500;
+          margin-bottom: 24px;
+          color: var(--color-ultramarine);
+        }
+        
+        .back-button {
+          background: none;
+          border: none;
+          color: var(--color-ultramarine);
+          font-family: var(--font-body);
+          font-weight: 500;
+          font-size: 1rem;
+          cursor: pointer;
+          padding: 0;
+          margin-bottom: 24px;
+          display: inline-flex;
+          align-items: center;
+          transition: opacity 0.2s ease;
+        }
+        
+        .back-button:hover {
+          opacity: 0.8;
+        }
+        
         .checkout-error {
           background-color: #f8d7da;
           color: #721c24;
@@ -666,8 +571,8 @@ const Checkout = () => {
         
         @media (max-width: 992px) {
           .checkout-layout {
-            grid-template-columns: 1fr;
-            gap: 48px;
+            grid-template-columns: 1fr !important;
+            gap: 32px;
           }
           
           .checkout-sidebar {
@@ -679,6 +584,7 @@ const Checkout = () => {
         @media (max-width: 768px) {
           .checkout-layout {
             margin-top: 32px;
+            gap: 24px;
           }
           
           .checkout-section {
@@ -688,16 +594,24 @@ const Checkout = () => {
           .checkout-button {
             padding: 14px;
           }
+          
+          .payment-container {
+            padding: 24px;
+          }
         }
         
         @media (max-width: 480px) {
           .checkout-layout {
             margin-top: 24px;
-            gap: 32px;
+            gap: 24px;
           }
           
           .checkout-section {
             margin-bottom: 16px;
+          }
+          
+          .payment-container {
+            padding: 16px;
           }
         }
       `}</style>
