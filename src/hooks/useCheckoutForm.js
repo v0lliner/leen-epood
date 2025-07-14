@@ -21,10 +21,6 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     omnivaParcelMachineId: '',
     omnivaParcelMachineName: '',
     
-    // Payment
-    bankCountry: 'ee',
-    paymentMethod: '',
-    
     // Additional
     notes: '',
     termsAccepted: false
@@ -118,22 +114,6 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     }
   };
   
-  // Handle payment method selection
-  const handlePaymentMethodChange = (method) => {
-    setFormData(prev => ({
-      ...prev,
-      paymentMethod: method
-    }));
-    
-    // Clear validation error
-    if (validationErrors.paymentMethod) {
-      setValidationErrors(prev => ({
-        ...prev,
-        paymentMethod: ''
-      }));
-    }
-  };
-  
   // Validate the form
   const validateForm = () => {
     const errors = {};
@@ -149,11 +129,6 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     // Shipping method validation
     if (formData.shippingMethod === 'omniva' && !formData.omnivaParcelMachineId) {
       errors.omnivaParcelMachineId = t('checkout.shipping.omniva.required');
-    }
-    
-    // Payment method validation
-    if (!formData.paymentMethod) {
-      errors.paymentMethod = t('checkout.payment.method_required');
     }
     
     // Terms acceptance validation
@@ -180,12 +155,9 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
       country: formData.country,
       
       // Shipping information
-      shippingMethod: formData.shippingMethod,
+      shippingMethod: formData.shippingMethod || 'pickup',
       omnivaParcelMachineId: formData.omnivaParcelMachineId,
       omnivaParcelMachineName: formData.omnivaParcelMachineName,
-      
-      // Payment information
-      paymentMethod: formData.paymentMethod,
       
       // Additional information
       notes: formData.notes,
@@ -203,7 +175,6 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     handleInputChange,
     handleShippingMethodChange,
     handleParcelMachineSelect,
-    handlePaymentMethodChange,
     validateForm,
     getPayloadForSubmission,
     getShippingCost,

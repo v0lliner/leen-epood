@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { StripePaymentWrapper } from '../components/Checkout/StripePaymentForm';
+import { createPaymentIntent, processSuccessfulPayment, handlePaymentError } from '../utils/stripe';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
@@ -13,7 +15,6 @@ import CartSummaryDisplay from '../components/Checkout/CartSummaryDisplay';
 import ContactInfoForm from '../components/Checkout/ContactInfoForm';
 import ShippingAddressForm from '../components/Checkout/ShippingAddressForm';
 import OrderNotesForm from '../components/Checkout/OrderNotesForm';
-import PaymentMethodSelector from '../components/Checkout/PaymentMethodSelector';
 import OrderSummaryDisplay from '../components/Checkout/OrderSummaryDisplay';
 import TermsAndConditionsCheckbox from '../components/Checkout/TermsAndConditionsCheckbox';
 
@@ -25,6 +26,7 @@ const Checkout = () => {
   const [error, setError] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
+  const [clientSecret, setClientSecret] = useState('');
   const [isPageLoading, setIsPageLoading] = useState(true);
   
   // Get cart total
@@ -37,7 +39,6 @@ const Checkout = () => {
     handleInputChange,
     handleShippingMethodChange,
     handleParcelMachineSelect,
-    handlePaymentMethodChange,
     validateForm,
     getPayloadForSubmission,
     getShippingCost,
@@ -46,6 +47,34 @@ const Checkout = () => {
     isSubmitting,
     setIsSubmitting
   } = useCheckoutForm(cartItems, cartTotal);
+  
+  // Create payment intent when form is valid
+  const createStripePaymentIntent = async () => {
+    try {
+      setIsSubmitting(true);
+      
+      // Prepare payload for payment intent
+      const payload = getPayloadForSubmission();
+      
+      // Create payment intent
+      const { clientSecret } = await createPaymentIntent({
+        amount: Math.round(calculateTotal() * 100), // Convert to cents
+        currency: 'eur',
+        metadata: {
+          customer_email: payload.email,
+          customer_name: `${payload.firstName} ${payload.lastName}`,
+          shipping_method: payload.shippingMethod
+        }
+      });
+      
+      setClientSecret(clientSecret);
+    } catch (err) {
+      console.error('Error creating payment intent:', err);
+      setError(t('checkout.error.session_failed'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   
   // Redirect to shop if cart is empty
   useEffect(() => {
@@ -58,11 +87,11 @@ const Checkout = () => {
     
     // Handle payment status from URL
     if (status) {
-      if (status === 'korras') {
+      if (status === 'korras' || status === 'success') {
         setPaymentStatus('success');
         // Clear cart on successful payment
         clearCart();
-      } else if (status === 'katkestatud') {
+      } else if (status === 'katkestatud' || status === 'canceled') {
         setPaymentStatus('cancelled');
       }
     }
@@ -80,7 +109,9 @@ const Checkout = () => {
     
     setError('');
     
-    if (!validateForm()) {
+    // Validate form fields
+    const isValid = validateForm();
+    if (!isValid) {
       // Scroll to first error
       const firstErrorElement = document.querySelector('.has-error');
       if (firstErrorElement) {
@@ -89,6 +120,11 @@ const Checkout = () => {
       return;
     }
     
+    // Create payment intent
+    await createStripePaymentIntent();
+  };
+  
+  const handlePaymentSuccess = async (paymentIntent) => {
     setIsSubmitting(true);
     setProcessingPayment(true);
     
@@ -96,7 +132,7 @@ const Checkout = () => {
       // Prepare payload for submission
       const payload = getPayloadForSubmission();
       
-      // Create order in Supabase directly
+      // Create order in Supabase
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
         .insert({
@@ -111,7 +147,7 @@ const Checkout = () => {
           items: JSON.stringify(payload.items),
           subtotal: payload.subtotal,
           shipping_cost: payload.shipping_cost,
-          total_amount: payload.total_amount,
+          total_amount: calculateTotal(),
           status: 'PENDING',
           payment_status: 'PENDING',
           payment_method: payload.paymentMethod,
@@ -124,7 +160,7 @@ const Checkout = () => {
         throw new Error(orderError.message || 'Failed to create order');
       }
       
-      // For demo purposes, simulate successful payment
+      // Process successful payment
       // In a real implementation, you would integrate with a payment provider API
       console.log('Order created successfully:', orderData);
       
@@ -159,6 +195,16 @@ const Checkout = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+  
+  const handlePaymentError = async (error) => {
+    console.error('Payment error:', error);
+    setError(error.message || t('checkout.error.session_failed'));
+    setProcessingPayment(false);
+    
+    // Scroll to error message
+    const errorElement = document.querySelector('.checkout-error');
+    if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
   
   if (cartItems.length === 0) {
@@ -385,14 +431,16 @@ const Checkout = () => {
                   </div>
                   
                   {/* Payment Method */}
-                  <div className="checkout-section">
-                    <PaymentMethodSelector
-                      formData={formData}
-                      onChange={handleInputChange}
-                      validationErrors={validationErrors}
-                      onPaymentMethodChange={handlePaymentMethodChange}
-                    />
-                  </div>
+                  {clientSecret && (
+                    <div className="checkout-section">
+                      <h3 className="section-title">{t('checkout.payment.title')}</h3>
+                      <StripePaymentWrapper 
+                        clientSecret={clientSecret}
+                        onPaymentSuccess={handlePaymentSuccess}
+                        onPaymentError={handlePaymentError}
+                      />
+                    </div>
+                  )}
                   
                   {/* Terms and Conditions */}
                   <div className="checkout-section">
@@ -406,9 +454,9 @@ const Checkout = () => {
                       <button 
                         type="submit"
                         className="checkout-button"
-                        disabled={isSubmitting}
+                        disabled={isSubmitting || clientSecret}
                       >
-                        {isSubmitting ? t('checkout.summary.processing') : 'VORMISTA OST'}
+                        {isSubmitting ? t('checkout.summary.processing') : clientSecret ? t('checkout.payment.proceed') : t('checkout.continue')}
                       </button>
                     </div>
                   </div>
@@ -422,6 +470,7 @@ const Checkout = () => {
                   totalAmount={calculateTotal()}
                   isSubmitting={isSubmitting}
                   onSubmit={handleSubmit}
+                  showPayButton={!clientSecret}
                 />
               </div>
             </div>
