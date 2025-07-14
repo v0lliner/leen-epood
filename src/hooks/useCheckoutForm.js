@@ -22,7 +22,6 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     omnivaParcelMachineName: '',
     
     // Payment
-    bankCountry: 'ee',
     paymentMethod: '',
     
     // Additional
