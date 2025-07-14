@@ -302,7 +302,7 @@
       "retry": "Proovi uuesti",
       "no_methods": "Maksevõimalusi ei leitud",
       "method_required": "Palun valige makseviis",
-      "card": "Pangakaart",
+     "card": "Krediit-/deebetkaart",
       "google_pay": "Google Pay",
       "apple_pay": "Apple Pay",
       "proceed": "Jätka maksega",

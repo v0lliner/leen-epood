@@ -17,12 +17,12 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     
     // Shipping
     country: 'Estonia',
-    shippingMethod: 'pickup', // 'pickup' or 'omniva'
+    shippingMethod: 'pickup', // 'pickup' or 'omniva' 
     omnivaParcelMachineId: '',
     omnivaParcelMachineName: '',
     
     // Payment
-    paymentMethod: '',
+    paymentMethod: 'card',
     
     // Additional
     notes: '',
@@ -149,12 +149,7 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
     if (formData.shippingMethod === 'omniva' && !formData.omnivaParcelMachineId) {
       errors.omnivaParcelMachineId = t('checkout.shipping.omniva.required');
     }
-    
-    // Payment method validation
-    if (!formData.paymentMethod) {
-      errors.paymentMethod = t('checkout.payment.method_required');
-    }
-    
+        
     // Terms acceptance validation
     if (!formData.termsAccepted) {
       errors.termsAccepted = t('checkout.terms.required');

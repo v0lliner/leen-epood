@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { CardElement } from '@stripe/react-stripe-js';
 
 const PaymentMethodSelector = ({ 
   formData, 
@@ -10,18 +11,38 @@ const PaymentMethodSelector = ({
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(''); 
+  const [showCardFields, setShowCardFields] = useState(false);
 
-  // Payment method options
+  // Payment method options with official logos
   const paymentMethods = [
-    { id: 'card', name: 'Credit/Debit Card', icon: '💳' },
-    { id: 'google_pay', name: 'Google Pay', icon: '🔄' },
-    { id: 'apple_pay', name: 'Apple Pay', icon: '🍎' }
+    { 
+      id: 'card', 
+      name: t('checkout.payment.card'), 
+      logo: '/assets/payment/credit-card.png' 
+    },
+    { 
+      id: 'google_pay', 
+      name: 'Google Pay', 
+      logo: '/assets/payment/google-pay.png' 
+    },
+    { 
+      id: 'apple_pay', 
+      name: 'Apple Pay', 
+      logo: '/assets/payment/apple-pay.png' 
+    }
   ];
 
-  // Update available banks when bank country changes
+  // Update available payment methods
   useEffect(() => {
     setLoading(false);
-  }, []);
+    
+    // Show card fields if card is selected
+    if (formData.paymentMethod === 'card') {
+      setShowCardFields(true);
+    } else {
+      setShowCardFields(false);
+    }
+  }, [formData.paymentMethod]);
 
   const handlePaymentMethodSelection = (methodId) => {
     onPaymentMethodChange(methodId);
@@ -31,8 +52,8 @@ const PaymentMethodSelector = ({
     <div className="payment-method-selector">
       <h3 className="section-title">{t('checkout.payment.title')}</h3>
       
-      <div className="bank-selection">
-        <label className="bank-label">Makseviis</label>
+      <div className="payment-selection">
+        <label className="payment-label">Makseviis</label>
         
         {loading ? (
           <div className="loading-message">{t('checkout.payment.loading_methods')}</div>
@@ -47,7 +68,20 @@ const PaymentMethodSelector = ({
                 onClick={() => handlePaymentMethodSelection(method.id)}
               >
                 <div className="payment-method-content">
-                  <span className="payment-method-icon">{method.icon}</span>
+                  {method.logo ? (
+                    <img 
+                      src={method.logo} 
+                      alt={method.name} 
+                      className="payment-method-logo"
+                      onError={(e) => {
+                        // Fallback to text if image fails to load
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'block';
+                      }}
+                    />
+                  ) : (
+                    <span className="payment-method-icon">{method.icon}</span>
+                  )}
                   <span className="payment-method-name">{method.name}</span>
                 </div>
               </div>
@@ -59,6 +93,34 @@ const PaymentMethodSelector = ({
           <div className="error-message">{validationErrors.paymentMethod}</div>
         )}
       </div>
+
+      {/* Card payment fields */}
+      {showCardFields && (
+        <div className="card-payment-fields">
+          <div className="card-element-container">
+            <label htmlFor="card-element">Kaardi andmed</label>
+            <div className="card-element-wrapper">
+              {/* This is a placeholder for the Stripe CardElement */}
+              <div className="card-element-placeholder">
+                <div className="card-field-placeholder">
+                  <span>Kaardi number</span>
+                  <div className="card-icons">
+                    <img src="/assets/payment/visa.png" alt="Visa" className="card-brand-icon" />
+                    <img src="/assets/payment/mastercard.png" alt="Mastercard" className="card-brand-icon" />
+                  </div>
+                </div>
+                <div className="card-field-row">
+                  <div className="card-field-placeholder small">Aegumiskuupäev</div>
+                  <div className="card-field-placeholder small">CVC</div>
+                </div>
+              </div>
+            </div>
+            <div className="card-element-info">
+              Maksed töödeldakse turvaliselt Stripe'i kaudu
+            </div>
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         .payment-method-selector {
@@ -73,47 +135,14 @@ const PaymentMethodSelector = ({
           color: var(--color-ultramarine);
         }
         
-        .payment-disabled {
-          color: #dc3545;
-          font-size: 0.9rem;
-          font-weight: normal;
-        }
-        
-        .form-group {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          margin-bottom: 24px;
-        }
-        
-        .form-group label {
-          font-family: var(--font-heading);
-          font-weight: 500;
-          font-size: 0.9rem;
-          color: var(--color-text);
-        }
-        
-        .form-input {
-          padding: 12px 16px;
-          border: 1px solid #ddd;
-          border-radius: 4px;
-          font-family: var(--font-body);
-          font-size: 1rem;
-          transition: border-color 0.2s ease;
-        }
-        
-        .form-input:focus {
-          outline: none;
-          border-color: var(--color-ultramarine);
-        }
-        
-        .bank-selection {
+        .payment-selection {
           display: flex;
           flex-direction: column;
           gap: 16px;
+          margin-bottom: 24px;
         }
         
-        .bank-label {
+        .payment-label {
           font-family: var(--font-heading);
           font-weight: 500;
           font-size: 0.9rem;
@@ -127,9 +156,9 @@ const PaymentMethodSelector = ({
         }
         
         .payment-method-option {
-          border: none;
-          border-radius: 4px;
-          padding: 12px;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          padding: 16px;
           cursor: pointer;
           transition: all 0.2s ease;
           display: flex;
@@ -147,6 +176,7 @@ const PaymentMethodSelector = ({
         
         .payment-method-option:hover {
           background-color: rgba(47, 62, 156, 0.05);
+          border-color: #d0d0d0;
         }
         
         .payment-method-option.selected {
@@ -161,10 +191,18 @@ const PaymentMethodSelector = ({
           justify-content: center;
           gap: 8px;
           text-align: center;
+          width: 100%;
+        }
+        
+        .payment-method-logo {
+          height: 24px;
+          width: auto;
+          object-fit: contain;
         }
         
         .payment-method-icon {
           font-size: 1.5rem;
+          display: none;
         }
         
         .payment-method-name {
@@ -183,53 +221,97 @@ const PaymentMethodSelector = ({
           font-size: 0.85rem;
         }
         
-        .info-message {
-          font-size: 0.85rem;
-          color: #666;
+        /* Card payment fields */
+        .card-payment-fields {
+          margin-top: 24px;
+          padding-top: 24px;
+          border-top: 1px solid #f0f0f0;
         }
         
-        .payment-notice {
-          background-color: #f8d7da;
-          color: #721c24;
-          padding: 12px 16px;
-          border-radius: 4px;
+        .card-element-container {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        
+        .card-element-container label {
+          font-family: var(--font-heading);
+          font-weight: 500;
           font-size: 0.9rem;
-          text-align: center;
-          margin-top: 16px;
+          color: var(--color-text);
         }
         
-        .test-card {
-          position: relative;
-          border: 2px dashed #f0ad4e;
-          background-color: rgba(240, 173, 78, 0.1);
+        .card-element-wrapper {
+          border: 1px solid #ddd;
+          border-radius: 8px;
+          padding: 16px;
+          background-color: white;
+          transition: border-color 0.2s ease;
         }
         
-        .test-card-label {
-          position: absolute;
-          bottom: 0;
-          left: 0;
-          right: 0;
-          background-color: #f0ad4e;
-          color: white;
-          font-size: 0.7rem;
+        .card-element-wrapper:focus-within {
+          border-color: var(--color-ultramarine);
+          box-shadow: 0 0 0 1px rgba(47, 62, 156, 0.2);
+        }
+        
+        .card-element-info {
+          font-size: 0.8rem;
+          color: #666;
+          margin-top: 8px;
           text-align: center;
-          padding: 2px 0;
+        }
+        
+        /* Placeholder for Stripe CardElement */
+        .card-element-placeholder {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+        
+        .card-field-placeholder {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background-color: #f8f9fa;
+          border-radius: 4px;
+          color: #aaa;
+          font-size: 0.9rem;
+        }
+        
+        .card-field-placeholder.small {
+          width: 48%;
+        }
+        
+        .card-field-row {
+          display: flex;
+          justify-content: space-between;
+          gap: 12px;
+        }
+        
+        .card-icons {
+          display: flex;
+          gap: 8px;
+        }
+        
+        .card-brand-icon {
+          height: 20px;
+          width: auto;
         }
         
         @media (max-width: 768px) {
           .payment-methods-grid {
-            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-            gap: 8px;
-            margin-top: 8px;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
           }
           
           .payment-method-option {
-            padding: 6px;
-            height: 60px;
+            padding: 12px;
+            height: 70px;
           }
           
-          .payment-method-icon {
-            font-size: 1.25rem;
+          .payment-method-logo {
+            height: 20px;
           }
           
           .payment-method-name {
@@ -240,12 +322,21 @@ const PaymentMethodSelector = ({
         @media (max-width: 480px) {
           .payment-methods-grid {
             grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
+            gap: 8px;
           }
           
           .payment-method-option {
-            height: 50px;
-            padding: 4px;
+            height: 60px;
+            padding: 8px;
+          }
+          
+          .card-field-row {
+            flex-direction: column;
+            gap: 8px;
+          }
+          
+          .card-field-placeholder.small {
+            width: 100%;
           }
         }
       `}</style>
