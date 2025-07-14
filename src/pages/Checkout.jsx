@@ -246,6 +246,7 @@ const Checkout = () => {
     } finally {
       setProcessingPayment(false);
       setIsSubmitting(false);
+    }
   };
   
   if (cartItems.length === 0) {
