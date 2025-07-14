@@ -13,7 +13,7 @@
   "dependencies": {
     "@stripe/react-stripe-js": "^3.7.0",
     "@stripe/stripe-js": "^7.4.0",
-    "@supabase/supabase-js": "^2.50.3",
+    "@supabase/supabase-js": "^2.51.0",
     "browser-image-compression": "^2.0.2",
     "i18next": "^23.7.8",
     "react": "^18.3.1",

@@ -10,7 +10,7 @@ const StripeCardElement = ({ onChange }) => {
   const cardElementOptions = {
     style: {
       base: {
-        color: '#32325d',
+        color: 'var(--color-text)',
         fontFamily: 'var(--font-body), sans-serif',
         fontSmoothing: 'antialiased',
         fontSize: '16px',
@@ -19,8 +19,8 @@ const StripeCardElement = ({ onChange }) => {
         },
       },
       invalid: {
-        color: '#fa755a',
-        iconColor: '#fa755a',
+        color: '#dc3545',
+        iconColor: '#dc3545',
       },
     },
     hidePostalCode: true,
@@ -41,10 +41,12 @@ const StripeCardElement = ({ onChange }) => {
           border-radius: 4px;
           background-color: white;
           transition: border-color 0.2s ease;
+          min-height: 24px;
         }
         
         .card-element-wrapper:focus-within {
           border-color: var(--color-ultramarine);
+          box-shadow: 0 0 0 3px rgba(47, 62, 156, 0.1);
         }
       `}</style>
     </div>

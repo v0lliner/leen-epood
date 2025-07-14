@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
 import StripeCardElement from './StripeCardElement';
 
 const PaymentMethodSelector = ({ 
@@ -16,6 +16,7 @@ const PaymentMethodSelector = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(''); 
   const [showCardFields, setShowCardFields] = useState(false);
+  const [cardBrand, setCardBrand] = useState(null);
 
   // Payment method options with official logos
   const paymentMethods = [
@@ -55,6 +56,11 @@ const PaymentMethodSelector = ({
   const handleCardElementChange = (event) => {
     if (onStripeElementChange) {
       onStripeElementChange(event);
+      
+      // Update card brand if available
+      if (event.brand) {
+        setCardBrand(event.brand);
+      }
     }
   };
 
@@ -115,7 +121,14 @@ const PaymentMethodSelector = ({
               <div className="loading-message">{t('checkout.payment.loading_stripe')}</div>
             )}
             <div className="card-element-info">
-              Maksed töödeldakse turvaliselt Stripe'i kaudu
+              {cardBrand ? (
+                <div className="card-brand-info">
+                  <span className="card-brand-label">Kaardi tüüp:</span>
+                  <span className="card-brand-value">{cardBrand}</span>
+                </div>
+              ) : (
+                <span>Maksed töödeldakse turvaliselt Stripe'i kaudu</span>
+              )}
             </div>
           </div>
         </div>
@@ -234,7 +247,24 @@ const PaymentMethodSelector = ({
         .card-element-info {
           font-size: 0.8rem;
           color: #666;
-          margin-top: 8px;
+          margin-top: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        
+        .card-brand-info {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .card-brand-label {
+          font-weight: 500;
+        }
+        
+        .card-brand-value {
+          text-transform: capitalize;
         }
         
         .card-icons {

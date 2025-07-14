@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Elements } from '@stripe/react-stripe-js';
+import { Elements, useStripe, useElements } from '@stripe/react-stripe-js';
 import stripePromise from '../utils/stripe';
 import { useCart } from '../context/CartContext';
 import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
+import { createPaymentIntent, saveOrder, updateOrder } from '../utils/api';
 
 // Import custom hook
 import { useCheckoutForm } from '../hooks/useCheckoutForm';
@@ -22,12 +23,16 @@ import TermsAndConditionsCheckbox from '../components/Checkout/TermsAndCondition
 const Checkout = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const stripe = useStripe();
+  const elements = useElements();
   const { status } = useParams();
   const { items: cartItems, getTotalPrice, clearCart } = useCart();
   const [error, setError] = useState('');
   const [processingPayment, setProcessingPayment] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [isPageLoading, setIsPageLoading] = useState(true);
+  const [clientSecret, setClientSecret] = useState('');
+  const [orderId, setOrderId] = useState(null);
   
   // Stripe state
   const [stripeError, setStripeError] = useState(null);
@@ -90,6 +95,11 @@ const Checkout = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!stripe || !elements) {
+      setError('Stripe has not been properly initialized');
+      return;
+    }
+    
     setError('');
     
     if (!validateForm()) {
@@ -104,137 +114,128 @@ const Checkout = () => {
     setIsSubmitting(true);
     setProcessingPayment(true);
     setError('');
+    let savedOrderId = null;
     
     try {
-      if (formData.paymentMethod === 'card') {
-        // For card payments, we need to use Stripe
-        if (!stripe || !elements) {
-          setError('Stripe has not been properly initialized');
-          setProcessingPayment(false);
-          setIsSubmitting(false);
-          return;
-        }
-        
-        if (!stripeElementsComplete) {
-          setError('Please enter complete card information');
-          setProcessingPayment(false);
-          setIsSubmitting(false);
-          return;
-        }
-        
-        // Prepare payload for submission
-        const payload = getPayloadForSubmission();
-        
-        // Create order in Supabase
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            customer_email: payload.email,
-            customer_name: `${payload.firstName} ${payload.lastName}`,
-            customer_phone: payload.phone,
-            shipping_address: JSON.stringify({
-              country: payload.country,
-              parcel_machine_id: payload.omnivaParcelMachineId,
-              parcel_machine_name: payload.omnivaParcelMachineName
-            }),
-            items: JSON.stringify(payload.items),
-            subtotal: payload.subtotal,
-            shipping_cost: payload.shipping_cost,
-            total_amount: payload.total_amount,
-            status: 'PENDING',
-            payment_status: 'PENDING',
-            payment_method: payload.paymentMethod,
-            notes: payload.notes
+      // Prepare payload for submission
+      const payload = getPayloadForSubmission();
+      
+      // Step 1: Create order in database with PENDING status
+      const { data: orderData, error: orderError } = await saveOrder({
+        customer_email: payload.email,
+        customer_name: `${payload.firstName} ${payload.lastName}`,
+        customer_phone: payload.phone,
+        shipping_address: JSON.stringify({
+          country: payload.country,
+          parcel_machine_id: payload.omnivaParcelMachineId,
+          parcel_machine_name: payload.omnivaParcelMachineName
+        }),
+        items: JSON.stringify(payload.items),
+        subtotal: payload.subtotal,
+        shipping_cost: payload.shipping_cost,
+        total_amount: payload.total_amount,
+        status: 'PENDING',
+        payment_status: 'PENDING',
+        payment_method: payload.paymentMethod,
+        notes: payload.notes
+      });
+      
+      if (orderError) {
+        throw new Error(orderError.message || 'Failed to create order');
+      }
+      
+      savedOrderId = orderData.id;
+      setOrderId(savedOrderId);
+      
+      // Step 2: Create a payment intent
+      const { clientSecret: secret, paymentIntentId } = await createPaymentIntent({
+        amount: payload.total_amount,
+        currency: 'eur',
+        items: payload.items.map(item => ({
+          title: item.title,
+          price: parseFloat(item.price.replace('€', '')),
+          quantity: 1
+        })),
+        customer: {
+          email: payload.email,
+          name: `${payload.firstName} ${payload.lastName}`,
+          phone: payload.phone
+        },
+        metadata: {
+          order_id: savedOrderId,
+          shipping_method: payload.shippingMethod,
+          shipping_address: JSON.stringify({
+            country: payload.country,
+            parcel_machine_id: payload.omnivaParcelMachineId,
+            parcel_machine_name: payload.omnivaParcelMachineName
           })
-          .select()
-          .single();
-        
-        if (orderError) {
-          throw new Error(orderError.message || 'Failed to create order');
         }
-        
-        // Process payment with Stripe
+      });
+      
+      // Update order with payment intent ID
+      await updateOrder(savedOrderId, {
+        payment_intent_id: paymentIntentId,
+        client_secret: secret,
+        payment_status: 'PROCESSING'
+      });
+      
+      // Step 3: Confirm the payment
+      if (formData.paymentMethod === 'card') {
         const cardElement = elements.getElement(CardElement);
         
-        const { error: stripeError, paymentMethod } = await stripe.createPaymentMethod({
-          type: 'card',
-          card: cardElement,
-          billing_details: {
-            name: `${payload.firstName} ${payload.lastName}`,
-            email: payload.email,
-            phone: payload.phone
+        if (!cardElement) {
+          throw new Error('Card element not found');
+        }
+        
+        const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(secret, {
+          payment_method: {
+            card: cardElement,
+            billing_details: {
+              name: `${payload.firstName} ${payload.lastName}`,
+              email: payload.email,
+              phone: payload.phone
+            }
           }
         });
         
-        if (stripeError) {
-          throw new Error(stripeError.message || 'Payment processing failed');
+        if (confirmError) {
+          // Update order status to failed
+          await updateOrder(savedOrderId, {
+            payment_status: 'FAILED',
+            status: 'CANCELLED'
+          });
+          
+          throw new Error(confirmError.message || 'Payment confirmation failed');
         }
         
-        // In a real implementation, you would now:
-        // 1. Call a serverless function to create a payment intent
-        // 2. Confirm the payment with the client
-        // 3. Update the order status based on the payment result
-        
-        // For now, we'll simulate a successful payment
-        console.log('Payment method created:', paymentMethod.id);
-        
-        // Update order status
-        await supabase
-          .from('orders')
-          .update({
-            status: 'PAID',
+        // Payment succeeded
+        if (paymentIntent.status === 'succeeded') {
+          // Update order with payment details
+          await updateOrder(savedOrderId, {
             payment_status: 'COMPLETED',
-            payment_reference: paymentMethod.id
-          })
-          .eq('id', orderData.id);
-        
-        // Clear cart and show success
-        clearCart();
-        setPaymentStatus('success');
+            status: 'PAID',
+            payment_method_id: paymentIntent.payment_method,
+            payment_method_type: 'card',
+            payment_method_details: JSON.stringify(paymentIntent.payment_method_details || {})
+          });
+          
+          // Clear cart and show success
+          clearCart();
+          setPaymentStatus('success');
+        } else {
+          throw new Error(`Unexpected payment status: ${paymentIntent.status}`);
+        }
       } else if (formData.paymentMethod === 'google_pay' || formData.paymentMethod === 'apple_pay') {
-        // For Google Pay and Apple Pay, we would integrate with their respective APIs
-        // For now, we'll simulate the process
+        // For Google Pay and Apple Pay, we would use stripe.confirmPayment
+        // This is a simplified implementation
         
-        // Prepare payload for submission
-        const payload = getPayloadForSubmission();
-        
-        // Create order in Supabase
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            customer_email: payload.email,
-            customer_name: `${payload.firstName} ${payload.lastName}`,
-            customer_phone: payload.phone,
-            shipping_address: JSON.stringify({
-              country: payload.country,
-              parcel_machine_id: payload.omnivaParcelMachineId,
-              parcel_machine_name: payload.omnivaParcelMachineName
-            }),
-            items: JSON.stringify(payload.items),
-            subtotal: payload.subtotal,
-            shipping_cost: payload.shipping_cost,
-            total_amount: payload.total_amount,
-            status: 'PENDING',
-            payment_status: 'PENDING',
-            payment_method: payload.paymentMethod,
-            notes: payload.notes
-          })
-          .select()
-          .single();
-        
-        if (orderError) {
-          throw new Error(orderError.message || 'Failed to create order');
-        }
-        
-        // Simulate successful payment
-        await supabase
-          .from('orders')
-          .update({
-            status: 'PAID',
-            payment_status: 'COMPLETED',
-            payment_reference: `sim_${formData.paymentMethod}_${Date.now()}`
-          })
-          .eq('id', orderData.id);
+        // Simulate successful payment for now
+        await updateOrder(savedOrderId, {
+          payment_status: 'COMPLETED',
+          status: 'PAID',
+          payment_method_type: formData.paymentMethod,
+          payment_reference: `sim_${formData.paymentMethod}_${Date.now()}`
+        });
         
         // Clear cart and show success
         clearCart();
@@ -243,6 +244,18 @@ const Checkout = () => {
     } catch (err) {
       console.error('Payment processing error:', err);
       setError(err.message || t('checkout.error.session_failed'));
+      
+      // Update order status if we have an order ID
+      if (savedOrderId) {
+        try {
+          await updateOrder(savedOrderId, {
+            payment_status: 'FAILED',
+            status: 'CANCELLED'
+          });
+        } catch (updateErr) {
+          console.error('Failed to update order status:', updateErr);
+        }
+      }
     } finally {
       setProcessingPayment(false);
       setIsSubmitting(false);
@@ -498,7 +511,7 @@ const Checkout = () => {
                           className="checkout-button"
                           disabled={isSubmitting}
                         >
-                          {isSubmitting ? t('checkout.summary.processing') : 'VORMISTA OST'}
+                          {isSubmitting ? t('checkout.summary.processing') : 'MAKSA'}
                         </button>
                       </div>
                     </div>
