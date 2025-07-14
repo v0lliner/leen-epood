@@ -5,6 +5,7 @@ import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import ImageGallery from '../components/UI/ImageGallery';
 import ProductCard from '../components/Shop/ProductCard';
+import StripeCheckoutButton from '../components/Checkout/StripeCheckoutButton';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../hooks/useProducts';
 import { productImageService } from '../utils/supabase/productImages';
@@ -357,11 +358,20 @@ const ProductDetail = () => {
                   <div className="product-actions">
                     {canAddToCart && (
                       <button 
-                        className="link-with-arrow add-to-cart-btn"
+                        className="link-with-arrow add-to-cart-btn add-to-cart-secondary"
                         onClick={handleAddToCart}
                       >
                         {getButtonText()} <span className="arrow-wrapper">→</span>
                       </button>
+                    )}
+                    {product.priceId && (
+                      <StripeCheckoutButton
+                        priceId={product.priceId}
+                        mode="payment"
+                        className="checkout-btn"
+                      >
+                        Buy Now with Stripe
+                      </StripeCheckoutButton>
                     )}
                     {!canAddToCart && (
                       <div className="unavailable-btn">
@@ -549,6 +559,7 @@ const ProductDetail = () => {
           display: flex;
           flex-direction: column;
           gap: 24px;
+          margin-top: 24px;
         }
 
         .add-to-cart-btn {
@@ -570,6 +581,14 @@ const ProductDetail = () => {
 
         .add-to-cart-btn:hover {
           opacity: 0.8;
+        }
+
+        .add-to-cart-secondary {
+          color: #6c757d;
+        }
+
+        .checkout-btn {
+          width: 100%;
         }
 
         .unavailable-btn {

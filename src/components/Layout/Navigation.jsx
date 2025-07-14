@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../context/AuthContext';
 import LanguageToggle from './LanguageToggle';
 import CartSummary from '../Shop/CartSummary';
 import { useCart } from '../../context/CartContext';
 
 const Navigation = () => { 
   const { t } = useTranslation();
+  const { user } = useAuth();
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -67,6 +69,18 @@ const Navigation = () => {
             </div>
 
             <div className="nav-actions">
+              {user ? (
+                <Link to="/account" className="account-button">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </Link>
+              ) : (
+                <Link to="/login" className="login-button">
+                  Log In
+                </Link>
+              )}
               <button 
                 className="cart-button"
                 onClick={() => setIsCartOpen(true)}
@@ -83,6 +97,22 @@ const Navigation = () => {
             </div>
 
             <div className="mobile-actions">
+              {user ? (
+                <Link to="/account" className="mobile-account-button">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </Link>
+              ) : (
+                <Link to="/login" className="mobile-login-button">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 3H19C19.5304 3 20.0391 3.21071 20.4142 3.58579C20.7893 3.96086 21 4.46957 21 5V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M10 17L15 12L10 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M15 12H3" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </Link>
+              )}
               <button 
                 className="mobile-cart-button"
                 onClick={() => setIsCartOpen(true)}
@@ -122,6 +152,27 @@ const Navigation = () => {
                     </Link>
                   </li>
                 ))}
+                {user ? (
+                  <li>
+                    <Link 
+                      to="/account"
+                      className="nav-mobile-link"
+                      onClick={handleLinkClick}
+                    >
+                      My Account
+                    </Link>
+                  </li>
+                ) : (
+                  <li>
+                    <Link 
+                      to="/login"
+                      className="nav-mobile-link"
+                      onClick={handleLinkClick}
+                    >
+                      Log In
+                    </Link>
+                  </li>
+                )}
                 <li>
                   <button 
                     className="nav-mobile-link cart-mobile-link"
@@ -228,6 +279,45 @@ const Navigation = () => {
             align-items: center;
             gap: 24px;
             justify-self: end;
+          }
+
+          .account-button,
+          .login-button {
+            background: none;
+            border: none;
+            color: var(--color-text);
+            font-family: var(--font-body);
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 0;
+            text-decoration: none;
+          }
+
+          .account-button:hover,
+          .login-button:hover {
+            color: var(--color-ultramarine);
+          }
+
+          .mobile-account-button,
+          .mobile-login-button {
+            background: none;
+            border: none;
+            color: var(--color-text);
+            cursor: pointer;
+            transition: color 0.2s ease;
+            display: flex;
+            align-items: center;
+            position: relative;
+            padding: 0;
+          }
+
+          .mobile-account-button:hover,
+          .mobile-login-button:hover {
+            color: var(--color-ultramarine);
           }
 
           .cart-button {
