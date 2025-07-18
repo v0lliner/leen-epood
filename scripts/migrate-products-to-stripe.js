@@ -334,9 +334,10 @@ async function processProduct(product, options, result) {
           product: stripeProductId,
           unit_amount: priceAmount,
           currency: 'eur',
-          metadata: {
-          query: `name:"${product.title.replace(/"/g, '\\"')}"`,
-          },
+        // Use metadata search instead of name search to avoid quote issues
+        const existingProducts = await stripe.products.search({
+          query: `metadata["supabase_id"]:"${product.id}"`,
+          limit: 1,
         });
         
         stripePriceId = stripePrice.id;
