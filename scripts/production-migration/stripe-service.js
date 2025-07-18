@@ -107,8 +107,6 @@ class StripeService {
       description: validatedProduct.description || '',
       metadata: validatedProduct.metadata,
       active: true,
-      // Add images if available
-      ...(validatedProduct.image && { images: [validatedProduct.image] }),
     };
     
     this.logger.debug('Creating Stripe product', { productData, context });
@@ -144,8 +142,7 @@ class StripeService {
     
     const priceData = {
       product: stripeProduct.id,
-      // Convert euros to cents for Stripe (multiply by 100)
-      unit_amount: Math.round(validatedProduct.price * 100),
+      unit_amount: validatedProduct.price,
       currency: validatedProduct.currency,
       metadata: {
         [STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID]: validatedProduct.id,
@@ -180,7 +177,7 @@ class StripeService {
     const context = {
       operation: 'findExistingPrice',
       stripeProductId: stripeProduct.id,
-      targetAmount: Math.round(validatedProduct.price * 100), // Convert to cents for comparison
+      targetAmount: validatedProduct.price,
       targetCurrency: validatedProduct.currency
     };
     
@@ -199,9 +196,8 @@ class StripeService {
       }
       
       // Find price with matching amount and currency
-      const targetAmountCents = Math.round(validatedProduct.price * 100);
       const matchingPrice = result.data.data.find(price => 
-        price.unit_amount === targetAmountCents && 
+        price.unit_amount === validatedProduct.price && 
         price.currency === validatedProduct.currency
       );
       

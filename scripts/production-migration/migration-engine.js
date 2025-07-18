@@ -85,50 +85,37 @@ class MigrationEngine {
   async run() {
     try {
       this.state.isRunning = true;
-      console.log('🔄 MigrationEngine.run() started');
       this.logger.info('🚀 Starting production migration', this.options);
       
       // Pre-flight checks
-      console.log('🔍 Starting pre-flight checks...');
       await this.performPreflightChecks();
-      console.log('✅ Pre-flight checks completed');
       
       // Load checkpoint if resuming
       if (this.options.resumeFromCheckpoint) {
-        console.log('🔄 Loading checkpoint...');
         await this.loadCheckpointIfExists();
       }
       
       // Get products to migrate
-      console.log('📦 Fetching products to migrate...');
       const products = await this.getProductsToMigrate();
-      console.log(`📋 Found ${products.length} products to process`);
       
       if (products.length === 0) {
         this.logger.info('No products found to migrate');
-        console.log('ℹ️  No products found to migrate');
         return this.generateFinalReport();
       }
       
       // Create backup
-      console.log('💾 Creating backup...');
       this.checkpointManager.createMigrationBackup(products);
       
       // Process products in batches
-      console.log('🔄 Starting batch processing...');
       await this.processBatches(products);
-      console.log('✅ Batch processing completed');
       
       // Verify migration if enabled
       if (MIGRATION_CONFIG.VERIFY_AFTER_MIGRATION && !this.options.dryRun) {
-        console.log('🔍 Verifying migration...');
         await this.verifyMigration();
       }
       
       // Generate final report
-      console.log('📊 Generating final report...');
       const report = await this.generateFinalReport();
-      console.log('✅ Final report generated');
       
       // Cleanup
       if (this.state.errorCount === 0) {
@@ -138,7 +125,6 @@ class MigrationEngine {
       return report;
       
     } catch (error) {
-      console.error('❌ Critical error in migration engine:', error);
       this.logger.error('Migration failed with critical error', error);
       this.state.isRunning = false;
       throw error;
@@ -274,21 +260,9 @@ class MigrationEngine {
       });
     }
     
-    // Process products sequentially to avoid overwhelming APIs and improve reliability
-    const results = [];
-    for (const product of batch) {
-      try {
-        const result = await this.processProduct(product);
-        results.push({ status: 'fulfilled', value: result });
-        
-        // Add delay between products to respect rate limits
-        if (batch.indexOf(product) < batch.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
-        }
-      } catch (error) {
-        results.push({ status: 'rejected', reason: error });
-      }
-    }
+    // Process products in parallel (with concurrency limit)
+    const promises = batch.map(product => this.processProduct(product));
+    const results = await Promise.allSettled(promises);
     
     // Analyze batch results
     let batchSuccess = 0;
@@ -378,9 +352,7 @@ class MigrationEngine {
       this.logger.success(`Product migrated successfully: ${product.title}`, {
         productId: product.id,
         stripeProductId: stripeProduct.id,
-        stripePriceId: stripePrice.id,
-        priceAmount: `${validatedProduct.price}€ (${Math.round(validatedProduct.price * 100)} cents)`,
-        hasImage: !!validatedProduct.image
+        stripePriceId: stripePrice.id
       });
       
       return {

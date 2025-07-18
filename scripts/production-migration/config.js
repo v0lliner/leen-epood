@@ -11,18 +11,18 @@ export const MIGRATION_CONFIG = {
   MAX_CONCURRENT_REQUESTS: 3, // Maximum concurrent API requests
   
   // Rate Limiting (Stripe allows 100 req/sec, we use conservative limits)
-  STRIPE_RATE_LIMIT_PER_SECOND: 15, // More conservative rate limit for stability
+  STRIPE_RATE_LIMIT_PER_SECOND: 25, // Conservative rate limit
   RATE_LIMIT_WINDOW_MS: 1000, // 1 second window
   
   // Retry Configuration
-  MAX_RETRIES: 8, // Increased retry attempts for better reliability
-  INITIAL_RETRY_DELAY_MS: 2000, // Longer initial delay between retries
-  MAX_RETRY_DELAY_MS: 60000, // Longer maximum delay between retries
+  MAX_RETRIES: 5, // Maximum retry attempts per operation
+  INITIAL_RETRY_DELAY_MS: 1000, // Initial delay between retries
+  MAX_RETRY_DELAY_MS: 30000, // Maximum delay between retries
   RETRY_BACKOFF_MULTIPLIER: 2, // Exponential backoff multiplier
   
   // Timeout Configuration
-  SUPABASE_TIMEOUT_MS: 120000, // 2 minute timeout for Supabase operations
-  STRIPE_TIMEOUT_MS: 120000, // 2 minute timeout for Stripe operations
+  SUPABASE_TIMEOUT_MS: 30000, // 30 second timeout for Supabase operations
+  STRIPE_TIMEOUT_MS: 30000, // 30 second timeout for Stripe operations
   
   // Data Validation
   MIN_PRICE_CENTS: 50, // Minimum price in cents (0.50€)
