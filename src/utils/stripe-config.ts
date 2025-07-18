@@ -73,3 +73,4 @@ export const products = [
  */
 export const getProductByPriceId = (priceId: string) => {
   return products.find(product => product.priceId === priceId);
+}
