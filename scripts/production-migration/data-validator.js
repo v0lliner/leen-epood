@@ -4,7 +4,7 @@
  * Validates product data before sending to Stripe and provides detailed error reporting.
  */
 
-import { MIGRATION_CONFIG, ERROR_CODES, SUPPORTED_CURRENCIES } from './config.js';
+import { MIGRATION_CONFIG, ERROR_CODES, SUPPORTED_CURRENCIES, STRIPE_PRODUCT_METADATA_KEYS } from './config.js';
 
 class DataValidator {
   constructor(logger) {
@@ -143,19 +143,19 @@ class DataValidator {
     
     // Add Supabase ID for tracking
     if (product.id) {
-      metadata[MIGRATION_CONFIG.STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID] = product.id;
+      metadata[STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID] = product.id;
     }
     
     // Add migration timestamp
-    metadata[MIGRATION_CONFIG.STRIPE_PRODUCT_METADATA_KEYS.MIGRATION_TIMESTAMP] = new Date().toISOString();
+    metadata[STRIPE_PRODUCT_METADATA_KEYS.MIGRATION_TIMESTAMP] = new Date().toISOString();
     
     // Add category information
     if (product.category) {
-      metadata[MIGRATION_CONFIG.STRIPE_PRODUCT_METADATA_KEYS.ORIGINAL_CATEGORY] = product.category;
+      metadata[STRIPE_PRODUCT_METADATA_KEYS.ORIGINAL_CATEGORY] = product.category;
     }
     
     if (product.subcategory) {
-      metadata[MIGRATION_CONFIG.STRIPE_PRODUCT_METADATA_KEYS.ORIGINAL_SUBCATEGORY] = product.subcategory;
+      metadata[STRIPE_PRODUCT_METADATA_KEYS.ORIGINAL_SUBCATEGORY] = product.subcategory;
     }
     
     // Validate metadata doesn't exceed Stripe limits
@@ -164,8 +164,8 @@ class DataValidator {
       this.validationWarnings.push('Metadata too large, some fields may be truncated');
       // Keep only essential metadata
       return {
-        [MIGRATION_CONFIG.STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID]: product.id,
-        [MIGRATION_CONFIG.STRIPE_PRODUCT_METADATA_KEYS.MIGRATION_TIMESTAMP]: new Date().toISOString()
+        [STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID]: product.id,
+        [STRIPE_PRODUCT_METADATA_KEYS.MIGRATION_TIMESTAMP]: new Date().toISOString()
       };
     }
     
