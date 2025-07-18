@@ -120,9 +120,7 @@ function App() {
                   <Route path="/checkout" element={
                     <div className="app">
                       <Navigation />
-                      <Elements stripe={stripePromise}>
-                        <Checkout />
-                      </Elements>
+                      <Checkout />
                       <Footer />
                     </div>
                   } />
