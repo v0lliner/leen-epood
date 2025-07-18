@@ -267,8 +267,7 @@ Deno.serve(async (req) => {
       const { data: products, error: fetchError } = await supabase
         .from('products')
         .select('*')
-        .eq('available', true)
-        .is('stripe_product_id', null)
+        .or('stripe_product_id.is.null,stripe_price_id.is.null')
         .limit(batch_size);
 
       if (fetchError) {
@@ -279,7 +278,11 @@ Deno.serve(async (req) => {
       let successCount = 0;
       let failureCount = 0;
 
+      console.log(`Found ${products?.length || 0} products to migrate`);
+
       for (const product of products || []) {
+        console.log(`Processing product: ${product.title} (ID: ${product.id})`);
+        
         // Create sync log entry
         const { data: logEntry } = await supabase
           .from('stripe_sync_log')
@@ -294,6 +297,8 @@ Deno.serve(async (req) => {
 
         // Sync to Stripe
         const result = await syncProductToStripe(product);
+        
+        console.log(`Sync result for ${product.title}:`, result);
         
         if (result.success) {
           await updateProductStripeIds(
@@ -313,6 +318,8 @@ Deno.serve(async (req) => {
           product_title: product.title,
           success: result.success,
           error: result.error,
+          stripe_product_id: result.stripe_product_id,
+          stripe_price_id: result.stripe_price_id,
         });
 
         // Rate limiting: wait 100ms between requests
