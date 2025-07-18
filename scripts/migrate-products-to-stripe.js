@@ -410,6 +410,9 @@ async function processProduct(product, options, result) {
     }
 
     console.log(`   ✅ Updated Supabase product with Stripe IDs`);
+
+    // Add small delay to prevent rate limiting
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
   // Update result counters
