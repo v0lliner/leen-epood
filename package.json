@@ -9,10 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "optimize-images": "node scripts/optimize-images.js",
-    "migrate": "cd scripts/migration && npm run migrate",
-    "migrate:dry-run": "cd scripts/migration && npm run migrate:dry-run",
-    "migrate:resume": "cd scripts/migration && npm run migrate:resume",
-    "migrate:validate": "cd scripts/migration && npm run migrate:validate"
+    "migrate": "(cd scripts/migration && npm run migrate)",
+    "migrate:dry-run": "(cd scripts/migration && npm run migrate:dry-run)",
+    "migrate:resume": "(cd scripts/migration && npm run migrate:resume)",
+    "migrate:validate": "(cd scripts/migration && npm run migrate:validate)"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^3.7.0",
