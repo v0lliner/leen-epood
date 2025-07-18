@@ -159,6 +159,15 @@ async function main() {
   try {
     console.log('🚀 Production Stripe Migration System');
     console.log('=====================================');
+    console.log('Environment check:');
+    console.log('- VITE_SUPABASE_URL:', process.env.VITE_SUPABASE_URL ? 'SET' : 'MISSING');
+    console.log('- SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING');
+    console.log('- STRIPE_SECRET_KEY:', process.env.STRIPE_SECRET_KEY ? 'SET' : 'MISSING');
+    console.log('Options:', options);
+    console.log('');
+    
+    console.log('🚀 Production Stripe Migration System');
+    console.log('=====================================');
     console.log('Options:', options);
     console.log('');
     
@@ -168,10 +177,14 @@ async function main() {
     }
     
     // Initialize migration engine
+    console.log('Initializing migration engine...');
     migrationEngine = new MigrationEngine(options);
+    console.log('Migration engine initialized successfully');
     
     // Run migration
+    console.log('Starting migration process...');
     const report = await migrationEngine.run();
+    console.log('Migration process completed');
     
     // Display final results
     console.log('\n📊 Migration Summary:');
@@ -207,8 +220,10 @@ async function main() {
     process.exit(exitCode);
     
   } catch (error) {
+    console.error('\n💥 Critical error in main function:');
     console.error('\n💥 Migration failed with critical error:');
     console.error(error.message);
+    console.error('Full error:', error);
     
     if (error.stack && options.logLevel === 'DEBUG') {
       console.error('\nStack trace:');

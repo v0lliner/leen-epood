@@ -71,6 +71,8 @@ class SupabaseService {
     };
     
     try {
+      console.log('🔍 SupabaseService.getProducts() called with options:', options);
+      
       let query = this.supabase
         .from('products')
         .select('*')
@@ -80,32 +82,51 @@ class SupabaseService {
       if (!forceResync) {
         // Only get products that haven't been synced or failed to sync
         query = query.or('stripe_product_id.is.null,sync_status.neq.synced');
+        console.log('🔍 Filtering for unsynced products only');
+      } else {
+        console.log('🔍 Force resync enabled - getting all products');
       }
       
       // Resume from last processed ID if provided
       if (lastProcessedId) {
         query = query.gt('created_at', await this.getProductCreatedAt(lastProcessedId));
+        console.log('🔍 Resuming from last processed ID:', lastProcessedId);
       }
       
       // Apply pagination
       if (limit) {
         query = query.limit(limit);
+        console.log('🔍 Applying limit:', limit);
       }
       
       if (offset > 0) {
         query = query.range(offset, offset + (limit || 1000) - 1);
+        console.log('🔍 Applying offset:', offset);
       }
       
+      console.log('🔍 Executing Supabase query...');
       const result = await this.retryHandler.retrySupabaseOperation(
         () => query,
         context
       );
       
       if (!result.success) {
+        console.error('❌ Supabase query failed:', result.error);
         throw result.error;
       }
       
       const products = result.data.data || [];
+      console.log(`📦 Retrieved ${products.length} products from Supabase`);
+      
+      if (products.length > 0) {
+        console.log('📋 Sample product:', {
+          id: products[0].id,
+          title: products[0].title,
+          price: products[0].price,
+          stripe_product_id: products[0].stripe_product_id,
+          sync_status: products[0].sync_status
+        });
+      }
       
       this.logger.info('Products fetched from Supabase', {
         count: products.length,
@@ -115,6 +136,7 @@ class SupabaseService {
       
       return products;
     } catch (error) {
+      console.error('❌ Error in getProducts:', error);
       this.logger.error('Failed to fetch products from Supabase', error, context);
       throw error;
     }
