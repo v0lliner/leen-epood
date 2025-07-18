@@ -273,63 +273,28 @@ async function processProduct(product: any, options: MigrationOptions, result: M
 
   // Update Supabase product with Stripe IDs
   if (!options.dryRun && (stripeProductId || stripePriceId)) {
-    // Retry logic for Supabase updates to handle network issues
-    const maxRetries = 3;
-    let retryCount = 0;
-    let updateError: any = null;
-    
-    while (retryCount < maxRetries) {
-      try {
-        const updates: any = {
-          sync_status: 'synced',
-          last_synced_at: new Date().toISOString(),
-        };
+    const updates: any = {
+      sync_status: 'synced',
+      last_synced_at: new Date().toISOString(),
+    };
 
-        if (stripeProductId) {
-          updates.stripe_product_id = stripeProductId;
-        }
-        if (stripePriceId) {
-          updates.stripe_price_id = stripePriceId;
-        }
-
-        const { error } = await supabase
-          .from('products')
-          .update(updates)
-          .eq('id', product.id);
-
-        if (error) {
-          throw new Error(`Database error: ${error.message}`);
-        }
-        
-        // Success - break out of retry loop
-        updateError = null;
-        break;
-        
-      } catch (err: any) {
-        updateError = err;
-        retryCount++;
-        
-        if (err.message.includes('fetch failed') || err.message.includes('network') || err.message.includes('timeout')) {
-          if (retryCount < maxRetries) {
-            console.log(`⚠️ Network error on attempt ${retryCount}/${maxRetries}, retrying in 2 seconds...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            continue;
-          }
-        }
-        
-        // If it's not a network error or we've exhausted retries, break
-        break;
-      }
+    if (stripeProductId) {
+      updates.stripe_product_id = stripeProductId;
     }
-    
+    if (stripePriceId) {
+      updates.stripe_price_id = stripePriceId;
+    }
+
+    const { error: updateError } = await supabase
+      .from('products')
+      .update(updates)
+      .eq('id', product.id);
+
     if (updateError) {
-      throw new Error(`Failed to update product in Supabase after ${maxRetries} attempts: ${updateError.message}`);
+      throw new Error(`Failed to update product in Supabase: ${updateError.message}`);
     }
 
     console.log(`💾 Updated Supabase product with Stripe IDs`);
-
-    // Add small delay to prevent rate limiting
-    await new Promise(resolve => setTimeout(resolve, 100));
   }
 
   // Update result counters
