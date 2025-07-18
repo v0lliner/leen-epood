@@ -292,6 +292,11 @@ function App() {
                     <PaymentSettings />
                   </ProtectedRoute>
                 } />
+                <Route path="/admin/stripe-sync" element={
+                  <ProtectedRoute>
+                    <StripeSync />
+                  </ProtectedRoute>
+                } />
 
                 {/* 404 route */}
                 <Route path="*" element={

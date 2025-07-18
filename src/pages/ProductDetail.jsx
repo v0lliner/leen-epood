@@ -364,9 +364,9 @@ const ProductDetail = () => {
                         {getButtonText()} <span className="arrow-wrapper">→</span>
                       </button>
                     )}
-                    {product.priceId && (
+                    {product.stripe_price_id && (
                       <StripeCheckoutButton
-                        priceId={product.priceId}
+                        priceId={product.stripe_price_id}
                         mode="payment"
                         className="checkout-btn"
                       >

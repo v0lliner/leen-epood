@@ -9,7 +9,7 @@ export const products = [
     subcategory: 'kujud',
     title: 'Kuju "Kärp"',
     price: '349€',
-    priceId: 'price_1RfOoRP1VBbJ3P2LKofFkMPc', // Stripe price ID
+    stripe_price_id: 'price_1RfOoRP1VBbJ3P2LKofFkMPc', // Stripe price ID
     description: 'Kõrgkuumuskeraamika. Käsitsi vormitud ja põletatud kuju, mis kannab endas looduse jõudu ja ilu.',
     image: '',
     dimensions: {
