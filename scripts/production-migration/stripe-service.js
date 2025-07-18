@@ -5,7 +5,7 @@
  */
 
 import Stripe from 'stripe';
-import { MIGRATION_CONFIG, ERROR_CODES } from './config.js';
+import { MIGRATION_CONFIG, ERROR_CODES, STRIPE_PRODUCT_METADATA_KEYS } from './config.js';
 
 class StripeService {
   constructor(logger, retryHandler, dataValidator) {
@@ -41,7 +41,7 @@ class StripeService {
       // First, try to find by metadata (most reliable)
       const metadataResult = await this.retryHandler.retryStripeOperation(
         () => this.stripe.products.search({
-          query: `metadata["${MIGRATION_CONFIG.STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID}"]:"${product.id}"`,
+          query: `metadata["${STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID}"]:"${product.id}"`,
           limit: 1,
         }),
         context
@@ -145,7 +145,7 @@ class StripeService {
       unit_amount: validatedProduct.price,
       currency: validatedProduct.currency,
       metadata: {
-        [MIGRATION_CONFIG.STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID]: validatedProduct.id,
+        [STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID]: validatedProduct.id,
       },
     };
     
