@@ -67,13 +67,13 @@ const options = {
   batchSize: parseInt(args.find(arg => arg.startsWith('--batch-size='))?.split('=')[1] || MIGRATION_CONFIG.BATCH_SIZE),
   resumeFromCheckpoint: !args.includes('--no-checkpoint'),
   skipValidation: args.includes('--skip-validation'),
-  logLevel: args.find(arg => arg.startsWith('--log-level='))?.split('=')[1] || 'DEBUG',
+  logLevel: args.find(arg => arg.startsWith('--log-level='))?.split('=')[1] || MIGRATION_CONFIG.LOG_LEVEL,
   help: args.includes('--help'),
 };
 
 // Update config with CLI options
 if (options.logLevel) {
-  MIGRATION_CONFIG.LOG_LEVEL = 'DEBUG';
+  MIGRATION_CONFIG.LOG_LEVEL = options.logLevel.toUpperCase();
 }
 
 if (options.help) {
