@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Stripe Product Migration Script
+ * Stripe Product Migration Script (Edge Function Client)
  * 
- * This script synchronizes product data between Supabase and Stripe.
- * It creates Stripe Products and Prices for each product in your Supabase database.
+ * This script triggers the Supabase Edge Function to perform the actual migration.
+ * All heavy lifting is done server-side for better reliability and performance.
  * 
  * Usage:
  *   node scripts/migrate-products-to-stripe.js [options]
@@ -17,12 +17,9 @@
  * 
  * Environment Variables:
  *   VITE_SUPABASE_URL           - Your Supabase project URL
- *   SUPABASE_SERVICE_ROLE_KEY   - Your Supabase service role key
- *   STRIPE_SECRET_KEY           - Your Stripe secret key
+ *   SUPABASE_SERVICE_ROLE_KEY   - Your Supabase service role key (for Edge Function auth)
  */
 
-import { createClient } from '@supabase/supabase-js';
-import Stripe from 'stripe';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -43,9 +40,10 @@ const options = {
 
 if (options.help) {
   console.log(`
-Stripe Product Migration Script
+Stripe Product Migration Script (Edge Function Client)
 
-This script synchronizes product data between Supabase and Stripe.
+This script triggers the Supabase Edge Function to perform the actual migration.
+All heavy lifting is done server-side for better reliability and performance.
 
 Usage:
   node scripts/migrate-products-to-stripe.js [options]
@@ -58,8 +56,7 @@ Options:
 
 Environment Variables:
   VITE_SUPABASE_URL           - Your Supabase project URL
-  SUPABASE_SERVICE_ROLE_KEY   - Your Supabase service role key
-  STRIPE_SECRET_KEY           - Your Stripe secret key
+  SUPABASE_SERVICE_ROLE_KEY   - Your Supabase service role key (for Edge Function auth)
 
 Examples:
   # Dry run to see what would be migrated
@@ -78,7 +75,6 @@ Examples:
 const requiredEnvVars = {
   VITE_SUPABASE_URL: process.env.VITE_SUPABASE_URL,
   SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
-  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
 };
 
 const missingVars = Object.entries(requiredEnvVars)
@@ -92,36 +88,8 @@ if (missingVars.length > 0) {
   process.exit(1);
 }
 
-// Initialize clients
-const supabase = createClient(
-  requiredEnvVars.VITE_SUPABASE_URL,
-  requiredEnvVars.SUPABASE_SERVICE_ROLE_KEY
-);
-
-const stripe = new Stripe(requiredEnvVars.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
-  appInfo: {
-    name: 'Leen E-pood Migration Script',
-    version: '1.0.0',
-  },
-});
-
-// Migration result interface
-class MigrationResult {
-  constructor() {
-    this.success = false;
-    this.processed = 0;
-    this.created = 0;
-    this.updated = 0;
-    this.skipped = 0;
-    this.failed = 0;
-    this.errors = [];
-    this.summary = '';
-  }
-}
-
 async function main() {
-  console.log('🚀 Starting Stripe Product Migration');
+  console.log('🚀 Starting Stripe Product Migration (via Edge Function)');
   console.log('Options:', options);
   console.log('');
 
@@ -131,7 +99,9 @@ async function main() {
   }
 
   try {
-    const result = await migrateProductsToStripe(options);
+    console.log('📡 Triggering Edge Function migration...');
+    
+    const result = await triggerEdgeFunctionMigration(options);
     
     console.log('\n📊 Migration Summary:');
     console.log(`   Processed: ${result.processed}`);
@@ -140,7 +110,7 @@ async function main() {
     console.log(`   Skipped: ${result.skipped}`);
     console.log(`   Failed: ${result.failed}`);
     
-    if (result.errors.length > 0) {
+    if (result.errors && result.errors.length > 0) {
       console.log('\n❌ Errors:');
       result.errors.forEach(error => {
         console.log(`   Product ${error.productId}: ${error.error}`);
@@ -156,302 +126,53 @@ async function main() {
   }
 }
 
-async function migrateProductsToStripe(options) {
-  const result = new MigrationResult();
-
+async function triggerEdgeFunctionMigration(options) {
+  const edgeFunctionUrl = `${requiredEnvVars.VITE_SUPABASE_URL}/functions/v1/migrate-products-to-stripe`;
+  
+  console.log(`🔗 Edge Function URL: ${edgeFunctionUrl}`);
+  
   try {
-    console.log('📦 Fetching products from Supabase...');
+    const response = await fetch(edgeFunctionUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${requiredEnvVars.SUPABASE_SERVICE_ROLE_KEY}`,
+      },
+      body: JSON.stringify({
+        dryRun: options.dryRun,
+        batchSize: options.batchSize,
+        forceResync: options.forceResync,
+      }),
+    });
 
-    // Fetch products from Supabase
-    let query = supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: true });
-
-    // If not forcing resync, only get products that haven't been synced
-    if (!options.forceResync) {
-      query = query.or('stripe_product_id.is.null,sync_status.neq.synced');
-    }
-
-    const { data: products, error: fetchError } = await query;
-
-    if (fetchError) {
-      throw new Error(`Failed to fetch products: ${fetchError.message}`);
-    }
-
-    if (!products || products.length === 0) {
-      result.summary = 'No products found to migrate';
-      result.success = true;
-      return result;
-    }
-
-    console.log(`📋 Found ${products.length} products to process\n`);
-
-    // Process products in batches
-    const batchSize = options.batchSize || 10;
-    for (let i = 0; i < products.length; i += batchSize) {
-      const batch = products.slice(i, i + batchSize);
-      const batchNum = Math.floor(i / batchSize) + 1;
-      const totalBatches = Math.ceil(products.length / batchSize);
+    if (!response.ok) {
+      const errorText = await response.text();
+      let errorMessage;
       
-      console.log(`🔄 Processing batch ${batchNum}/${totalBatches} (${batch.length} products)`);
-
-      for (const product of batch) {
-        try {
-          await processProduct(product, options, result);
-        } catch (error) {
-          console.error(`❌ Failed to process product ${product.id} (${product.title}):`, error.message);
-          result.failed++;
-          result.errors.push({
-            productId: product.id,
-            error: error.message,
-          });
-        }
-        result.processed++;
+      try {
+        const errorData = JSON.parse(errorText);
+        errorMessage = errorData.error || errorData.message || 'Unknown error';
+      } catch {
+        errorMessage = errorText || `HTTP ${response.status}: ${response.statusText}`;
       }
-
-      // Add delay between batches to respect rate limits
-      if (i + batchSize < products.length) {
-        console.log('⏳ Waiting 1 second before next batch...\n');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+      
+      throw new Error(`Edge Function failed (${response.status}): ${errorMessage}`);
     }
 
-    // Generate summary
-    result.summary = `Migration completed: ${result.processed} processed, ${result.created} created, ${result.updated} updated, ${result.skipped} skipped, ${result.failed} failed`;
-    result.success = result.failed === 0;
-
+    const result = await response.json();
+    
+    if (!result.success && result.error) {
+      throw new Error(`Edge Function error: ${result.error}`);
+    }
+    
     return result;
-
   } catch (error) {
-    result.summary = `Migration failed: ${error.message}`;
+    if (error.name === 'TypeError' && error.message.includes('fetch')) {
+      throw new Error(`Failed to connect to Edge Function. Please check:\n  - Supabase URL is correct\n  - Edge Function is deployed\n  - Network connectivity\n  Original error: ${error.message}`);
+    }
+    
     throw error;
   }
-}
-
-async function processProduct(product, options, result) {
-  const productLog = `${product.title} (ID: ${product.id})`;
-  
-  // Skip if already synced and not forcing resync
-  if (!options.forceResync && product.stripe_product_id && product.sync_status === 'synced') {
-    console.log(`⏭️  Skipping already synced: ${productLog}`);
-    result.skipped++;
-    return;
-  }
-
-  console.log(`🔄 Processing: ${productLog}`);
-
-  // Validate product data
-  if (!product.title || !product.price) {
-    throw new Error('Product missing required fields (title or price)');
-  }
-
-  // Parse price from string format (e.g., "349€" -> 34900 cents)
-  const priceAmount = parsePriceToAmount(product.price);
-  if (priceAmount <= 0) {
-    throw new Error(`Invalid price: ${product.price}`);
-  }
-
-  let stripeProductId = product.stripe_product_id;
-  let stripePriceId = product.stripe_price_id;
-  let isNewProduct = false;
-  let isNewPrice = false;
-
-  // Create or update Stripe Product
-  if (!stripeProductId) {
-    // Check if product exists in Stripe by name
-    console.log(`   🔍 Checking for existing Stripe product...`);
-    
-    try {
-      const existingProducts = await stripe.products.search({
-        query: `name:"${escapeForStripeSearch(product.title)}"`,
-        limit: 1,
-      });
-
-      if (existingProducts.data.length > 0) {
-        stripeProductId = existingProducts.data[0].id;
-        console.log(`   📋 Found existing Stripe product: ${stripeProductId}`);
-      } else {
-        // Create new product in Stripe
-        if (!options.dryRun) {
-          console.log(`   ✨ Creating new Stripe product...`);
-          
-          const stripeProduct = await stripe.products.create({
-            name: product.title,
-            description: product.description || '',
-            metadata: {
-              supabase_id: product.id,
-              category: product.category || '',
-              subcategory: product.subcategory || '',
-            },
-            images: product.image ? [product.image] : [],
-          });
-          
-          stripeProductId = stripeProduct.id;
-          isNewProduct = true;
-          console.log(`   ✅ Created Stripe product: ${stripeProductId}`);
-        } else {
-          console.log(`   🔍 [DRY RUN] Would create new Stripe product`);
-          result.created++;
-          return;
-        }
-      }
-    } catch (error) {
-      if (error.code === 'rate_limit') {
-        console.log(`   ⏳ Rate limit hit, waiting 5 seconds...`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        // Retry the operation
-        return await processProduct(product, options, result);
-      }
-      throw error;
-    }
-  }
-
-  // Create or update Stripe Price
-  if (!stripePriceId && stripeProductId) {
-    console.log(`   🔍 Checking for existing Stripe price...`);
-    
-    try {
-      // Check if price exists for this product
-      const existingPrices = await stripe.prices.list({
-        product: stripeProductId,
-        active: true,
-        limit: 10,
-      });
-
-      const matchingPrice = existingPrices.data.find(price => 
-        price.unit_amount === priceAmount && price.currency === 'eur'
-      );
-
-      if (matchingPrice) {
-        stripePriceId = matchingPrice.id;
-        console.log(`   📋 Found existing Stripe price: ${stripePriceId}`);
-      } else if (!options.dryRun) {
-        // Create new price
-        console.log(`   ✨ Creating new Stripe price...`);
-        
-        const stripePrice = await stripe.prices.create({
-          product: stripeProductId,
-          unit_amount: priceAmount,
-          currency: 'eur',
-        }
-        )
-        // Use metadata search instead of name search to avoid quote issues
-        stripePriceId = stripePrice.id;
-        isNewPrice = true;
-        console.log(`   ✅ Created Stripe price: ${stripePriceId} (${priceAmount} cents)`);
-      }
-    } catch (error) {
-      if (error.code === 'rate_limit') {
-        console.log(`   ⏳ Rate limit hit, waiting 5 seconds...`);
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        // Retry the operation
-        return await processProduct(product, options, result);
-      }
-      throw error;
-    }
-  }
-
-  // Update Supabase product with Stripe IDs
-  if (!options.dryRun && (stripeProductId || stripePriceId)) {
-    console.log(`   💾 Updating Supabase product...`);
-    
-    // Retry logic for Supabase updates to handle network issues
-    const maxRetries = 3;
-    let retryCount = 0;
-    let updateError = null;
-    
-    while (retryCount < maxRetries) {
-      try {
-        const updates = {
-          sync_status: 'synced',
-          last_synced_at: new Date().toISOString(),
-        };
-
-        if (stripeProductId) {
-          updates.stripe_product_id = stripeProductId;
-        }
-        if (stripePriceId) {
-          updates.stripe_price_id = stripePriceId;
-        }
-
-        const { error } = await supabase
-          .from('products')
-          .update(updates)
-          .eq('id', product.id);
-
-        if (error) {
-          throw new Error(`Database error: ${error.message}`);
-        }
-        
-        // Success - break out of retry loop
-        updateError = null;
-        break;
-        
-      } catch (err) {
-        updateError = err;
-        retryCount++;
-        
-        if (err.message.includes('fetch failed') || err.message.includes('network') || err.message.includes('timeout')) {
-          if (retryCount < maxRetries) {
-            console.log(`   ⚠️  Network error on attempt ${retryCount}/${maxRetries}, retrying in 2 seconds...`);
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            continue;
-          }
-        }
-        
-        // If it's not a network error or we've exhausted retries, break
-        break;
-      }
-    }
-    
-    if (updateError) {
-      throw new Error(`Failed to update product in Supabase after ${maxRetries} attempts: ${updateError.message}`);
-    }
-
-    console.log(`   ✅ Updated Supabase product with Stripe IDs`);
-
-    // Add small delay to prevent rate limiting
-    await new Promise(resolve => setTimeout(resolve, 100));
-  }
-
-  // Update result counters
-  if (isNewProduct || isNewPrice) {
-    result.created++;
-    console.log(`   🎉 Successfully created new Stripe resources`);
-  } else {
-    result.updated++;
-    console.log(`   🔄 Successfully updated existing resources`);
-  }
-  
-  console.log(''); // Add spacing between products
-}
-
-function parsePriceToAmount(priceString) {
-  if (typeof priceString === 'number') {
-    return Math.round(priceString * 100);
-  }
-  
-  if (!priceString || typeof priceString !== 'string') {
-    return 0;
-  }
-  
-  // Remove currency symbols and whitespace
-  const cleanPrice = priceString.replace(/[€$£¥₹]/g, '').trim();
-  
-  // Replace comma with dot for decimal parsing
-  const normalizedPrice = cleanPrice.replace(',', '.');
-  
-  // Parse as float and convert to cents
-  const amount = parseFloat(normalizedPrice);
-  
-  return isNaN(amount) ? 0 : Math.round(amount * 100);
-}
-
-function escapeForStripeSearch(str) {
-  if (!str) return '';
-  // Escape double quotes and backslashes for Stripe search query
-  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 // Run the migration
