@@ -206,9 +206,8 @@ async function processProduct(product: any, options: MigrationOptions, result: M
   // Create or update Stripe Product
   if (!stripeProductId) {
     // Check if product exists in Stripe by name
-    // Use metadata search instead of name search to avoid quote issues
     const existingProducts = await stripe.products.search({
-      query: `metadata["supabase_id"]:"${product.id}"`,
+      query: `name:"${product.title}"`,
       limit: 1,
     });
 
@@ -226,6 +225,7 @@ async function processProduct(product: any, options: MigrationOptions, result: M
             category: product.category || '',
             subcategory: product.subcategory || '',
           }
+          query: `name:"${product.title.replace(/"/g, '\\"')}"`,
           images: product.image ? [product.image] : [],
         });
         stripeProductId = stripeProduct.id;
