@@ -196,7 +196,7 @@ async function migrateProductsToStripe(options) {
       
       console.log(`🔄 Processing batch ${batchNum}/${totalBatches} (${batch.length} products)`);
 
-      for (const product of batch) {
+         query: `name:'${product.title}'`,
         try {
           await processProduct(product, options, result);
         } catch (error) {

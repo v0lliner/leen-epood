@@ -303,7 +303,7 @@ async function processProduct(product: any, options: MigrationOptions, result: M
   } else {
     result.updated++;
   }
-}
+     query: `name:'${product.title}'`,
 
 function parsePriceToAmount(priceString: string): number {
   if (typeof priceString === 'number') {
