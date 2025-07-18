@@ -84,7 +84,12 @@ class SupabaseService {
       
       // Resume from last processed ID if provided
       if (lastProcessedId) {
-        query = query.gt('created_at', await this.getProductCreatedAt(lastProcessedId));
+        const lastCreatedAt = await this.getProductCreatedAt(lastProcessedId);
+        if (lastCreatedAt) {
+          query = query.gt('created_at', lastCreatedAt);
+        } else {
+          console.warn(`Could not find created_at for lastProcessedId ${lastProcessedId}, ignoring checkpoint filter`);
+        }
       }
       
       // Apply pagination
@@ -131,8 +136,11 @@ class SupabaseService {
         { operation: 'getProductCreatedAt', productId }
       );
       
-      if (result.success && result.data.data) {
+      if (result.success && result.data && result.data.data) {
         return result.data.data.created_at;
+      } else if (result.success && result.data) {
+        // Handle case where data is directly the product object
+        return result.data.created_at;
       }
       
       return null;
