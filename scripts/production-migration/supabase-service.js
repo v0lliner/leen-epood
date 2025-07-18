@@ -211,11 +211,17 @@ class SupabaseService {
           .eq('id', productId),
         context
       );
+      // Prepare product data with images
+      const productWithImages = {
+        ...product,
+        images: product.image ? [product.image] : [] // Add main image to images array
+      };
       
+      const validatedProduct = this.dataValidator.validateProduct(productWithImages);
       if (result.success) {
         this.logger.debug('Product marked as failed in Supabase', {
           productId,
-          error: error.message,
+          price: `${(validatedProduct.price / 100).toFixed(2)}€`,
           attempt
         });
       }

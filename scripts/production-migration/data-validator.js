@@ -25,7 +25,8 @@ class DataValidator {
       currency: this.validateCurrency(product.currency || 'eur'),
       category: product.category,
       subcategory: product.subcategory,
-      metadata: this.buildMetadata(product)
+      metadata: this.buildMetadata(product),
+      images: product.images || (product.image ? [product.image] : []) // Include images
     };
     
     // Check for critical errors
@@ -101,7 +102,7 @@ class DataValidator {
       return 0;
     }
     
-    // Parse price from various formats
+    // Parse price from various formats - this should return the amount in euros, not cents
     const priceAmount = this.parsePriceToAmount(priceString);
     
     if (isNaN(priceAmount) || priceAmount <= 0) {
@@ -109,17 +110,21 @@ class DataValidator {
       return 0;
     }
     
-    if (priceAmount < MIGRATION_CONFIG.MIN_PRICE_CENTS) {
-      this.validationErrors.push(`Price ${priceAmount} cents is below minimum ${MIGRATION_CONFIG.MIN_PRICE_CENTS} cents`);
+    // Convert to cents for validation
+    const priceInCents = Math.round(priceAmount * 100);
+    
+    if (priceInCents < MIGRATION_CONFIG.MIN_PRICE_CENTS) {
+      this.validationErrors.push(`Price ${priceInCents} cents is below minimum ${MIGRATION_CONFIG.MIN_PRICE_CENTS} cents`);
       return 0;
     }
     
-    if (priceAmount > MIGRATION_CONFIG.MAX_PRICE_CENTS) {
-      this.validationErrors.push(`Price ${priceAmount} cents exceeds maximum ${MIGRATION_CONFIG.MAX_PRICE_CENTS} cents`);
+    if (priceInCents > MIGRATION_CONFIG.MAX_PRICE_CENTS) {
+      this.validationErrors.push(`Price ${priceInCents} cents exceeds maximum ${MIGRATION_CONFIG.MAX_PRICE_CENTS} cents`);
       return 0;
     }
     
-    return priceAmount;
+    // Return price in cents for Stripe
+    return priceInCents;
   }
 
   validateCurrency(currency) {
@@ -174,7 +179,7 @@ class DataValidator {
 
   parsePriceToAmount(priceString) {
     if (typeof priceString === 'number') {
-      return Math.round(priceString * 100);
+      return priceString; // Return as euros, not cents
     }
     
     if (!priceString || typeof priceString !== 'string') {
@@ -187,10 +192,10 @@ class DataValidator {
     // Replace comma with dot for decimal parsing
     const normalizedPrice = cleanPrice.replace(',', '.');
     
-    // Parse as float and convert to cents
+    // Parse as float - return in euros
     const amount = parseFloat(normalizedPrice);
     
-    return isNaN(amount) ? 0 : Math.round(amount * 100);
+    return isNaN(amount) ? 0 : amount;
   }
 
   validateBatch(products) {

@@ -302,12 +302,27 @@ class MigrationEngine {
         return { skipped: true };
       }
       
-      // Validate product data
-      const validatedProduct = this.dataValidator.validateProduct(product);
+      // Validate product data with better error handling
+      let validatedProduct;
+      try {
+        validatedProduct = this.dataValidator.validateProduct(product);
+      } catch (validationError) {
+        if (MIGRATION_CONFIG.SKIP_VALIDATION_ERRORS) {
+          this.logger.warn(`Skipping product due to validation error: ${product.title}`, {
+            productId: product.id,
+            error: validationError.message
+          });
+          this.state.skippedCount++;
+          this.state.processedCount++;
+          return { skipped: true, reason: 'validation_error' };
+        } else {
+          throw validationError;
+        }
+      }
       
       if (this.options.dryRun) {
         this.logger.info(`[DRY RUN] Would migrate product: ${validatedProduct.title}`, {
-          price: `${validatedProduct.price} cents`,
+          price: `${(validatedProduct.price / 100).toFixed(2)}€`,
           currency: validatedProduct.currency
         });
         this.state.successCount++;
