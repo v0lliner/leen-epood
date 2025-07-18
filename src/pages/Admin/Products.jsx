@@ -179,6 +179,9 @@ const AdminProducts = () => {
                     {product.dimensions && (
                       <span>📏 {product.dimensions.height}×{product.dimensions.width}×{product.dimensions.depth}cm</span>
                     )}
+                    {product.stripe_product_id && (
+                      <span className="stripe-status">🔗 Stripe: {product.sync_status || 'synced'}</span>
+                    )}
                   </div>
                   <div className="product-actions">
                     <Link 

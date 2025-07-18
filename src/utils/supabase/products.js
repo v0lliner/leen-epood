@@ -41,6 +41,47 @@ export const productService = {
   },
 
   /**
+   * Get products with Stripe integration data
+   * @returns {Promise<{data: Array, error: object|null}>}
+   */
+  async getProductsWithStripe() {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*, stripe_product_id, stripe_price_id, sync_status, last_synced_at')
+        .order('created_at', { ascending: false })
+      
+      return { data: data || [], error }
+    } catch (error) {
+      return { data: [], error: { message: 'Network error occurred' } }
+    }
+  },
+
+  /**
+   * Update product Stripe integration data
+   * @param {string} id - Product ID
+   * @param {object} stripeData - Stripe integration data
+   * @returns {Promise<{data: object|null, error: object|null}>}
+   */
+  async updateStripeData(id, stripeData) {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .update({
+          ...stripeData,
+          last_synced_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select()
+        .single()
+      
+      return { data, error }
+    } catch (error) {
+      return { data: null, error: { message: 'Network error occurred' } }
+    }
+  },
+
+  /**
    * Generate a unique slug for a product
    * @param {string} baseSlug - Base slug to make unique
    * @param {string} excludeId - Product ID to exclude from uniqueness check (for updates)
