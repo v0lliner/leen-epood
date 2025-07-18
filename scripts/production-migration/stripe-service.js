@@ -107,7 +107,6 @@ class StripeService {
       description: validatedProduct.description || '',
       metadata: validatedProduct.metadata,
       active: true,
-      images: validatedProduct.images || [], // Add product images
     };
     
     this.logger.debug('Creating Stripe product', { productData, context });
@@ -143,7 +142,7 @@ class StripeService {
     
     const priceData = {
       product: stripeProduct.id,
-      unit_amount: validatedProduct.price, // This should already be in cents from validator
+      unit_amount: validatedProduct.price,
       currency: validatedProduct.currency,
       metadata: {
         [STRIPE_PRODUCT_METADATA_KEYS.SUPABASE_ID]: validatedProduct.id,
@@ -167,7 +166,7 @@ class StripeService {
     this.logger.success('Stripe price created', {
       productId: validatedProduct.id,
       stripePriceId: result.data.id,
-      amount: `${(result.data.unit_amount / 100).toFixed(2)}€`,
+      amount: result.data.unit_amount,
       currency: result.data.currency
     });
     

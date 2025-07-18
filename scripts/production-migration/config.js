@@ -34,7 +34,6 @@ export const MIGRATION_CONFIG = {
   ENABLE_ROLLBACK: true, // Enable rollback capabilities
   BACKUP_BEFORE_MIGRATION: true, // Create backup before migration
   VERIFY_AFTER_MIGRATION: true, // Verify data after migration
-  SKIP_VALIDATION_ERRORS: false, // Skip products with validation errors instead of stopping
   
   // Logging
   LOG_LEVEL: 'INFO', // DEBUG, INFO, WARN, ERROR
