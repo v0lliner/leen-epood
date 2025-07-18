@@ -158,6 +158,11 @@ class DataValidator {
       metadata[STRIPE_PRODUCT_METADATA_KEYS.ORIGINAL_SUBCATEGORY] = product.subcategory;
     }
     
+    // Add image URL to metadata for reference
+    if (product.image) {
+      metadata.image_url = product.image;
+    }
+    
     // Validate metadata doesn't exceed Stripe limits
     const metadataString = JSON.stringify(metadata);
     if (metadataString.length > 8000) { // Stripe metadata limit
@@ -174,7 +179,9 @@ class DataValidator {
 
   parsePriceToAmount(priceString) {
     if (typeof priceString === 'number') {
-      return Math.round(priceString * 100);
+      // Return the number as-is since Stripe expects the final amount in cents
+      // The conversion to cents will happen in the Stripe service
+      return priceString;
     }
     
     if (!priceString || typeof priceString !== 'string') {
@@ -190,7 +197,8 @@ class DataValidator {
     // Parse as float and convert to cents
     const amount = parseFloat(normalizedPrice);
     
-    return isNaN(amount) ? 0 : Math.round(amount * 100);
+    // Return the euro amount as-is, conversion to cents happens in Stripe service
+    return isNaN(amount) ? 0 : amount;
   }
 
   validateBatch(products) {

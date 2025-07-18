@@ -260,9 +260,21 @@ class MigrationEngine {
       });
     }
     
-    // Process products in parallel (with concurrency limit)
-    const promises = batch.map(product => this.processProduct(product));
-    const results = await Promise.allSettled(promises);
+    // Process products sequentially to avoid overwhelming APIs and improve reliability
+    const results = [];
+    for (const product of batch) {
+      try {
+        const result = await this.processProduct(product);
+        results.push({ status: 'fulfilled', value: result });
+        
+        // Add delay between products to respect rate limits
+        if (batch.indexOf(product) < batch.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay
+        }
+      } catch (error) {
+        results.push({ status: 'rejected', reason: error });
+      }
+    }
     
     // Analyze batch results
     let batchSuccess = 0;
@@ -352,7 +364,9 @@ class MigrationEngine {
       this.logger.success(`Product migrated successfully: ${product.title}`, {
         productId: product.id,
         stripeProductId: stripeProduct.id,
-        stripePriceId: stripePrice.id
+        stripePriceId: stripePrice.id,
+        priceAmount: `${validatedProduct.price}€ (${Math.round(validatedProduct.price * 100)} cents)`,
+        hasImage: !!validatedProduct.image
       });
       
       return {
