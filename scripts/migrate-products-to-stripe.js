@@ -264,7 +264,7 @@ async function processProduct(product, options, result) {
     
     try {
       const existingProducts = await stripe.products.search({
-        query: `name:"${product.title}"`,
+        query: `name:"${escapeForStripeSearch(product.title)}"`,
         limit: 1,
       });
 
@@ -337,11 +337,6 @@ async function processProduct(product, options, result) {
         }
         )
         // Use metadata search instead of name search to avoid quote issues
-        const existingProducts = await stripe.products.search({
-          query: `metadata["supabase_id"]:"${product.id}"`,
-          limit: 1,
-        });
-        
         stripePriceId = stripePrice.id;
         isNewPrice = true;
         console.log(`   ✅ Created Stripe price: ${stripePriceId} (${priceAmount} cents)`);
@@ -416,6 +411,12 @@ function parsePriceToAmount(priceString) {
   const amount = parseFloat(normalizedPrice);
   
   return isNaN(amount) ? 0 : Math.round(amount * 100);
+}
+
+function escapeForStripeSearch(str) {
+  if (!str) return '';
+  // Escape double quotes and backslashes for Stripe search query
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 // Run the migration

@@ -207,7 +207,7 @@ async function processProduct(product: any, options: MigrationOptions, result: M
   if (!stripeProductId) {
     // Check if product exists in Stripe by name
     const existingProducts = await stripe.products.search({
-      query: `name:"${product.title}"`,
+      query: `name:"${escapeForStripeSearch(product.title)}"`,
       limit: 1,
     });
 
@@ -324,4 +324,10 @@ function parsePriceToAmount(priceString: string): number {
   const amount = parseFloat(normalizedPrice);
   
   return isNaN(amount) ? 0 : Math.round(amount * 100);
+}
+
+function escapeForStripeSearch(str: string): string {
+  if (!str) return '';
+  // Escape double quotes and backslashes for Stripe search query
+  return str.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
