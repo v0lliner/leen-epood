@@ -224,8 +224,7 @@ async function processProduct(product: any, options: MigrationOptions, result: M
             supabase_id: product.id,
             category: product.category || '',
             subcategory: product.subcategory || '',
-          }
-          query: `name:"${product.title.replace(/"/g, '\\"')}"`,
+          },
           images: product.image ? [product.image] : [],
         });
         stripeProductId = stripeProduct.id;
@@ -304,7 +303,6 @@ async function processProduct(product: any, options: MigrationOptions, result: M
   } else {
     result.updated++;
   }
-     query: `name:'${product.title}'`,
 }
 
 function parsePriceToAmount(priceString: string): number {

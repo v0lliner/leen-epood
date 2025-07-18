@@ -335,7 +335,7 @@ async function processProduct(product, options, result) {
           unit_amount: priceAmount,
           currency: 'eur',
           metadata: {
-          query: `name:"${product.title.replace(/"/g, '\\"')}"`,
+            supabase_id: product.id,
           },
         });
         
