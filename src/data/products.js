@@ -9,7 +9,7 @@ export const products = [
     subcategory: 'kujud',
     title: 'Kuju "Kärp"',
     price: '349€',
-    priceId: 'price_1RfOoRP1VBbJ3P2LKofFkMPc', // Stripe price ID - replace with actual
+    priceId: 'price_1RfOoRP1VBbJ3P2LKofFkMPc', // Stripe price ID
     description: 'Kõrgkuumuskeraamika. Käsitsi vormitud ja põletatud kuju, mis kannab endas looduse jõudu ja ilu.',
     image: '',
     dimensions: {
@@ -26,7 +26,6 @@ export const products = [
     subcategory: 'roivad',
     title: 'Linane suvekleit',
     price: '120€',
-    priceId: 'price_example_linen_dress', // Add Stripe price ID
     description: 'Käsitsi õmmeldud kleit looduslikust linasest kangast. Mugav ja hingav, sobib igapäevaseks kandmiseks.',
     image: '',
     dimensions: {
@@ -43,7 +42,6 @@ export const products = [
     subcategory: 'tassid',
     title: 'Kohvitasside komplekt',
     price: '65€',
-    priceId: 'price_example_coffee_cups', // Add Stripe price ID
     description: 'Dreitud tasside komplekt 4 tükki, mattkasiin. Iga tass on käsitsi vormitud ja ainulaadne.',
     image: '',
     dimensions: {
@@ -60,7 +58,6 @@ export const products = [
     subcategory: 'kaunistused',
     title: 'Käsitööehed kõrvarõngad',
     price: '35€',
-    priceId: 'price_example_earrings', // Add Stripe price ID
     description: 'Keraamikast kõrvarõngad, käsitsi vormitud ja maalitud. Kerged ja mugavad igapäevaseks kandmiseks.',
     image: '',
     dimensions: {
@@ -77,7 +74,6 @@ export const products = [
     subcategory: 'kimonod',
     title: 'Villane kimono',
     price: '180€',
-    priceId: 'price_example_kimono', // Add Stripe price ID
     description: 'Käsitööna kootud kimono looduslikust villast. Soe ja mugav, sobib nii kodus kui väljas kandmiseks.',
     image: '',
     dimensions: {
@@ -94,7 +90,6 @@ export const products = [
     subcategory: 'kausid',
     title: 'Savikausid komplekt',
     price: '95€',
-    priceId: 'price_example_ceramic_bowls', // Add Stripe price ID
     description: 'Käsitsi vormitud kausid, sobivad nii toidu serveerimiseks kui dekoratsiooniks. Komplektis 3 erinevat suurust.',
     image: '',
     dimensions: {
@@ -111,7 +106,6 @@ export const products = [
     subcategory: 'alused',
     title: 'Keraamika alused',
     price: '45€',
-    priceId: 'price_example_ceramic_coasters', // Add Stripe price ID
     description: 'Käsitsi valmistatud alused kuumade nõude jaoks. Praktiline ja ilus lahendus köögis.',
     image: '',
     dimensions: {
@@ -128,7 +122,6 @@ export const products = [
     subcategory: 'roivad',
     title: 'Looduslik vest',
     price: '90€',
-    priceId: 'price_example_wool_vest', // Add Stripe price ID
     description: 'Käsitsi õmmeldud vest looduslikest materjalidest. Stiilne ja mugav, sobib erinevate riiete peale.',
     image: '',
     dimensions: {
