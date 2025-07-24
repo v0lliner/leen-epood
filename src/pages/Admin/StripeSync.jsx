@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import AdminLayout from '../../components/Admin/AdminLayout';
-import { migrateAllProducts, syncSingleProduct, processPendingSync, getSyncStatus } from '../../utils/stripe-sync';
+import { migrateAllProducts, syncSingleProduct, processPendingSync, getSyncStatus, debugProducts } from '../../utils/stripe-sync';
 
 const StripeSync = () => {
   const { t } = useTranslation();
@@ -10,6 +10,7 @@ const StripeSync = () => {
   const [migrationResults, setMigrationResults] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
     loadSyncStatus();
@@ -25,6 +26,22 @@ const StripeSync = () => {
     }
   };
 
+  const handleDebugProducts = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const results = await debugProducts();
+      setDebugInfo(results.debug_info);
+      setSuccess('Debug info loaded successfully!');
+    } catch (err) {
+      setError(`Debug failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleMigrateAll = async () => {
     setLoading(true);
     setError('');
@@ -34,7 +51,7 @@ const StripeSync = () => {
     try {
       const results = await migrateAllProducts(5); // Process 5 products at a time
       setMigrationResults(results);
-      setSuccess(`Migration completed! ${results.migrated} products synced, ${results.failed} failed.`);
+      setSuccess(results.message || `Migration completed! ${results.migrated} products synced, ${results.failed} failed.`);
       await loadSyncStatus();
     } catch (err) {
       setError(`Migration failed: ${err.message}`);
@@ -145,6 +162,22 @@ const StripeSync = () => {
 
             <div className="action-card">
               <div className="action-header">
+                <h3>🐛 Debug Products</h3>
+                <p>Check which products need syncing and debug any issues with the sync process.</p>
+              </div>
+              <div className="action-footer">
+                <button
+                  onClick={handleDebugProducts}
+                  disabled={loading}
+                  className="btn btn-secondary"
+                >
+                  {loading ? 'Debugging...' : 'Debug Products'}
+                </button>
+              </div>
+            </div>
+
+            <div className="action-card">
+              <div className="action-header">
                 <h3>📊 Refresh Status</h3>
                 <p>Refresh the sync status overview to see the latest synchronization state.</p>
               </div>
@@ -192,6 +225,54 @@ const StripeSync = () => {
                         ) : (
                           <span className="status-error">❌ {result.error}</span>
                         )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Debug Results */}
+        {debugInfo && (
+          <div className="debug-results">
+            <h2>🐛 Debug Information</h2>
+            <div className="debug-summary">
+              <div className="debug-stat">
+                <span className="debug-number">{debugInfo.total_products}</span>
+                <span className="debug-label">Total Products</span>
+              </div>
+              <div className="debug-stat">
+                <span className="debug-number">{debugInfo.available_products}</span>
+                <span className="debug-label">Available Products</span>
+              </div>
+              <div className="debug-stat">
+                <span className="debug-number">{debugInfo.needs_sync}</span>
+                <span className="debug-label">Need Sync</span>
+              </div>
+            </div>
+
+            {debugInfo.products_needing_sync && debugInfo.products_needing_sync.length > 0 && (
+              <div className="debug-details">
+                <h3>Products Needing Sync</h3>
+                <div className="debug-list">
+                  {debugInfo.products_needing_sync.map((product, index) => (
+                    <div key={index} className="debug-item">
+                      <div className="debug-product">
+                        <strong>{product.title}</strong>
+                        <span className="debug-id">ID: {product.id}</span>
+                      </div>
+                      <div className="debug-status">
+                        <span className={`debug-badge ${product.has_stripe_product ? 'success' : 'missing'}`}>
+                          Product: {product.has_stripe_product ? '✅' : '❌'}
+                        </span>
+                        <span className={`debug-badge ${product.has_stripe_price ? 'success' : 'missing'}`}>
+                          Price: {product.has_stripe_price ? '✅' : '❌'}
+                        </span>
+                        <span className="debug-sync-status">
+                          Status: {product.sync_status || 'pending'}
+                        </span>
                       </div>
                     </div>
                   ))}
@@ -494,6 +575,111 @@ const StripeSync = () => {
           font-weight: 500;
         }
 
+        .debug-results {
+          margin-bottom: 48px;
+        }
+
+        .debug-results h2 {
+          font-family: var(--font-heading);
+          color: var(--color-text);
+          margin-bottom: 24px;
+          font-size: 1.5rem;
+        }
+
+        .debug-summary {
+          display: flex;
+          gap: 32px;
+          margin-bottom: 32px;
+        }
+
+        .debug-stat {
+          text-align: center;
+        }
+
+        .debug-number {
+          font-family: var(--font-heading);
+          font-size: 2rem;
+          font-weight: 600;
+          color: var(--color-ultramarine);
+          display: block;
+          margin-bottom: 4px;
+        }
+
+        .debug-label {
+          font-size: 0.9rem;
+          color: #666;
+        }
+
+        .debug-details {
+          background: white;
+          border-radius: 8px;
+          padding: 24px;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .debug-details h3 {
+          font-family: var(--font-heading);
+          color: var(--color-text);
+          margin-bottom: 16px;
+        }
+
+        .debug-list {
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .debug-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px;
+          border-radius: 4px;
+          border: 1px solid #e9ecef;
+          background-color: #f8f9fa;
+        }
+
+        .debug-product {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .debug-id {
+          font-size: 0.8rem;
+          color: #666;
+          font-family: var(--font-heading);
+        }
+
+        .debug-status {
+          display: flex;
+          gap: 8px;
+          align-items: center;
+        }
+
+        .debug-badge {
+          padding: 2px 6px;
+          border-radius: 4px;
+          font-size: 0.7rem;
+          font-weight: 500;
+        }
+
+        .debug-badge.success {
+          background-color: #d4edda;
+          color: #155724;
+        }
+
+        .debug-badge.missing {
+          background-color: #f8d7da;
+          color: #721c24;
+        }
+
+        .debug-sync-status {
+          font-size: 0.8rem;
+          color: #666;
+          font-style: italic;
+        }
+
         .info-section {
           margin-bottom: 32px;
         }
@@ -606,6 +792,23 @@ const StripeSync = () => {
             flex-direction: column;
             align-items: flex-start;
             gap: 8px;
+          }
+
+          .debug-summary {
+            flex-direction: column;
+            gap: 16px;
+          }
+
+          .debug-item {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+          }
+
+          .debug-status {
+            align-self: stretch;
+            justify-content: flex-start;
+            flex-wrap: wrap;
           }
         }
       `}</style>
