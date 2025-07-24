@@ -3,8 +3,7 @@ import Stripe from 'npm:stripe@17.7.0';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
 
 // Initialize Stripe
-const stripeSecret = Deno.env.get('STRIPE_SECRET_KEY');
-const stripe = new Stripe(stripeSecret || '', {
+const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
   apiVersion: '2023-10-16',
   appInfo: {
     name: 'Leen E-pood Product Sync',
@@ -55,49 +54,29 @@ function sanitizeProductName(name: string): string {
 
 // Helper function to parse price from string
 function parsePrice(priceString: string): number {
-  console.log(`💰 Parsing price: "${priceString}"`);
   const cleanPrice = priceString.replace(/[€$£¥₹,]/g, '').trim();
   const price = parseFloat(cleanPrice);
-  const priceInCents = isNaN(price) ? 0 : Math.round(price * 100);
-  console.log(`💰 Price conversion: "${priceString}" → ${cleanPrice} → ${price} → ${priceInCents} cents`);
-  return priceInCents;
+  return isNaN(price) ? 0 : Math.round(price * 100); // Convert to cents
 }
 
 // Create or update Stripe product
 async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
   try {
-    console.log(`🔄 Starting sync for product: "${product.title}" (ID: ${product.id})`);
-    console.log(`📊 Product data:`, {
-      title: product.title,
-      price: product.price,
-      available: product.available,
-      stripe_product_id: product.stripe_product_id,
-      stripe_price_id: product.stripe_price_id
-    });
-    
-    // Validate Stripe API key
-    if (!stripeSecret) {
-      throw new Error('STRIPE_SECRET_KEY environment variable is not set');
-    }
+    console.log(`Syncing product: ${product.title} (ID: ${product.id})`);
     
     const sanitizedName = sanitizeProductName(product.title);
     const priceInCents = parsePrice(product.price);
     
     if (priceInCents <= 0) {
-      throw new Error(`Invalid price: ${product.price} → ${priceInCents} cents`);
+      throw new Error(`Invalid price: ${product.price}`);
     }
-
-    console.log(`🏷️ Sanitized name: "${sanitizedName}"`);
-    console.log(`💰 Price in cents: ${priceInCents}`);
 
     let stripeProduct: Stripe.Product;
     
     // Check if product already exists in Stripe
     if (product.stripe_product_id) {
-      console.log(`🔍 Checking existing Stripe product: ${product.stripe_product_id}`);
       try {
         stripeProduct = await stripe.products.retrieve(product.stripe_product_id);
-        console.log(`✅ Found existing Stripe product: ${stripeProduct.id}`);
         
         // Update existing product
         stripeProduct = await stripe.products.update(product.stripe_product_id, {
@@ -113,10 +92,9 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
           active: product.available,
         });
         
-        console.log(`✅ Updated Stripe product: ${stripeProduct.id}`);
-      } catch (error: any) {
+        console.log(`Updated Stripe product: ${stripeProduct.id}`);
+      } catch (error) {
         if (error.code === 'resource_missing') {
-          console.log(`⚠️ Stripe product ${product.stripe_product_id} not found, creating new one`);
           // Product doesn't exist in Stripe, create new one
           stripeProduct = await stripe.products.create({
             name: sanitizedName,
@@ -131,14 +109,12 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
             active: product.available,
           });
           
-          console.log(`✅ Created new Stripe product: ${stripeProduct.id}`);
+          console.log(`Created new Stripe product: ${stripeProduct.id}`);
         } else {
-          console.error(`❌ Error retrieving/updating Stripe product:`, error);
           throw error;
         }
       }
     } else {
-      console.log(`🆕 Creating new Stripe product for: "${sanitizedName}"`);
       // Create new product
       stripeProduct = await stripe.products.create({
         name: sanitizedName,
@@ -153,21 +129,18 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
         active: product.available,
       });
       
-      console.log(`✅ Created new Stripe product: ${stripeProduct.id}`);
+      console.log(`Created new Stripe product: ${stripeProduct.id}`);
     }
 
     // Handle price
     let stripePrice: Stripe.Price;
     
     if (product.stripe_price_id) {
-      console.log(`🔍 Checking existing Stripe price: ${product.stripe_price_id}`);
       try {
         stripePrice = await stripe.prices.retrieve(product.stripe_price_id);
-        console.log(`✅ Found existing Stripe price: ${stripePrice.id} (${stripePrice.unit_amount} cents)`);
         
         // Check if price needs updating
         if (stripePrice.unit_amount !== priceInCents || !stripePrice.active) {
-          console.log(`🔄 Price needs updating: ${stripePrice.unit_amount} → ${priceInCents} cents`);
           // Deactivate old price
           await stripe.prices.update(product.stripe_price_id, { active: false });
           
@@ -181,11 +154,10 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
             },
           });
           
-          console.log(`✅ Created new Stripe price: ${stripePrice.id}`);
+          console.log(`Created new Stripe price: ${stripePrice.id}`);
         }
-      } catch (error: any) {
+      } catch (error) {
         if (error.code === 'resource_missing') {
-          console.log(`⚠️ Stripe price ${product.stripe_price_id} not found, creating new one`);
           // Price doesn't exist, create new one
           stripePrice = await stripe.prices.create({
             product: stripeProduct.id,
@@ -196,14 +168,12 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
             },
           });
           
-          console.log(`✅ Created new Stripe price: ${stripePrice.id}`);
+          console.log(`Created new Stripe price: ${stripePrice.id}`);
         } else {
-          console.error(`❌ Error retrieving/updating Stripe price:`, error);
           throw error;
         }
       }
     } else {
-      console.log(`🆕 Creating new Stripe price for product: ${stripeProduct.id}`);
       // Create new price
       stripePrice = await stripe.prices.create({
         product: stripeProduct.id,
@@ -214,19 +184,16 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
         },
       });
       
-      console.log(`✅ Created new Stripe price: ${stripePrice.id}`);
+      console.log(`Created new Stripe price: ${stripePrice.id}`);
     }
-
-    console.log(`🎉 Successfully synced product "${product.title}"`);
-    console.log(`📋 Final result: Product ID: ${stripeProduct.id}, Price ID: ${stripePrice.id}`);
 
     return {
       success: true,
       stripe_product_id: stripeProduct.id,
       stripe_price_id: stripePrice.id,
     };
-  } catch (error: any) {
-    console.error(`❌ Error syncing product "${product.title}" (${product.id}):`, error);
+  } catch (error) {
+    console.error(`Error syncing product ${product.id}:`, error);
     return {
       success: false,
       error: error.message,
@@ -241,8 +208,6 @@ async function updateSyncLog(
   result: SyncResult,
   retryCount: number = 0
 ) {
-  console.log(`📝 Updating sync log ${logId}: ${status}`);
-  
   const updateData: any = {
     status,
     updated_at: new Date().toISOString(),
@@ -256,16 +221,10 @@ async function updateSyncLog(
     updateData.error_message = result.error;
   }
 
-  const { error } = await supabase
+  await supabase
     .from('stripe_sync_log')
     .update(updateData)
     .eq('id', logId);
-
-  if (error) {
-    console.error('❌ Error updating sync log:', error);
-  } else {
-    console.log(`✅ Updated sync log ${logId}`);
-  }
 }
 
 // Update product with Stripe IDs
@@ -274,9 +233,7 @@ async function updateProductStripeIds(
   stripeProductId: string,
   stripePriceId: string
 ) {
-  console.log(`📝 Updating product ${productId} with Stripe IDs`);
-  
-  const { error } = await supabase
+  await supabase
     .from('products')
     .update({
       stripe_product_id: stripeProductId,
@@ -285,12 +242,6 @@ async function updateProductStripeIds(
       last_synced_at: new Date().toISOString(),
     })
     .eq('id', productId);
-
-  if (error) {
-    console.error('❌ Error updating product Stripe IDs:', error);
-  } else {
-    console.log(`✅ Updated product ${productId} with Stripe IDs`);
-  }
 }
 
 Deno.serve(async (req) => {
@@ -307,135 +258,33 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { action, product_id, batch_size = 3 } = await req.json();
-    console.log(`📥 Received request: action="${action}", batch_size=${batch_size}`);
-
-    // Check environment variables
-    console.log(`🔧 Environment check:`);
-    console.log(`- STRIPE_SECRET_KEY: ${stripeSecret ? 'SET' : 'MISSING'}`);
-    console.log(`- SUPABASE_URL: ${Deno.env.get('SUPABASE_URL') ? 'SET' : 'MISSING'}`);
-    console.log(`- SUPABASE_SERVICE_ROLE_KEY: ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ? 'SET' : 'MISSING'}`);
-
-    if (action === 'debug_products') {
-      console.log(`🔍 Debug: Fetching products from database...`);
-      
-      // Get all products to see what we have
-      const { data: allProducts, error: allError } = await supabase
-        .from('products')
-        .select('id, title, price, available, stripe_product_id, stripe_price_id, sync_status')
-        .limit(20);
-
-      console.log(`📊 Database query result:`, { 
-        error: allError, 
-        count: allProducts?.length || 0,
-        products: allProducts 
-      });
-
-      if (allError) {
-        console.error(`❌ Database error:`, allError);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: `Database error: ${allError.message}`,
-            products: [],
-            count: 0 
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      return new Response(
-        JSON.stringify({
-          success: true,
-          products: allProducts || [],
-          count: allProducts?.length || 0,
-          debug_info: {
-            stripe_key_present: !!stripeSecret,
-            supabase_url_present: !!Deno.env.get('SUPABASE_URL'),
-            service_key_present: !!Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
-          }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    const { action, product_id, batch_size = 10 } = await req.json();
 
     if (action === 'migrate_all') {
-      console.log(`🚀 Starting migration of all products...`);
+      // Migrate all products
+      console.log('Starting bulk migration...');
       
-      // First check what products we have
-      const { data: allProducts, error: allError } = await supabase
-        .from('products')
-        .select('*')
-        .limit(50);
-
-      console.log(`📊 Total products in database: ${allProducts?.length || 0}`);
-      
-      if (allError) {
-        console.error(`❌ Error fetching all products:`, allError);
-        throw new Error(`Database error: ${allError.message}`);
-      }
-
-      if (allProducts) {
-        allProducts.forEach((p, index) => {
-          console.log(`📦 Product ${index + 1}: "${p.title}" - Available: ${p.available} - Stripe Product: ${p.stripe_product_id || 'MISSING'} - Stripe Price: ${p.stripe_price_id || 'MISSING'}`);
-        });
-      }
-
-      // Get products that need syncing - be more aggressive in finding them
       const { data: products, error: fetchError } = await supabase
         .from('products')
         .select('*')
-        .eq('available', true) // Only sync available products
+        .or('stripe_product_id.is.null,stripe_price_id.is.null')
         .limit(batch_size);
 
-      console.log(`🔍 Query for available products returned: ${products?.length || 0} products`);
-
       if (fetchError) {
-        console.error('❌ Error fetching products for migration:', fetchError);
         throw new Error(`Failed to fetch products: ${fetchError.message}`);
-      }
-
-      if (!products || products.length === 0) {
-        console.log(`⚠️ No available products found in database`);
-        return new Response(
-          JSON.stringify({
-            success: true,
-            migrated: 0,
-            failed: 0,
-            message: 'No available products found in database',
-            results: [],
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
-
-      // Filter products that actually need syncing
-      const productsToSync = products.filter(p => !p.stripe_product_id || !p.stripe_price_id);
-      console.log(`🎯 Products that need syncing: ${productsToSync.length} out of ${products.length}`);
-
-      if (productsToSync.length === 0) {
-        console.log(`✅ All available products are already synced`);
-        return new Response(
-          JSON.stringify({
-            success: true,
-            migrated: 0,
-            failed: 0,
-            message: 'All available products are already synced to Stripe',
-            results: [],
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
       }
 
       const results = [];
       let successCount = 0;
       let failureCount = 0;
 
-      for (const product of productsToSync) {
-        console.log(`\n🔄 Processing product ${successCount + failureCount + 1}/${productsToSync.length}: "${product.title}"`);
+      console.log(`Found ${products?.length || 0} products to migrate`);
+
+      for (const product of products || []) {
+        console.log(`Processing product: ${product.title} (ID: ${product.id})`);
         
         // Create sync log entry
-        const { data: logEntry, error: logError } = await supabase
+        const { data: logEntry } = await supabase
           .from('stripe_sync_log')
           .insert({
             product_id: product.id,
@@ -446,24 +295,10 @@ Deno.serve(async (req) => {
           .select()
           .single();
 
-        if (logError) {
-          console.error(`❌ Error creating log entry for "${product.title}":`, logError);
-          failureCount++;
-          results.push({
-            product_id: product.id,
-            product_title: product.title,
-            success: false,
-            error: `Failed to create log entry: ${logError.message}`,
-          });
-          continue;
-        }
-
-        console.log(`📝 Created sync log entry: ${logEntry.id}`);
-
         // Sync to Stripe
         const result = await syncProductToStripe(product);
         
-        console.log(`📊 Sync result for "${product.title}":`, result);
+        console.log(`Sync result for ${product.title}:`, result);
         
         if (result.success) {
           await updateProductStripeIds(
@@ -473,11 +308,9 @@ Deno.serve(async (req) => {
           );
           await updateSyncLog(logEntry.id, 'success', result);
           successCount++;
-          console.log(`✅ Successfully synced: "${product.title}"`);
         } else {
           await updateSyncLog(logEntry.id, 'failed', result);
           failureCount++;
-          console.log(`❌ Failed to sync: "${product.title}" - ${result.error}`);
         }
 
         results.push({
@@ -489,23 +322,15 @@ Deno.serve(async (req) => {
           stripe_price_id: result.stripe_price_id,
         });
 
-        // Rate limiting: wait 500ms between requests to be safe
-        console.log(`⏱️ Waiting 500ms before next product...`);
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Rate limiting: wait 100ms between requests
+        await new Promise(resolve => setTimeout(resolve, 100));
       }
-
-      console.log(`\n🎯 Migration completed:`);
-      console.log(`✅ Success: ${successCount}`);
-      console.log(`❌ Failed: ${failureCount}`);
-      console.log(`📊 Total processed: ${successCount + failureCount}`);
 
       return new Response(
         JSON.stringify({
           success: true,
           migrated: successCount,
           failed: failureCount,
-          total_available: products.length,
-          total_processed: productsToSync.length,
           results,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -513,7 +338,8 @@ Deno.serve(async (req) => {
     }
 
     if (action === 'sync_product' && product_id) {
-      console.log(`🔄 Syncing single product: ${product_id}`);
+      // Sync single product
+      console.log(`Syncing single product: ${product_id}`);
       
       const { data: product, error: fetchError } = await supabase
         .from('products')
@@ -522,22 +348,32 @@ Deno.serve(async (req) => {
         .single();
 
       if (fetchError || !product) {
-        console.error(`❌ Product not found: ${product_id}`, fetchError);
         throw new Error(`Product not found: ${product_id}`);
       }
 
-      console.log(`📦 Found product: "${product.title}"`);
-
-      // Create sync log entry
-      const { data: logEntry } = await supabase
+      // Get or create sync log entry
+      let { data: logEntry } = await supabase
         .from('stripe_sync_log')
-        .insert({
-          product_id: product.id,
-          operation: 'create',
-          status: 'pending',
-        })
-        .select()
-        .single();
+        .select('*')
+        .eq('product_id', product_id)
+        .eq('status', 'pending')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!logEntry) {
+        const { data: newLogEntry } = await supabase
+          .from('stripe_sync_log')
+          .insert({
+            product_id: product.id,
+            operation: 'create',
+            status: 'pending',
+          })
+          .select()
+          .single();
+        
+        logEntry = newLogEntry;
+      }
 
       // Sync to Stripe
       const result = await syncProductToStripe(product);
@@ -557,7 +393,6 @@ Deno.serve(async (req) => {
         JSON.stringify({
           success: result.success,
           product_id,
-          product_title: product.title,
           stripe_product_id: result.stripe_product_id,
           stripe_price_id: result.stripe_price_id,
           error: result.error,
@@ -566,18 +401,76 @@ Deno.serve(async (req) => {
       );
     }
 
+    if (action === 'process_pending') {
+      // Process pending sync operations
+      console.log('Processing pending sync operations...');
+      
+      const { data: pendingLogs, error: fetchError } = await supabase
+        .from('stripe_sync_log')
+        .select('*, products(*)')
+        .eq('status', 'pending')
+        .lt('retry_count', 3)
+        .order('created_at', { ascending: true })
+        .limit(batch_size);
+
+      if (fetchError) {
+        throw new Error(`Failed to fetch pending operations: ${fetchError.message}`);
+      }
+
+      const results = [];
+      let processedCount = 0;
+
+      for (const log of pendingLogs || []) {
+        if (!log.products) {
+          await updateSyncLog(log.id, 'failed', { success: false, error: 'Product not found' });
+          continue;
+        }
+
+        const result = await syncProductToStripe(log.products);
+        
+        if (result.success) {
+          await updateProductStripeIds(
+            log.products.id,
+            result.stripe_product_id!,
+            result.stripe_price_id!
+          );
+          await updateSyncLog(log.id, 'success', result);
+        } else {
+          await updateSyncLog(log.id, 'failed', result, log.retry_count + 1);
+        }
+
+        results.push({
+          log_id: log.id,
+          product_id: log.products.id,
+          success: result.success,
+          error: result.error,
+        });
+
+        processedCount++;
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          processed: processedCount,
+          results,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: 'Invalid action. Supported actions: migrate_all, sync_product, debug_products' }),
+      JSON.stringify({ error: 'Invalid action' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
-  } catch (error: any) {
-    console.error('❌ Function error:', error);
+  } catch (error) {
+    console.error('Sync error:', error);
     return new Response(
-      JSON.stringify({ 
-        error: error.message,
-        stack: error.stack 
-      }),
+      JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
