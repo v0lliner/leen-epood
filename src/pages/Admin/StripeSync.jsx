@@ -186,15 +186,16 @@ const StripeSync = () => {
           <div className="product-status-cards">
             <div className="status-card synced">
               <div className="status-number">{syncStatus.synced}</div>
-              <div className="status-label">Synced Products</div>
+              <div className="status-label">Tõeliselt Sünkroonitud</div>
+              <div className="status-sublabel">Stripe ID-d olemas</div>
             </div>
             <div className="status-card pending">
               <div className="status-number">{syncStatus.pending}</div>
-              <div className="status-label">Pending Sync</div>
+              <div className="status-label">Ootab Sünkroonimist</div>
             </div>
             <div className="status-card failed">
               <div className="status-number">{syncStatus.failed}</div>
-              <div className="status-label">Failed Sync</div>
+              <div className="status-label">Ebaõnnestunud</div>
             </div>
           </div>
         </div>

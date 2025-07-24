@@ -137,10 +137,10 @@ export const getSyncStatus = async () => {
       import.meta.env.VITE_SUPABASE_ANON_KEY
     );
 
-    // Get product sync status
+    // Get product sync status - ONLY count as synced if BOTH Stripe IDs exist
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('sync_status')
+      .select('sync_status, stripe_product_id, stripe_price_id')
       .eq('available', true);
 
     if (productsError) {
@@ -150,7 +150,13 @@ export const getSyncStatus = async () => {
     // Get queue stats
     const queueStats = await getQueueStats();
 
-    const syncedProducts = products?.filter(p => p.sync_status === 'synced').length || 0;
+    // CRITICAL FIX: Only count as synced if BOTH Stripe IDs exist AND sync_status is synced
+    const syncedProducts = products?.filter(p => 
+      p.sync_status === 'synced' && 
+      p.stripe_product_id && 
+      p.stripe_price_id
+    ).length || 0;
+    
     const pendingProducts = products?.filter(p => p.sync_status === 'pending').length || 0;
     const failedProducts = products?.filter(p => p.sync_status === 'failed').length || 0;
 
