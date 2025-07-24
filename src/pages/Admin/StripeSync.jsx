@@ -59,6 +59,37 @@ const StripeSync = () => {
     }
   };
 
+  const handleDebugProducts = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-product-sync`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+        },
+        body: JSON.stringify({
+          action: 'debug_products',
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Debug failed');
+      }
+
+      const results = await response.json();
+      console.log('Debug results:', results);
+      setSuccess(`Found ${results.count} products in database. Check console for details.`);
+    } catch (err) {
+      setError(`Debug failed: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <AdminLayout>
       <div className="stripe-sync-container">
@@ -127,6 +158,21 @@ const StripeSync = () => {
               </div>
             </div>
 
+            <div className="action-card">
+              <div className="action-header">
+                <h3>🔍 Debug Products</h3>
+                <p>View current products in the database and their Stripe sync status for debugging purposes.</p>
+              </div>
+              <div className="action-footer">
+                <button
+                  onClick={handleDebugProducts}
+                  disabled={loading}
+                  className="btn btn-secondary"
+                >
+                  {loading ? 'Loading...' : 'Debug Products'}
+                </button>
+              </div>
+            </div>
             <div className="action-card">
               <div className="action-header">
                 <h3>⚡ Process Pending</h3>
