@@ -63,6 +63,7 @@ const StripeSync = () => {
     setLoading(true);
     setError('');
     setSuccess('');
+    setMigrationResults(null);
 
     try {
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-product-sync`, {
@@ -83,7 +84,36 @@ const StripeSync = () => {
 
       const results = await response.json();
       console.log('Debug results:', results);
-      setSuccess(`Found ${results.count} products in database. Check console for details.`);
+      
+      if (results.success) {
+        setSuccess(`Found ${results.count} products in database. Check console for details.`);
+        
+        // Show detailed debug info
+        const debugInfo = results.debug_info || {};
+        const envStatus = `Environment: Stripe Key ${debugInfo.stripe_key_present ? '✅' : '❌'}, Supabase URL ${debugInfo.supabase_url_present ? '✅' : '❌'}, Service Key ${debugInfo.service_key_present ? '✅' : '❌'}`;
+        
+        console.log('🔧 Environment Status:', envStatus);
+        console.log('📦 Products found:', results.products);
+        
+        // Set migration results to show the products
+        setMigrationResults({
+          migrated: 0,
+          failed: 0,
+          debug: true,
+          results: results.products.map(p => ({
+            product_id: p.id,
+            product_title: p.title,
+            success: !!(p.stripe_product_id && p.stripe_price_id),
+            error: !(p.stripe_product_id && p.stripe_price_id) ? 'Not synced to Stripe yet' : null,
+            stripe_product_id: p.stripe_product_id,
+            stripe_price_id: p.stripe_price_id,
+            available: p.available,
+            price: p.price
+          }))
+        });
+      } else {
+        setError(`Debug failed: ${results.error}`);
+      }
     } catch (err) {
       setError(`Debug failed: ${err.message}`);
     } finally {
@@ -224,17 +254,29 @@ const StripeSync = () => {
 
             {migrationResults.results && migrationResults.results.length > 0 && (
               <div className="results-details">
-                <h3>Detailed Results</h3>
+                <h3>{migrationResults.debug ? 'Products in Database' : 'Migration Results'}</h3>
                 <div className="results-list">
                   {migrationResults.results.map((result, index) => (
                     <div key={index} className={`result-item ${result.success ? 'success' : 'error'}`}>
                       <div className="result-product">
                         <strong>{result.product_title}</strong>
                         <span className="result-id">ID: {result.product_id}</span>
+                        {result.price && <span className="result-price">Price: {result.price}</span>}
+                        {typeof result.available !== 'undefined' && (
+                          <span className="result-available">Available: {result.available ? 'Yes' : 'No'}</span>
+                        )}
                       </div>
                       <div className="result-status">
                         {result.success ? (
-                          <span className="status-success">✅ Synced</span>
+                          <span className="status-success">
+                            ✅ {migrationResults.debug ? 'Synced' : 'Migrated'}
+                            {result.stripe_product_id && (
+                              <div className="stripe-ids">
+                                <small>Product: {result.stripe_product_id}</small>
+                                {result.stripe_price_id && <small>Price: {result.stripe_price_id}</small>}
+                              </div>
+                            )}
+                          </span>
                         ) : (
                           <span className="status-error">❌ {result.error}</span>
                         )}
@@ -528,6 +570,24 @@ const StripeSync = () => {
           font-size: 0.8rem;
           color: #666;
           font-family: var(--font-heading);
+        }
+        
+        .result-price,
+        .result-available {
+          font-size: 0.8rem;
+          color: #666;
+          display: block;
+        }
+        
+        .stripe-ids {
+          margin-top: 4px;
+        }
+        
+        .stripe-ids small {
+          display: block;
+          font-size: 0.7rem;
+          color: #888;
+          font-family: monospace;
         }
 
         .status-success {
