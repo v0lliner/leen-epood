@@ -62,7 +62,7 @@ function parsePrice(priceString: string): number {
 // Create or update Stripe product
 async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
   try {
-    console.log(`Syncing product: ${product.title} (ID: ${product.id})`);
+    console.log(`🔄 Syncing product: ${product.title} (ID: ${product.id})`);
     
     const sanitizedName = sanitizeProductName(product.title);
     const priceInCents = parsePrice(product.price);
@@ -70,6 +70,8 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
     if (priceInCents <= 0) {
       throw new Error(`Invalid price: ${product.price}`);
     }
+
+    console.log(`💰 Parsed price: ${product.price} → ${priceInCents} cents`);
 
     let stripeProduct: Stripe.Product;
     
@@ -92,7 +94,7 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
           active: product.available,
         });
         
-        console.log(`Updated Stripe product: ${stripeProduct.id}`);
+        console.log(`✅ Updated Stripe product: ${stripeProduct.id}`);
       } catch (error) {
         if (error.code === 'resource_missing') {
           // Product doesn't exist in Stripe, create new one
@@ -109,7 +111,7 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
             active: product.available,
           });
           
-          console.log(`Created new Stripe product: ${stripeProduct.id}`);
+          console.log(`🆕 Created new Stripe product: ${stripeProduct.id}`);
         } else {
           throw error;
         }
@@ -129,7 +131,7 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
         active: product.available,
       });
       
-      console.log(`Created new Stripe product: ${stripeProduct.id}`);
+      console.log(`🆕 Created new Stripe product: ${stripeProduct.id}`);
     }
 
     // Handle price
@@ -154,7 +156,9 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
             },
           });
           
-          console.log(`Created new Stripe price: ${stripePrice.id}`);
+          console.log(`💸 Created new Stripe price: ${stripePrice.id}`);
+        } else {
+          console.log(`💸 Price unchanged: ${stripePrice.id}`);
         }
       } catch (error) {
         if (error.code === 'resource_missing') {
@@ -168,7 +172,7 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
             },
           });
           
-          console.log(`Created new Stripe price: ${stripePrice.id}`);
+          console.log(`💸 Created new Stripe price: ${stripePrice.id}`);
         } else {
           throw error;
         }
@@ -184,7 +188,7 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
         },
       });
       
-      console.log(`Created new Stripe price: ${stripePrice.id}`);
+      console.log(`💸 Created new Stripe price: ${stripePrice.id}`);
     }
 
     return {
@@ -193,7 +197,7 @@ async function syncProductToStripe(product: ProductData): Promise<SyncResult> {
       stripe_price_id: stripePrice.id,
     };
   } catch (error) {
-    console.error(`Error syncing product ${product.id}:`, error);
+    console.error(`❌ Error syncing product ${product.id}:`, error);
     return {
       success: false,
       error: error.message,
@@ -233,7 +237,9 @@ async function updateProductStripeIds(
   stripeProductId: string,
   stripePriceId: string
 ) {
-  await supabase
+  console.log(`📝 Updating product ${productId} with Stripe IDs: ${stripeProductId}, ${stripePriceId}`);
+  
+  const { error } = await supabase
     .from('products')
     .update({
       stripe_product_id: stripeProductId,
@@ -242,6 +248,12 @@ async function updateProductStripeIds(
       last_synced_at: new Date().toISOString(),
     })
     .eq('id', productId);
+    
+  if (error) {
+    console.error(`❌ Failed to update product ${productId}:`, error);
+  } else {
+    console.log(`✅ Successfully updated product ${productId} with Stripe IDs`);
+  }
 }
 
 Deno.serve(async (req) => {
@@ -259,32 +271,53 @@ Deno.serve(async (req) => {
 
   try {
     const { action, product_id, batch_size = 10 } = await req.json();
+    console.log(`🚀 Starting action: ${action} with batch_size: ${batch_size}`);
 
     if (action === 'migrate_all') {
-      // Migrate all products
-      console.log('Starting bulk migration...');
+      // 🏆 KUNINGLIKU MIGRATSIOON - leiame KÕIK tooted mis vajavad sync'i
+      console.log('👑 Starting ROYAL migration...');
       
+      // Leiame tooted mis:
+      // 1. On saadaval JA puudub stripe_product_id
+      // 2. VÕI on saadaval JA puudub stripe_price_id  
+      // 3. VÕI sync_status on 'pending'
       const { data: products, error: fetchError } = await supabase
         .from('products')
         .select('*')
-        .or('stripe_product_id.is.null,stripe_price_id.is.null')
+        .eq('available', true)
+        .or('stripe_product_id.is.null,stripe_price_id.is.null,sync_status.eq.pending')
         .limit(batch_size);
 
       if (fetchError) {
+        console.error('❌ Failed to fetch products:', fetchError);
         throw new Error(`Failed to fetch products: ${fetchError.message}`);
+      }
+
+      console.log(`🔍 Found ${products?.length || 0} products that need syncing`);
+      
+      if (!products || products.length === 0) {
+        console.log('🎉 No products need syncing - all done!');
+        return new Response(
+          JSON.stringify({
+            success: true,
+            migrated: 0,
+            failed: 0,
+            results: [],
+            message: 'All products are already synced!'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
 
       const results = [];
       let successCount = 0;
       let failureCount = 0;
 
-      console.log(`Found ${products?.length || 0} products to migrate`);
-
-      for (const product of products || []) {
-        console.log(`Processing product: ${product.title} (ID: ${product.id})`);
+      for (const product of products) {
+        console.log(`🔄 Processing product: ${product.title} (ID: ${product.id})`);
         
         // Create sync log entry
-        const { data: logEntry } = await supabase
+        const { data: logEntry, error: logError } = await supabase
           .from('stripe_sync_log')
           .insert({
             product_id: product.id,
@@ -295,10 +328,22 @@ Deno.serve(async (req) => {
           .select()
           .single();
 
+        if (logError) {
+          console.error(`❌ Failed to create log entry for ${product.id}:`, logError);
+          failureCount++;
+          results.push({
+            product_id: product.id,
+            product_title: product.title,
+            success: false,
+            error: 'Failed to create sync log',
+          });
+          continue;
+        }
+
         // Sync to Stripe
         const result = await syncProductToStripe(product);
         
-        console.log(`Sync result for ${product.title}:`, result);
+        console.log(`📊 Sync result for ${product.title}:`, result);
         
         if (result.success) {
           await updateProductStripeIds(
@@ -308,9 +353,11 @@ Deno.serve(async (req) => {
           );
           await updateSyncLog(logEntry.id, 'success', result);
           successCount++;
+          console.log(`✅ Successfully synced: ${product.title}`);
         } else {
           await updateSyncLog(logEntry.id, 'failed', result);
           failureCount++;
+          console.error(`❌ Failed to sync: ${product.title} - ${result.error}`);
         }
 
         results.push({
@@ -322,9 +369,11 @@ Deno.serve(async (req) => {
           stripe_price_id: result.stripe_price_id,
         });
 
-        // Rate limiting: wait 100ms between requests
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Rate limiting: wait 200ms between requests to be extra safe
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
+
+      console.log(`🏁 Migration complete! Success: ${successCount}, Failed: ${failureCount}`);
 
       return new Response(
         JSON.stringify({
@@ -332,14 +381,15 @@ Deno.serve(async (req) => {
           migrated: successCount,
           failed: failureCount,
           results,
+          message: `Migration completed! ${successCount} products synced successfully.`
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     if (action === 'sync_product' && product_id) {
-      // Sync single product
-      console.log(`Syncing single product: ${product_id}`);
+      // Single product sync
+      console.log(`🎯 Syncing single product: ${product_id}`);
       
       const { data: product, error: fetchError } = await supabase
         .from('products')
@@ -350,6 +400,8 @@ Deno.serve(async (req) => {
       if (fetchError || !product) {
         throw new Error(`Product not found: ${product_id}`);
       }
+
+      console.log(`📦 Found product: ${product.title}`);
 
       // Get or create sync log entry
       let { data: logEntry } = await supabase
@@ -403,11 +455,14 @@ Deno.serve(async (req) => {
 
     if (action === 'process_pending') {
       // Process pending sync operations
-      console.log('Processing pending sync operations...');
+      console.log('🔄 Processing pending sync operations...');
       
       const { data: pendingLogs, error: fetchError } = await supabase
         .from('stripe_sync_log')
-        .select('*, products(*)')
+        .select(`
+          *,
+          products (*)
+        `)
         .eq('status', 'pending')
         .lt('retry_count', 3)
         .order('created_at', { ascending: true })
@@ -416,6 +471,8 @@ Deno.serve(async (req) => {
       if (fetchError) {
         throw new Error(`Failed to fetch pending operations: ${fetchError.message}`);
       }
+
+      console.log(`📋 Found ${pendingLogs?.length || 0} pending operations`);
 
       const results = [];
       let processedCount = 0;
@@ -449,7 +506,7 @@ Deno.serve(async (req) => {
         processedCount++;
 
         // Rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
 
       return new Response(
@@ -462,13 +519,54 @@ Deno.serve(async (req) => {
       );
     }
 
+    // 🔍 DEBUG ACTION - kontrollime mis toimub
+    if (action === 'debug_products') {
+      console.log('🐛 DEBUG: Checking products status...');
+      
+      const { data: allProducts, error } = await supabase
+        .from('products')
+        .select('id, title, price, available, stripe_product_id, stripe_price_id, sync_status')
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        throw new Error(`Debug query failed: ${error.message}`);
+      }
+      
+      console.log(`🔍 Total products in database: ${allProducts?.length || 0}`);
+      
+      const availableProducts = allProducts?.filter(p => p.available) || [];
+      const needsSync = availableProducts.filter(p => !p.stripe_product_id || !p.stripe_price_id);
+      
+      console.log(`✅ Available products: ${availableProducts.length}`);
+      console.log(`🔄 Products needing sync: ${needsSync.length}`);
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          debug_info: {
+            total_products: allProducts?.length || 0,
+            available_products: availableProducts.length,
+            needs_sync: needsSync.length,
+            products_needing_sync: needsSync.map(p => ({
+              id: p.id,
+              title: p.title,
+              has_stripe_product: !!p.stripe_product_id,
+              has_stripe_price: !!p.stripe_price_id,
+              sync_status: p.sync_status
+            }))
+          }
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     return new Response(
-      JSON.stringify({ error: 'Invalid action' }),
+      JSON.stringify({ error: 'Invalid action. Available actions: migrate_all, sync_product, process_pending, debug_products' }),
       { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Sync error:', error);
+    console.error('💥 Sync error:', error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

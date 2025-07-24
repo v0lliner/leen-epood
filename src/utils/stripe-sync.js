@@ -144,3 +144,32 @@ export const getSyncStatus = async () => {
     throw error;
   }
 };
+
+/**
+ * 🐛 Debug products to see what's happening
+ * @returns {Promise<{debug_info: object}>}
+ */
+export const debugProducts = async () => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-product-sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'debug_products',
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Debug failed');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Debug error:', error);
+    throw error;
+  }
+};
