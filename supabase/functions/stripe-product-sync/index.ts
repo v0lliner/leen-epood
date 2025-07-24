@@ -274,20 +274,27 @@ Deno.serve(async (req) => {
     console.log(`🚀 Starting action: ${action} with batch_size: ${batch_size}`);
 
     if (action === 'migrate_all') {
-      // 🏆 KUNINGLIKU MIGRATSIOON - leiame KÕIK tooted mis vajavad sync'i
-      console.log('👑 Starting ROYAL migration...');
+      // 👑 KUNINGLIK MIGRATSIOON - leiame ABSOLUUTSELT KÕIK tooted mis vajavad sync'i
+      console.log('👑 Starting ULTIMATE ROYAL migration...');
       
-      // Leiame tooted mis:
-      // 1. On saadaval JA puudub stripe_product_id
-      // 2. VÕI on saadaval JA puudub stripe_price_id  
-      // 3. VÕI sync_status on 'pending'
+      // 🔥 UUED REEGLID - leiame tooted mis:
+      // 1. Puudub stripe_product_id (olenemata available staatusest)
+      // 2. VÕI puudub stripe_price_id (olenemata available staatusest)
+      // 3. VÕI sync_status EI OLE 'synced' (hõlmab pending, failed, null)
       const query = supabase
         .from('products')
         .select('*')
-        .or('stripe_product_id.is.null,stripe_price_id.is.null,sync_status.neq.synced')
+        .or('stripe_product_id.is.null,stripe_price_id.is.null,sync_status.neq.synced,sync_status.is.null')
         .limit(batch_size);
       
-      console.log('Executing query for migration:', query.url); // Log the constructed URL for debugging
+      console.log('🔍 Executing ULTIMATE query for migration...');
+      console.log('📊 Query will find products where:');
+      console.log('   - stripe_product_id IS NULL');
+      console.log('   - OR stripe_price_id IS NULL'); 
+      console.log('   - OR sync_status != "synced"');
+      console.log('   - OR sync_status IS NULL');
+      console.log('   - NO available filter applied (will sync ALL products)');
+      
       const { data: products, error: fetchError } = await query;
 
       if (fetchError) {
