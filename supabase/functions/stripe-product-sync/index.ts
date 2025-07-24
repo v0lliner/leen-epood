@@ -281,12 +281,14 @@ Deno.serve(async (req) => {
       // 1. On saadaval JA puudub stripe_product_id
       // 2. VÕI on saadaval JA puudub stripe_price_id  
       // 3. VÕI sync_status on 'pending'
-      const { data: products, error: fetchError } = await supabase
+      const query = supabase
         .from('products')
         .select('*')
-        .eq('available', true)
-        .or('stripe_product_id.is.null,stripe_price_id.is.null,sync_status.eq.pending')
+        .or('stripe_product_id.is.null,stripe_price_id.is.null,sync_status.neq.synced')
         .limit(batch_size);
+      
+      console.log('Executing query for migration:', query.url); // Log the constructed URL for debugging
+      const { data: products, error: fetchError } = await query;
 
       if (fetchError) {
         console.error('❌ Failed to fetch products:', fetchError);
