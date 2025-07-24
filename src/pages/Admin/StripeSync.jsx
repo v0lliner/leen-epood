@@ -1,58 +1,97 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import AdminLayout from '../../components/Admin/AdminLayout';
-import { migrateAllProducts, syncSingleProduct, processPendingSync, getSyncStatus, debugProducts } from '../../utils/stripe-sync';
+import { 
+  queueAllProducts, 
+  processStripeQueue, 
+  getQueueStats, 
+  cleanupQueue,
+  getSyncStatus 
+} from '../../utils/stripe-sync';
 
 const StripeSync = () => {
   const { t } = useTranslation();
+  const [queueStats, setQueueStats] = useState({ stats: [], recent_items: [] });
   const [syncStatus, setSyncStatus] = useState({ synced: 0, pending: 0, failed: 0 });
   const [loading, setLoading] = useState(false);
-  const [migrationResults, setMigrationResults] = useState(null);
+  const [results, setResults] = useState(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [debugInfo, setDebugInfo] = useState(null);
 
   useEffect(() => {
-    loadSyncStatus();
+    loadData();
   }, []);
 
-  const loadSyncStatus = async () => {
+  const loadData = async () => {
     try {
-      const status = await getSyncStatus();
-      setSyncStatus(status);
+      const [queueData, statusData] = await Promise.all([
+        getQueueStats(),
+        getSyncStatus()
+      ]);
+      
+      setQueueStats(queueData);
+      setSyncStatus(statusData);
     } catch (err) {
-      console.error('Error loading sync status:', err);
-      setError('Failed to load sync status');
+      console.error('Error loading data:', err);
+      setError('Failed to load sync data');
     }
   };
 
-  const handleDebugProducts = async () => {
+  const handleQueueAllProducts = async () => {
     setLoading(true);
     setError('');
     setSuccess('');
+    setResults(null);
 
     try {
-      const results = await debugProducts();
-      setDebugInfo(results.debug_info);
-      setSuccess('Debug info loaded successfully!');
+      const result = await queueAllProducts();
+      setSuccess(result.message || `Successfully queued ${result.queued} products for sync!`);
+      await loadData();
     } catch (err) {
-      setError(`Debug failed: ${err.message}`);
+      setError(`Failed to queue products: ${err.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleMigrateAll = async () => {
+  const handleProcessQueue = async () => {
     setLoading(true);
     setError('');
     setSuccess('');
-    setMigrationResults(null);
+    setResults(null);
 
     try {
-      const results = await migrateAllProducts(5); // Process 5 products at a time
-      setMigrationResults(results);
-      setSuccess(results.message || `Migration completed! ${results.migrated} products synced, ${results.failed} failed.`);
-      await loadSyncStatus();
+      const result = await processStripeQueue(10);
+      setResults(result);
+      setSuccess(result.message || `Processed ${result.processed} items successfully!`);
+      await loadData();
+    } catch (err) {
+      setError(`Failed to process queue: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleFullMigration = async () => {
+    setLoading(true);
+    setError('');
+    setSuccess('');
+    setResults(null);
+
+    try {
+      // First queue all products
+      const queueResult = await queueAllProducts();
+      
+      if (queueResult.queued === 0) {
+        setSuccess('All products are already synced!');
+        return;
+      }
+
+      // Then process the queue
+      const processResult = await processStripeQueue(queueResult.queued);
+      setResults(processResult);
+      setSuccess(`Full migration completed! ${processResult.successful} products synced, ${processResult.failed} failed.`);
+      await loadData();
     } catch (err) {
       setError(`Migration failed: ${err.message}`);
     } finally {
@@ -60,28 +99,38 @@ const StripeSync = () => {
     }
   };
 
-  const handleProcessPending = async () => {
+  const handleCleanupQueue = async () => {
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
-      const results = await processPendingSync(10);
-      setSuccess(`Processed ${results.processed} pending operations.`);
-      await loadSyncStatus();
+      const result = await cleanupQueue();
+      setSuccess(result.message || 'Queue cleaned up successfully!');
+      await loadData();
     } catch (err) {
-      setError(`Processing failed: ${err.message}`);
+      setError(`Cleanup failed: ${err.message}`);
     } finally {
       setLoading(false);
     }
+  };
+
+  const getStatusCount = (status) => {
+    const stat = queueStats.stats?.find(s => s.status === status);
+    return stat?.count || 0;
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleString('et-EE');
   };
 
   return (
     <AdminLayout>
       <div className="stripe-sync-container">
         <div className="sync-header">
-          <h1>Stripe Product Synchronization</h1>
-          <p>Manage product synchronization between your CMS and Stripe</p>
+          <h1>🏆 New Queue-Based Stripe Sync</h1>
+          <p>Robust, scalable Stripe product synchronization with queue management</p>
         </div>
 
         {error && (
@@ -104,10 +153,37 @@ const StripeSync = () => {
           </div>
         )}
 
-        {/* Sync Status Overview */}
+        {/* Queue Status Overview */}
         <div className="status-overview">
-          <h2>Sync Status Overview</h2>
+          <h2>📊 Queue Status</h2>
           <div className="status-cards">
+            <div className="status-card pending">
+              <div className="status-number">{getStatusCount('pending')}</div>
+              <div className="status-label">Pending Operations</div>
+            </div>
+            <div className="status-card processing">
+              <div className="status-number">{getStatusCount('processing')}</div>
+              <div className="status-label">Currently Processing</div>
+            </div>
+            <div className="status-card completed">
+              <div className="status-number">{getStatusCount('completed')}</div>
+              <div className="status-label">Completed</div>
+            </div>
+            <div className="status-card failed">
+              <div className="status-number">{getStatusCount('failed')}</div>
+              <div className="status-label">Failed</div>
+            </div>
+            <div className="status-card retrying">
+              <div className="status-number">{getStatusCount('retrying')}</div>
+              <div className="status-label">Retrying</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Sync Status */}
+        <div className="product-status-overview">
+          <h2>🛍️ Product Sync Status</h2>
+          <div className="product-status-cards">
             <div className="status-card synced">
               <div className="status-number">{syncStatus.synced}</div>
               <div className="status-label">Synced Products</div>
@@ -118,110 +194,130 @@ const StripeSync = () => {
             </div>
             <div className="status-card failed">
               <div className="status-number">{syncStatus.failed}</div>
-              <div className="status-label">Failed Operations (24h)</div>
+              <div className="status-label">Failed Sync</div>
             </div>
           </div>
         </div>
 
-        {/* Migration Actions */}
-        <div className="migration-section">
-          <h2>Migration & Sync Actions</h2>
+        {/* Queue Actions */}
+        <div className="queue-actions">
+          <h2>🎯 Queue Management</h2>
           
           <div className="action-cards">
-            <div className="action-card">
+            <div className="action-card primary">
               <div className="action-header">
-                <h3>🔄 Migrate All Products</h3>
-                <p>Migrate all existing products to Stripe. This will create Stripe products and prices for all available products that haven't been synced yet.</p>
+                <h3>🚀 Full Migration</h3>
+                <p>Queue all products that need syncing and process them immediately. This is the recommended way to start.</p>
               </div>
               <div className="action-footer">
                 <button
-                  onClick={handleMigrateAll}
+                  onClick={handleFullMigration}
                   disabled={loading}
                   className="btn btn-primary"
                 >
-                  {loading ? 'Migrating...' : 'Start Migration'}
+                  {loading ? 'Running Migration...' : 'Start Full Migration'}
                 </button>
               </div>
             </div>
 
             <div className="action-card">
               <div className="action-header">
-                <h3>⚡ Process Pending</h3>
-                <p>Process any pending sync operations that may have failed or are waiting to be retried.</p>
+                <h3>📦 Queue All Products</h3>
+                <p>Add all products that need syncing to the queue. Use this to prepare for batch processing.</p>
               </div>
               <div className="action-footer">
                 <button
-                  onClick={handleProcessPending}
+                  onClick={handleQueueAllProducts}
                   disabled={loading}
                   className="btn btn-secondary"
                 >
-                  {loading ? 'Processing...' : 'Process Pending'}
+                  {loading ? 'Queueing...' : 'Queue All Products'}
                 </button>
               </div>
             </div>
 
             <div className="action-card">
               <div className="action-header">
-                <h3>🐛 Debug Products</h3>
-                <p>Check which products need syncing and debug any issues with the sync process.</p>
+                <h3>⚡ Process Queue</h3>
+                <p>Process pending items in the sync queue. This will sync queued products to Stripe.</p>
               </div>
               <div className="action-footer">
                 <button
-                  onClick={handleDebugProducts}
-                  disabled={loading}
+                  onClick={handleProcessQueue}
+                  disabled={loading || getStatusCount('pending') === 0}
                   className="btn btn-secondary"
                 >
-                  {loading ? 'Debugging...' : 'Debug Products'}
+                  {loading ? 'Processing...' : `Process Queue (${getStatusCount('pending')} items)`}
                 </button>
               </div>
             </div>
 
             <div className="action-card">
               <div className="action-header">
-                <h3>📊 Refresh Status</h3>
-                <p>Refresh the sync status overview to see the latest synchronization state.</p>
+                <h3>🧹 Cleanup Queue</h3>
+                <p>Remove old completed operations from the queue to keep it clean.</p>
               </div>
               <div className="action-footer">
                 <button
-                  onClick={loadSyncStatus}
+                  onClick={handleCleanupQueue}
                   disabled={loading}
                   className="btn btn-secondary"
                 >
-                  Refresh Status
+                  {loading ? 'Cleaning...' : 'Cleanup Old Items'}
+                </button>
+              </div>
+            </div>
+
+            <div className="action-card">
+              <div className="action-header">
+                <h3>🔄 Refresh Data</h3>
+                <p>Reload queue statistics and sync status to see the latest state.</p>
+              </div>
+              <div className="action-footer">
+                <button
+                  onClick={loadData}
+                  disabled={loading}
+                  className="btn btn-secondary"
+                >
+                  Refresh Data
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Migration Results */}
-        {migrationResults && (
-          <div className="migration-results">
-            <h2>Migration Results</h2>
+        {/* Processing Results */}
+        {results && (
+          <div className="processing-results">
+            <h2>📋 Processing Results</h2>
             <div className="results-summary">
               <div className="result-stat">
-                <span className="result-number">{migrationResults.migrated}</span>
-                <span className="result-label">Successfully Migrated</span>
+                <span className="result-number">{results.processed}</span>
+                <span className="result-label">Total Processed</span>
               </div>
               <div className="result-stat">
-                <span className="result-number">{migrationResults.failed}</span>
+                <span className="result-number">{results.successful}</span>
+                <span className="result-label">Successful</span>
+              </div>
+              <div className="result-stat">
+                <span className="result-number">{results.failed}</span>
                 <span className="result-label">Failed</span>
               </div>
             </div>
 
-            {migrationResults.results && migrationResults.results.length > 0 && (
+            {results.results && results.results.length > 0 && (
               <div className="results-details">
                 <h3>Detailed Results</h3>
                 <div className="results-list">
-                  {migrationResults.results.map((result, index) => (
+                  {results.results.map((result, index) => (
                     <div key={index} className={`result-item ${result.success ? 'success' : 'error'}`}>
-                      <div className="result-product">
-                        <strong>{result.product_title}</strong>
-                        <span className="result-id">ID: {result.product_id}</span>
+                      <div className="result-info">
+                        <strong>Product ID: {result.product_id}</strong>
+                        <span className="result-operation">{result.operation_type}</span>
                       </div>
                       <div className="result-status">
                         {result.success ? (
-                          <span className="status-success">✅ Synced</span>
+                          <span className="status-success">✅ Success</span>
                         ) : (
                           <span className="status-error">❌ {result.error}</span>
                         )}
@@ -234,85 +330,87 @@ const StripeSync = () => {
           </div>
         )}
 
-        {/* Debug Results */}
-        {debugInfo && (
-          <div className="debug-results">
-            <h2>🐛 Debug Information</h2>
-            <div className="debug-summary">
-              <div className="debug-stat">
-                <span className="debug-number">{debugInfo.total_products}</span>
-                <span className="debug-label">Total Products</span>
+        {/* Recent Queue Items */}
+        {queueStats.recent_items && queueStats.recent_items.length > 0 && (
+          <div className="recent-items">
+            <h2>📝 Recent Queue Items</h2>
+            <div className="items-table">
+              <div className="table-header">
+                <div className="table-cell">Product</div>
+                <div className="table-cell">Operation</div>
+                <div className="table-cell">Status</div>
+                <div className="table-cell">Retries</div>
+                <div className="table-cell">Created</div>
+                <div className="table-cell">Processed</div>
               </div>
-              <div className="debug-stat">
-                <span className="debug-number">{debugInfo.available_products}</span>
-                <span className="debug-label">Available Products</span>
-              </div>
-              <div className="debug-stat">
-                <span className="debug-number">{debugInfo.needs_sync}</span>
-                <span className="debug-label">Need Sync</span>
-              </div>
-            </div>
-
-            {debugInfo.products_needing_sync && debugInfo.products_needing_sync.length > 0 && (
-              <div className="debug-details">
-                <h3>Products Needing Sync</h3>
-                <div className="debug-list">
-                  {debugInfo.products_needing_sync.map((product, index) => (
-                    <div key={index} className="debug-item">
-                      <div className="debug-product">
-                        <strong>{product.title}</strong>
-                        <span className="debug-id">ID: {product.id}</span>
-                      </div>
-                      <div className="debug-status">
-                        <span className={`debug-badge ${product.has_stripe_product ? 'success' : 'missing'}`}>
-                          Product: {product.has_stripe_product ? '✅' : '❌'}
-                        </span>
-                        <span className={`debug-badge ${product.has_stripe_price ? 'success' : 'missing'}`}>
-                          Price: {product.has_stripe_price ? '✅' : '❌'}
-                        </span>
-                        <span className="debug-sync-status">
-                          Status: {product.sync_status || 'pending'}
-                        </span>
-                      </div>
+              {queueStats.recent_items.slice(0, 10).map((item) => (
+                <div key={item.id} className="table-row">
+                  <div className="table-cell">
+                    <div className="product-info">
+                      <strong>{item.products?.title || 'Unknown Product'}</strong>
+                      <span className="product-id">{item.product_id}</span>
                     </div>
-                  ))}
+                  </div>
+                  <div className="table-cell">
+                    <span className={`operation-badge ${item.operation_type}`}>
+                      {item.operation_type}
+                    </span>
+                  </div>
+                  <div className="table-cell">
+                    <span className={`status-badge ${item.status}`}>
+                      {item.status}
+                    </span>
+                  </div>
+                  <div className="table-cell">{item.retry_count}</div>
+                  <div className="table-cell">{formatDate(item.created_at)}</div>
+                  <div className="table-cell">{formatDate(item.processed_at)}</div>
                 </div>
-              </div>
-            )}
+              ))}
+            </div>
           </div>
         )}
 
-        {/* Important Notes */}
-        <div className="info-section">
-          <h2>Important Information</h2>
+        {/* System Information */}
+        <div className="system-info">
+          <h2>ℹ️ How the New System Works</h2>
           <div className="info-cards">
             <div className="info-card">
               <div className="info-header">
                 <div className="info-icon">🔄</div>
-                <h3>Automatic Sync</h3>
+                <h3>Automatic Queueing</h3>
               </div>
               <div className="info-body">
-                <p>New products are automatically synced to Stripe when created or updated in the CMS. The sync happens in the background via database triggers.</p>
+                <p>When you create, update, or delete products, they are automatically added to the sync queue via database triggers. No manual intervention needed!</p>
               </div>
             </div>
 
             <div className="info-card">
               <div className="info-header">
-                <div className="info-icon">⚠️</div>
-                <h3>Rate Limits</h3>
+                <div className="info-icon">📋</div>
+                <h3>Queue Processing</h3>
               </div>
               <div className="info-body">
-                <p>Stripe API has rate limits. The migration processes products in batches with delays to avoid hitting these limits. Large migrations may take time.</p>
+                <p>The queue processor handles items in batches with rate limiting and automatic retries. Failed operations are retried up to 5 times with exponential backoff.</p>
               </div>
             </div>
 
             <div className="info-card">
               <div className="info-header">
-                <div className="info-icon">🔒</div>
-                <h3>Data Safety</h3>
+                <div className="info-icon">🛡️</div>
+                <h3>Reliability</h3>
               </div>
               <div className="info-body">
-                <p>All sync operations are logged and can be retried. Failed operations are automatically retried up to 3 times before being marked as failed.</p>
+                <p>Every operation is tracked and logged. If Stripe API is down, operations wait in the queue and are processed when the service is available again.</p>
+              </div>
+            </div>
+
+            <div className="info-card">
+              <div className="info-header">
+                <div className="info-icon">📈</div>
+                <h3>Scalability</h3>
+              </div>
+              <div className="info-body">
+                <p>The system can handle hundreds of products efficiently. Batch processing and rate limiting ensure we never hit Stripe API limits.</p>
               </div>
             </div>
           </div>
@@ -322,7 +420,7 @@ const StripeSync = () => {
       <style jsx>{`
         .stripe-sync-container {
           padding: 32px;
-          max-width: 1200px;
+          max-width: 1400px;
           margin: 0 auto;
         }
 
@@ -336,11 +434,12 @@ const StripeSync = () => {
           font-family: var(--font-heading);
           color: var(--color-ultramarine);
           margin-bottom: 8px;
+          font-size: 2rem;
         }
 
         .sync-header p {
           color: #666;
-          font-size: 1rem;
+          font-size: 1.125rem;
           margin: 0;
         }
 
@@ -382,42 +481,54 @@ const StripeSync = () => {
           font-size: 0.9rem;
         }
 
-        .status-overview {
+        .status-overview,
+        .product-status-overview {
           margin-bottom: 48px;
         }
 
-        .status-overview h2 {
+        .status-overview h2,
+        .product-status-overview h2 {
           font-family: var(--font-heading);
           color: var(--color-text);
           margin-bottom: 24px;
           font-size: 1.5rem;
         }
 
-        .status-cards {
+        .status-cards,
+        .product-status-cards {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 24px;
+          grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+          gap: 20px;
         }
 
         .status-card {
           background: white;
           border-radius: 8px;
-          padding: 24px;
+          padding: 20px;
           text-align: center;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
           border-left: 4px solid;
-        }
-
-        .status-card.synced {
-          border-left-color: #28a745;
         }
 
         .status-card.pending {
           border-left-color: #ffc107;
         }
 
+        .status-card.processing {
+          border-left-color: #17a2b8;
+        }
+
+        .status-card.completed,
+        .status-card.synced {
+          border-left-color: #28a745;
+        }
+
         .status-card.failed {
           border-left-color: #dc3545;
+        }
+
+        .status-card.retrying {
+          border-left-color: #fd7e14;
         }
 
         .status-number {
@@ -435,11 +546,11 @@ const StripeSync = () => {
           font-weight: 500;
         }
 
-        .migration-section {
+        .queue-actions {
           margin-bottom: 48px;
         }
 
-        .migration-section h2 {
+        .queue-actions h2 {
           font-family: var(--font-heading);
           color: var(--color-text);
           margin-bottom: 24px;
@@ -448,7 +559,7 @@ const StripeSync = () => {
 
         .action-cards {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+          grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
           gap: 24px;
         }
 
@@ -460,6 +571,12 @@ const StripeSync = () => {
           display: flex;
           flex-direction: column;
           justify-content: space-between;
+          border: 2px solid transparent;
+        }
+
+        .action-card.primary {
+          border-color: var(--color-ultramarine);
+          background: rgba(47, 62, 156, 0.02);
         }
 
         .action-header h3 {
@@ -480,11 +597,11 @@ const StripeSync = () => {
           margin-top: 20px;
         }
 
-        .migration-results {
+        .processing-results {
           margin-bottom: 48px;
         }
 
-        .migration-results h2 {
+        .processing-results h2 {
           font-family: var(--font-heading);
           color: var(--color-text);
           margin-bottom: 24px;
@@ -495,6 +612,7 @@ const StripeSync = () => {
           display: flex;
           gap: 32px;
           margin-bottom: 32px;
+          justify-content: center;
         }
 
         .result-stat {
@@ -553,16 +671,17 @@ const StripeSync = () => {
           border-color: #fed7d7;
         }
 
-        .result-product {
+        .result-info {
           display: flex;
           flex-direction: column;
           gap: 4px;
         }
 
-        .result-id {
+        .result-operation {
           font-size: 0.8rem;
           color: #666;
-          font-family: var(--font-heading);
+          text-transform: uppercase;
+          font-weight: 500;
         }
 
         .status-success {
@@ -575,116 +694,124 @@ const StripeSync = () => {
           font-weight: 500;
         }
 
-        .debug-results {
+        .recent-items {
           margin-bottom: 48px;
         }
 
-        .debug-results h2 {
+        .recent-items h2 {
           font-family: var(--font-heading);
           color: var(--color-text);
           margin-bottom: 24px;
           font-size: 1.5rem;
         }
 
-        .debug-summary {
-          display: flex;
-          gap: 32px;
-          margin-bottom: 32px;
-        }
-
-        .debug-stat {
-          text-align: center;
-        }
-
-        .debug-number {
-          font-family: var(--font-heading);
-          font-size: 2rem;
-          font-weight: 600;
-          color: var(--color-ultramarine);
-          display: block;
-          margin-bottom: 4px;
-        }
-
-        .debug-label {
-          font-size: 0.9rem;
-          color: #666;
-        }
-
-        .debug-details {
+        .items-table {
           background: white;
           border-radius: 8px;
-          padding: 24px;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
         }
 
-        .debug-details h3 {
-          font-family: var(--font-heading);
-          color: var(--color-text);
-          margin-bottom: 16px;
+        .table-header {
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr 80px 120px 120px;
+          gap: 16px;
+          padding: 16px;
+          background: #f8f9fa;
+          font-weight: 600;
+          border-bottom: 1px solid #e9ecef;
         }
 
-        .debug-list {
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .debug-item {
-          display: flex;
-          justify-content: space-between;
+        .table-row {
+          display: grid;
+          grid-template-columns: 2fr 1fr 1fr 80px 120px 120px;
+          gap: 16px;
+          padding: 16px;
+          border-bottom: 1px solid #f0f0f0;
           align-items: center;
-          padding: 12px;
-          border-radius: 4px;
-          border: 1px solid #e9ecef;
-          background-color: #f8f9fa;
         }
 
-        .debug-product {
+        .table-row:last-child {
+          border-bottom: none;
+        }
+
+        .table-cell {
+          font-size: 0.9rem;
+        }
+
+        .product-info {
           display: flex;
           flex-direction: column;
           gap: 4px;
         }
 
-        .debug-id {
-          font-size: 0.8rem;
+        .product-id {
+          font-size: 0.75rem;
           color: #666;
           font-family: var(--font-heading);
         }
 
-        .debug-status {
-          display: flex;
-          gap: 8px;
-          align-items: center;
-        }
-
-        .debug-badge {
-          padding: 2px 6px;
-          border-radius: 4px;
-          font-size: 0.7rem;
+        .operation-badge {
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 0.75rem;
           font-weight: 500;
+          text-transform: uppercase;
         }
 
-        .debug-badge.success {
-          background-color: #d4edda;
+        .operation-badge.create {
+          background: #d4edda;
           color: #155724;
         }
 
-        .debug-badge.missing {
-          background-color: #f8d7da;
+        .operation-badge.update {
+          background: #cce5ff;
+          color: #004085;
+        }
+
+        .operation-badge.delete {
+          background: #f8d7da;
           color: #721c24;
         }
 
-        .debug-sync-status {
-          font-size: 0.8rem;
-          color: #666;
-          font-style: italic;
+        .status-badge {
+          padding: 2px 8px;
+          border-radius: 12px;
+          font-size: 0.75rem;
+          font-weight: 500;
+          text-transform: uppercase;
         }
 
-        .info-section {
+        .status-badge.pending {
+          background: #fff3cd;
+          color: #856404;
+        }
+
+        .status-badge.processing {
+          background: #cce5ff;
+          color: #004085;
+        }
+
+        .status-badge.completed {
+          background: #d4edda;
+          color: #155724;
+        }
+
+        .status-badge.failed {
+          background: #f8d7da;
+          color: #721c24;
+        }
+
+        .status-badge.retrying {
+          background: #ffeaa7;
+          color: #d63031;
+        }
+
+        .system-info {
           margin-bottom: 32px;
         }
 
-        .info-section h2 {
+        .system-info h2 {
           font-family: var(--font-heading);
           color: var(--color-text);
           margin-bottom: 24px;
@@ -771,8 +898,10 @@ const StripeSync = () => {
             padding: 24px 16px;
           }
 
-          .status-cards {
-            grid-template-columns: 1fr;
+          .status-cards,
+          .product-status-cards {
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 16px;
           }
 
           .action-cards {
@@ -788,27 +917,14 @@ const StripeSync = () => {
             gap: 16px;
           }
 
-          .result-item {
-            flex-direction: column;
-            align-items: flex-start;
+          .table-header,
+          .table-row {
+            grid-template-columns: 1fr;
             gap: 8px;
           }
 
-          .debug-summary {
-            flex-direction: column;
-            gap: 16px;
-          }
-
-          .debug-item {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-          }
-
-          .debug-status {
-            align-self: stretch;
-            justify-content: flex-start;
-            flex-wrap: wrap;
+          .table-cell {
+            padding: 8px 0;
           }
         }
       `}</style>

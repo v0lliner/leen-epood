@@ -1,105 +1,132 @@
 /**
- * Stripe Product Synchronization Utilities
+ * 🏆 NEW QUEUE-BASED STRIPE SYNC UTILITIES
  * 
- * This module provides functions to sync products between the CMS and Stripe,
- * including migration of existing products and ongoing synchronization.
+ * This module provides functions for the new queue-based Stripe synchronization system.
+ * Instead of direct sync operations, this system uses a queue for better reliability and scalability.
  */
 
 /**
- * Migrate all products to Stripe
- * @param {number} batchSize - Number of products to process in each batch
- * @returns {Promise<{success: boolean, migrated: number, failed: number, results: Array}>}
+ * Queue all products for Stripe sync
+ * @param {boolean} forceAll - Force queue all products regardless of current sync status
+ * @returns {Promise<{success: boolean, queued: number, message: string}>}
  */
-export const migrateAllProducts = async (batchSize = 10) => {
+export const queueAllProducts = async (forceAll = false) => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-product-sync`, {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-stripe-queue`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
-        action: 'migrate_all',
+        action: 'queue_all_products',
+        force_all: forceAll,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to queue products');
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Queue all products error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Process the Stripe sync queue
+ * @param {number} batchSize - Number of items to process in this batch
+ * @returns {Promise<{success: boolean, processed: number, successful: number, failed: number, results: Array}>}
+ */
+export const processStripeQueue = async (batchSize = 10) => {
+  try {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-stripe-queue`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify({
+        action: 'process_queue',
         batch_size: batchSize,
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Migration failed');
+      throw new Error(errorData.error || 'Failed to process queue');
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Migration error:', error);
+    console.error('Process queue error:', error);
     throw error;
   }
 };
 
 /**
- * Sync a single product to Stripe
- * @param {string} productId - Product ID to sync
- * @returns {Promise<{success: boolean, stripe_product_id?: string, stripe_price_id?: string, error?: string}>}
+ * Get queue statistics and recent items
+ * @returns {Promise<{success: boolean, stats: Array, recent_items: Array}>}
  */
-export const syncSingleProduct = async (productId) => {
+export const getQueueStats = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-product-sync`, {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-stripe-queue`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
-        action: 'sync_product',
-        product_id: productId,
+        action: 'get_queue_stats',
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Sync failed');
+      throw new Error(errorData.error || 'Failed to get queue stats');
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Sync error:', error);
+    console.error('Get queue stats error:', error);
     throw error;
   }
 };
 
 /**
- * Process pending sync operations
- * @param {number} batchSize - Number of operations to process
- * @returns {Promise<{success: boolean, processed: number, results: Array}>}
+ * Clean up old completed queue items
+ * @returns {Promise<{success: boolean, message: string}>}
  */
-export const processPendingSync = async (batchSize = 10) => {
+export const cleanupQueue = async () => {
   try {
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-product-sync`, {
+    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/process-stripe-queue`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
       },
       body: JSON.stringify({
-        action: 'process_pending',
-        batch_size: batchSize,
+        action: 'cleanup_queue',
       }),
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Processing failed');
+      throw new Error(errorData.error || 'Failed to cleanup queue');
     }
 
     return await response.json();
   } catch (error) {
-    console.error('Processing error:', error);
+    console.error('Cleanup queue error:', error);
     throw error;
   }
 };
 
 /**
- * Get sync status for products
+ * Get sync status for products (legacy compatibility)
  * @returns {Promise<{synced: number, pending: number, failed: number}>}
  */
 export const getSyncStatus = async () => {
@@ -120,24 +147,21 @@ export const getSyncStatus = async () => {
       throw new Error(productsError.message);
     }
 
-    // Get sync log status
-    const { data: logs, error: logsError } = await supabase
-      .from('stripe_sync_log')
-      .select('status')
-      .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Last 24 hours
-
-    if (logsError) {
-      throw new Error(logsError.message);
-    }
+    // Get queue stats
+    const queueStats = await getQueueStats();
 
     const syncedProducts = products?.filter(p => p.sync_status === 'synced').length || 0;
     const pendingProducts = products?.filter(p => p.sync_status === 'pending').length || 0;
-    const failedLogs = logs?.filter(l => l.status === 'failed').length || 0;
+    const failedProducts = products?.filter(p => p.sync_status === 'failed').length || 0;
+
+    // Add queue pending items to pending count
+    const queuePending = queueStats.stats?.find(s => s.status === 'pending')?.count || 0;
+    const queueFailed = queueStats.stats?.find(s => s.status === 'failed')?.count || 0;
 
     return {
       synced: syncedProducts,
-      pending: pendingProducts,
-      failed: failedLogs,
+      pending: pendingProducts + queuePending,
+      failed: failedProducts + queueFailed,
     };
   } catch (error) {
     console.error('Error getting sync status:', error);
@@ -145,31 +169,72 @@ export const getSyncStatus = async () => {
   }
 };
 
-/**
- * 🐛 Debug products to see what's happening
- * @returns {Promise<{debug_info: object}>}
- */
-export const debugProducts = async () => {
-  try {
-    const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/stripe-product-sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-      },
-      body: JSON.stringify({
-        action: 'debug_products',
-      }),
-    });
+// Legacy functions for backward compatibility
+export const migrateAllProducts = async (batchSize = 10) => {
+  console.log('🔄 Using new queue-based migration...');
+  
+  // First queue all products
+  const queueResult = await queueAllProducts();
+  
+  if (!queueResult.success) {
+    throw new Error(queueResult.message || 'Failed to queue products');
+  }
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Debug failed');
+  // Then process the queue
+  const processResult = await processStripeQueue(batchSize);
+  
+  return {
+    success: processResult.success,
+    migrated: processResult.successful || 0,
+    failed: processResult.failed || 0,
+    results: processResult.results || [],
+    message: `Migration completed using new queue system! ${processResult.successful || 0} products synced successfully.`
+  };
+};
+
+export const syncSingleProduct = async (productId) => {
+  console.log('🎯 Queueing single product for sync...');
+  
+  try {
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      import.meta.env.VITE_SUPABASE_URL,
+      import.meta.env.VITE_SUPABASE_ANON_KEY
+    );
+
+    // Add product to queue
+    const { error: queueError } = await supabase
+      .from('stripe_sync_queue')
+      .insert({
+        product_id: productId,
+        operation_type: 'update',
+        status: 'pending'
+      });
+
+    if (queueError) {
+      throw new Error(queueError.message);
     }
 
-    return await response.json();
+    // Process the queue with batch size 1
+    const result = await processStripeQueue(1);
+    
+    return {
+      success: result.success,
+      product_id: productId,
+      message: 'Product queued and processed successfully'
+    };
   } catch (error) {
-    console.error('Debug error:', error);
+    console.error('Sync single product error:', error);
     throw error;
   }
+};
+
+export const processPendingSync = async (batchSize = 10) => {
+  console.log('⚡ Processing pending sync operations...');
+  return await processStripeQueue(batchSize);
+};
+
+export const debugProducts = async () => {
+  console.log('🐛 Getting queue stats for debugging...');
+  return await getQueueStats();
 };
