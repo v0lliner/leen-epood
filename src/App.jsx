@@ -6,10 +6,9 @@ import stripePromise from './utils/stripe';
 import { CartProvider } from './context/CartContext'; 
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import Navigation from './components/Layout/Navigation';
+import Layout from './components/Layout/Layout';
 import Login from './pages/Auth/Login';
 import Signup from './pages/Auth/Signup';
-import Footer from './components/Layout/Footer';
 import ProtectedRoute from './components/Admin/ProtectedRoute';
 import CookieConsentBanner from './components/UI/CookieConsentBanner';
 import Home from './pages/Home';
@@ -62,133 +61,97 @@ function App() {
                 <Routes>
                   {/* Public routes */}
                   <Route path="/" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Home />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/minust" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <About />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/minu-lemmikud" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Portfolio />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   {/* Keep old routes for backward compatibility */}
                   <Route path="/parimad-palad" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Portfolio />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/tehtud-tood" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Portfolio />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/portfoolio" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Portfolio />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/epood" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Shop />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/epood/toode/:slug" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <ProductDetail />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/checkout" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Elements stripe={stripePromise}>
                         <Checkout />
                       </Elements>
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/checkout/success" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <CheckoutSuccess />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/checkout/cancel" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <CheckoutCancel />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/login" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Login />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/signup" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Signup />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/makse/katkestatud" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Checkout />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/kontakt" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Contact />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/kkk" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <FAQ />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/muugitingimused" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Muugitingimused />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
                   <Route path="/privaatsuspoliitika" element={
-                    <div className="app">
-                      <Navigation />
+                    <Layout>
                       <Privaatsuspoliitika />
-                      <Footer />
-                    </div>
+                    </Layout>
                   } />
 
                 {/* Admin routes */}
@@ -303,20 +266,16 @@ function App() {
 
                 {/* 404 route */}
                 <Route path="*" element={
-                  <div className="app">
-                    <Navigation />
+                  <Layout>
                     <NotFound />
-                    <Footer />
-                  </div>
+                  </Layout>
                 } />
                 <Route path="/makse/:status" element={
-                  <div className="app">
-                    <Navigation />
+                  <Layout>
                     <Elements stripe={stripePromise}>
                       <Checkout />
                     </Elements>
-                    <Footer />
-                  </div>
+                  </Layout>
                 } />
                 </Routes>
               </Suspense>
