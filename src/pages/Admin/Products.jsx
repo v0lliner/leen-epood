@@ -149,13 +149,6 @@ const AdminProducts = () => {
               <div key={product.id} className="product-card">
                 <div className="product-image">
                   <img src={product.image} alt={product.title} />
-                  <div className="product-status">
-                    {product.available ? (
-                      <span className="status-available">✅ Saadaval</span>
-                    ) : (
-                      <span className="status-sold">❌ Müüdud</span>
-                    )}
-                  </div>
                 </div>
                 <div className="product-info">
                   <div className="product-meta">
@@ -356,30 +349,6 @@ const AdminProducts = () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
-        }
-
-        .product-status {
-          position: absolute;
-          top: 8px;
-          right: 8px;
-        }
-
-        .status-available {
-          background: rgba(34, 197, 94, 0.9);
-          color: white;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 0.8rem;
-          font-weight: 500;
-        }
-
-        .status-sold {
-          background: rgba(239, 68, 68, 0.9);
-          color: white;
-          padding: 4px 8px;
-          border-radius: 4px;
-          font-size: 0.8rem;
-          font-weight: 500;
         }
 
         .product-info {

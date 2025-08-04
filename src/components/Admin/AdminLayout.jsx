@@ -64,12 +64,6 @@ const AdminLayout = ({ children }) => {
       href: '/admin/settings/payment',
       icon: '⚙️',
       active: location.pathname.startsWith('/admin/settings/')
-    },
-    {
-      name: 'Stripe Sync',
-      href: '/admin/stripe-sync',
-      icon: '🔄',
-      active: location.pathname.startsWith('/admin/stripe-sync')
     }
   ]
 

@@ -40,7 +40,6 @@ const HomepageContent = lazy(() => import('./pages/Admin/HomepageContent'));
 const TehtudToodForm = lazy(() => import('./pages/Admin/TehtudToodForm'));
 const ProductForm = lazy(() => import('./pages/Admin/ProductForm'));
 const PaymentSettings = lazy(() => import('./pages/Admin/PaymentSettings'));
-const StripeSync = lazy(() => import('./pages/Admin/StripeSync'));
 import './styles/globals.css';
 import './i18n';
 
@@ -256,11 +255,6 @@ function App() {
                 <Route path="/admin/settings/payment" element={
                   <ProtectedRoute>
                     <PaymentSettings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/stripe-sync" element={
-                  <ProtectedRoute>
-                    <StripeSync />
                   </ProtectedRoute>
                 } />
 
