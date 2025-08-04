@@ -41,33 +41,47 @@ const AdminDashboard = () => {
     setError('')
 
     try {
-      console.log('🔄 Dashboard: Loading data...')
+      if (import.meta.env.DEV) {
+        console.log('🔄 Dashboard: Loading data...')
+      }
 
       // Load order statistics
       try {
         const orderStatsResult = await orderService.getOrderStats()
         if (orderStatsResult.error) {
-          console.error('❌ Dashboard: Order stats error:', orderStatsResult.error)
+          if (import.meta.env.DEV) {
+            console.error('❌ Dashboard: Order stats error:', orderStatsResult.error)
+          }
         } else {
           setOrderStats(orderStatsResult.data)
-          console.log('📊 Dashboard: Order stats loaded:', orderStatsResult.data)
+          if (import.meta.env.DEV) {
+            console.log('📊 Dashboard: Order stats loaded:', orderStatsResult.data)
+          }
         }
       } catch (orderError) {
-        console.error('Error loading order stats:', orderError)
+        if (import.meta.env.DEV) {
+          console.error('Error loading order stats:', orderError)
+        }
       }
       
       // Load products first
       const productsResult = await productService.getProducts()
-      console.log('📦 Dashboard: Products result:', productsResult)
+      if (import.meta.env.DEV) {
+        console.log('📦 Dashboard: Products result:', productsResult)
+      }
       
       if (productsResult.error) {
-        console.error('❌ Dashboard: Products error:', productsResult.error)
+        if (import.meta.env.DEV) {
+          console.error('❌ Dashboard: Products error:', productsResult.error)
+        }
         setError(`Toodete laadimine ebaõnnestus: ${productsResult.error.message}`)
         return
       }
 
       const products = productsResult.data || []
-      console.log('📦 Dashboard: Products count:', products.length)
+      if (import.meta.env.DEV) {
+        console.log('📦 Dashboard: Products count:', products.length)
+      }
 
       // Load other data in parallel
       const [
@@ -78,10 +92,12 @@ const AdminDashboard = () => {
         faqService.getFAQItems('et').catch(err => ({ error: err, data: [] }))
       ])
 
-      console.log('📊 Dashboard: All data loaded:', {
-        portfolio: portfolioResult,
-        faq: faqResult
-      })
+      if (import.meta.env.DEV) {
+        console.log('📊 Dashboard: All data loaded:', {
+          portfolio: portfolioResult,
+          faq: faqResult
+        })
+      }
 
       // Statistics from real data
       const portfolioItems = portfolioResult.data || []
@@ -94,13 +110,17 @@ const AdminDashboard = () => {
         faqItems: faqItems.length
       }
 
-      console.log('📈 Dashboard: Calculated stats:', newStats)
+      if (import.meta.env.DEV) {
+        console.log('📈 Dashboard: Calculated stats:', newStats)
+      }
       setStats(newStats)
 
     } catch (err) {
-      console.error('❌ Dashboard: Error loading data:', err)
+      if (import.meta.env.DEV) {
+        console.error('❌ Dashboard: Error loading data:', err)
+      }
       setError(`Andmete laadimine ebaõnnestus: ${err.message}`)
-    } finally {
+    }finally {
       setLoading(false)
     }
   }

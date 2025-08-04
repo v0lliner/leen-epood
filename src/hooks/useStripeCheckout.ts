@@ -74,7 +74,9 @@ export const useStripeCheckout = () => {
       // Redirect to Stripe Checkout
       window.location.href = url;
     } catch (err: any) {
-      console.error('Checkout error:', err);
+      if (import.meta.env.DEV) {
+        console.error('Checkout error:', err);
+      }
       setError(err.message || 'An error occurred during checkout');
       setLoading(false);
     }

@@ -36,13 +36,17 @@ const Account = () => {
           .maybeSingle();
 
         if (error) {
-          console.error('Error fetching subscription:', error);
+          if (import.meta.env.DEV) {
+            console.error('Error fetching subscription:', error);
+          }
           setError('Failed to load subscription data');
         } else {
           setSubscription(data);
         }
       } catch (err) {
-        console.error('Error:', err);
+        if (import.meta.env.DEV) {
+          console.error('Error:', err);
+        }
         setError('An unexpected error occurred');
       } finally {
         setLoading(false);

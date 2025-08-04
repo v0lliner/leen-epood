@@ -86,14 +86,18 @@ const Portfolio = () => {
       const { data, error } = await portfolioItemService.getPortfolioItems();
       
       if (error) {
-        console.warn('Failed to load portfolio items from database, using fallback data:', error);
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load portfolio items from database, using fallback data:', error);
+        }
         setPortfolioItems(fallbackItems);
       } else {
         // If no items in database, use fallback data
         setPortfolioItems(data.length > 0 ? data : fallbackItems);
       }
     } catch (err) {
-      console.warn('Error loading portfolio items, using fallback data:', err);
+      if (import.meta.env.DEV) {
+        console.warn('Error loading portfolio items, using fallback data:', err);
+      }
       setPortfolioItems(fallbackItems);
     } finally {
       setLoading(false);

@@ -66,14 +66,18 @@ const FAQ = () => {
       const { data, error } = await faqService.getFAQItems(i18n.language);
       
       if (error) {
-        console.warn('Failed to load FAQ items from database, using fallback data:', error);
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load FAQ items from database, using fallback data:', error);
+        }
         setFaqItems(fallbackItems);
       } else {
         // If no items in database, use fallback data
         setFaqItems(data.length > 0 ? data : fallbackItems);
       }
     } catch (err) {
-      console.warn('Error loading FAQ items, using fallback data:', err);
+      if (import.meta.env.DEV) {
+        console.warn('Error loading FAQ items, using fallback data:', err);
+      }
       setFaqItems(fallbackItems);
     } finally {
       setLoading(false);

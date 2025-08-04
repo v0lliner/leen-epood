@@ -33,7 +33,9 @@ const Contact = () => {
     
     try {
       // Simulate form submission success
-      console.log('Form data would be sent:', formData);
+      if (import.meta.env.DEV) {
+        console.log('Form data would be sent:', formData);
+      }
       
       // In a real implementation, you would integrate with a form submission service
       // like Formspree, Netlify Forms, or a custom serverless function
@@ -44,9 +46,11 @@ const Contact = () => {
         setFormData({ name: '', email: '', phone: '', message: '' });
       }, 1000);
     } catch (error) {
-      console.error('Form submission error:', error);
+      if (import.meta.env.DEV) {
+        console.error('Form submission error:', error);
+      }
       setSubmitError('Võrguühenduse viga. Palun proovige hiljem uuesti.');
-    } finally {
+    }finally {
       setIsSubmitting(false);
     }
   };

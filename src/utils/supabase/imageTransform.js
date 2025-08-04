@@ -66,7 +66,9 @@ export const transformImage = (imageUrl, options = {}) => {
     
     return url.toString();
   } catch (error) {
-    console.error('Error transforming image URL:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error transforming image URL:', error);
+    }
     return imageUrl; // Return original URL if transformation fails
   }
 };

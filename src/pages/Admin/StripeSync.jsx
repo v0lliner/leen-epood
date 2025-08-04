@@ -32,7 +32,9 @@ const StripeSync = () => {
       setQueueStats(queueData);
       setSyncStatus(statusData);
     } catch (err) {
-      console.error('Error loading data:', err);
+      if (import.meta.env.DEV) {
+        console.error('Error loading data:', err);
+      }
       setError('Failed to load sync data');
     }
   };

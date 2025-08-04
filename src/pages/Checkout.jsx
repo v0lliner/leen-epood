@@ -242,7 +242,9 @@ const Checkout = () => {
         setPaymentStatus('success');
       }
     } catch (err) {
-      console.error('Payment processing error:', err);
+      if (import.meta.env.DEV) {
+        console.error('Payment processing error:', err);
+      }
       setError(err.message || t('checkout.error.session_failed'));
       
       // Update order status if we have an order ID
@@ -253,7 +255,9 @@ const Checkout = () => {
             status: 'CANCELLED'
           });
         } catch (updateErr) {
-          console.error('Failed to update order status:', updateErr);
+          if (import.meta.env.DEV) {
+            console.error('Failed to update order status:', updateErr);
+          }
         }
       }
     } finally {

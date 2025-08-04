@@ -24,13 +24,17 @@ const ProductFilters = ({
       const { data, error } = await categoryService.getCategories();
       
       if (error) {
-        console.warn('Failed to load categories:', error);
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load categories:', error);
+        }
         setCategories([]);
       } else {
         setCategories(data);
       }
     } catch (err) {
-      console.warn('Error loading categories:', err);
+      if (import.meta.env.DEV) {
+        console.warn('Error loading categories:', err);
+      }
       setCategories([]);
     } finally {
       setCategoriesLoading(false);

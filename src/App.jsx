@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import { lazy, Suspense } from 'react';
 import { Elements } from '@stripe/react-stripe-js';
@@ -6,17 +6,13 @@ import stripePromise from './utils/stripe';
 import { CartProvider } from './context/CartContext'; 
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import Navigation from './components/Layout/Navigation';
-import Login from './pages/Auth/Login';
-import Signup from './pages/Auth/Signup';
-import Footer from './components/Layout/Footer';
-import ProtectedRoute from './components/Admin/ProtectedRoute';
+import MainLayout from './components/Layout/MainLayout';
+import AdminLayout from './components/Layout/AdminLayout';
+import ErrorBoundary from './components/ErrorBoundary';
 import CookieConsentBanner from './components/UI/CookieConsentBanner';
-import Home from './pages/Home';
-import CheckoutSuccess from './pages/Checkout/Success';
-import CheckoutCancel from './pages/Checkout/Cancel';
 
-// Lazy load pages
+// Lazy load all pages for consistent code splitting
+const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
 const Portfolio = lazy(() => import('./pages/Portfolio'));
 const Shop = lazy(() => import('./pages/Shop'));
@@ -27,6 +23,10 @@ const FAQ = lazy(() => import('./pages/FAQ'));
 const Muugitingimused = lazy(() => import('./pages/Muugitingimused'));
 const Privaatsuspoliitika = lazy(() => import('./pages/Privaatsuspoliitika'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Login = lazy(() => import('./pages/Auth/Login'));
+const Signup = lazy(() => import('./pages/Auth/Signup'));
+const CheckoutSuccess = lazy(() => import('./pages/Checkout/Success'));
+const CheckoutCancel = lazy(() => import('./pages/Checkout/Cancel'));
 
 // Lazy load admin pages
 const AdminLogin = lazy(() => import('./pages/Admin/Login'));
@@ -53,273 +53,89 @@ function App() {
           <CartProvider>
             <Router>
               <CookieConsentBanner />
-              <Suspense fallback={
-                <div className="loading-full-page">
-                  <div className="loading-spinner"></div>
-                  <p>Laadin...</p>
-                </div>
-              }>
-                <Routes>
+              <ErrorBoundary>
+                <Suspense fallback={
+                  <div className="loading-full-page">
+                    <div className="loading-spinner"></div>
+                    <p>Loading...</p>
+                  </div>
+                }>
+                  <Routes>
                   {/* Public routes */}
-                  <Route path="/" element={
-                    <div className="app">
-                      <Navigation />
-                      <Home />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/minust" element={
-                    <div className="app">
-                      <Navigation />
-                      <About />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/minu-lemmikud" element={
-                    <div className="app">
-                      <Navigation />
-                      <Portfolio />
-                      <Footer />
-                    </div>
-                  } />
+                  <Route path="/" element={<MainLayout><Home /></MainLayout>} />
+                  <Route path="/minust" element={<MainLayout><About /></MainLayout>} />
+                  <Route path="/minu-lemmikud" element={<MainLayout><Portfolio /></MainLayout>} />
+                  
                   {/* Keep old routes for backward compatibility */}
-                  <Route path="/parimad-palad" element={
-                    <div className="app">
-                      <Navigation />
-                      <Portfolio />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/tehtud-tood" element={
-                    <div className="app">
-                      <Navigation />
-                      <Portfolio />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/portfoolio" element={
-                    <div className="app">
-                      <Navigation />
-                      <Portfolio />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/epood" element={
-                    <div className="app">
-                      <Navigation />
-                      <Shop />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/epood/toode/:slug" element={
-                    <div className="app">
-                      <Navigation />
-                      <ProductDetail />
-                      <Footer />
-                    </div>
-                  } />
+                  <Route path="/parimad-palad" element={<MainLayout><Portfolio /></MainLayout>} />
+                  <Route path="/tehtud-tood" element={<MainLayout><Portfolio /></MainLayout>} />
+                  <Route path="/portfoolio" element={<MainLayout><Portfolio /></MainLayout>} />
+                  
+                  <Route path="/epood" element={<MainLayout><Shop /></MainLayout>} />
+                  <Route path="/epood/toode/:slug" element={<MainLayout><ProductDetail /></MainLayout>} />
+                  
                   <Route path="/checkout" element={
-                    <div className="app">
-                      <Navigation />
+                    <MainLayout>
                       <Elements stripe={stripePromise}>
                         <Checkout />
                       </Elements>
-                      <Footer />
-                    </div>
+                    </MainLayout>
                   } />
-                  <Route path="/checkout/success" element={
-                    <div className="app">
-                      <Navigation />
-                      <CheckoutSuccess />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/checkout/cancel" element={
-                    <div className="app">
-                      <Navigation />
-                      <CheckoutCancel />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/login" element={
-                    <div className="app">
-                      <Navigation />
-                      <Login />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/signup" element={
-                    <div className="app">
-                      <Navigation />
-                      <Signup />
-                      <Footer />
-                    </div>
-                  } />
+                  <Route path="/checkout/success" element={<MainLayout><CheckoutSuccess /></MainLayout>} />
+                  <Route path="/checkout/cancel" element={<MainLayout><CheckoutCancel /></MainLayout>} />
                   <Route path="/makse/katkestatud" element={
-                    <div className="app">
-                      <Navigation />
-                      <Checkout />
-                      <Footer />
-                    </div>
+                    <MainLayout>
+                      <Elements stripe={stripePromise}>
+                        <Checkout />
+                      </Elements>
+                    </MainLayout>
                   } />
-                  <Route path="/kontakt" element={
-                    <div className="app">
-                      <Navigation />
-                      <Contact />
-                      <Footer />
-                    </div>
+                  <Route path="/makse/:status" element={
+                    <MainLayout>
+                      <Elements stripe={stripePromise}>
+                        <Checkout />
+                      </Elements>
+                    </MainLayout>
                   } />
-                  <Route path="/kkk" element={
-                    <div className="app">
-                      <Navigation />
-                      <FAQ />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/muugitingimused" element={
-                    <div className="app">
-                      <Navigation />
-                      <Muugitingimused />
-                      <Footer />
-                    </div>
-                  } />
-                  <Route path="/privaatsuspoliitika" element={
-                    <div className="app">
-                      <Navigation />
-                      <Privaatsuspoliitika />
-                      <Footer />
-                    </div>
-                  } />
+                  
+                  <Route path="/login" element={<MainLayout><Login /></MainLayout>} />
+                  <Route path="/signup" element={<MainLayout><Signup /></MainLayout>} />
+                  <Route path="/kontakt" element={<MainLayout><Contact /></MainLayout>} />
+                  <Route path="/kkk" element={<MainLayout><FAQ /></MainLayout>} />
+                  <Route path="/muugitingimused" element={<MainLayout><Muugitingimused /></MainLayout>} />
+                  <Route path="/privaatsuspoliitika" element={<MainLayout><Privaatsuspoliitika /></MainLayout>} />
 
-                {/* Admin routes */}
-                <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin" element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/dashboard" element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/products" element={
-                  <ProtectedRoute>
-                    <AdminProducts />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/categories" element={
-                  <ProtectedRoute>
-                    <AdminCategories />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/about" element={
-                  <ProtectedRoute>
-                    <AdminAboutPage />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/faq" element={
-                  <ProtectedRoute>
-                    <AdminFAQ />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/homepage" element={
-                  <ProtectedRoute>
-                    <HomepageContent />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/orders" element={
-                  <ProtectedRoute>
-                    <AdminOrders />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/minu-lemmikud" element={
-                  <ProtectedRoute>
-                    <AdminTehtudTood />
-                  </ProtectedRoute>
-                } />
-                {/* Keep old admin routes for backward compatibility */}
-                <Route path="/admin/parimad-palad" element={
-                  <ProtectedRoute>
-                    <AdminTehtudTood />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/tehtud-tood" element={
-                  <ProtectedRoute>
-                    <AdminTehtudTood />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/minu-lemmikud/new" element={
-                  <ProtectedRoute>
-                    <TehtudToodForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/minu-lemmikud/:id/edit" element={
-                  <ProtectedRoute>
-                    <TehtudToodForm />
-                  </ProtectedRoute>
-                } />
-                {/* Keep old admin routes for backward compatibility */}
-                <Route path="/admin/parimad-palad/new" element={
-                  <ProtectedRoute>
-                    <TehtudToodForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/parimad-palad/:id/edit" element={
-                  <ProtectedRoute>
-                    <TehtudToodForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/tehtud-tood/new" element={
-                  <ProtectedRoute>
-                    <TehtudToodForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/tehtud-tood/:id/edit" element={
-                  <ProtectedRoute>
-                    <TehtudToodForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/products/new" element={
-                  <ProtectedRoute>
-                    <ProductForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/products/:id/edit" element={
-                  <ProtectedRoute>
-                    <ProductForm />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/settings/payment" element={
-                  <ProtectedRoute>
-                    <PaymentSettings />
-                  </ProtectedRoute>
-                } />
-                <Route path="/admin/stripe-sync" element={
-                  <ProtectedRoute>
-                    <StripeSync />
-                  </ProtectedRoute>
-                } />
+                  {/* Admin routes */}
+                  <Route path="/admin/login" element={<AdminLogin />} />
+                  <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                  <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
+                  <Route path="/admin/products" element={<AdminLayout><AdminProducts /></AdminLayout>} />
+                  <Route path="/admin/categories" element={<AdminLayout><AdminCategories /></AdminLayout>} />
+                  <Route path="/admin/about" element={<AdminLayout><AdminAboutPage /></AdminLayout>} />
+                  <Route path="/admin/faq" element={<AdminLayout><AdminFAQ /></AdminLayout>} />
+                  <Route path="/admin/homepage" element={<AdminLayout><HomepageContent /></AdminLayout>} />
+                  <Route path="/admin/orders" element={<AdminLayout><AdminOrders /></AdminLayout>} />
+                  <Route path="/admin/minu-lemmikud" element={<AdminLayout><AdminTehtudTood /></AdminLayout>} />
+                  
+                  {/* Keep old admin routes for backward compatibility */}
+                  <Route path="/admin/parimad-palad" element={<AdminLayout><AdminTehtudTood /></AdminLayout>} />
+                  <Route path="/admin/tehtud-tood" element={<AdminLayout><AdminTehtudTood /></AdminLayout>} />
+                  <Route path="/admin/minu-lemmikud/new" element={<AdminLayout><TehtudToodForm /></AdminLayout>} />
+                  <Route path="/admin/minu-lemmikud/:id/edit" element={<AdminLayout><TehtudToodForm /></AdminLayout>} />
+                  <Route path="/admin/parimad-palad/new" element={<AdminLayout><TehtudToodForm /></AdminLayout>} />
+                  <Route path="/admin/parimad-palad/:id/edit" element={<AdminLayout><TehtudToodForm /></AdminLayout>} />
+                  <Route path="/admin/tehtud-tood/new" element={<AdminLayout><TehtudToodForm /></AdminLayout>} />
+                  <Route path="/admin/tehtud-tood/:id/edit" element={<AdminLayout><TehtudToodForm /></AdminLayout>} />
+                  <Route path="/admin/products/new" element={<AdminLayout><ProductForm /></AdminLayout>} />
+                  <Route path="/admin/products/:id/edit" element={<AdminLayout><ProductForm /></AdminLayout>} />
+                  <Route path="/admin/settings/payment" element={<AdminLayout><PaymentSettings /></AdminLayout>} />
+                  <Route path="/admin/stripe-sync" element={<AdminLayout><StripeSync /></AdminLayout>} />
 
-                {/* 404 route */}
-                <Route path="*" element={
-                  <div className="app">
-                    <Navigation />
-                    <NotFound />
-                    <Footer />
-                  </div>
-                } />
-                <Route path="/makse/:status" element={
-                  <div className="app">
-                    <Navigation />
-                    <Elements stripe={stripePromise}>
-                      <Checkout />
-                    </Elements>
-                    <Footer />
-                  </div>
-                } />
+                  {/* 404 route */}
+                  <Route path="*" element={<MainLayout><NotFound /></MainLayout>} />
                 </Routes>
-              </Suspense>
+                </Suspense>
+              </ErrorBoundary>
             </Router>
           </CartProvider>
         </AuthProvider>

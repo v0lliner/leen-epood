@@ -4,7 +4,9 @@ export const orderService = {
   // Get order statistics from the admin_order_stats view
   async getOrderStats() {
     try {
-      console.log('📊 OrderService: Fetching order stats...')
+      if (import.meta.env.DEV) {
+        console.log('📊 OrderService: Fetching order stats...')
+      }
       
       const { data, error } = await supabase
         .from('admin_order_stats')
@@ -12,7 +14,9 @@ export const orderService = {
         .single()
 
       if (error) {
-        console.error('❌ OrderService: Error fetching order stats:', error)
+        if (import.meta.env.DEV) {
+          console.error('❌ OrderService: Error fetching order stats:', error)
+        }
         return { 
           error, 
           data: {
@@ -30,10 +34,14 @@ export const orderService = {
         }
       }
 
-      console.log('✅ OrderService: Order stats fetched successfully:', data)
+      if (import.meta.env.DEV) {
+        console.log('✅ OrderService: Order stats fetched successfully:', data)
+      }
       return { data, error: null }
     } catch (err) {
-      console.error('❌ OrderService: Exception fetching order stats:', err)
+      if (import.meta.env.DEV) {
+        console.error('❌ OrderService: Exception fetching order stats:', err)
+      }
       return { 
         error: err, 
         data: {
@@ -55,7 +63,9 @@ export const orderService = {
   // Get all orders for admin view
   async getOrders() {
     try {
-      console.log('📋 OrderService: Fetching orders...')
+      if (import.meta.env.DEV) {
+        console.log('📋 OrderService: Fetching orders...')
+      }
       
       const { data, error } = await supabase
         .from('admin_orders_view')
@@ -63,14 +73,20 @@ export const orderService = {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('❌ OrderService: Error fetching orders:', error)
+        if (import.meta.env.DEV) {
+          console.error('❌ OrderService: Error fetching orders:', error)
+        }
         return { error, data: [] }
       }
 
-      console.log('✅ OrderService: Orders fetched successfully:', data?.length || 0, 'orders')
+      if (import.meta.env.DEV) {
+        console.log('✅ OrderService: Orders fetched successfully:', data?.length || 0, 'orders')
+      }
       return { data: data || [], error: null }
     } catch (err) {
-      console.error('❌ OrderService: Exception fetching orders:', err)
+      if (import.meta.env.DEV) {
+        console.error('❌ OrderService: Exception fetching orders:', err)
+      }
       return { error: err, data: [] }
     }
   }

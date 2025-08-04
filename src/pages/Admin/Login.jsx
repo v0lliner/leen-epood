@@ -47,7 +47,9 @@ const AdminLogin = () => {
         navigate('/admin/dashboard', { replace: true })
       }
     } catch (err) {
-      console.error('Login error:', err)
+      if (import.meta.env.DEV) {
+        console.error('Login error:', err)
+      }
       setError(t('admin.login.error_network'))
     } finally {
       setIsLoading(false)

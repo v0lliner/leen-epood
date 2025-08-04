@@ -11,7 +11,9 @@ export const productImageService = {
    */
   async getProductImages(productId) {
     try {
-      console.log('Getting product images for product ID:', productId)
+      if (import.meta.env.DEV) {
+        console.log('Getting product images for product ID:', productId)
+      }
       
       const { data, error } = await supabase
         .from('product_images')
@@ -19,11 +21,15 @@ export const productImageService = {
         .eq('product_id', productId)
         .order('display_order', { ascending: true })
       
-      console.log('Product images query result:', { data, error })
+      if (import.meta.env.DEV) {
+        console.log('Product images query result:', { data, error })
+      }
       
       return { data: data || [], error }
     } catch (error) {
-      console.error('Error in getProductImages:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error in getProductImages:', error)
+      }
       return { data: [], error: { message: 'Network error occurred' } }
     }
   },

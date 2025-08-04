@@ -31,7 +31,9 @@ export const queueAllProducts = async (forceAll = false) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Queue all products error:', error);
+    if (import.meta.env.DEV) {
+      console.error('Queue all products error:', error);
+    }
     throw error;
   }
 };
@@ -62,7 +64,9 @@ export const processStripeQueue = async (batchSize = 10) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Process queue error:', error);
+    if (import.meta.env.DEV) {
+      console.error('Process queue error:', error);
+    }
     throw error;
   }
 };
@@ -91,7 +95,9 @@ export const getQueueStats = async () => {
 
     return await response.json();
   } catch (error) {
-    console.error('Get queue stats error:', error);
+    if (import.meta.env.DEV) {
+      console.error('Get queue stats error:', error);
+    }
     throw error;
   }
 };
@@ -120,7 +126,9 @@ export const cleanupQueue = async () => {
 
     return await response.json();
   } catch (error) {
-    console.error('Cleanup queue error:', error);
+    if (import.meta.env.DEV) {
+      console.error('Cleanup queue error:', error);
+    }
     throw error;
   }
 };
@@ -170,14 +178,18 @@ export const getSyncStatus = async () => {
       failed: failedProducts + queueFailed,
     };
   } catch (error) {
-    console.error('Error getting sync status:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error getting sync status:', error);
+    }
     throw error;
   }
 };
 
 // Legacy functions for backward compatibility
 export const migrateAllProducts = async (batchSize = 10) => {
-  console.log('🔄 Using new queue-based migration...');
+  if (import.meta.env.DEV) {
+    console.log('🔄 Using new queue-based migration...');
+  }
   
   // First queue all products
   const queueResult = await queueAllProducts();
@@ -199,7 +211,9 @@ export const migrateAllProducts = async (batchSize = 10) => {
 };
 
 export const syncSingleProduct = async (productId) => {
-  console.log('🎯 Queueing single product for sync...');
+  if (import.meta.env.DEV) {
+    console.log('🎯 Queueing single product for sync...');
+  }
   
   try {
     const { createClient } = await import('@supabase/supabase-js');
@@ -230,17 +244,23 @@ export const syncSingleProduct = async (productId) => {
       message: 'Product queued and processed successfully'
     };
   } catch (error) {
-    console.error('Sync single product error:', error);
+    if (import.meta.env.DEV) {
+      console.error('Sync single product error:', error);
+    }
     throw error;
   }
 };
 
 export const processPendingSync = async (batchSize = 10) => {
-  console.log('⚡ Processing pending sync operations...');
+  if (import.meta.env.DEV) {
+    console.log('⚡ Processing pending sync operations...');
+  }
   return await processStripeQueue(batchSize);
 };
 
 export const debugProducts = async () => {
-  console.log('🐛 Getting queue stats for debugging...');
+  if (import.meta.env.DEV) {
+    console.log('🐛 Getting queue stats for debugging...');
+  }
   return await getQueueStats();
 };

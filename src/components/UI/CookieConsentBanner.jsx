@@ -34,7 +34,9 @@ const CookieConsentBanner = () => {
           }));
         }
       } catch (error) {
-        console.error('Error parsing saved cookie preferences:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error parsing saved cookie preferences:', error);
+        }
       }
     }
   }, []);

@@ -36,10 +36,14 @@ const ProductCard = ({ product, priority = false }) => {
 
   // Fallback image in case the optimized one fails to load
   const handleImageError = (e) => {
-    console.warn('Image failed to load:', product.image);
+    if (import.meta.env.DEV) {
+      console.warn('Image failed to load:', product.image);
+    }
     // Try loading the original image without transformations
     if (e.target.src !== product.image && product.image) {
-      console.log('Falling back to original image:', product.image);
+      if (import.meta.env.DEV) {
+        console.log('Falling back to original image:', product.image);
+      }
       e.target.src = product.image;
     }
   };

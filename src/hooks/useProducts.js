@@ -29,7 +29,9 @@ export const useProducts = () => {
       ])
       
       if (productsResult.error) {
-        console.warn('Failed to load products from Supabase, using fallback data:', productsResult.error)
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load products from Supabase, using fallback data:', productsResult.error)
+        }
         setProducts(fallbackProducts)
       } else {
         // If no products in database, use fallback data
@@ -37,16 +39,20 @@ export const useProducts = () => {
       }
 
       if (categoriesResult.error) {
-        console.warn('Failed to load categories from Supabase:', categoriesResult.error)
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load categories from Supabase:', categoriesResult.error)
+        }
         setCategories([])
       } else {
         setCategories(categoriesResult.data)
       }
     } catch (err) {
-      console.warn('Error loading data, using fallback:', err)
+      if (import.meta.env.DEV) {
+        console.warn('Error loading data, using fallback:', err)
+      }
       setProducts(fallbackProducts)
       setCategories([])
-    } finally {
+    }finally {
       setLoading(false)
     }
   }

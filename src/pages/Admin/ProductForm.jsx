@@ -50,7 +50,9 @@ const ProductForm = () => {
     const { data, error } = await categoryService.getCategories()
     
     if (error) {
-      console.warn('Failed to load categories:', error)
+      if (import.meta.env.DEV) {
+        console.warn('Failed to load categories:', error)
+      }
       setCategories([])
     } else {
       setCategories(data)
@@ -86,7 +88,6 @@ const ProductForm = () => {
         })
 
         // Load product images with retry mechanism
-        console.log('Loading images for product:', id)
         let retryCount = 0
         const maxRetries = 3
         
@@ -94,7 +95,9 @@ const ProductForm = () => {
           const { data: imagesData, error: imagesError } = await productImageService.getProductImages(id)
           
           if (imagesError) {
-            console.warn(`Failed to load product images (attempt ${retryCount + 1}):`, imagesError)
+            if (import.meta.env.DEV) {
+              console.warn(`Failed to load product images (attempt ${retryCount + 1}):`, imagesError)
+            }
             retryCount++
             if (retryCount < maxRetries) {
               await new Promise(resolve => setTimeout(resolve, 1000)) // Wait 1 second before retry
@@ -102,14 +105,15 @@ const ProductForm = () => {
               setImages([])
             }
           } else {
-            console.log('Loaded product images:', imagesData)
             setImages(imagesData || [])
             break
           }
         }
       }
     } catch (err) {
-      console.error('Error loading product:', err)
+      if (import.meta.env.DEV) {
+        console.error('Error loading product:', err)
+      }
       setError('Andmete laadimine ebaõnnestus')
     } finally {
       setLoading(false)
@@ -257,19 +261,14 @@ const ProductForm = () => {
         productData.id = id
       }
 
-      console.log('Saving product with data:', productData)
-      console.log('Current images:', images)
 
       const { data, error } = await productService.upsertProduct(productData)
       
       if (error) {
         setError(error.message)
       } else {
-        console.log('Product saved successfully:', data)
-        
         // If this is a new product and we have temporary images, we need to associate them
         if (!isEdit && data?.id && images.some(img => img.id.startsWith('temp-'))) {
-          console.log('Associating temporary images with new product...')
           try {
             // Re-upload images for the new product
             const tempImages = images.filter(img => img.id.startsWith('temp-'))
@@ -283,9 +282,10 @@ const ProductForm = () => {
                 tempImage.display_order
               )
             }
-            console.log('Successfully associated all images with new product')
           } catch (imageError) {
-            console.error('Error associating images with new product:', imageError)
+            if (import.meta.env.DEV) {
+              console.error('Error associating images with new product:', imageError)
+            }
           }
         }
         
@@ -295,16 +295,17 @@ const ProductForm = () => {
         }, 1500)
       }
     } catch (err) {
-      console.error('Error saving product:', err)
+      if (import.meta.env.DEV) {
+        console.error('Error saving product:', err)
+      }
       setError(t('admin.products.form.network_error'))
     } finally {
       setLoading(false)
     }
   }
 
-  // Handle images change with logging and validation
+  // Handle images change with validation
   const handleImagesChange = (newImages) => {
-    console.log('Images changed in ProductForm:', newImages)
     setImages(newImages)
     
     // Clear error if we now have images

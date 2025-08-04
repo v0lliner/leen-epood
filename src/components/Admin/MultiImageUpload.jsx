@@ -30,42 +30,35 @@ const MultiImageUpload = ({
 
     setUploading(true)
     setCompressionInfo('Piltide töötlemine ja kompressioon...')
-    console.log('Starting file upload process for', fileArray.length, 'files')
 
     try {
       const uploadPromises = fileArray.map(async (file, index) => {
-        console.log(`Processing file ${index + 1}:`, file.name)
         
         // Validate file
         const validation = storageService.validateImage(file)
         if (!validation.valid) {
-          console.error('File validation failed:', validation.error)
+          if (import.meta.env.DEV) {
+            console.error('File validation failed:', validation.error)
+          }
           throw new Error(validation.error)
         }
 
         const originalSize = (file.size / 1024).toFixed(2)
-        console.log('Uploading file to storage...')
         
         const { data, error } = await storageService.uploadImage(file, 'products')
         if (error) {
-          console.error('Storage upload failed:', error)
+          if (import.meta.env.DEV) {
+            console.error('Storage upload failed:', error)
+          }
           throw new Error(error.message)
         }
 
-        console.log('File uploaded and compressed successfully:', data)
 
         // Add to database if productId exists
         if (productId) {
           const isPrimary = images.length === 0 && index === 0 // First image is primary
           const displayOrder = images.length + index
           
-          console.log('Adding image to database:', {
-            productId,
-            url: data.url,
-            path: data.path,
-            isPrimary,
-            displayOrder
-          })
           
           const { data: imageData, error: dbError } = await productImageService.addProductImage(
             productId,
@@ -76,17 +69,20 @@ const MultiImageUpload = ({
           )
           
           if (dbError) {
-            console.error('Database error when adding image:', dbError)
+            if (import.meta.env.DEV) {
+              console.error('Database error when adding image:', dbError)
+            }
             // Try to clean up uploaded file
             try {
               await storageService.deleteImage(data.path)
             } catch (cleanupError) {
-              console.error('Failed to cleanup uploaded file:', cleanupError)
+              if (import.meta.env.DEV) {
+                console.error('Failed to cleanup uploaded file:', cleanupError)
+              }
             }
             throw new Error(dbError.message)
           }
           
-          console.log('Successfully added image to database:', imageData)
           return imageData
         } else {
           // Return image data for form preview
@@ -97,14 +93,11 @@ const MultiImageUpload = ({
             is_primary: images.length === 0 && index === 0,
             display_order: images.length + index
           }
-          console.log('Created temporary image object:', tempImage)
           return tempImage
         }
       })
 
-      console.log('Waiting for all uploads to complete...')
       const newImages = await Promise.all(uploadPromises)
-      console.log('All images uploaded successfully:', newImages)
       
       // Show compression success info
       setCompressionInfo(`✅ ${fileArray.length} pilti optimeeritud ja üles laaditud`)
@@ -112,17 +105,14 @@ const MultiImageUpload = ({
       
       // Update the images state
       const updatedImages = [...images, ...newImages]
-      console.log('Updated images array:', updatedImages)
       onImagesChange(updatedImages)
       
       // Force reload of images if we have a productId to ensure consistency
       if (productId) {
-        console.log('Reloading images from database to ensure consistency...')
         setTimeout(async () => {
           try {
             const { data: refreshedImages } = await productImageService.getProductImages(productId)
             if (refreshedImages) {
-              console.log('Refreshed images from database:', refreshedImages)
               onImagesChange(refreshedImages)
             }
           } catch (refreshError) {

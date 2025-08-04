@@ -31,7 +31,9 @@ const ProductDetail = () => {
     if (!product?.id) return;
     
     setImagesLoading(true);
-    console.log('Loading images for product:', product.id);
+    if (import.meta.env.DEV) {
+      console.log('Loading images for product:', product.id);
+    }
     
     try {
       // Try multiple times to ensure we get the images
@@ -44,7 +46,9 @@ const ProductDetail = () => {
         const { data, error } = await productImageService.getProductImages(product.id);
         
         if (error) {
-          console.warn(`Failed to load product images (attempt ${retryCount + 1}):`, error);
+          if (import.meta.env.DEV) {
+            console.warn(`Failed to load product images (attempt ${retryCount + 1}):`, error);
+          }
           lastError = error;
           retryCount++;
           if (retryCount < maxRetries) {
@@ -57,10 +61,14 @@ const ProductDetail = () => {
       }
 
       if (lastError && !imagesData) {
-        console.warn('Failed to load product images after retries, using fallback:', lastError);
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load product images after retries, using fallback:', lastError);
+        }
         // Fallback to main product image
         if (product.image) {
-          console.log('Using fallback image:', product.image);
+          if (import.meta.env.DEV) {
+            console.log('Using fallback image:', product.image);
+          }
           setProductImages([{
             id: 'fallback',
             image_url: product.image,
@@ -71,14 +79,18 @@ const ProductDetail = () => {
           setProductImages([]);
         }
       } else {
-        console.log('Loaded product images from database:', imagesData);
+        if (import.meta.env.DEV) {
+          console.log('Loaded product images from database:', imagesData);
+        }
         
         // If we have images from database, use them
         if (imagesData && imagesData.length > 0) {
           setProductImages(imagesData);
         } else if (product.image) {
           // If no images in database but product has main image, use it as fallback
-          console.log('No images in database, using product main image as fallback');
+          if (import.meta.env.DEV) {
+            console.log('No images in database, using product main image as fallback');
+          }
           setProductImages([{
             id: 'fallback',
             image_url: product.image,
@@ -86,12 +98,16 @@ const ProductDetail = () => {
             display_order: 0
           }]);
         } else {
-          console.log('No images available for this product');
+          if (import.meta.env.DEV) {
+            console.log('No images available for this product');
+          }
           setProductImages([]);
         }
       }
     } catch (err) {
-      console.warn('Error loading product images, using fallback data:', err);
+      if (import.meta.env.DEV) {
+        console.warn('Error loading product images, using fallback data:', err);
+      }
       // Fallback to main product image
       if (product.image) {
         setProductImages([{
@@ -274,7 +290,9 @@ const ProductDetail = () => {
     return product.subcategory.charAt(0).toUpperCase() + product.subcategory.slice(1);
   };
 
-  console.log('ProductDetail render - productImages:', productImages);
+  if (import.meta.env.DEV) {
+    console.log('ProductDetail render - productImages:', productImages);
+  }
 
   return (
     <>

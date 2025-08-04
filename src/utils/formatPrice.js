@@ -20,7 +20,9 @@ export function formatPrice(amount, currency = 'EUR') {
     // Fallback for invalid numbers
     return '0,00 €';
   } catch (error) {
-    console.error('Error formatting price:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error formatting price:', error);
+    }
     return '0,00 €';
   }
 }

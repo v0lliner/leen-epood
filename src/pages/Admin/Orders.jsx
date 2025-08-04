@@ -33,7 +33,9 @@ const AdminOrders = () => {
       
       setOrders(data || [])
     } catch (err) {
-      console.error('Error loading orders:', err)
+      if (import.meta.env.DEV) {
+        console.error('Error loading orders:', err)
+      }
       setError('Tellimuste laadimine ebaõnnestus')
     } finally {
       setLoading(false)
@@ -58,7 +60,9 @@ const AdminOrders = () => {
       
       setOrderDetails(data || null)
     } catch (err) {
-      console.error('Error loading order details:', err)
+      if (import.meta.env.DEV) {
+        console.error('Error loading order details:', err)
+      }
       setError('Tellimuse detailide laadimine ebaõnnestus')
     } finally {
       setDetailsLoading(false)
@@ -102,7 +106,9 @@ const AdminOrders = () => {
         setOrderDetails({ ...orderDetails, status: newStatus })
       }
     } catch (err) {
-      console.error('Error updating order status:', err)
+      if (import.meta.env.DEV) {
+        console.error('Error updating order status:', err)
+      }
       setError('Tellimuse staatuse uuendamine ebaõnnestus')
     }
   }

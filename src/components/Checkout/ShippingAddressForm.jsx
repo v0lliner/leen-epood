@@ -86,7 +86,9 @@ const ShippingAddressForm = ({
       
       setParcelMachines(filteredLocations);
     } catch (err) {
-      console.error('Error fetching parcel machines:', err);
+      if (import.meta.env.DEV) {
+        console.error('Error fetching parcel machines:', err);
+      }
       setParcelMachineError(t('checkout.shipping.omniva.fetch_error'));
     } finally {
       setLoadingParcelMachines(false);

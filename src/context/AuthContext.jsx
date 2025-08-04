@@ -29,20 +29,28 @@ export const AuthProvider = ({ children }) => {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log('Getting initial session...')
+        if (import.meta.env.DEV) {
+          console.log('Getting initial session...')
+        }
         const { data, error } = await authService.getSession()
         
         if (error) {
-          console.error('Error getting initial session:', error)
+          if (import.meta.env.DEV) {
+            console.error('Error getting initial session:', error)
+          }
           setError(error.message)
         } else {
-          console.log('Initial session data:', data)
+          if (import.meta.env.DEV) {
+            console.log('Initial session data:', data)
+          }
           setSession(data.session)
           setUser(data.session?.user ?? null)
           setError(null)
         }
       } catch (err) {
-        console.error('Failed to get initial session:', err)
+        if (import.meta.env.DEV) {
+          console.error('Failed to get initial session:', err)
+        }
         setError('Failed to connect to authentication service')
       } finally {
         setLoading(false)
@@ -53,7 +61,9 @@ export const AuthProvider = ({ children }) => {
 
     // Listen for auth changes
     const unsubscribe = authService.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event, session)
+      if (import.meta.env.DEV) {
+        console.log('Auth state changed:', event, session)
+      }
       setSession(session)
       setUser(session?.user ?? null)
       setError(null)
@@ -72,7 +82,9 @@ export const AuthProvider = ({ children }) => {
       }
       return result
     } catch (err) {
-      console.error('Sign in error:', err)
+      if (import.meta.env.DEV) {
+        console.error('Sign in error:', err)
+      }
       setError('Failed to sign in')
       return { data: null, error: err }
     }
@@ -87,7 +99,9 @@ export const AuthProvider = ({ children }) => {
       }
       return result
     } catch (err) {
-      console.error('Sign up error:', err)
+      if (import.meta.env.DEV) {
+        console.error('Sign up error:', err)
+      }
       setError('Failed to sign up')
       return { data: null, error: err }
     }
@@ -102,7 +116,9 @@ export const AuthProvider = ({ children }) => {
       }
       return result
     } catch (err) {
-      console.error('Sign out error:', err)
+      if (import.meta.env.DEV) {
+        console.error('Sign out error:', err)
+      }
       setError('Failed to sign out')
       return { error: err }
     }

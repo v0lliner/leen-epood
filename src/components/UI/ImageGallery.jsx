@@ -377,10 +377,14 @@ const ImageGallery = ({ images = [], productTitle = '' }) => {
   
   // Fallback handler for image loading errors
   const handleImageError = (e) => {
-    console.warn('Gallery image failed to load:', e.target.src);
+    if (import.meta.env.DEV) {
+      console.warn('Gallery image failed to load:', e.target.src);
+    }
     const originalUrl = e.target.dataset.originalUrl;
     if (e.target.src !== originalUrl && originalUrl) {
-      console.log('Falling back to original image:', originalUrl);
+      if (import.meta.env.DEV) {
+        console.log('Falling back to original image:', originalUrl);
+      }
       e.target.src = originalUrl;
     }
   };

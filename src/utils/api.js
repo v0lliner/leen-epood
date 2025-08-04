@@ -30,7 +30,9 @@ export const createPaymentIntent = async (params) => {
 
     return await response.json();
   } catch (error) {
-    console.error('Error creating payment intent:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error creating payment intent:', error);
+    }
     throw error;
   }
 };
@@ -54,7 +56,9 @@ export const saveOrder = async (orderData) => {
       .select()
       .single();
   } catch (error) {
-    console.error('Error saving order:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error saving order:', error);
+    }
     return { data: null, error };
   }
 };
@@ -80,7 +84,9 @@ export const updateOrder = async (orderId, updates) => {
       .select()
       .single();
   } catch (error) {
-    console.error('Error updating order:', error);
+    if (import.meta.env.DEV) {
+      console.error('Error updating order:', error);
+    }
     return { data: null, error };
   }
 };

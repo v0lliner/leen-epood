@@ -12,7 +12,9 @@ export const storageService = {
    */
   async compressImage(file) {
     try {
-      console.log('Original file size:', (file.size / 1024).toFixed(2), 'KB')
+      if (import.meta.env.DEV) {
+        console.log('Original file size:', (file.size / 1024).toFixed(2), 'KB')
+      }
       
       const options = {
         maxSizeMB: 0.2, // 200KB max file size
@@ -26,12 +28,16 @@ export const storageService = {
 
       const compressedFile = await imageCompression(file, options)
       
-      console.log('Compressed file size:', (compressedFile.size / 1024).toFixed(2), 'KB')
-      console.log('Compression ratio:', ((1 - compressedFile.size / file.size) * 100).toFixed(1) + '%')
+      if (import.meta.env.DEV) {
+        console.log('Compressed file size:', (compressedFile.size / 1024).toFixed(2), 'KB')
+        console.log('Compression ratio:', ((1 - compressedFile.size / file.size) * 100).toFixed(1) + '%')
+      }
       
       return compressedFile
     } catch (error) {
-      console.warn('Image compression failed, using original file:', error)
+      if (import.meta.env.DEV) {
+        console.warn('Image compression failed, using original file:', error)
+      }
       return file // Fallback to original file if compression fails
     }
   },

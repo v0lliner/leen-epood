@@ -42,7 +42,9 @@ export const useCheckoutForm = (cartItems, cartTotal) => {
           setOmnivaShippingPrice(parseFloat(data.price));
         }
       } catch (err) {
-        console.error('Error fetching Omniva shipping price:', err);
+        if (import.meta.env.DEV) {
+          console.error('Error fetching Omniva shipping price:', err);
+        }
       }
     };
     

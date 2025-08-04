@@ -54,7 +54,9 @@ const PaymentSettings = () => {
         })
       }
     } catch (error) {
-      console.error('Error loading Omniva settings:', error)
+      if (import.meta.env.DEV) {
+        console.error('Error loading Omniva settings:', error)
+      }
     }
   }
 
@@ -63,13 +65,17 @@ const PaymentSettings = () => {
       const { data, error } = await shippingSettingsService.getOmnivaShippingSettings()
       
       if (error) {
-        console.error('Error loading Omniva shipping settings:', error)
+        if (import.meta.env.DEV) {
+          console.error('Error loading Omniva shipping settings:', error)
+        }
       } else if (data) {
         setOmnivaShippingSettings(data)
         setShippingPrice(data.price.toString())
       }
     } catch (err) {
-      console.error('Error in loadOmnivaShippingSettings:', err)
+      if (import.meta.env.DEV) {
+        console.error('Error in loadOmnivaShippingSettings:', err)
+      }
     }
   }
 

@@ -297,33 +297,15 @@ const Shop = () => {
                 {/* Category Tabs, Pagination and Sort Filter */}
                 <div className="shop-controls">
                   <div className="shop-tabs">
-                    {availableCategories.length > 0 ? (
-                      availableCategories.map(category => (
-                        <button
-                          key={category.slug}
-                          onClick={() => handleTabChange(category.slug)}
-                          className={`tab-button ${activeTab === category.slug ? 'active' : ''}`}
-                        >
-                          {category.name}
-                        </button>
-                      ))
-                    ) : (
-                      // Fallback to hardcoded categories if database is empty
-                      <>
-                        <button
-                          onClick={() => handleTabChange('keraamika')}
-                          className={`tab-button ${activeTab === 'keraamika' ? 'active' : ''}`}
-                        >
-                          {t('shop.tabs.keraamika')}
-                        </button>
-                        <button
-                          onClick={() => handleTabChange('omblus')}
-                          className={`tab-button ${activeTab === 'omblus' ? 'active' : ''}`}
-                        >
-                          {t('shop.tabs.omblus')}
-                        </button>
-                      </>
-                    )}
+                    {availableCategories.map(category => (
+                      <button
+                        key={category.slug}
+                        onClick={() => handleTabChange(category.slug)}
+                        className={`tab-button ${activeTab === category.slug ? 'active' : ''}`}
+                      >
+                        {category.name}
+                      </button>
+                    ))}
                   </div>
 
                   <Pagination className="pagination-top" />

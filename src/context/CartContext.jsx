@@ -40,7 +40,6 @@ export const CartProvider = ({ children }) => {
   const addItem = async (product) => {
     const existingItem = state.items.find(item => item.id === product.id);
     if (existingItem) {
-      console.log('Product already in cart');
       return;
     }
 

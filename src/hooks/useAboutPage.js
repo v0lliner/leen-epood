@@ -83,7 +83,9 @@ export const useAboutPage = () => {
       const { data, error } = await aboutPageService.getBilingualContent()
       
       if (error) {
-        console.warn('Failed to load about page content from Supabase, using fallback data:', error)
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load about page content from Supabase, using fallback data:', error)
+        }
         setContent(fallbackContent)
       } else {
         // If no content in database, use fallback data
@@ -96,7 +98,9 @@ export const useAboutPage = () => {
         })
       }
     } catch (err) {
-      console.warn('Error loading about page content, using fallback:', err)
+      if (import.meta.env.DEV) {
+        console.warn('Error loading about page content, using fallback:', err)
+      }
       setContent(fallbackContent)
     } finally {
       setLoading(false)
