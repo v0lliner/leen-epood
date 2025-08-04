@@ -93,3 +93,6 @@ This project is proprietary and not open for redistribution or use without expli
 ## Contact
 
 For any inquiries, please contact Leen Väränen at leen@leen.ee.
+
+---
+*This is a test change for verification purposes.*
