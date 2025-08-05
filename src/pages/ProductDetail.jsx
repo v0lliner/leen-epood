@@ -5,7 +5,6 @@ import SEOHead from '../components/Layout/SEOHead';
 import FadeInSection from '../components/UI/FadeInSection';
 import ImageGallery from '../components/UI/ImageGallery';
 import ProductCard from '../components/Shop/ProductCard';
-import StripeCheckoutButton from '../components/Checkout/StripeCheckoutButton';
 import { useCart } from '../context/CartContext';
 import { useProducts } from '../hooks/useProducts';
 import { productImageService } from '../utils/supabase/productImages';
@@ -364,15 +363,6 @@ const ProductDetail = () => {
                         {getButtonText()} <span className="arrow-wrapper">→</span>
                       </button>
                     )}
-                    {product.stripe_price_id && (
-                      <StripeCheckoutButton
-                        priceId={product.stripe_price_id}
-                        mode="payment"
-                        className="checkout-btn"
-                      >
-                        Buy Now with Stripe
-                      </StripeCheckoutButton>
-                    )}
                     {!canAddToCart && (
                       <div className="unavailable-btn">
                         {getButtonText()}
@@ -585,10 +575,6 @@ const ProductDetail = () => {
 
         .add-to-cart-secondary {
           color: #6c757d;
-        }
-
-        .checkout-btn {
-          width: 100%;
         }
 
         .unavailable-btn {

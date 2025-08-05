@@ -98,16 +98,6 @@ export const productService = {
    */
   async upsertProduct(product) {
     try {
-      // Set sync_status to pending for new products to trigger sync
-      if (!product.id) {
-        product.sync_status = 'pending';
-      }
-      
-      // Set sync_status to pending for new products to trigger sync
-      if (!product.id) {
-        product.sync_status = 'pending';
-      }
-      
       const { data, error } = await supabase
         .from('products')
         .upsert(product, { 
